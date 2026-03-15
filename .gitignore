@@ -1,4 +1,10 @@
 .idea/
+
+# Dialogic — generated/cached files that should not be committed
+addons/dialogic/.import/
+addons/dialogic/Editor/Events/Fields/
+
+# Godot editor-only imports (already in most Godot gitignores, verify presence)
 .godot/
 
 ## Ignore Visual Studio temporary files, build results, and
