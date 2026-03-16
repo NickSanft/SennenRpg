@@ -103,6 +103,7 @@ public partial class GameManager : Node
 		CurrentRoute = (RouteType)data.Route;
 		LastMapPath = data.LastMapPath;
 		LastSavePointId = data.LastSavePointId;
+		LastSpawnId = data.LastSpawnId;
 		Flags = new Godot.Collections.Dictionary<string, bool>(data.Flags);
 		PlayerStats.CurrentHp = data.PlayerHp;
 		PlayerStats.MaxHp = data.PlayerMaxHp;
