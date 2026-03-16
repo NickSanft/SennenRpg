@@ -14,6 +14,7 @@ public record SaveData
 	public int Route { get; init; }
 	public string LastMapPath { get; init; } = "";
 	public string LastSavePointId { get; init; } = "";
+	public string LastSpawnId { get; init; } = "";
 	public Dictionary<string, bool> Flags { get; init; } = new();
 	public List<string> InventoryItemPaths { get; init; } = new();
 }
@@ -45,6 +46,7 @@ public partial class SaveManager : Node
 			Route = (int)gm.CurrentRoute,
 			LastMapPath = gm.LastMapPath,
 			LastSavePointId = gm.LastSavePointId,
+			LastSpawnId = gm.LastSavePointId, // spawn at save point on load
 			Flags = new Dictionary<string, bool>(gm.Flags),
 		};
 
