@@ -18,6 +18,11 @@ config/icon="res://icon.svg"
 
 PhantomCameraManager="*uid://duq6jhf6unyis"
 GameManager="*uid://dt7n460r0x1ba"
+SaveManager="*uid://cjse2ggsmh0rk"
+AudioManager="*uid://0egl0iuwbud4"
+SceneTransition="*uid://cdnm7y7mvnus8"
+DialogicBridge="*uid://cdaesqlsosbyi"
+BattleRegistry="*uid://d36wu2sl1eacd"
 
 [dotnet]
 
