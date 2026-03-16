@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DialogicStyle" format=3 uid="uid://deeihaiutw2i5"]
+
+[ext_resource type="Script" uid="uid://bwg6yncmh2cml" path="res://addons/dialogic/Resources/dialogic_style_layer.gd" id="1_htsx0"]
+[ext_resource type="Script" uid="uid://dv08k6ljua6fm" path="res://addons/dialogic/Resources/dialogic_style.gd" id="2_y2r57"]
+
+[sub_resource type="Resource" id="Resource_rtehi"]
+script = ExtResource("1_htsx0")
+
+[resource]
+script = ExtResource("2_y2r57")
+name = "BasicStyle"
+layer_info = {
+"": SubResource("Resource_rtehi")
+}
+metadata/_latest_layer = ""

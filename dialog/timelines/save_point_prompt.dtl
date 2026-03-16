@@ -1,0 +1,7 @@
+You feel your DETERMINATION fill the air.
+Would you like to save?
+- Save
+[signal arg="flag:confirmed_save"]
+<<END BRANCH>>
+- Not now
+<<END BRANCH>>
