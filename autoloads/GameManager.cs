@@ -23,6 +23,8 @@ public partial class GameManager : Node
 	public int Love { get; private set; } = 1;          // LV (Level of Violence) starts at 1
 	public string LastMapPath { get; private set; } = "";
 	public string LastSavePointId { get; private set; } = "";
+	/// <summary>Spawn point ID to use when the next map loads. Set by MapExit before transitioning.</summary>
+	public string LastSpawnId { get; private set; } = "";
 
 	// Player stats — loaded from resources/characters/player_stats.tres on boot
 	public CharacterStats PlayerStats { get; private set; } = new CharacterStats();
@@ -55,6 +57,7 @@ public partial class GameManager : Node
 
 	public void SetLastMap(string scenePath) => LastMapPath = scenePath;
 	public void SetLastSavePoint(string savePointId) => LastSavePointId = savePointId;
+	public void SetLastSpawn(string spawnId) => LastSpawnId = spawnId;
 
 	public void RegisterKill()
 	{
