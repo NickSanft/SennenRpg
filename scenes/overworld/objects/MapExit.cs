@@ -16,14 +16,28 @@ public partial class MapExit : Area2D, IInteractable
 	[Export] public bool AutoTrigger { get; set; } = false;
 
 	private bool _triggered = false;
+	private Label? _promptLabel;
 
 	public override void _Ready()
 	{
 		if (!AutoTrigger)
+		{
 			AddToGroup("interactable");
+
+			_promptLabel = new Label();
+			_promptLabel.Text = "[Z] Enter";
+			_promptLabel.Position = new Vector2(-20, -20);
+			_promptLabel.AddThemeColorOverride("font_color", Colors.Yellow);
+			_promptLabel.AddThemeFontSizeOverride("font_size", 8);
+			_promptLabel.Visible = false;
+			AddChild(_promptLabel);
+		}
 
 		BodyEntered += OnBodyEntered;
 	}
+
+	public void ShowPrompt() { if (_promptLabel != null) _promptLabel.Visible = true; }
+	public void HidePrompt() { if (_promptLabel != null) _promptLabel.Visible = false; }
 
 	private void OnBodyEntered(Node2D body)
 	{
