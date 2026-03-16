@@ -73,6 +73,13 @@ public partial class GameManager : Node
 
 	public void AddGold(int amount) => Gold += amount;
 
+	/// <summary>Reduce player HP and emit PlayerStatsChanged so the HUD updates.</summary>
+	public void HurtPlayer(int amount)
+	{
+		PlayerStats.CurrentHp = Mathf.Max(0, PlayerStats.CurrentHp - amount);
+		EmitSignal(SignalName.PlayerStatsChanged);
+	}
+
 	public bool GetFlag(string key) => Flags.TryGetValue(key, out bool val) && val;
 	public void SetFlag(string key, bool value) => Flags[key] = value;
 

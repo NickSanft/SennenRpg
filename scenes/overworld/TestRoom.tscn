@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://bm5n2kpvryawd" path="res://scenes/overworld/objects/SavePoint.tscn" id="5_5gidl"]
 [ext_resource type="PackedScene" uid="uid://bx4f8kqjmpwo1" path="res://scenes/overworld/objects/EncounterTrigger.tscn" id="7_msmux"]
 [ext_resource type="Script" uid="uid://c5d22rd36ltx4" path="res://core/data/EnemyData.cs" id="8_msmux"]
+[ext_resource type="PackedScene" uid="uid://cxjw8vqfh5nk2" path="res://scenes/battle/patterns/Pattern001.tscn" id="9_7wnlp"]
 [ext_resource type="Script" uid="uid://dgj4v4oe30iqr" path="res://core/data/EncounterData.cs" id="9_rdhaj"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ikk50"]
@@ -2850,6 +2851,7 @@ sources/0 = SubResource("TileSetAtlasSource_8m7dc")
 
 [sub_resource type="Resource" id="Resource_7wnlp"]
 script = ExtResource("8_msmux")
+AttackPatternScene = ExtResource("9_7wnlp")
 metadata/_custom_type_script = "uid://c5d22rd36ltx4"
 
 [sub_resource type="Resource" id="Resource_ctr46"]

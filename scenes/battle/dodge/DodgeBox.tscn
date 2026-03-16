@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3 uid="uid://bk8wqmf3ydpx6"]
+
+[ext_resource type="Script" path="res://scenes/battle/dodge/DodgeBox.cs" uid="uid://c5rjnvhw4tqy9" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://c3p9wqfmxhk6b" path="res://scenes/battle/dodge/Soul.tscn" id="2_soul"]
+
+[node name="DodgeBox" type="Node2D"]
+visible = false
+script = ExtResource("1_script")
+
+[node name="Soul" parent="." instance=ExtResource("2_soul")]
+visible = false
+
+[node name="BulletContainer" type="Node2D" parent="."]

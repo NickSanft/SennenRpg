@@ -24,6 +24,7 @@ public partial class BattleScene : Node2D
 	private ActionMenu _actionMenu = null!;
 	private SubMenu    _subMenu    = null!;
 	private BattleHUD  _battleHud  = null!;
+	private DodgeBox   _dodgeBox   = null!;
 	private Sprite2D   _enemySprite = null!;
 
 	public override void _Ready()
@@ -33,6 +34,7 @@ public partial class BattleScene : Node2D
 		_actionMenu  = GetNode<ActionMenu>("ActionMenu");
 		_subMenu     = GetNode<SubMenu>("SubMenu");
 		_battleHud   = GetNode<BattleHUD>("BattleHUD");
+		_dodgeBox    = GetNode<DodgeBox>("DodgeBox");
 
 		_actionMenu.FightSelected += OnFightSelected;
 		_actionMenu.ActSelected   += OnActSelected;
@@ -40,6 +42,12 @@ public partial class BattleScene : Node2D
 		_actionMenu.MercySelected += OnMercySelected;
 		_subMenu.OptionSelected   += OnSubMenuOptionSelected;
 		_subMenu.Cancelled        += OnSubMenuCancelled;
+
+		// Wire dodge phase signals — DodgeBox and Soul are always present, just hidden
+		_dodgeBox.PhaseEnded += OnDodgePhaseEnded;
+		var soul = _dodgeBox.GetNodeOrNull<Soul>("Soul");
+		if (soul != null)
+			soul.Died += OnPlayerDied;
 
 		// Pull the pending encounter from the registry
 		var encounter = BattleRegistry.Instance.GetPendingEncounter();
@@ -78,6 +86,7 @@ public partial class BattleScene : Node2D
 		_state = newState;
 		_actionMenu.Visible = newState == BattleState.PlayerTurn;
 		_subMenu.Visible    = false;
+		// DodgeBox visibility is managed explicitly by BeginDodgePhase / OnDodgePhaseEnded
 		GD.Print($"[BattleScene] State → {newState}");
 
 		if (newState == BattleState.PlayerTurn)
@@ -172,13 +181,13 @@ public partial class BattleScene : Node2D
 		SetState(BattleState.PlayerTurn);
 	}
 
-	// ── Enemy turn (Phase 12 will replace with real dodge phase) ──────
+	// ── Enemy turn ────────────────────────────────────────────────────
 
 	private async Task RunEnemyTurn()
 	{
 		SetState(BattleState.EnemyTurn);
 
-		// Pick a random dialog line if the enemy has any
+		// Pick a random enemy dialog line
 		string line;
 		if (_enemy?.BattleDialogLines is { Length: > 0 })
 			line = _enemy.BattleDialogLines[GD.RandRange(0, _enemy.BattleDialogLines.Length - 1)];
@@ -186,13 +195,56 @@ public partial class BattleScene : Node2D
 			line = $"* {_enemy?.DisplayName ?? "???"} prepares to attack...";
 
 		ShowDialogText(line);
-		await ToSignal(GetTree().CreateTimer(1.5f), SceneTreeTimer.SignalName.Timeout);
+		await ToSignal(GetTree().CreateTimer(1.2f), SceneTreeTimer.SignalName.Timeout);
 
-		// Placeholder — Phase 12 starts DodgeBox here
-		ShowDialogText("* The attack misses!");
-		await ToSignal(GetTree().CreateTimer(1.0f), SceneTreeTimer.SignalName.Timeout);
+		BeginDodgePhase();
+	}
+
+	private void BeginDodgePhase()
+	{
+		SetState(BattleState.DodgePhase);
+		_dodgeBox.Visible = true;
+
+		// Spawn attack pattern if the enemy has one, otherwise use a 3-second empty phase
+		if (_enemy?.AttackPatternScene != null)
+		{
+			var pattern = _enemy.AttackPatternScene.Instantiate();
+			_dodgeBox.BulletContainer.AddChild(pattern);
+			GD.Print($"[BattleScene] Attack pattern spawned: {_enemy.AttackPatternScene.ResourcePath}");
+		}
+		else
+		{
+			GD.Print("[BattleScene] No attack pattern — using empty dodge phase.");
+		}
+
+		_dodgeBox.StartPhase(3.0f);
+	}
+
+	private void OnDodgePhaseEnded()
+	{
+		GD.Print("[BattleScene] Dodge phase ended — returning to player turn.");
+		_dodgeBox.Visible = false;
+
+		// Clean up any leftover pattern nodes
+		foreach (Node child in _dodgeBox.BulletContainer.GetChildren())
+			child.QueueFree();
 
 		SetState(BattleState.PlayerTurn);
+	}
+
+	private void OnPlayerDied()
+	{
+		GD.Print("[BattleScene] Player died — defeat.");
+		_dodgeBox.Visible = false;
+		_ = HandleDefeat();
+	}
+
+	private async Task HandleDefeat()
+	{
+		SetState(BattleState.Defeat);
+		ShowDialogText("* You feel your sins crawling on your back.\n\n* GAME OVER");
+		await ToSignal(GetTree().CreateTimer(3.0f), SceneTreeTimer.SignalName.Timeout);
+		await SceneTransition.Instance.GoToAsync("res://scenes/menus/MainMenu.tscn");
 	}
 
 	// ── Victory / Defeat ──────────────────────────────────────────────

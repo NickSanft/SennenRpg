@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://cxjw8vqfh5nk2"]
+
+[ext_resource type="Script" path="res://scenes/battle/patterns/Pattern001.cs" uid="uid://dmp7rkbj4fqe3" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://dqr7ntbwv2kxm" path="res://scenes/battle/dodge/StraightBullet.tscn" id="2_bullet"]
+
+[node name="Pattern001" type="Node"]
+script = ExtResource("1_script")
+BulletScene = ExtResource("2_bullet")
+
+[node name="SpawnTimer" type="Timer" parent="."]
+wait_time = 0.4
+autostart = true

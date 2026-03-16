@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://dqr7ntbwv2kxm"]
+
+[ext_resource type="Script" path="res://scenes/battle/dodge/StraightBullet.cs" uid="uid://bfw5mxj8pq3c1" id="1_script"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_1"]
+radius = 4.0
+
+[node name="StraightBullet" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("1_script")
+
+[node name="Visual" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-3, -3, 3, -3, 3, 3, -3, 3)
+color = Color(1, 1, 1, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_1")
