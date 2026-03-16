@@ -1431,3 +1431,4 @@ tile_map_data = PackedByteArray("AAD5////AAAiACYAAAD5/wAAAAAiACcAAAD5/wEAAAAiACg
 tile_set = SubResource("TileSet_8m7dc")
 
 [node name="Npc" parent="Npcs" parent_id_path=PackedInt32Array(613369906) index="0" unique_id=1198639027 instance=ExtResource("3_ikk50")]
+DisplayName = "Mysterious Figure"
