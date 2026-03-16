@@ -36,6 +36,9 @@ directories/dtl_directory={
 "npc_test_hello": "res://dialog/characters/npc_test_hello.dtl"
 }
 layout/style_directory={}
+layout/style_list=[]
+layout/default_style="Default"
+glossary/default_case_sensitive=true
 
 [dotnet]
 
