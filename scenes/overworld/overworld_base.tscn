@@ -5,20 +5,22 @@
 [node name="OverworldBase" type="Node2D" unique_id=280300523]
 script = ExtResource("1_3rkw5")
 
+[node name="Camera2D" type="Camera2D" parent="." unique_id=688362733]
+
 [node name="Ground" type="TileMapLayer" parent="." unique_id=1739729204]
+collision_enabled = false
+
+[node name="Ground" type="TileMapLayer" parent="Ground" unique_id=1278619425]
 collision_enabled = false
 
 [node name="Walls" type="TileMapLayer" parent="." unique_id=429113068]
 
-[node name="Objects" type="TileMapLayer" parent="." unique_id=1501605227]
-collision_enabled = false
-
 [node name="YSort" type="Node2D" parent="." unique_id=598468964]
 y_sort_enabled = true
+
+[node name="Objects" type="TileMapLayer" parent="." unique_id=1501605227]
+collision_enabled = false
 
 [node name="EncounterTriggers" type="Node2D" parent="." unique_id=1868538403]
 
 [node name="Npcs" type="Node2D" parent="." unique_id=613369906]
-
-[node name="Camera" type="Camera2D" parent="." unique_id=2043310471]
-scale = Vector2(3, 3)

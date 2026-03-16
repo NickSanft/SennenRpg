@@ -17,7 +17,6 @@ public partial class OverworldBase : Node2D
 	protected Vector2 DefaultSpawnPosition { get; set; } = Vector2.Zero;
 
 	private CharacterBody2D? _player;
-	private Camera2D? _camera;
 
 	public override void _Ready()
 	{
@@ -37,22 +36,10 @@ public partial class OverworldBase : Node2D
 		YSort.AddChild(_player);
 		_player.GlobalPosition = GetSpawnPosition();
 
-		// Configure camera — set zoom here; position is updated every frame in _Process
-		_camera = GetNode<Camera2D>("Camera");
-		_camera.Zoom = new Vector2(3, 3);
-		_camera.GlobalPosition = _player.GlobalPosition;
-
 		if (!string.IsNullOrEmpty(BgmPath))
 			AudioManager.Instance.PlayBgm(BgmPath);
 
 		GD.Print($"[OverworldBase] Ready. Map: {MapId}, Player spawned at {_player.GlobalPosition}");
-	}
-
-	public override void _Process(double delta)
-	{
-		// Smoothly follow the player each frame
-		if (_player != null && _camera != null)
-			_camera.GlobalPosition = _player.GlobalPosition;
 	}
 
 	/// <summary>

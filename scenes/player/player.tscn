@@ -2,6 +2,8 @@
 
 [ext_resource type="Script" uid="uid://1m58v4hiupi0" path="res://scenes/player/Player.cs" id="1_8afob"]
 [ext_resource type="Texture2D" uid="uid://brxf7eeheunts" path="res://assets/sprites/player/player.png" id="2_dovo2"]
+[ext_resource type="Script" uid="uid://bhexx6mj1xv3q" path="res://addons/phantom_camera/scripts/phantom_camera/phantom_camera_2d.gd" id="3_lvxji"]
+[ext_resource type="Script" uid="uid://8umksf8e80fw" path="res://addons/phantom_camera/scripts/resources/tween_resource.gd" id="4_p47bc"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_lvxji"]
 atlas = ExtResource("2_dovo2")
@@ -121,15 +123,20 @@ animations = [{
 }]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_x7p2l"]
+radius = 3.0
+height = 6.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_8afob"]
+
+[sub_resource type="Resource" id="Resource_75vfm"]
+script = ExtResource("4_p47bc")
 
 [node name="Player" type="CharacterBody2D" unique_id=1521976704]
 script = ExtResource("1_8afob")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="." unique_id=1571986454]
 sprite_frames = SubResource("SpriteFrames_gmlin")
-animation = &"walk_side"
+animation = &"idle_down"
 
 [node name="Collision" type="CollisionShape2D" parent="." unique_id=243239565]
 shape = SubResource("CapsuleShape2D_x7p2l")
@@ -138,3 +145,11 @@ shape = SubResource("CapsuleShape2D_x7p2l")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InteractRange" unique_id=962320122]
 shape = SubResource("CircleShape2D_8afob")
+
+[node name="PhantomCamera2D" type="Node2D" parent="." unique_id=95020246]
+script = ExtResource("3_lvxji")
+priority = 10
+zoom = Vector2(3, 3)
+snap_to_pixel = true
+tween_resource = SubResource("Resource_75vfm")
+metadata/_custom_type_script = "uid://bhexx6mj1xv3q"
