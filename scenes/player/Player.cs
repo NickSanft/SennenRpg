@@ -19,6 +19,19 @@ public partial class Player : CharacterBody2D
 
 		_interactRange.BodyEntered += OnInteractRangeBodyEntered;
 		_interactRange.BodyExited += OnInteractRangeBodyExited;
+
+		// Placeholder visual — visible until real sprites are assigned
+		if (_sprite.SpriteFrames == null)
+		{
+			var placeholder = new Polygon2D();
+			placeholder.Polygon = [
+				new Vector2(-6, -10), new Vector2(6, -10),
+				new Vector2(6, 8),    new Vector2(-6, 8)
+			];
+			placeholder.Color = new Color(0.2f, 0.8f, 1f); // Cyan rectangle
+			AddChild(placeholder);
+			GD.Print("[Player] No sprite assigned — showing placeholder.");
+		}
 	}
 
 	public override void _PhysicsProcess(double delta)
