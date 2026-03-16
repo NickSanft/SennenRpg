@@ -18,7 +18,20 @@ public partial class SavePoint : Area2D, IInteractable
 	public override void _Ready()
 	{
 		AddToGroup("interactable");
+
+		_promptLabel = new Label();
+		_promptLabel.Text = "[Z] Save";
+		_promptLabel.Position = new Vector2(-20, -24);
+		_promptLabel.AddThemeColorOverride("font_color", Colors.Yellow);
+		_promptLabel.AddThemeFontSizeOverride("font_size", 8);
+		_promptLabel.Visible = false;
+		AddChild(_promptLabel);
 	}
+
+	private Label? _promptLabel;
+
+	public void ShowPrompt() { if (_promptLabel != null) _promptLabel.Visible = true; }
+	public void HidePrompt() { if (_promptLabel != null) _promptLabel.Visible = false; }
 
 	public void Interact(Node player)
 	{
