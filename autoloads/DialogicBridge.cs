@@ -45,6 +45,10 @@ public partial class DialogicBridge : Node
 		GD.Print($"[DialogicBridge] Calling Dialogic.start('{timelinePath}')");
 		_dialogic.Call("start", timelinePath);
 		GD.Print("[DialogicBridge] Dialogic.start() returned.");
+
+		// One frame later, confirm the timeline is actually running
+		GetTree().CreateTimer(0.1).Connect("timeout",
+			Callable.From(() => GD.Print($"[DialogicBridge] IsRunning 0.1s later = {IsRunning()}")));
 	}
 
 	/// <summary>Returns true if a dialog timeline is currently running.</summary>
