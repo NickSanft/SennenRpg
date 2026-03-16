@@ -24,6 +24,18 @@ AudioManager="*uid://0egl0iuwbud4"
 SceneTransition="*uid://cdnm7y7mvnus8"
 DialogicBridge="*uid://cdaesqlsosbyi"
 BattleRegistry="*uid://d36wu2sl1eacd"
+Dialogic="*uid://ds2q0uclmolvu"
+
+[dialogic]
+
+directories/dch_directory={
+"TestNpc": "res://dialog/characters/TestNpc.dch",
+"unit_test_character": "res://addons/dialogic/Tests/Resources/unit_test_character.dch"
+}
+directories/dtl_directory={
+"npc_test_hello": "res://dialog/characters/npc_test_hello.dtl"
+}
+layout/style_directory={}
 
 [dotnet]
 
@@ -31,7 +43,7 @@ project/assembly_name="SennenRpg"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/dialogic/addons/dialogic/plugin.cfg", "res://addons/phantom_camera/plugin.cfg")
+enabled=PackedStringArray("res://addons/dialogic/plugin.cfg", "res://addons/phantom_camera/plugin.cfg")
 
 [input]
 
