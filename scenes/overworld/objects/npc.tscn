@@ -1,8 +1,13 @@
 [gd_scene format=3 uid="uid://dw1vhhwmxb1x3"]
 
+[ext_resource type="Script" uid="uid://bnq82lxdcn2ej" path="res://scenes/overworld/objects/Npc.cs" id="1_v0osc"]
+
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_e6kh8"]
 
 [node name="Npc" type="CharacterBody2D" unique_id=1198639027]
+script = ExtResource("1_v0osc")
+TimelinePath = "res://dialog/timelines/npc_test_hello.dtl"
+DisplayName = "Mysterious Figure\""
 
 [node name="Sprite" type="AnimatedSprite2D" parent="." unique_id=1912760606]
 

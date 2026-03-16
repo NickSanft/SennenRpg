@@ -55,28 +55,36 @@ public partial class Player : CharacterBody2D
 
 	private void UpdateAnimation(Vector2 direction)
 	{
-		// Determine facing direction for 4-directional sprite
+		if (_sprite.SpriteFrames == null) return;
+
 		if (Mathf.Abs(direction.X) > Mathf.Abs(direction.Y))
 		{
 			_sprite.FlipH = direction.X < 0;
-			_sprite.Play("walk_side");
+			PlayIfExists("walk_side");
 		}
 		else if (direction.Y < 0)
 		{
-			_sprite.Play("walk_up");
+			PlayIfExists("walk_up");
 		}
 		else
 		{
-			_sprite.Play("walk_down");
+			PlayIfExists("walk_down");
 		}
 	}
 
 	private void PlayIdleAnimation()
 	{
-		// Replace "walk_*" with "idle_*" — using the current animation's base name
+		if (_sprite.SpriteFrames == null) return;
+
 		string current = _sprite.Animation;
 		if (current.StartsWith("walk_"))
-			_sprite.Play(current.Replace("walk_", "idle_"));
+			PlayIfExists(current.Replace("walk_", "idle_"));
+	}
+
+	private void PlayIfExists(string animationName)
+	{
+		if (_sprite.SpriteFrames != null && _sprite.SpriteFrames.HasAnimation(animationName))
+			_sprite.Play(animationName);
 	}
 
 	private void OnInteractRangeBodyEntered(Node2D body)

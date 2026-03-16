@@ -39,24 +39,24 @@ public partial class DialogicBridge : Node
 	public bool IsRunning()
 	{
 		if (_dialogic == null) return false;
-		return _dialogic.Call("is_running").AsBool();
+		// Dialogic 2 exposes current_timeline as a property — null means no dialog active
+		return _dialogic.Get("current_timeline").AsGodotObject() != null;
 	}
 
 	/// <summary>Set a Dialogic variable. Call this before StartTimeline to pass data into a timeline.</summary>
 	public void SetVariable(string name, Variant value)
 	{
 		if (_dialogic == null) return;
-		// Dialogic 2 stores variables in its state subsystem
-		var state = _dialogic.Get("VAR").AsGodotObject();
-		state?.Set(name, value);
+		var varSubsystem = _dialogic.Call("get_subsystem", "VAR").AsGodotObject();
+		varSubsystem?.Call("set_variable", name, value);
 	}
 
 	/// <summary>Get a Dialogic variable. Call this after timeline_ended to read choice results.</summary>
 	public Variant GetVariable(string name)
 	{
 		if (_dialogic == null) return default;
-		var state = _dialogic.Get("VAR").AsGodotObject();
-		return state?.Get(name) ?? default;
+		var varSubsystem = _dialogic.Call("get_subsystem", "VAR").AsGodotObject();
+		return varSubsystem?.Call("get_variable", name) ?? default;
 	}
 
 	/// <summary>Connect a callback to fire when the current timeline ends.</summary>

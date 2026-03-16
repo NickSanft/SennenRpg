@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://bs06dan353qo1" path="res://scenes/overworld/overworld_base.tscn" id="1_v44pt"]
 [ext_resource type="Texture2D" uid="uid://btbgnx23fjkeg" path="res://Inside_C.png" id="2_hng3j"]
+[ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="3_ikk50"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ikk50"]
 texture = ExtResource("2_hng3j")
@@ -1428,3 +1429,5 @@ MapId = "test_room"
 [node name="Ground" parent="." index="0" unique_id=1739729204]
 enabled = false
 tile_set = SubResource("TileSet_8m7dc")
+
+[node name="Npc" parent="Npcs" parent_id_path=PackedInt32Array(613369906) index="0" unique_id=1198639027 instance=ExtResource("3_ikk50")]
