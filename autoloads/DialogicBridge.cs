@@ -12,6 +12,8 @@ public partial class DialogicBridge : Node
 {
 	public static DialogicBridge Instance { get; private set; } = null!;
 
+	[Signal] public delegate void DialogicSignalReceivedEventHandler(Variant argument);
+
 	private Node _dialogic = null!;
 
 	public override void _Ready()
@@ -25,7 +27,12 @@ public partial class DialogicBridge : Node
 		if (_dialogic == null)
 		{
 			GD.PushError("[DialogicBridge] Dialogic autoload not found. Is the plugin enabled in Project Settings?");
+			return;
 		}
+
+		// Wire Dialogic's signal_event to our C# handler.
+		// Any Signal Event in a timeline with argument "flag:xyz" sets flag "xyz" in GameManager.
+		_dialogic.Connect("signal_event", new Callable(this, MethodName.OnDialogicSignal));
 	}
 
 	/// <summary>Start a dialog timeline by its resource path.</summary>
@@ -75,5 +82,22 @@ public partial class DialogicBridge : Node
 		if (_dialogic == null) return;
 		// Connect with ONE_SHOT so the callback fires once and disconnects automatically
 		_dialogic.Connect("timeline_ended", callback, (uint)ConnectFlags.OneShot);
+	}
+
+	/// <summary>
+	/// Called by Dialogic's signal_event. Argument format:
+	///   "flag:my_flag_name"  → sets GameManager flag "my_flag_name" to true
+	///   anything else         → just emits DialogicSignalReceived for game code to handle
+	/// </summary>
+	private void OnDialogicSignal(Variant argument)
+	{
+		string sig = argument.AsString();
+		if (sig.StartsWith("flag:"))
+		{
+			string flagName = sig.Substring(5);
+			GameManager.Instance.SetFlag(flagName, true);
+			GD.Print($"[DialogicBridge] Flag set via timeline signal: '{flagName}'");
+		}
+		EmitSignal(SignalName.DialogicSignalReceived, argument);
 	}
 }
