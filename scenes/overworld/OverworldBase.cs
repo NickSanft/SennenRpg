@@ -22,6 +22,12 @@ public partial class OverworldBase : Node2D
 		YSort.AddChild(player);
 		player.Position = GetSpawnPosition();
 
+		// Reparent camera to player so it follows them, and set correct zoom
+		var camera = GetNode<Camera2D>("Camera");
+		camera.Reparent(player);
+		camera.Position = Vector2.Zero;
+		camera.Zoom = new Vector2(3, 3);
+
 		if (!string.IsNullOrEmpty(BgmPath))
 			AudioManager.Instance.PlayBgm(BgmPath);
 	}
