@@ -51,7 +51,10 @@ public partial class OverworldBase : Node2D
 	{
 		string spawnId = GameManager.Instance.LastSpawnId;
 		if (!string.IsNullOrEmpty(spawnId) && SpawnPoints.TryGetValue(spawnId, out var pos))
+		{
+			GameManager.Instance.SetLastSpawn(""); // consume — don't reuse on next load
 			return pos;
+		}
 		return DefaultSpawnPosition;
 	}
 }
