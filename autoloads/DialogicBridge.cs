@@ -32,14 +32,19 @@ public partial class DialogicBridge : Node
 
 		// Wire Dialogic's signal_event to our C# handler.
 		// Any Signal Event in a timeline with argument "flag:xyz" sets flag "xyz" in GameManager.
-		_dialogic.Connect("signal_event", new Callable(this, MethodName.OnDialogicSignal));
+		if (_dialogic.HasSignal("signal_event"))
+			_dialogic.Connect("signal_event", new Callable(this, MethodName.OnDialogicSignal));
+		else
+			GD.PushWarning("[DialogicBridge] 'signal_event' signal not found on Dialogic node — flag signals will not work.");
 	}
 
 	/// <summary>Start a dialog timeline by its resource path.</summary>
 	public void StartTimeline(string timelinePath)
 	{
 		if (_dialogic == null) return;
+		GD.Print($"[DialogicBridge] Calling Dialogic.start('{timelinePath}')");
 		_dialogic.Call("start", timelinePath);
+		GD.Print("[DialogicBridge] Dialogic.start() returned.");
 	}
 
 	/// <summary>Returns true if a dialog timeline is currently running.</summary>

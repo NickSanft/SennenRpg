@@ -69,7 +69,10 @@ public partial class Npc : CharacterBody2D, IInteractable
 	{
 		GD.Print($"[Npc] Interact called on {DisplayName}. TimelinePath: '{TimelinePath}'");
 		if (string.IsNullOrEmpty(TimelinePath)) { GD.Print("[Npc] No timeline path set — aborting."); return; }
-		if (DialogicBridge.Instance.IsRunning()) { GD.Print("[Npc] Dialog already running — aborting."); return; }
+
+		bool running = DialogicBridge.Instance.IsRunning();
+		GD.Print($"[Npc] IsRunning = {running}");
+		if (running) { GD.Print("[Npc] Dialog already running — aborting."); return; }
 
 		if (player is Node2D p2d)
 			FaceToward(p2d.GlobalPosition);
@@ -79,7 +82,10 @@ public partial class Npc : CharacterBody2D, IInteractable
 		DialogicBridge.Instance.ConnectTimelineEnded(
 			new Callable(this, MethodName.OnTimelineEnded));
 
-		DialogicBridge.Instance.StartTimeline(ChooseTimeline());
+		string timeline = ChooseTimeline();
+		GD.Print($"[Npc] Starting timeline: '{timeline}'");
+		DialogicBridge.Instance.StartTimeline(timeline);
+		GD.Print("[Npc] StartTimeline called.");
 	}
 
 	public string GetInteractPrompt() => $"Talk to {DisplayName}";
