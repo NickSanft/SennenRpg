@@ -1,7 +1,6 @@
 using Godot;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Interfaces;
-using SennenRpg.Scenes.Overworld;
 
 namespace SennenRpg.Scenes.Player;
 
@@ -17,6 +16,7 @@ public partial class Player : CharacterBody2D
 	public override void _Ready()
 	{
 		_sprite = GetNode<AnimatedSprite2D>("Sprite");
+		AddToGroup("player");
 
 		// Placeholder visual — visible until real sprites are assigned
 		if (_sprite.SpriteFrames == null)
@@ -70,8 +70,8 @@ public partial class Player : CharacterBody2D
 		// Show/hide interact prompts when the nearest interactable changes
 		if (_nearbyInteractable != previous)
 		{
-			if (previous is Npc prevNpc) prevNpc.HidePrompt();
-			if (_nearbyInteractable is Npc nearNpc) nearNpc.ShowPrompt();
+			previous?.HidePrompt();
+			_nearbyInteractable?.ShowPrompt();
 		}
 	}
 
