@@ -48,6 +48,12 @@ project/assembly_name="SennenRpg"
 
 enabled=PackedStringArray("res://addons/dialogic/plugin.cfg", "res://addons/phantom_camera/plugin.cfg")
 
+[importer_defaults]
+
+texture={
+&"process/fix_alpha_border": false
+}
+
 [input]
 
 move_up={
@@ -107,6 +113,7 @@ dialogic_default_action={
 
 [rendering]
 
+textures/canvas_textures/default_texture_filter=0
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
