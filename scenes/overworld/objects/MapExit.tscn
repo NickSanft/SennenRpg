@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://evwjjqormcym"]
+
+[ext_resource type="Script" uid="uid://ctpvffxw8avmu" path="res://scenes/overworld/objects/MapExit.cs" id="1_mapexit"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_exit"]
+size = Vector2(32, 8)
+
+[node name="MapExit" type="Area2D"]
+script = ExtResource("1_mapexit")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_exit")
+
+[node name="DebugRect" type="ColorRect" parent="."]
+offset_left = -16.0
+offset_top = -4.0
+offset_right = 16.0
+offset_bottom = 4.0
+color = Color(0.2, 0.8, 0.2, 0.4)

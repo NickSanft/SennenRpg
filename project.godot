@@ -33,11 +33,16 @@ directories/dch_directory={
 "unit_test_character": "res://addons/dialogic/Tests/Resources/unit_test_character.dch"
 }
 directories/dtl_directory={
-"npc_test_hello": "res://dialog/characters/npc_test_hello.dtl"
+"npc_test_after": "res://dialog/timelines/npc_test_after.dtl",
+"npc_test_hello": "res://dialog/characters/npc_test_hello.dtl",
+"save_point_prompt": "res://dialog/timelines/save_point_prompt.dtl"
 }
-layout/style_directory={}
-layout/style_list=[]
-layout/default_style="Default"
+layout/style_directory={
+"": "res://assets/styles/BasicStyle.tres",
+"BasicStyle": "res://assets/styles/BasicStyle.tres"
+}
+layout/style_list=["res://assets/styles/BasicStyle.tres"]
+layout/default_style="res://assets/styles/BasicStyle.tres"
 glossary/default_case_sensitive=true
 
 [dotnet]
