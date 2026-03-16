@@ -52,9 +52,8 @@ public partial class Npc : CharacterBody2D, IInteractable
 
 		GameManager.Instance.SetState(GameState.Dialog);
 
-		// Pass any game state that the timeline's Condition events might need
-		DialogicBridge.Instance.SetVariable("npc_name", DisplayName);
-		DialogicBridge.Instance.SetVariable("kill_count", GameManager.Instance.TotalKills);
+		// Note: to pass variables into a timeline, define them first in the
+		// Dialogic editor (Variables tab), then call DialogicBridge.SetVariable().
 
 		DialogicBridge.Instance.ConnectTimelineEnded(
 			new Callable(this, MethodName.OnTimelineEnded));

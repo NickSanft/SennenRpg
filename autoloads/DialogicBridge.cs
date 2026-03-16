@@ -43,12 +43,22 @@ public partial class DialogicBridge : Node
 		return _dialogic.Get("current_timeline").AsGodotObject() != null;
 	}
 
-	/// <summary>Set a Dialogic variable. Call this before StartTimeline to pass data into a timeline.</summary>
+	/// <summary>
+	/// Set a Dialogic variable. The variable must be defined in the Dialogic editor first.
+	/// Call this before StartTimeline to pass data into a timeline.
+	/// </summary>
 	public void SetVariable(string name, Variant value)
 	{
 		if (_dialogic == null) return;
 		var varSubsystem = _dialogic.Call("get_subsystem", "VAR").AsGodotObject();
-		varSubsystem?.Call("set_variable", name, value);
+		if (varSubsystem == null) return;
+
+		// Only set if the variable is already defined in Dialogic
+		bool exists = varSubsystem.Call("has", name).AsBool();
+		if (exists)
+			varSubsystem.Call("set_variable", name, value);
+		else
+			GD.PushWarning($"[DialogicBridge] Variable '{name}' is not defined in Dialogic. Define it in the Dialogic editor before setting it.");
 	}
 
 	/// <summary>Get a Dialogic variable. Call this after timeline_ended to read choice results.</summary>
