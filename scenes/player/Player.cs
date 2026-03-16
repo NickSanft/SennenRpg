@@ -1,6 +1,7 @@
 using Godot;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Interfaces;
+using SennenRpg.Scenes.Overworld;
 
 namespace SennenRpg.Scenes.Player;
 
@@ -50,6 +51,7 @@ public partial class Player : CharacterBody2D
 		MoveAndSlide();
 
 		// Distance-based interactable detection — find the closest interactable in range
+		IInteractable? previous = _nearbyInteractable;
 		_nearbyInteractable = null;
 		float closest = InteractRadius;
 		foreach (var node in GetTree().GetNodesInGroup("interactable"))
@@ -63,6 +65,13 @@ public partial class Player : CharacterBody2D
 					_nearbyInteractable = candidate;
 				}
 			}
+		}
+
+		// Show/hide interact prompts when the nearest interactable changes
+		if (_nearbyInteractable != previous)
+		{
+			if (previous is Npc prevNpc) prevNpc.HidePrompt();
+			if (_nearbyInteractable is Npc nearNpc) nearNpc.ShowPrompt();
 		}
 	}
 
@@ -108,5 +117,4 @@ public partial class Player : CharacterBody2D
 		if (_sprite.SpriteFrames != null && _sprite.SpriteFrames.HasAnimation(animationName))
 			_sprite.Play(animationName);
 	}
-
 }

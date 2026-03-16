@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 using SennenRpg.Autoloads;
 
 namespace SennenRpg.Scenes.Overworld;
@@ -9,12 +10,24 @@ public partial class OverworldBase : Node2D
 	[Export] public string BgmPath { get; set; } = "";
 
 	protected Node2D YSort = null!;
+	protected TileMapLayer? GroundLayer;
+	protected TileMapLayer? WallsLayer;
+	protected TileMapLayer? ObjectsLayer;
+	protected Dictionary<string, Vector2> SpawnPoints { get; } = new();
+	protected Vector2 DefaultSpawnPosition { get; set; } = Vector2.Zero;
+
 	private CharacterBody2D? _player;
 	private Camera2D? _camera;
 
 	public override void _Ready()
 	{
 		YSort = GetNode<Node2D>("YSort");
+
+		// Cache TileMapLayer references (may be null if a map omits a layer)
+		GroundLayer  = GetNodeOrNull<TileMapLayer>("Ground");
+		WallsLayer   = GetNodeOrNull<TileMapLayer>("Walls");
+		ObjectsLayer = GetNodeOrNull<TileMapLayer>("Objects");
+
 		GameManager.Instance.SetLastMap(SceneFilePath);
 		GameManager.Instance.SetState(GameState.Overworld);
 
@@ -42,6 +55,16 @@ public partial class OverworldBase : Node2D
 			_camera.GlobalPosition = _player.GlobalPosition;
 	}
 
-	/// <summary>Override in map subclasses to set the player spawn point.</summary>
-	protected virtual Vector2 GetSpawnPosition() => Vector2.Zero;
+	/// <summary>
+	/// Returns the spawn position for the player. Checks GameManager.LastSpawnId against
+	/// registered SpawnPoints, then falls back to DefaultSpawnPosition.
+	/// Subclasses register spawn points in their _Ready() before calling base._Ready().
+	/// </summary>
+	protected virtual Vector2 GetSpawnPosition()
+	{
+		string spawnId = GameManager.Instance.LastSpawnId;
+		if (!string.IsNullOrEmpty(spawnId) && SpawnPoints.TryGetValue(spawnId, out var pos))
+			return pos;
+		return DefaultSpawnPosition;
+	}
 }
