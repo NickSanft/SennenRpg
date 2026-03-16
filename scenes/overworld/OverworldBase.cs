@@ -1,4 +1,3 @@
-// res://scenes/overworld/OverworldBase.cs
 using Godot;
 using SennenRpg.Autoloads;
 
