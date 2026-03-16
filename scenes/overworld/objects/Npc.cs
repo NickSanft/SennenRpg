@@ -11,6 +11,7 @@ public partial class Npc : CharacterBody2D, IInteractable
 
 	public override void _Ready()
 	{
+		AddToGroup("interactable");
 		var sprite = GetNodeOrNull<AnimatedSprite2D>("Sprite");
 		if (sprite?.SpriteFrames == null)
 		{

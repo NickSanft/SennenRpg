@@ -8,17 +8,14 @@ public partial class Player : CharacterBody2D
 {
 	[Export] public float MoveSpeed { get; set; } = 80f;
 
+	[Export] public float InteractRadius { get; set; } = 32f;
+
 	private AnimatedSprite2D _sprite = null!;
-	private Area2D _interactRange = null!;
 	private IInteractable? _nearbyInteractable;
 
 	public override void _Ready()
 	{
 		_sprite = GetNode<AnimatedSprite2D>("Sprite");
-		_interactRange = GetNode<Area2D>("InteractRange");
-
-		_interactRange.BodyEntered += OnInteractRangeBodyEntered;
-		_interactRange.BodyExited += OnInteractRangeBodyExited;
 
 		// Placeholder visual — visible until real sprites are assigned
 		if (_sprite.SpriteFrames == null)
@@ -28,9 +25,8 @@ public partial class Player : CharacterBody2D
 				new Vector2(-6, -10), new Vector2(6, -10),
 				new Vector2(6, 8),    new Vector2(-6, 8)
 			];
-			placeholder.Color = new Color(0.2f, 0.8f, 1f); // Cyan rectangle
+			placeholder.Color = new Color(0.2f, 0.8f, 1f);
 			AddChild(placeholder);
-			GD.Print("[Player] No sprite assigned — showing placeholder.");
 		}
 	}
 
@@ -47,15 +43,27 @@ public partial class Player : CharacterBody2D
 		Velocity = direction * MoveSpeed;
 
 		if (direction != Vector2.Zero)
-		{
 			UpdateAnimation(direction);
-		}
 		else
-		{
 			PlayIdleAnimation();
-		}
 
 		MoveAndSlide();
+
+		// Distance-based interactable detection — find the closest interactable in range
+		_nearbyInteractable = null;
+		float closest = InteractRadius;
+		foreach (var node in GetTree().GetNodesInGroup("interactable"))
+		{
+			if (node is Node2D n && node is IInteractable candidate)
+			{
+				float dist = GlobalPosition.DistanceTo(n.GlobalPosition);
+				if (dist < closest)
+				{
+					closest = dist;
+					_nearbyInteractable = candidate;
+				}
+			}
+		}
 	}
 
 	public override void _UnhandledInput(InputEvent @event)
@@ -101,22 +109,4 @@ public partial class Player : CharacterBody2D
 			_sprite.Play(animationName);
 	}
 
-	private void OnInteractRangeBodyEntered(Node2D body)
-	{
-		GD.Print($"[Player] Body entered interact range: {body.Name} ({body.GetType().Name})");
-		if (body is IInteractable interactable)
-		{
-			_nearbyInteractable = interactable;
-			GD.Print($"[Player] Interactable set: {body.Name}");
-		}
-	}
-
-	private void OnInteractRangeBodyExited(Node2D body)
-	{
-		if (body is IInteractable && _nearbyInteractable == body)
-		{
-			_nearbyInteractable = null;
-			GD.Print($"[Player] Interactable cleared: {body.Name}");
-		}
-	}
 }
