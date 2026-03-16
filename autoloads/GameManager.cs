@@ -94,7 +94,24 @@ public partial class GameManager : Node
 		}
 	}
 	
-	// Add inside GameManager class:
+	/// <summary>Resets all runtime state for a fresh new game.</summary>
+	public void ResetForNewGame()
+	{
+		TotalKills = 0;
+		Gold = 0;
+		Love = 1;
+		LastMapPath = "";
+		LastSavePointId = "";
+		LastSpawnId = "";
+		Flags.Clear();
+		InventoryItemPaths.Clear();
+		CurrentRoute = RouteType.Neutral;
+		const string statsPath = "res://resources/characters/player_stats.tres";
+		if (ResourceLoader.Exists(statsPath))
+			PlayerStats = (CharacterStats)GD.Load<CharacterStats>(statsPath).Duplicate();
+		GD.Print("[GameManager] Reset for new game.");
+	}
+
 	public void ApplySaveData(SaveData data)
 	{
 		Gold = data.Gold;

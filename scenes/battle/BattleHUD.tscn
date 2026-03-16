@@ -1,0 +1,48 @@
+[gd_scene load_steps=2 format=3 uid="uid://bwn5qxp8fj4r3"]
+
+[ext_resource type="Script" path="res://scenes/battle/BattleHUD.cs" uid="uid://cqf7mnt6kov2d" id="1_script"]
+
+[node name="BattleHUD" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1_script")
+
+[node name="HudPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -56.0
+offset_bottom = 0.0
+grow_vertical = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="HudPanel"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="HudPanel/HBoxContainer"]
+layout_mode = 2
+text = "* Kris"
+vertical_alignment = 1
+
+[node name="LvLabel" type="Label" parent="HudPanel/HBoxContainer"]
+layout_mode = 2
+text = "LV 1"
+vertical_alignment = 1
+
+[node name="HpLabel" type="Label" parent="HudPanel/HBoxContainer"]
+layout_mode = 2
+text = "20 / 20"
+vertical_alignment = 1
+
+[node name="HpBarBg" type="ColorRect" parent="HudPanel/HBoxContainer"]
+custom_minimum_size = Vector2(200, 20)
+layout_mode = 2
+color = Color(0.15, 0.15, 0.15, 1)
+
+[node name="HpBar" type="ColorRect" parent="HudPanel/HBoxContainer/HpBarBg"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(1, 1, 0, 1)

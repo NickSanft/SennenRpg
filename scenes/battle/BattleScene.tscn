@@ -1,0 +1,52 @@
+[gd_scene load_steps=6 format=3 uid="uid://cwp9xtb3hm6qe"]
+
+[ext_resource type="Script" path="res://scenes/battle/BattleScene.cs" uid="uid://dno4vke1cj7p2" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://dxc3n8mp1oqv5" path="res://scenes/battle/ActionMenu.tscn" id="2_actionmenu"]
+[ext_resource type="PackedScene" uid="uid://djpw6hct3n2qk" path="res://scenes/battle/SubMenu.tscn" id="3_submenu"]
+[ext_resource type="PackedScene" uid="uid://bwn5qxp8fj4r3" path="res://scenes/battle/BattleHUD.tscn" id="4_battlehud"]
+
+[node name="BattleScene" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.08, 0.08, 0.08, 1)
+
+[node name="EnemyArea" type="Node2D" parent="."]
+position = Vector2(320, 120)
+
+[node name="DialogBox" type="PanelContainer" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 20.0
+offset_top = 260.0
+offset_right = 620.0
+offset_bottom = 340.0
+
+[node name="DialogLabel" type="Label" parent="DialogBox"]
+layout_mode = 2
+text = "..."
+autowrap_mode = 3
+
+[node name="ActionMenu" parent="." instance=ExtResource("2_actionmenu")]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 20.0
+offset_top = 350.0
+offset_right = 340.0
+offset_bottom = 430.0
+visible = false
+
+[node name="SubMenu" parent="." instance=ExtResource("3_submenu")]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 350.0
+offset_top = 350.0
+offset_right = 570.0
+offset_bottom = 430.0
+visible = false
+
+[node name="BattleHUD" parent="." instance=ExtResource("4_battlehud")]

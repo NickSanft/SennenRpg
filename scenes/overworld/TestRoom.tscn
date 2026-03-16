@@ -2,9 +2,13 @@
 
 [ext_resource type="PackedScene" uid="uid://bs06dan353qo1" path="res://scenes/overworld/overworld_base.tscn" id="1_v44pt"]
 [ext_resource type="Texture2D" uid="uid://btbgnx23fjkeg" path="res://Inside_C.png" id="2_hng3j"]
+[ext_resource type="Script" uid="uid://xnqia3alvobh" path="res://scenes/overworld/TestRoom.cs" id="3_b2n1c"]
 [ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="3_ikk50"]
-[ext_resource type="PackedScene" path="res://scenes/overworld/objects/MapExit.tscn" id="4_8m7dc"]
-[ext_resource type="PackedScene" path="res://scenes/overworld/objects/SavePoint.tscn" id="5_5gidl"]
+[ext_resource type="PackedScene" uid="uid://evwjjqormcym" path="res://scenes/overworld/objects/MapExit.tscn" id="4_8m7dc"]
+[ext_resource type="PackedScene" uid="uid://bm5n2kpvryawd" path="res://scenes/overworld/objects/SavePoint.tscn" id="5_5gidl"]
+[ext_resource type="PackedScene" uid="uid://bx4f8kqjmpwo1" path="res://scenes/overworld/objects/EncounterTrigger.tscn" id="7_msmux"]
+[ext_resource type="Script" uid="uid://c5d22rd36ltx4" path="res://core/data/EnemyData.cs" id="8_msmux"]
+[ext_resource type="Script" uid="uid://dgj4v4oe30iqr" path="res://core/data/EncounterData.cs" id="9_rdhaj"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ikk50"]
 texture = ExtResource("2_hng3j")
@@ -2844,6 +2848,15 @@ texture = ExtResource("2_hng3j")
 [sub_resource type="TileSet" id="TileSet_5gidl"]
 sources/0 = SubResource("TileSetAtlasSource_8m7dc")
 
+[sub_resource type="Resource" id="Resource_7wnlp"]
+script = ExtResource("8_msmux")
+metadata/_custom_type_script = "uid://c5d22rd36ltx4"
+
+[sub_resource type="Resource" id="Resource_ctr46"]
+script = ExtResource("9_rdhaj")
+Enemies = Array[ExtResource("8_msmux")]([SubResource("Resource_7wnlp")])
+metadata/_custom_type_script = "uid://dgj4v4oe30iqr"
+
 [node name="OverworldBase" unique_id=280300523 instance=ExtResource("1_v44pt")]
 MapId = "test_room"
 
@@ -2853,6 +2866,7 @@ tile_set = SubResource("TileSet_8m7dc")
 
 [node name="Walls" parent="." index="2" unique_id=429113068]
 tile_set = SubResource("TileSet_5gidl")
+script = ExtResource("3_b2n1c")
 
 [node name="Npc" parent="Npcs" parent_id_path=PackedInt32Array(613369906) index="0" unique_id=1198639027 instance=ExtResource("3_ikk50")]
 TimelinePath = "res://dialog/characters/npc_test_hello.dtl"
@@ -2861,7 +2875,7 @@ AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_test_after.dtl"
 AltTimelineFlags = PackedStringArray("met_npc_1")
 
 [node name="MapExit" parent="." index="7" unique_id=1070646756 instance=ExtResource("4_8m7dc")]
-position = Vector2(1, -163)
+position = Vector2(1, -170)
 TargetMapPath = "res://scenes/overworld/Room2.tscn"
 TargetSpawnId = "from_test_room"
 AutoTrigger = true
@@ -2869,3 +2883,7 @@ AutoTrigger = true
 [node name="SavePoint" parent="." index="8" unique_id=1286621093 instance=ExtResource("5_5gidl")]
 position = Vector2(-69, -96)
 SavePointId = "test_room"
+
+[node name="EncounterTrigger" parent="." index="9" unique_id=1055175828 instance=ExtResource("7_msmux")]
+position = Vector2(-81, -12)
+EncounterResource = SubResource("Resource_ctr46")

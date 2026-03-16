@@ -1,0 +1,37 @@
+[gd_scene load_steps=2 format=3 uid="uid://dxc3n8mp1oqv5"]
+
+[ext_resource type="Script" path="res://scenes/battle/ActionMenu.cs" uid="uid://b5y7vk2qwrtu8" id="1_script"]
+
+[node name="ActionMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 320.0
+offset_bottom = 80.0
+script = ExtResource("1_script")
+
+[node name="GridContainer" type="GridContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+columns = 2
+
+[node name="FightButton" type="Button" parent="GridContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 36)
+text = "FIGHT"
+
+[node name="ActButton" type="Button" parent="GridContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 36)
+text = "ACT"
+
+[node name="ItemButton" type="Button" parent="GridContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 36)
+text = "ITEM"
+
+[node name="MercyButton" type="Button" parent="GridContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(140, 36)
+text = "MERCY"

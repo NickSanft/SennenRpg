@@ -2,6 +2,7 @@ using Godot;
 
 namespace SennenRpg.Core.Data;
 
+[GlobalClass]
 public partial class CharacterStats : Resource
 {
     [Export] public int MaxHp { get; set; } = 20;
