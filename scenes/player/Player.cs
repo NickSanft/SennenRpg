@@ -60,9 +60,10 @@ public partial class Player : CharacterBody2D
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
-		if (@event.IsActionPressed("interact") && _nearbyInteractable != null)
+		if (@event.IsActionPressed("interact"))
 		{
-			_nearbyInteractable.Interact(this);
+			GD.Print($"[Player] Interact pressed. Nearby: {_nearbyInteractable?.GetType().Name ?? "none"}");
+			_nearbyInteractable?.Interact(this);
 		}
 	}
 
@@ -102,13 +103,20 @@ public partial class Player : CharacterBody2D
 
 	private void OnInteractRangeBodyEntered(Node2D body)
 	{
+		GD.Print($"[Player] Body entered interact range: {body.Name} ({body.GetType().Name})");
 		if (body is IInteractable interactable)
+		{
 			_nearbyInteractable = interactable;
+			GD.Print($"[Player] Interactable set: {body.Name}");
+		}
 	}
 
 	private void OnInteractRangeBodyExited(Node2D body)
 	{
 		if (body is IInteractable && _nearbyInteractable == body)
+		{
 			_nearbyInteractable = null;
+			GD.Print($"[Player] Interactable cleared: {body.Name}");
+		}
 	}
 }

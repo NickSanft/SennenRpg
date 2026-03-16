@@ -45,8 +45,9 @@ public partial class Npc : CharacterBody2D, IInteractable
 
 	public void Interact(Node player)
 	{
-		if (string.IsNullOrEmpty(TimelinePath)) return;
-		if (DialogicBridge.Instance.IsRunning()) return;  // Prevent double-trigger
+		GD.Print($"[Npc] Interact called on {DisplayName}. TimelinePath: '{TimelinePath}'");
+		if (string.IsNullOrEmpty(TimelinePath)) { GD.Print("[Npc] No timeline path set — aborting."); return; }
+		if (DialogicBridge.Instance.IsRunning()) { GD.Print("[Npc] Dialog already running — aborting."); return; }
 
 		GameManager.Instance.SetState(GameState.Dialog);
 
