@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="EncounterData" format=3 uid="uid://cxrj5vnbwk8p3"]
+
+[ext_resource type="Script" uid="uid://c5d22rd36ltx4" path="res://core/data/EnemyData.cs" id="1_7wuwq"]
+[ext_resource type="Script" uid="uid://dgj4v4oe30iqr" path="res://core/data/EncounterData.cs" id="1_EncounterData"]
+[ext_resource type="EnemyData" uid="uid://bqf7nmxwk4pv1" path="res://resources/enemies/enemy_001.tres" id="2_enemy"]
+
+[resource]
+script = ExtResource("1_EncounterData")
+Enemies = Array[ExtResource("1_7wuwq")]([ExtResource("2_enemy")])

@@ -7,9 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://evwjjqormcym" path="res://scenes/overworld/objects/MapExit.tscn" id="4_8m7dc"]
 [ext_resource type="PackedScene" uid="uid://bm5n2kpvryawd" path="res://scenes/overworld/objects/SavePoint.tscn" id="5_5gidl"]
 [ext_resource type="PackedScene" uid="uid://bx4f8kqjmpwo1" path="res://scenes/overworld/objects/EncounterTrigger.tscn" id="7_msmux"]
-[ext_resource type="Script" uid="uid://c5d22rd36ltx4" path="res://core/data/EnemyData.cs" id="8_msmux"]
-[ext_resource type="PackedScene" uid="uid://cxjw8vqfh5nk2" path="res://scenes/battle/patterns/Pattern001.tscn" id="9_7wnlp"]
-[ext_resource type="Script" uid="uid://dgj4v4oe30iqr" path="res://core/data/EncounterData.cs" id="9_rdhaj"]
+[ext_resource type="EncounterData" uid="uid://cxrj5vnbwk8p3" path="res://resources/encounters/encounter_001.tres" id="8_msmux"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ikk50"]
 texture = ExtResource("2_hng3j")
@@ -2849,18 +2847,8 @@ texture = ExtResource("2_hng3j")
 [sub_resource type="TileSet" id="TileSet_5gidl"]
 sources/0 = SubResource("TileSetAtlasSource_8m7dc")
 
-[sub_resource type="Resource" id="Resource_7wnlp"]
-script = ExtResource("8_msmux")
-DisplayName = "Jim the Unkind"
-AttackPatternScene = ExtResource("9_7wnlp")
-metadata/_custom_type_script = "uid://c5d22rd36ltx4"
-
-[sub_resource type="Resource" id="Resource_ctr46"]
-script = ExtResource("9_rdhaj")
-Enemies = Array[ExtResource("8_msmux")]([SubResource("Resource_7wnlp")])
-metadata/_custom_type_script = "uid://dgj4v4oe30iqr"
-
 [node name="OverworldBase" unique_id=280300523 instance=ExtResource("1_v44pt")]
+script = ExtResource("3_b2n1c")
 MapId = "test_room"
 
 [node name="Ground" parent="." index="1" unique_id=1739729204]
@@ -2869,7 +2857,6 @@ tile_set = SubResource("TileSet_8m7dc")
 
 [node name="Walls" parent="." index="2" unique_id=429113068]
 tile_set = SubResource("TileSet_5gidl")
-script = ExtResource("3_b2n1c")
 
 [node name="Npc" parent="Npcs" parent_id_path=PackedInt32Array(613369906) index="0" unique_id=1198639027 instance=ExtResource("3_ikk50")]
 TimelinePath = "res://dialog/characters/npc_test_hello.dtl"
@@ -2888,5 +2875,5 @@ position = Vector2(-69, -96)
 SavePointId = "test_room"
 
 [node name="EncounterTrigger" parent="." index="9" unique_id=1055175828 instance=ExtResource("7_msmux")]
-position = Vector2(-81, -12)
-EncounterResource = SubResource("Resource_ctr46")
+position = Vector2(-96, 5)
+EncounterResource = ExtResource("8_msmux")

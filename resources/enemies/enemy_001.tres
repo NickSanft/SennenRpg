@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnemyData" format=3 uid="uid://bqf7nmxwk4pv1"]
+
+[ext_resource type="Script" uid="uid://c5d22rd36ltx4" path="res://core/data/EnemyData.cs" id="1_EnemyData"]
+[ext_resource type="Script" uid="uid://dqonjuygth0gq" path="res://core/data/CharacterStats.cs" id="2_CharacterStats"]
+[ext_resource type="PackedScene" uid="uid://cxjw8vqfh5nk2" path="res://scenes/battle/patterns/Pattern001.tscn" id="3_pattern"]
+
+[sub_resource type="Resource" id="CharacterStats_1"]
+script = ExtResource("2_CharacterStats")
+Attack = 5
+Speed = 3.0
+
+[resource]
+script = ExtResource("1_EnemyData")
+EnemyId = "enemy_001"
+DisplayName = "Wisplet"
+FlavorText = "A small wandering spirit. Seems lost."
+Stats = SubResource("CharacterStats_1")
+ActOptions = PackedStringArray("Check", "Greet", "Hum")
+ActMercyValues = PackedInt32Array(0, 50, 50)
+ActResultTexts = PackedStringArray("* 20 HP. Looks uncertain.", "* The Wisplet bobs happily.", "* The Wisplet hums along!")
+BattleDialogLines = PackedStringArray("* ...", "* Hm?", "* What do you want?", "* This is scary.")
+CanBeSpared = true
+GoldDrop = 5
+ExpDrop = 3
+AttackPatternScene = ExtResource("3_pattern")

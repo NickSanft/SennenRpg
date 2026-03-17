@@ -5,8 +5,8 @@ using SennenRpg.Autoloads;
 namespace SennenRpg.Scenes.Overworld;
 
 /// <summary>
-/// Area2D-based trigger. When the player walks in (or interacts with a door-type),
-/// it starts a battle encounter. Set OneShot = true for scripted fights.
+/// Area2D-based trigger. When the player walks in it starts a battle encounter.
+/// Set OneShot = true for scripted fights (trigger removes itself after firing).
 /// </summary>
 public partial class EncounterTrigger : Area2D
 {
@@ -31,12 +31,24 @@ public partial class EncounterTrigger : Area2D
 			return;
 		}
 
-		GD.Print($"[EncounterTrigger] Encounter triggered. Enemy count: {EncounterResource.Enemies.Count}");
+		int enemyCount = EncounterResource.Enemies?.Count ?? 0;
+		GD.Print($"[EncounterTrigger] Triggered. Resource: '{EncounterResource.ResourcePath}', Enemies: {enemyCount}");
+
+		// Set flag before await so re-entry is blocked while transitioning
 		_triggered = true;
 
-		if (OneShot)
-			QueueFree();
+		try
+		{
+			if (OneShot)
+				QueueFree();
 
-		await SceneTransition.Instance.ToBattleAsync(EncounterResource);
+			await SceneTransition.Instance.ToBattleAsync(EncounterResource);
+		}
+		catch (System.Exception e)
+		{
+			// If the transition fails, reset the flag so the trigger remains usable
+			GD.PushError($"[EncounterTrigger] Transition failed: {e.Message}");
+			_triggered = false;
+		}
 	}
 }

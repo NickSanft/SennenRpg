@@ -24,7 +24,15 @@ public partial class FightBar : Control
 
 	public override void _Ready()
 	{
-		_cursor = GetNode<ColorRect>("Cursor");
+		// Create cursor in code so the tscn doesn't need a specific child node
+		_cursor = GetNodeOrNull<ColorRect>("Cursor") ?? CreateCursor();
+	}
+
+	private ColorRect CreateCursor()
+	{
+		var c = new ColorRect { Color = Colors.White };
+		AddChild(c);
+		return c;
 	}
 
 	/// <summary>Start the cursor animation. Call this when Fight is selected.</summary>

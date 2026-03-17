@@ -29,7 +29,7 @@ public partial class BattleScene : Node2D
 	private BattleHUD  _battleHud   = null!;
 	private DodgeBox   _dodgeBox    = null!;
 	private FightBar   _fightBar    = null!;
-	private Sprite2D   _enemySprite = null!;
+	private Node2D     _enemyVisual = null!; // Sprite2D or Polygon2D placeholder
 
 	public override void _Ready()
 	{
@@ -70,15 +70,31 @@ public partial class BattleScene : Node2D
 
 	private void SetupEnemySprite()
 	{
-		_enemySprite = new Sprite2D();
 		if (_enemy?.BattleSprite != null)
-			_enemySprite.Texture = _enemy.BattleSprite;
-		_enemyArea.AddChild(_enemySprite);
+		{
+			var sprite = new Sprite2D();
+			sprite.Texture = _enemy.BattleSprite;
+			_enemyVisual = sprite;
+		}
+		else
+		{
+			// Colored polygon placeholder — replaced when real art is added to EnemyData
+			var poly = new Polygon2D();
+			poly.Polygon = [
+				new Vector2(-20, -28), new Vector2(20, -28),
+				new Vector2(20,  28),  new Vector2(-20, 28)
+			];
+			poly.Color = new Color(0.55f, 0.3f, 0.85f, 1f); // soft purple
+			_enemyVisual = poly;
+		}
 
+		_enemyArea.AddChild(_enemyVisual);
+
+		// Idle bob — works on both Sprite2D and Polygon2D
 		var tween = CreateTween().SetLoops();
-		tween.TweenProperty(_enemySprite, "position:y",  4f, 0.6f)
+		tween.TweenProperty(_enemyVisual, "position:y",  4f, 0.6f)
 		     .SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Sine);
-		tween.TweenProperty(_enemySprite, "position:y", -4f, 0.6f)
+		tween.TweenProperty(_enemyVisual, "position:y", -4f, 0.6f)
 		     .SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Sine);
 	}
 
