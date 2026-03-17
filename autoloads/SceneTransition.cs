@@ -46,14 +46,14 @@ public partial class SceneTransition : CanvasLayer
 	{
 		_overlay.Color = type == TransitionType.BattleFlash ? Colors.White : Colors.Black;
 		var tween = CreateTween();
-		tween.TweenProperty(_overlay, "modulate:a", 1.0f, type == TransitionType.BattleFlash ? 0.1f : 0.4f);
+		tween.TweenProperty(_overlay, "modulate:a", 1.0f, type == TransitionType.BattleFlash ? 0.08f : 0.2f);
 		await ToSignal(tween, Tween.SignalName.Finished);
 	}
 
 	private async Task PlayIn(TransitionType type)
 	{
 		var tween = CreateTween();
-		tween.TweenProperty(_overlay, "modulate:a", 0.0f, 0.4f);
+		tween.TweenProperty(_overlay, "modulate:a", 0.0f, 0.2f);
 		await ToSignal(tween, Tween.SignalName.Finished);
 	}
 }

@@ -145,7 +145,7 @@ public partial class BattleScene : Node2D
 	{
 		SetState(BattleState.Intro);
 		ShowDialogText($"* {_enemy?.DisplayName ?? "???"} appeared!");
-		await ToSignal(GetTree().CreateTimer(1.5f), SceneTreeTimer.SignalName.Timeout);
+		await ToSignal(GetTree().CreateTimer(0.7f), SceneTreeTimer.SignalName.Timeout);
 		SetState(BattleState.PlayerTurn);
 	}
 
@@ -391,7 +391,7 @@ public partial class BattleScene : Node2D
 				line = $"* {_enemy?.DisplayName ?? "???"} prepares to attack...";
 
 			ShowDialogText(line);
-			await ToSignal(GetTree().CreateTimer(1.2f), SceneTreeTimer.SignalName.Timeout);
+			await ToSignal(GetTree().CreateTimer(0.7f), SceneTreeTimer.SignalName.Timeout);
 		}
 
 		BeginDodgePhase();
@@ -453,7 +453,7 @@ public partial class BattleScene : Node2D
 			ShowDialogText("* The enemy was spared.");
 		}
 
-		await ToSignal(GetTree().CreateTimer(2.5f), SceneTreeTimer.SignalName.Timeout);
+		await ToSignal(GetTree().CreateTimer(1.2f), SceneTreeTimer.SignalName.Timeout);
 		await ReturnToOverworld();
 	}
 
@@ -461,7 +461,7 @@ public partial class BattleScene : Node2D
 	{
 		SetState(BattleState.Victory);
 		ShowDialogText("* You got away safely!");
-		await ToSignal(GetTree().CreateTimer(1.5f), SceneTreeTimer.SignalName.Timeout);
+		await ToSignal(GetTree().CreateTimer(0.8f), SceneTreeTimer.SignalName.Timeout);
 		await ReturnToOverworld();
 	}
 
@@ -469,7 +469,7 @@ public partial class BattleScene : Node2D
 	{
 		SetState(BattleState.Defeat);
 		ShowDialogText("* You feel your sins crawling on your back.\n\n* GAME OVER");
-		await ToSignal(GetTree().CreateTimer(3.0f), SceneTreeTimer.SignalName.Timeout);
+		await ToSignal(GetTree().CreateTimer(2.0f), SceneTreeTimer.SignalName.Timeout);
 		await SceneTransition.Instance.GoToAsync("res://scenes/menus/MainMenu.tscn");
 	}
 
