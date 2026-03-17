@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="EnemyData" format=3]
+
+[ext_resource type="Script" path="res://core/data/EnemyData.cs" id="1_EnemyData"]
+[ext_resource type="Script" path="res://core/data/CharacterStats.cs" id="2_CharacterStats"]
+[ext_resource type="PackedScene" path="res://scenes/battle/patterns/Pattern004.tscn" id="3_pattern"]
+
+[sub_resource type="Resource" id="CharacterStats_1"]
+script = ExtResource("2_CharacterStats")
+MaxHp = 12
+CurrentHp = 12
+Attack = 4
+Defense = 0
+Speed = 4.0
+
+[resource]
+script = ExtResource("1_EnemyData")
+EnemyId = "enemy_004"
+DisplayName = "Dustmote"
+FlavorText = "A tiny mote of chaos. It means no harm — it just can't sit still."
+Stats = SubResource("CharacterStats_1")
+ActOptions = PackedStringArray("Check", "Hug")
+ActMercyValues = PackedInt32Array(0, 100)
+ActResultTexts = PackedStringArray("* 12 HP. Basically harmless.", "* You open your arms. The Dustmote flutters\n* into your chest and sighs. Spare it?")
+BattleDialogLines = PackedStringArray("* zzzip!", "* (It zips past your ear.)", "* wheeeee", "* (It can't stop moving.)")
+CanBeSpared = true
+GoldDrop = 3
+ExpDrop = 2
+AttackPatternScene = ExtResource("3_pattern")

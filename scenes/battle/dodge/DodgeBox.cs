@@ -44,15 +44,44 @@ public partial class DodgeBox : Node2D
 		_phaseTimer -= (float)delta;
 
 		// Clamp soul within the box (6 px margin so the sprite doesn't clip the border)
-		var half    = BoxSize * 0.5f;
-		const float margin = 6f;
+		var half = BoxSize * 0.5f;
+		const float soulMargin = 6f;
 		_soul.Position = new Vector2(
-			Mathf.Clamp(_soul.Position.X, -half.X + margin, half.X - margin),
-			Mathf.Clamp(_soul.Position.Y, -half.Y + margin, half.Y - margin)
+			Mathf.Clamp(_soul.Position.X, -half.X + soulMargin, half.X - soulMargin),
+			Mathf.Clamp(_soul.Position.Y, -half.Y + soulMargin, half.Y - soulMargin)
 		);
+
+		// Cull any bullet that has left the arena bounds (8 px grace so it visually
+		// just clips the border rather than vanishing inside it).
+		const float cullMargin = 8f;
+		var cullHalf = half + new Vector2(cullMargin, cullMargin);
+		CullBulletsRecursive(BulletContainer, cullHalf);
 
 		if (_phaseTimer <= 0f)
 			EndPhase();
+	}
+
+	/// <summary>
+	/// Recursively walks the bullet container tree and frees any BulletBase node
+	/// whose global position has left the arena bounds.
+	/// Using GlobalPosition means the check is correct even if intermediate nodes
+	/// (e.g. PatternRandom) are at non-zero offsets.
+	/// </summary>
+	private void CullBulletsRecursive(Node parent, Vector2 cullHalf)
+	{
+		foreach (Node child in parent.GetChildren())
+		{
+			if (child is BulletBase bullet)
+			{
+				var localPos = BulletContainer.ToLocal(bullet.GlobalPosition);
+				if (Mathf.Abs(localPos.X) > cullHalf.X || Mathf.Abs(localPos.Y) > cullHalf.Y)
+					bullet.QueueFree();
+			}
+			else if (child.GetChildCount() > 0)
+			{
+				CullBulletsRecursive(child, cullHalf);
+			}
+		}
 	}
 
 	private void EndPhase()
