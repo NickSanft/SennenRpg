@@ -22,24 +22,32 @@ public partial class BattleScene : Node2D
 	private int         _mercyPercent;
 	private SubMenuMode _subMenuMode;
 
-	private Node2D     _enemyArea   = null!;
-	private Label      _dialogLabel = null!;
-	private ActionMenu _actionMenu  = null!;
-	private SubMenu    _subMenu     = null!;
-	private BattleHUD  _battleHud   = null!;
-	private DodgeBox   _dodgeBox    = null!;
-	private FightBar   _fightBar    = null!;
-	private Node2D     _enemyVisual = null!; // Sprite2D or Polygon2D placeholder
+	private Node2D          _enemyArea      = null!;
+	private Label           _dialogLabel    = null!;
+	private ActionMenu      _actionMenu     = null!;
+	private SubMenu         _subMenu        = null!;
+	private BattleHUD       _battleHud      = null!;
+	private DodgeBox        _dodgeBox       = null!;
+	private FightBar        _fightBar       = null!;
+	private EnemyNameplate  _enemyNameplate = null!;
+	private Node2D          _enemyVisual    = null!; // Sprite2D or Polygon2D placeholder
+
+	private PackedScene? _damageNumberScene;
 
 	public override void _Ready()
 	{
-		_enemyArea   = GetNode<Node2D>("EnemyArea");
-		_dialogLabel = GetNode<Label>("DialogBox/DialogLabel");
-		_actionMenu  = GetNode<ActionMenu>("ActionMenu");
-		_subMenu     = GetNode<SubMenu>("SubMenu");
-		_battleHud   = GetNode<BattleHUD>("BattleHUD");
-		_dodgeBox    = GetNode<DodgeBox>("DodgeBox");
-		_fightBar    = GetNode<FightBar>("FightBar");
+		_enemyArea      = GetNode<Node2D>("EnemyArea");
+		_dialogLabel    = GetNode<Label>("DialogBox/DialogLabel");
+		_actionMenu     = GetNode<ActionMenu>("ActionMenu");
+		_subMenu        = GetNode<SubMenu>("SubMenu");
+		_battleHud      = GetNode<BattleHUD>("BattleHUD");
+		_dodgeBox       = GetNode<DodgeBox>("DodgeBox");
+		_fightBar       = GetNode<FightBar>("FightBar");
+		_enemyNameplate = GetNode<EnemyNameplate>("EnemyNameplate");
+
+		const string dmgPath = "res://scenes/battle/ui/DamageNumber.tscn";
+		if (ResourceLoader.Exists(dmgPath))
+			_damageNumberScene = GD.Load<PackedScene>(dmgPath);
 
 		_actionMenu.FightSelected += OnFightSelected;
 		_actionMenu.ActSelected   += OnActSelected;
@@ -63,6 +71,7 @@ public partial class BattleScene : Node2D
 		_enemyCurrentHp = _enemy?.Stats?.MaxHp ?? 10;
 
 		SetupEnemySprite();
+		_enemyNameplate.Setup(_enemy?.DisplayName ?? "???");
 		_ = RunIntro();
 	}
 
@@ -93,9 +102,9 @@ public partial class BattleScene : Node2D
 		// Idle bob — works on both Sprite2D and Polygon2D
 		var tween = CreateTween().SetLoops();
 		tween.TweenProperty(_enemyVisual, "position:y",  4f, 0.6f)
-		     .SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Sine);
+			 .SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Sine);
 		tween.TweenProperty(_enemyVisual, "position:y", -4f, 0.6f)
-		     .SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Sine);
+			 .SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Sine);
 	}
 
 	// ── State machine ─────────────────────────────────────────────────
@@ -103,13 +112,24 @@ public partial class BattleScene : Node2D
 	private void SetState(BattleState newState)
 	{
 		_state = newState;
-		_actionMenu.Visible = newState == BattleState.PlayerTurn;
-		_subMenu.Visible    = false;
-		_fightBar.Visible   = false;
+		_actionMenu.Visible     = newState == BattleState.PlayerTurn;
+		_subMenu.Visible        = false;
+		_fightBar.Visible       = false;
+		_enemyNameplate.Visible = newState is BattleState.PlayerTurn or BattleState.EnemyTurn;
 		GD.Print($"[BattleScene] State → {newState}");
 
 		if (newState == BattleState.PlayerTurn)
 			_actionMenu.FocusFirst();
+	}
+
+	private void SpawnDamageNumber(int damage, bool isCrit)
+	{
+		if (_damageNumberScene == null) return;
+		var num = _damageNumberScene.Instantiate<DamageNumber>();
+		// Position above the enemy, with slight random horizontal offset for variety
+		num.Position = _enemyArea.Position + new Vector2((float)GD.RandRange(-16.0, 16.0), -30f);
+		AddChild(num);
+		num.Play(damage, isCrit);
 	}
 
 	private void ShowDialogText(string text)
@@ -149,8 +169,10 @@ public partial class BattleScene : Node2D
 		int damage  = Mathf.Max(1, Mathf.RoundToInt(atk * mult) - def);
 		_enemyCurrentHp -= damage;
 
-		string hitLabel = accuracy > 0.8f ? "Critical!" : accuracy > 0.4f ? "Hit!" : "Weak hit.";
+		bool isCrit = accuracy > 0.8f;
+		string hitLabel = isCrit ? "Critical!" : accuracy > 0.4f ? "Hit!" : "Weak hit.";
 		GD.Print($"[BattleScene] {hitLabel} Accuracy {accuracy:F2}, mult {mult:F2}, damage {damage}. Enemy HP: {_enemyCurrentHp}");
+		SpawnDamageNumber(damage, isCrit);
 		ShowDialogText($"* {hitLabel}\n* {_enemy?.DisplayName ?? "???"} took {damage} damage.");
 
 		if (_enemyCurrentHp <= 0)
@@ -220,6 +242,7 @@ public partial class BattleScene : Node2D
 			_mercyPercent = Mathf.Clamp(_mercyPercent + _enemy.ActMercyValues[index], 0, 100);
 
 		_enemyCanBeSpared = _mercyPercent >= 100 && (_enemy?.CanBeSpared ?? false);
+		_enemyNameplate.UpdateMercy(_mercyPercent, _enemyCanBeSpared);
 
 		// Show result text
 		string result;

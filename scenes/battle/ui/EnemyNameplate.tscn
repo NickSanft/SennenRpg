@@ -1,0 +1,22 @@
+[gd_scene format=4 uid="uid://enmplt5k6j7s8"]
+
+[ext_resource type="Script" path="res://scenes/battle/ui/EnemyNameplate.cs" id="1_EnemyNameplate"]
+
+[node name="EnemyNameplate" type="Control"]
+script = ExtResource("1_EnemyNameplate")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+
+[node name="NameLabel" type="Label" parent="VBox"]
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 11
+
+[node name="MercyLabel" type="Label" parent="VBox"]
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 10

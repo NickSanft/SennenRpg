@@ -40,7 +40,7 @@ public partial class BattleHUD : CanvasLayer
 	private void UpdateHud()
 	{
 		var stats = GameManager.Instance.PlayerStats;
-		_nameLabel.Text = "* Foran"; // TODO: player name from variable
+		_nameLabel.Text = "* " + GameManager.Instance.PlayerName;
 		_lvLabel.Text   = $"LV {GameManager.Instance.Love}";
 		_hpLabel.Text   = $"{stats.CurrentHp} / {stats.MaxHp}";
 
