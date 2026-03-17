@@ -39,9 +39,13 @@ public partial class OverworldBase : Node2D
 		if (!string.IsNullOrEmpty(BgmPath))
 			AudioManager.Instance.PlayBgm(BgmPath);
 
-		const string hudPath = "res://scenes/hud/GameHud.tscn";
+		const string hudPath   = "res://scenes/hud/GameHud.tscn";
 		if (ResourceLoader.Exists(hudPath))
 			AddChild(GD.Load<PackedScene>(hudPath).Instantiate());
+
+		const string pausePath = "res://scenes/menus/PauseMenu.tscn";
+		if (ResourceLoader.Exists(pausePath))
+			AddChild(GD.Load<PackedScene>(pausePath).Instantiate());
 
 		GD.Print($"[OverworldBase] Ready. Map: {MapId}, Player spawned at {_player.GlobalPosition}");
 	}

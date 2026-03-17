@@ -21,6 +21,7 @@ public partial class GameManager : Node
 	public string PlayerName { get; private set; } = "Foran";
 	public int TotalKills { get; private set; }
 	public int Gold { get; private set; }
+	public int Exp  { get; private set; }
 	public int Love { get; private set; } = 1;          // LV (Level of Violence) starts at 1
 	public string LastMapPath { get; private set; } = "";
 	public string LastSavePointId { get; private set; } = "";
@@ -73,11 +74,28 @@ public partial class GameManager : Node
 	}
 
 	public void AddGold(int amount) => Gold += amount;
+	public void AddExp(int amount)  => Exp  += amount;
+
+	public void AddItem(string resourcePath)    => InventoryItemPaths.Add(resourcePath);
+	public bool RemoveItem(string resourcePath)
+	{
+		int idx = InventoryItemPaths.IndexOf(resourcePath);
+		if (idx < 0) return false;
+		InventoryItemPaths.RemoveAt(idx);
+		return true;
+	}
 
 	/// <summary>Reduce player HP and emit PlayerStatsChanged so the HUD updates.</summary>
 	public void HurtPlayer(int amount)
 	{
 		PlayerStats.CurrentHp = Mathf.Max(0, PlayerStats.CurrentHp - amount);
+		EmitSignal(SignalName.PlayerStatsChanged);
+	}
+
+	/// <summary>Restore player HP (capped at MaxHp) and emit PlayerStatsChanged.</summary>
+	public void HealPlayer(int amount)
+	{
+		PlayerStats.CurrentHp = Mathf.Min(PlayerStats.MaxHp, PlayerStats.CurrentHp + amount);
 		EmitSignal(SignalName.PlayerStatsChanged);
 	}
 
@@ -115,12 +133,14 @@ public partial class GameManager : Node
 	{
 		TotalKills = 0;
 		Gold = 0;
+		Exp  = 0;
 		Love = 1;
 		LastMapPath = "";
 		LastSavePointId = "";
 		LastSpawnId = "";
 		Flags.Clear();
 		InventoryItemPaths.Clear();
+		InventoryItemPaths.Add("res://resources/items/item_001.tres"); // starting Bandage
 		CurrentRoute = RouteType.Neutral;
 		const string statsPath = "res://resources/characters/player_stats.tres";
 		if (ResourceLoader.Exists(statsPath))
@@ -131,6 +151,7 @@ public partial class GameManager : Node
 	public void ApplySaveData(SaveData data)
 	{
 		Gold = data.Gold;
+		Exp  = data.Exp;
 		Love = data.Love;
 		TotalKills = data.TotalKills;
 		CurrentRoute = (RouteType)data.Route;
@@ -140,5 +161,8 @@ public partial class GameManager : Node
 		Flags = new Godot.Collections.Dictionary<string, bool>(data.Flags);
 		PlayerStats.CurrentHp = data.PlayerHp;
 		PlayerStats.MaxHp = data.PlayerMaxHp;
+		InventoryItemPaths.Clear();
+		foreach (var path in data.InventoryItemPaths)
+			InventoryItemPaths.Add(path);
 	}
 }

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ItemData" format=3 uid="uid://itm001band001"]
+
+[ext_resource type="Script" path="res://core/data/ItemData.cs" id="1_ItemData"]
+
+[resource]
+script = ExtResource("1_ItemData")
+ItemId = "item_001"
+DisplayName = "Bandage"
+Description = "A clean bandage. Restores 10 HP."
+HealAmount = 10

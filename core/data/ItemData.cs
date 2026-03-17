@@ -2,6 +2,7 @@ using Godot;
 
 namespace SennenRpg.Core.Data;
 
+[GlobalClass]
 public partial class ItemData : Resource
 {
     [Export] public string ItemId { get; set; } = "";

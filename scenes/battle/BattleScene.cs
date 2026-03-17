@@ -13,7 +13,7 @@ public enum BattleState { Intro, PlayerTurn, EnemyTurn, DodgePhase, Victory, Def
 /// </summary>
 public partial class BattleScene : Node2D
 {
-	private enum SubMenuMode { Act, Mercy }
+	private enum SubMenuMode { Act, Mercy, Items }
 
 	private BattleState _state;
 	private EnemyData?  _enemy;
@@ -200,8 +200,25 @@ public partial class BattleScene : Node2D
 	private void OnItemSelected()
 	{
 		GD.Print("[BattleScene] Item selected");
-		ShowDialogText("* You have no items.");
-		_ = RunEnemyTurn();
+		var inv = GameManager.Instance.InventoryItemPaths;
+		if (inv.Count == 0)
+		{
+			ShowDialogText("* You have no items.");
+			_ = RunEnemyTurn();
+			return;
+		}
+
+		_subMenuMode = SubMenuMode.Items;
+		_actionMenu.Visible = false;
+
+		var labels = new string[inv.Count];
+		for (int i = 0; i < inv.Count; i++)
+		{
+			var item = ResourceLoader.Exists(inv[i]) ? GD.Load<ItemData>(inv[i]) : null;
+			labels[i] = item != null ? $"{item.DisplayName} (+{item.HealAmount} HP)" : "???";
+		}
+		_subMenu.Populate(labels);
+		_subMenu.Visible = true;
 	}
 
 	private void OnMercySelected()
@@ -222,6 +239,12 @@ public partial class BattleScene : Node2D
 		if (_subMenuMode == SubMenuMode.Mercy)
 		{
 			HandleMercyOption(index);
+			return;
+		}
+
+		if (_subMenuMode == SubMenuMode.Items)
+		{
+			HandleItemOption(index);
 			return;
 		}
 
@@ -285,6 +308,32 @@ public partial class BattleScene : Node2D
 				_ = RunEnemyTurn();
 			}
 		}
+	}
+
+	private void HandleItemOption(int index)
+	{
+		var inv = GameManager.Instance.InventoryItemPaths;
+		if (index >= inv.Count)
+		{
+			ShowDialogText("* Nothing happened.");
+			_ = RunEnemyTurn();
+			return;
+		}
+
+		string path = inv[index];
+		var item = ResourceLoader.Exists(path) ? GD.Load<ItemData>(path) : null;
+		if (item == null)
+		{
+			ShowDialogText("* That item seems to have vanished.");
+			_ = RunEnemyTurn();
+			return;
+		}
+
+		GameManager.Instance.RemoveItem(path);
+		GameManager.Instance.HealPlayer(item.HealAmount);
+		ShowDialogText($"* Used {item.DisplayName}.\n* Restored {item.HealAmount} HP.");
+		GD.Print($"[BattleScene] Used item: {item.DisplayName}. HP: {GameManager.Instance.PlayerStats.CurrentHp}/{GameManager.Instance.PlayerStats.MaxHp}");
+		_ = RunEnemyTurn();
 	}
 
 	private void OnSubMenuCancelled()
@@ -354,9 +403,12 @@ public partial class BattleScene : Node2D
 
 		if (killed)
 		{
+			int gold = _enemy?.GoldDrop ?? 0;
+			int exp  = _enemy?.ExpDrop  ?? 0;
 			GameManager.Instance.RegisterKill();
-			GameManager.Instance.AddGold(_enemy?.GoldDrop ?? 0);
-			ShowDialogText($"* You won!\n* Got {_enemy?.GoldDrop ?? 0} G.  LV {GameManager.Instance.Love}");
+			GameManager.Instance.AddGold(gold);
+			GameManager.Instance.AddExp(exp);
+			ShowDialogText($"* You won!\n* Got {gold} G and {exp} EXP.\n* LV {GameManager.Instance.Love}");
 		}
 		else
 		{

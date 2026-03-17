@@ -1,0 +1,46 @@
+[gd_scene format=4 uid="uid://d0513us0j8g1r"]
+
+[ext_resource type="Script" path="res://scenes/menus/PauseMenu.cs" id="1_PauseMenu"]
+
+[node name="PauseMenu" type="CanvasLayer"]
+script = ExtResource("1_PauseMenu")
+
+[node name="Overlay" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.65)
+
+[node name="Panel" type="PanelContainer" parent="Overlay"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -80.0
+offset_top = -72.0
+offset_right = 80.0
+offset_bottom = 72.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Overlay/Panel"]
+alignment = 1
+
+[node name="PausedLabel" type="Label" parent="Overlay/Panel/VBox"]
+text = "PAUSED"
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="Overlay/Panel/VBox"]
+custom_minimum_size = Vector2(0, 8)
+
+[node name="ResumeButton" type="Button" parent="Overlay/Panel/VBox"]
+text = "RESUME"
+
+[node name="SaveButton" type="Button" parent="Overlay/Panel/VBox"]
+text = "SAVE"
+
+[node name="MainMenuButton" type="Button" parent="Overlay/Panel/VBox"]
+text = "MAIN MENU"

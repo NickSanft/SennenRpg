@@ -9,6 +9,7 @@ public record SaveData
 	public int PlayerHp { get; init; }
 	public int PlayerMaxHp { get; init; }
 	public int Gold { get; init; }
+	public int Exp  { get; init; }
 	public int Love { get; init; }
 	public int TotalKills { get; init; }
 	public int Route { get; init; }
@@ -41,6 +42,7 @@ public partial class SaveManager : Node
 			PlayerHp = gm.PlayerStats.CurrentHp,
 			PlayerMaxHp = gm.PlayerStats.MaxHp,
 			Gold = gm.Gold,
+			Exp  = gm.Exp,
 			Love = gm.Love,
 			TotalKills = gm.TotalKills,
 			Route = (int)gm.CurrentRoute,
@@ -48,6 +50,7 @@ public partial class SaveManager : Node
 			LastSavePointId = gm.LastSavePointId,
 			LastSpawnId = gm.LastSavePointId, // spawn at save point on load
 			Flags = new Dictionary<string, bool>(gm.Flags),
+			InventoryItemPaths = new List<string>(gm.InventoryItemPaths),
 		};
 
 		string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
