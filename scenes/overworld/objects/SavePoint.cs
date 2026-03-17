@@ -5,15 +5,15 @@ using SennenRpg.Core.Interfaces;
 namespace SennenRpg.Scenes.Overworld;
 
 /// <summary>
-/// Save point star — press interact to open the save dialog.
-/// Uses a Dialogic timeline with a Choice block. The "Save" choice fires
-/// Signal Event "flag:confirmed_save", which DialogicBridge converts into a flag.
-/// OnSaveDialogEnded() checks that flag and calls SaveManager if set.
+/// Save point star — press interact to open the native save confirmation dialog.
+/// No Dialogic dependency; uses SaveConfirmDialog (a simple CanvasLayer popup).
 /// </summary>
 public partial class SavePoint : Area2D, IInteractable
 {
 	[Export] public string SavePointId { get; set; } = "default";
-	[Export] public string TimelinePath { get; set; } = "res://dialog/timelines/save_point_prompt.dtl";
+
+	private Label? _promptLabel;
+	private bool   _dialogOpen = false;
 
 	public override void _Ready()
 	{
@@ -28,35 +28,36 @@ public partial class SavePoint : Area2D, IInteractable
 		AddChild(_promptLabel);
 	}
 
-	private Label? _promptLabel;
-
 	public void ShowPrompt() { if (_promptLabel != null) _promptLabel.Visible = true; }
 	public void HidePrompt() { if (_promptLabel != null) _promptLabel.Visible = false; }
+	public string GetInteractPrompt() => "Save";
 
 	public void Interact(Node player)
 	{
-		if (DialogicBridge.Instance.IsRunning()) return;
+		if (_dialogOpen) return;
+		_dialogOpen = true;
 
 		GameManager.Instance.SetLastSavePoint(SavePointId);
-		GameManager.Instance.SetState(GameState.Dialog);
+		GameManager.Instance.SetState(GameState.Paused);
 
-		DialogicBridge.Instance.ConnectTimelineEnded(
-			new Callable(this, MethodName.OnSaveDialogEnded));
-
-		DialogicBridge.Instance.StartTimeline(TimelinePath);
+		var dialog = new SaveConfirmDialog();
+		dialog.Confirmed  += OnConfirmed;
+		dialog.Cancelled  += OnCancelled;
+		AddChild(dialog);
 	}
 
-	public string GetInteractPrompt() => "Save";
-
-	private void OnSaveDialogEnded()
+	private void OnConfirmed()
 	{
-		bool confirmed = GameManager.Instance.GetFlag("confirmed_save");
-		if (confirmed)
-		{
-			GameManager.Instance.SetFlag("confirmed_save", false); // reset for next time
-			SaveManager.Instance.SaveGame();
-			GD.Print($"[SavePoint] Game saved at '{SavePointId}'.");
-		}
+		SaveManager.Instance.SaveGame();
+		GD.Print($"[SavePoint] Game saved at '{SavePointId}'.");
+		Close();
+	}
+
+	private void OnCancelled() => Close();
+
+	private void Close()
+	{
+		_dialogOpen = false;
 		GameManager.Instance.SetState(GameState.Overworld);
 	}
 }

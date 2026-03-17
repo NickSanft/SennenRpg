@@ -6,6 +6,11 @@ namespace SennenRpg.Scenes.Overworld;
 
 public partial class Npc : CharacterBody2D, IInteractable
 {
+	/// <summary>
+	/// Unique identifier for this NPC. When set, the flag "talked_to_{NpcId}" is
+	/// automatically raised after the first conversation ends — no Signal Event required.
+	/// </summary>
+	[Export] public string NpcId { get; set; } = "";
 	[Export] public string TimelinePath { get; set; } = "";
 	[Export] public string DisplayName { get; set; } = "???";
 	[Export] public FacingDirection DefaultFacing { get; set; } = FacingDirection.Down;
@@ -84,8 +89,8 @@ public partial class Npc : CharacterBody2D, IInteractable
 
 		string timeline = ChooseTimeline();
 		GD.Print($"[Npc] Starting timeline: '{timeline}'");
-		DialogicBridge.Instance.StartTimeline(timeline);
-		GD.Print("[Npc] StartTimeline called.");
+		DialogicBridge.Instance.StartTimelineWithFlags(timeline);
+		GD.Print("[Npc] StartTimelineWithFlags called.");
 	}
 
 	public string GetInteractPrompt() => $"Talk to {DisplayName}";
@@ -133,6 +138,11 @@ public partial class Npc : CharacterBody2D, IInteractable
 
 	private void OnTimelineEnded()
 	{
+		if (!string.IsNullOrEmpty(NpcId))
+		{
+			GameManager.Instance.SetFlag($"talked_to_{NpcId}", true);
+			GD.Print($"[Npc] Flag set: talked_to_{NpcId}");
+		}
 		GameManager.Instance.SetState(GameState.Overworld);
 	}
 }
