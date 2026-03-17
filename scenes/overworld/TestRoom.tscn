@@ -6,8 +6,8 @@
 [ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="3_ikk50"]
 [ext_resource type="PackedScene" uid="uid://evwjjqormcym" path="res://scenes/overworld/objects/MapExit.tscn" id="4_8m7dc"]
 [ext_resource type="PackedScene" uid="uid://bm5n2kpvryawd" path="res://scenes/overworld/objects/SavePoint.tscn" id="5_5gidl"]
-[ext_resource type="PackedScene" uid="uid://bx4f8kqjmpwo1" path="res://scenes/overworld/objects/EncounterTrigger.tscn" id="7_msmux"]
-[ext_resource type="EncounterData" uid="uid://cxrj5vnbwk8p3" path="res://resources/encounters/encounter_001.tres" id="8_msmux"]
+[ext_resource type="Resource" uid="uid://cxrj5vnbwk8p3" path="res://resources/encounters/encounter_001.tres" id="8_msmux"]
+[ext_resource type="PackedScene" path="res://scenes/overworld/objects/EnemyPawn.tscn" id="9_rdhaj"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ikk50"]
 texture = ExtResource("2_hng3j")
@@ -2874,6 +2874,6 @@ AutoTrigger = true
 position = Vector2(-69, -96)
 SavePointId = "test_room"
 
-[node name="EncounterTrigger" parent="." index="9" unique_id=1055175828 instance=ExtResource("7_msmux")]
-position = Vector2(-96, 5)
+[node name="EnemyPawn" parent="." index="9" unique_id=1458458709 instance=ExtResource("9_rdhaj")]
+position = Vector2(98, -79)
 EncounterResource = ExtResource("8_msmux")
