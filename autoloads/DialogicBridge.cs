@@ -15,6 +15,7 @@ public partial class DialogicBridge : Node
 	[Signal] public delegate void DialogicSignalReceivedEventHandler(Variant argument);
 
 	private Node _dialogic = null!;
+	private float _safetyTimer;
 
 	public override void _Ready()
 	{
@@ -36,6 +37,32 @@ public partial class DialogicBridge : Node
 			_dialogic.Connect("signal_event", new Callable(this, MethodName.OnDialogicSignal));
 		else
 			GD.PushWarning("[DialogicBridge] 'signal_event' signal not found on Dialogic node — flag signals will not work.");
+
+		// Sync Dialogic variables back to GameManager after every timeline ends.
+		if (_dialogic.HasSignal("timeline_ended"))
+			_dialogic.Connect("timeline_ended", new Callable(this, MethodName.OnTimelineEndedInternal));
+	}
+
+	/// <summary>
+	/// Safety net: if GameState is Dialog but Dialogic is not running (e.g. a timeline
+	/// finished without emitting timeline_ended), reset state after 5 seconds.
+	/// </summary>
+	public override void _Process(double delta)
+	{
+		if (GameManager.Instance == null) return;
+		if (GameManager.Instance.CurrentState != GameState.Dialog || IsRunning())
+		{
+			_safetyTimer = 0f;
+			return;
+		}
+
+		_safetyTimer += (float)delta;
+		if (_safetyTimer >= 5.0f)
+		{
+			GD.PushWarning("[DialogicBridge] Safety net: GameState stuck in Dialog but Dialogic is idle — resetting to Overworld.");
+			_safetyTimer = 0f;
+			GameManager.Instance.SetState(GameState.Overworld);
+		}
 	}
 
 	/// <summary>
@@ -142,5 +169,31 @@ public partial class DialogicBridge : Node
 			GD.Print($"[DialogicBridge] Flag set via timeline signal: '{flagName}'");
 		}
 		EmitSignal(SignalName.DialogicSignalReceived, argument);
+	}
+
+	/// <summary>
+	/// Runs after every timeline ends. Reads all Dialogic variables back into
+	/// GameManager so flags set inside a timeline are visible immediately in C#.
+	/// </summary>
+	private void OnTimelineEndedInternal()
+	{
+		if (_dialogic == null) return;
+		var varSubsystem = _dialogic.Call("get_subsystem", "VAR").AsGodotObject();
+		if (varSubsystem == null) return;
+
+		var all = varSubsystem.Call("get_all").AsGodotDictionary();
+		if (all == null) return;
+
+		foreach (var key in all.Keys)
+		{
+			string name = key.AsString();
+			var value = all[key];
+			// Write booleans back as flags; ignore numeric/string-only variables
+			if (value.VariantType == Variant.Type.Bool)
+			{
+				GameManager.Instance.SetFlag(name, value.AsBool());
+			}
+		}
+		GD.Print($"[DialogicBridge] Post-timeline sync: {all.Count} variable(s) checked.");
 	}
 }

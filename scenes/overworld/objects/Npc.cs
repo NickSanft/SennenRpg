@@ -143,6 +143,11 @@ public partial class Npc : CharacterBody2D, IInteractable
 			GameManager.Instance.SetFlag($"talked_to_{NpcId}", true);
 			GD.Print($"[Npc] Flag set: talked_to_{NpcId}");
 		}
+
+		// Reset to default facing so the NPC doesn't stay turned toward the player
+		if (_sprite != null) _sprite.FlipH = false;
+		PlayFacingIdle(DefaultFacing);
+
 		GameManager.Instance.SetState(GameState.Overworld);
 	}
 }

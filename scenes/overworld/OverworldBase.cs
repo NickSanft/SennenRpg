@@ -68,6 +68,7 @@ public partial class OverworldBase : Node2D
 			AudioManager.Instance.PlayBgm(BgmPath);
 
 		ApplyCameraBoundsFromGround();
+		PreloadNpcTimelines();
 
 		const string hudPath   = "res://scenes/hud/GameHud.tscn";
 		if (ResourceLoader.Exists(hudPath))
@@ -143,6 +144,34 @@ public partial class OverworldBase : Node2D
 		cam.Set("limit_bottom", bottom);
 
 		GD.Print($"[OverworldBase] Camera bounds set: L={left} T={top} R={right} B={bottom}");
+	}
+
+	/// <summary>
+	/// Kicks off background loading for all NPC timeline files on this map so dialog
+	/// starts instantly the first time the player talks to an NPC.
+	/// </summary>
+	private void PreloadNpcTimelines()
+	{
+		int count = 0;
+		foreach (var node in GetTree().GetNodesInGroup("interactable"))
+		{
+			if (node is not Npc npc) continue;
+
+			void TryPreload(string path)
+			{
+				if (!string.IsNullOrEmpty(path) && ResourceLoader.Exists(path))
+				{
+					ResourceLoader.LoadThreadedRequest(path);
+					count++;
+				}
+			}
+
+			TryPreload(npc.TimelinePath);
+			foreach (var alt in npc.AltTimelinePaths)
+				TryPreload(alt);
+		}
+		if (count > 0)
+			GD.Print($"[OverworldBase] Preloading {count} NPC timeline(s) in background.");
 	}
 
 	/// <summary>

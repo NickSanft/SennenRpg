@@ -25,6 +25,7 @@ SceneTransition="*uid://cdnm7y7mvnus8"
 DialogicBridge="*uid://cdaesqlsosbyi"
 BattleRegistry="*uid://d36wu2sl1eacd"
 Dialogic="*uid://ds2q0uclmolvu"
+DialogRegistry="*res://autoloads/DialogRegistry.cs"
 
 [dialogic]
 

@@ -1,5 +1,6 @@
 using Godot;
 using System.Threading.Tasks;
+using System.Threading;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
 
@@ -369,14 +370,29 @@ public partial class BattleScene : Node2D
 	{
 		SetState(BattleState.EnemyTurn);
 
-		string line;
-		if (_enemy?.BattleDialogLines is { Length: > 0 })
-			line = _enemy.BattleDialogLines[GD.RandRange(0, _enemy.BattleDialogLines.Length - 1)];
+		// If the enemy has a Dialogic timeline for its turn, play it and wait for it to finish.
+		string battlePath = _enemy?.BattleTimelinePath ?? "";
+		if (!string.IsNullOrEmpty(battlePath) && ResourceLoader.Exists(battlePath))
+		{
+			GameManager.Instance.SetState(GameState.Dialog);
+			var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+			DialogicBridge.Instance.ConnectTimelineEnded(Callable.From(() => tcs.TrySetResult(true)));
+			DialogicBridge.Instance.StartTimelineWithFlags(battlePath);
+			await tcs.Task;
+			GameManager.Instance.SetState(GameState.Battle);
+		}
 		else
-			line = $"* {_enemy?.DisplayName ?? "???"} prepares to attack...";
+		{
+			// Plain-text fallback — show a random dialog line, then wait briefly.
+			string line;
+			if (_enemy?.BattleDialogLines is { Length: > 0 })
+				line = _enemy.BattleDialogLines[(int)GD.RandRange(0, _enemy.BattleDialogLines.Length - 1)];
+			else
+				line = $"* {_enemy?.DisplayName ?? "???"} prepares to attack...";
 
-		ShowDialogText(line);
-		await ToSignal(GetTree().CreateTimer(1.2f), SceneTreeTimer.SignalName.Timeout);
+			ShowDialogText(line);
+			await ToSignal(GetTree().CreateTimer(1.2f), SceneTreeTimer.SignalName.Timeout);
+		}
 
 		BeginDodgePhase();
 	}
