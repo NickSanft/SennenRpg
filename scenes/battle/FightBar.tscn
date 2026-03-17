@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://bpv3wqt8nxhk4"]
+
+[ext_resource type="Script" path="res://scenes/battle/FightBar.cs" uid="uid://cjm6ftqrwb9n2" id="1_script"]
+
+[node name="FightBar" type="Control"]
+custom_minimum_size = Vector2(300, 24)
+visible = false
+script = ExtResource("1_script")
+
+[node name="Cursor" type="ColorRect" parent="."]
+offset_right = 8.0
+offset_bottom = 24.0
+color = Color(1, 1, 1, 1)

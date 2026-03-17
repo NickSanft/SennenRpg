@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://cwp9xtb3hm6qe"]
+[gd_scene load_steps=8 format=3 uid="uid://cwp9xtb3hm6qe"]
 
 [ext_resource type="Script" path="res://scenes/battle/BattleScene.cs" uid="uid://dno4vke1cj7p2" id="1_script"]
 [ext_resource type="PackedScene" uid="uid://dxc3n8mp1oqv5" path="res://scenes/battle/ActionMenu.tscn" id="2_actionmenu"]
 [ext_resource type="PackedScene" uid="uid://djpw6hct3n2qk" path="res://scenes/battle/SubMenu.tscn" id="3_submenu"]
 [ext_resource type="PackedScene" uid="uid://bwn5qxp8fj4r3" path="res://scenes/battle/BattleHUD.tscn" id="4_battlehud"]
 [ext_resource type="PackedScene" uid="uid://bk8wqmf3ydpx6" path="res://scenes/battle/dodge/DodgeBox.tscn" id="5_dodgebox"]
+[ext_resource type="PackedScene" uid="uid://bpv3wqt8nxhk4" path="res://scenes/battle/FightBar.tscn" id="6_fightbar"]
 
 [node name="BattleScene" type="Node2D"]
 script = ExtResource("1_script")
@@ -52,6 +53,15 @@ visible = false
 
 [node name="DodgeBox" parent="." instance=ExtResource("5_dodgebox")]
 position = Vector2(320, 200)
+visible = false
+
+[node name="FightBar" parent="." instance=ExtResource("6_fightbar")]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 20.0
+offset_top = 348.0
+offset_right = 320.0
+offset_bottom = 372.0
 visible = false
 
 [node name="BattleHUD" parent="." instance=ExtResource("4_battlehud")]

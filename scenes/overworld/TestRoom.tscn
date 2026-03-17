@@ -2851,6 +2851,7 @@ sources/0 = SubResource("TileSetAtlasSource_8m7dc")
 
 [sub_resource type="Resource" id="Resource_7wnlp"]
 script = ExtResource("8_msmux")
+DisplayName = "Jim the Unkind"
 AttackPatternScene = ExtResource("9_7wnlp")
 metadata/_custom_type_script = "uid://c5d22rd36ltx4"
 

@@ -85,13 +85,21 @@ public partial class GameManager : Node
 
 	private void RecalculateRoute()
 	{
-		// Simplified route logic — expand as areas are built
-		// Full genocide requires clearing every enemy in an area
+		// Love (LV) scales with kills — expand thresholds as areas are built
+		Love = TotalKills switch
+		{
+			0    => 1,
+			< 10 => 2,
+			< 20 => 3,
+			_    => 4
+		};
+		EmitSignal(SignalName.PlayerStatsChanged); // HUD shows LV
+
 		var newRoute = TotalKills switch
 		{
-			0 => RouteType.Pacifist,
+			0     => RouteType.Pacifist,
 			>= 20 => RouteType.Genocide,
-			_ => RouteType.Neutral
+			_     => RouteType.Neutral
 		};
 
 		if (newRoute != CurrentRoute)
