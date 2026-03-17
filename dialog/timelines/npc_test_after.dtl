@@ -1,4 +1,6 @@
-...You again.
-I still don't know what a Fallowhearted is.
-Maybe it's someone who follows their heart?
-Or maybe Cinderblock just made it up.
+join TestNpc center
+TestNpc: ...You again.
+TestNpc: I still don't know what a Fallowhearted is.
+TestNpc: Maybe it's someone who follows their heart?
+TestNpc: Or maybe Cinderblock just made it up.
+leave --All--

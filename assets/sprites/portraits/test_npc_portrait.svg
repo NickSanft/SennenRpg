@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 192" width="128" height="192">
+  <!-- Background -->
+  <rect width="128" height="192" fill="#120a1f"/>
+  <!-- Background glow -->
+  <radialGradient id="bgGlow" cx="50%" cy="45%" r="45%">
+    <stop offset="0%" stop-color="#3a1a5a" stop-opacity="0.6"/>
+    <stop offset="100%" stop-color="#120a1f" stop-opacity="0"/>
+  </radialGradient>
+  <rect width="128" height="192" fill="url(#bgGlow)"/>
+
+  <!-- Robe base (wide) -->
+  <path d="M 20 192 L 28 118 L 48 106 L 80 106 L 100 118 L 108 192 Z" fill="#2a1848"/>
+
+  <!-- Robe folds/shading -->
+  <path d="M 64 110 L 58 192" stroke="#3d2860" stroke-width="2" opacity="0.7"/>
+  <path d="M 64 110 L 70 192" stroke="#3d2860" stroke-width="2" opacity="0.7"/>
+  <path d="M 64 110 L 44 192" stroke="#3d2860" stroke-width="1.5" opacity="0.4"/>
+  <path d="M 64 110 L 84 192" stroke="#3d2860" stroke-width="1.5" opacity="0.4"/>
+
+  <!-- Robe hem detail -->
+  <path d="M 20 192 Q 40 182 64 185 Q 88 182 108 192" stroke="#9b50d0" stroke-width="1.5" fill="none" opacity="0.6"/>
+
+  <!-- Star emblem on robe -->
+  <polygon points="64,126 66.5,133 74,133 68,137.5 70.5,144.5 64,140 57.5,144.5 60,137.5 54,133 61.5,133"
+           fill="#9b30d0" opacity="0.9"/>
+  <polygon points="64,128 66,133.5 71,133.5 67,136.5 68.5,142 64,139 59.5,142 61,136.5 57,133.5 62,133.5"
+           fill="#cc60ff" opacity="0.7"/>
+
+  <!-- Hood shadow -->
+  <ellipse cx="64" cy="72" rx="34" ry="36" fill="#1e1038"/>
+  <!-- Hood outer -->
+  <path d="M 30 82 Q 34 44 64 38 Q 94 44 98 82 L 98 96 Q 84 80 64 76 Q 44 80 30 96 Z" fill="#2a1848"/>
+  <!-- Hood inner shadow -->
+  <path d="M 36 86 Q 40 58 64 52 Q 88 58 92 86 L 92 94 Q 80 76 64 72 Q 48 76 36 94 Z" fill="#1a0e30"/>
+
+  <!-- Face (partially shadowed) -->
+  <ellipse cx="64" cy="84" rx="20" ry="22" fill="#c4a07a"/>
+
+  <!-- Shadow over top of face from hood -->
+  <ellipse cx="64" cy="72" rx="20" ry="14" fill="#1a0e30" opacity="0.7"/>
+
+  <!-- Eyes (glowing purple) -->
+  <ellipse cx="55" cy="82" rx="6" ry="5" fill="#0a0520"/>
+  <ellipse cx="73" cy="82" rx="6" ry="5" fill="#0a0520"/>
+  <ellipse cx="55" cy="82" rx="4" ry="3.5" fill="#8820c0"/>
+  <ellipse cx="73" cy="82" rx="4" ry="3.5" fill="#8820c0"/>
+  <ellipse cx="55" cy="82" rx="2.5" ry="2" fill="#cc60ff"/>
+  <ellipse cx="73" cy="82" rx="2.5" ry="2" fill="#cc60ff"/>
+  <!-- Eye inner glow -->
+  <circle cx="54" cy="81" r="1" fill="white" opacity="0.5"/>
+  <circle cx="72" cy="81" r="1" fill="white" opacity="0.5"/>
+
+  <!-- Faint smile / neutral expression -->
+  <path d="M 58 91 Q 64 94 70 91" stroke="#a07850" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+
+  <!-- Hands emerging from robe -->
+  <ellipse cx="34" cy="152" rx="10" ry="12" fill="#c4a07a"/>
+  <ellipse cx="94" cy="152" rx="10" ry="12" fill="#c4a07a"/>
+  <!-- Finger suggestions -->
+  <line x1="26" y1="148" x2="24" y2="158" stroke="#b89068" stroke-width="2" stroke-linecap="round"/>
+  <line x1="29" y1="145" x2="27" y2="156" stroke="#b89068" stroke-width="2" stroke-linecap="round"/>
+  <line x1="102" y1="148" x2="104" y2="158" stroke="#b89068" stroke-width="2" stroke-linecap="round"/>
+  <line x1="99" y1="145" x2="101" y2="156" stroke="#b89068" stroke-width="2" stroke-linecap="round"/>
+</svg>

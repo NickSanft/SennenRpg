@@ -8,6 +8,9 @@ namespace SennenRpg.Scenes.Overworld;
 /// </summary>
 public partial class TestRoom : OverworldBase
 {
+	private const string NpcScene    = "res://scenes/overworld/objects/npc.tscn";
+	private const string ForanTimeline = "res://dialog/timelines/npc_foran.dtl";
+
 	public override void _Ready()
 	{
 		MapId = "test_room";
@@ -21,5 +24,21 @@ public partial class TestRoom : OverworldBase
 		DefaultSpawnPosition = new Vector2(100, 100);
 
 		base._Ready();
+
+		SpawnNpcs();
+	}
+
+	private void SpawnNpcs()
+	{
+		var npcScene = GD.Load<PackedScene>(NpcScene);
+
+		// ── Foran ─────────────────────────────────────────────────────
+		// Stand next to the Mysterious Figure NPC (which is at world (0,0))
+		var foran = npcScene.Instantiate<Npc>();
+		foran.NpcId        = "foran_testroom";
+		foran.DisplayName  = "Foran";
+		foran.TimelinePath = ForanTimeline;
+		YSort.AddChild(foran);
+		foran.GlobalPosition = new Vector2(32, 0);
 	}
 }
