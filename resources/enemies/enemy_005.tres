@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="EnemyData" format=3]
+
+[ext_resource type="Script" path="res://core/data/EnemyData.cs" id="1_EnemyData"]
+[ext_resource type="Script" path="res://core/data/CharacterStats.cs" id="2_CharacterStats"]
+[ext_resource type="PackedScene" path="res://scenes/battle/patterns/Pattern005.tscn" id="3_pattern"]
+
+[sub_resource type="Resource" id="CharacterStats_1"]
+script = ExtResource("2_CharacterStats")
+MaxHp = 45
+CurrentHp = 45
+Attack = 12
+Defense = 5
+Speed = 2.0
+
+[resource]
+script = ExtResource("1_EnemyData")
+EnemyId = "enemy_005"
+DisplayName = "Stonecrawler"
+FlavorText = "An ancient creature of compressed earth. It has been moving for centuries."
+Stats = SubResource("CharacterStats_1")
+ActOptions = PackedStringArray("Check", "Chip Away", "Tap Gently")
+ActMercyValues = PackedInt32Array(0, 30, 70)
+ActResultTexts = PackedStringArray("* 45 HP. Tough exterior.\n* Moves very slowly.", "* You chip at the surface.\n* A small crack appears.", "* You tap politely.\n* It pauses, confused.")
+BattleDialogLines = PackedStringArray("* ...thud.", "* (It shifts its weight.)", "* (The ground trembles slightly.)", "* ...hrm.")
+CanBeSpared = true
+GoldDrop = 12
+ExpDrop = 8
+AttackPatternScene = ExtResource("3_pattern")

@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="EnemyData" format=3]
+
+[ext_resource type="Script" path="res://core/data/EnemyData.cs" id="1_EnemyData"]
+[ext_resource type="Script" path="res://core/data/CharacterStats.cs" id="2_CharacterStats"]
+[ext_resource type="PackedScene" path="res://scenes/battle/patterns/Pattern006.tscn" id="3_pattern"]
+
+[sub_resource type="Resource" id="CharacterStats_1"]
+script = ExtResource("2_CharacterStats")
+MaxHp = 18
+CurrentHp = 18
+Attack = 7
+Defense = 0
+Speed = 5.0
+
+[resource]
+script = ExtResource("1_EnemyData")
+EnemyId = "enemy_006"
+DisplayName = "Flickerfly"
+FlavorText = "A creature of light and nerves. It can't help flickering when startled."
+Stats = SubResource("CharacterStats_1")
+ActOptions = PackedStringArray("Check", "Admire Wings", "Stay Still")
+ActMercyValues = PackedInt32Array(0, 50, 50)
+ActResultTexts = PackedStringArray("* 18 HP. Moves in erratic bursts.", "* You stare at its wings.\n* It slows down, flattered.", "* You go perfectly still.\n* The Flickerfly relaxes.")
+BattleDialogLines = PackedStringArray("* zzzt—!", "* (It darts left, then right.)", "* flicker flicker", "* (It can't decide where to look.)")
+CanBeSpared = true
+GoldDrop = 6
+ExpDrop = 4
+AttackPatternScene = ExtResource("3_pattern")
