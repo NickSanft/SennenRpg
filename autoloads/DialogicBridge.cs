@@ -38,6 +38,40 @@ public partial class DialogicBridge : Node
 			GD.PushWarning("[DialogicBridge] 'signal_event' signal not found on Dialogic node — flag signals will not work.");
 	}
 
+	/// <summary>
+	/// Syncs all GameManager flags and common variables to Dialogic, then starts the timeline.
+	/// Use this instead of StartTimeline when the timeline may branch on game state.
+	/// Variables that aren't defined in the Dialogic editor are silently skipped.
+	/// </summary>
+	public void StartTimelineWithFlags(string timelinePath)
+	{
+		if (_dialogic == null) return;
+
+		var varSubsystem = _dialogic.Call("get_subsystem", "VAR").AsGodotObject();
+		if (varSubsystem != null)
+		{
+			// Sync all GameManager flags — quietly skip any not defined in Dialogic
+			foreach (var kvp in GameManager.Instance.Flags)
+			{
+				if (varSubsystem.Call("has", kvp.Key).AsBool())
+					varSubsystem.Call("set_variable", kvp.Key, Variant.From(kvp.Value));
+			}
+
+			// Sync common numeric/string variables if they exist in Dialogic
+			void TrySync(string name, Variant value)
+			{
+				if (varSubsystem.Call("has", name).AsBool())
+					varSubsystem.Call("set_variable", name, value);
+			}
+
+			TrySync("playerName", Variant.From(GameManager.Instance.PlayerName));
+			TrySync("gold",       Variant.From(GameManager.Instance.Gold));
+			TrySync("love",       Variant.From(GameManager.Instance.Love));
+		}
+
+		StartTimeline(timelinePath);
+	}
+
 	/// <summary>Start a dialog timeline by its resource path.</summary>
 	public void StartTimeline(string timelinePath)
 	{
