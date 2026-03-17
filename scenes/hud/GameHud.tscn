@@ -1,0 +1,43 @@
+[gd_scene format=4 uid="uid://ch7n4mxrb2j9s"]
+
+[ext_resource type="Script" path="res://scenes/hud/GameHud.cs" id="1_GameHud"]
+
+[node name="GameHud" type="CanvasLayer"]
+script = ExtResource("1_GameHud")
+layer = 2
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = -56.0
+offset_right = 200.0
+offset_bottom = -8.0
+grow_vertical = 0
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+
+[node name="NameRow" type="HBoxContainer" parent="Panel/VBox"]
+
+[node name="HeartLabel" type="Label" parent="Panel/VBox/NameRow"]
+text = "❤"
+theme_override_colors/font_color = Color(1, 0.2, 0.2, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="NameLabel" type="Label" parent="Panel/VBox/NameRow"]
+text = ""
+theme_override_font_sizes/font_size = 10
+
+[node name="HpRow" type="HBoxContainer" parent="Panel/VBox"]
+
+[node name="HpLabel" type="Label" parent="Panel/VBox/HpRow"]
+text = "HP  20 / 20"
+theme_override_font_sizes/font_size = 10
+
+[node name="HpBarBg" type="Control" parent="Panel/VBox"]
+custom_minimum_size = Vector2(160, 8)
+
+[node name="HpBar" type="ColorRect" parent="Panel/VBox/HpBarBg"]
+color = Color(0.98, 0.98, 0.1, 1)
+offset_right = 160.0
+offset_bottom = 8.0
