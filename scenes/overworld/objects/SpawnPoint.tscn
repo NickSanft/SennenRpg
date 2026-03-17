@@ -1,0 +1,6 @@
+[gd_scene format=4 uid="uid://c8ngbh51b842l"]
+
+[ext_resource type="Script" path="res://scenes/overworld/objects/SpawnPoint.cs" id="1_SpawnPoint"]
+
+[node name="SpawnPoint" type="Node2D"]
+script = ExtResource("1_SpawnPoint")

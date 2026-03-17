@@ -13,10 +13,24 @@ public partial class EncounterTrigger : Area2D
 	[Export] public EncounterData? EncounterResource { get; set; }
 	[Export] public bool OneShot { get; set; } = false;
 
+	/// <summary>
+	/// If non-empty, this flag is set in GameManager when the trigger fires and is
+	/// checked on _Ready() — so a OneShot encounter won't respawn after save/load.
+	/// Convention: "encountered_{unique_id}", e.g. "encountered_intro_wisplet".
+	/// </summary>
+	[Export] public string PersistenceFlag { get; set; } = "";
+
 	private bool _triggered = false;
 
 	public override void _Ready()
 	{
+		// If this trigger has already fired in a previous session, remove it immediately
+		if (!string.IsNullOrEmpty(PersistenceFlag) && GameManager.Instance.GetFlag(PersistenceFlag))
+		{
+			QueueFree();
+			return;
+		}
+
 		BodyEntered += OnBodyEntered;
 	}
 
@@ -36,6 +50,10 @@ public partial class EncounterTrigger : Area2D
 
 		// Set flag before await so re-entry is blocked while transitioning
 		_triggered = true;
+
+		// Persist before the scene transition so saving mid-battle still remembers this fired
+		if (!string.IsNullOrEmpty(PersistenceFlag))
+			GameManager.Instance.SetFlag(PersistenceFlag, true);
 
 		try
 		{

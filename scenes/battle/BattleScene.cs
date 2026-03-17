@@ -267,7 +267,22 @@ public partial class BattleScene : Node2D
 		_enemyCanBeSpared = _mercyPercent >= 100 && (_enemy?.CanBeSpared ?? false);
 		_enemyNameplate.UpdateMercy(_mercyPercent, _enemyCanBeSpared);
 
-		// Show result text
+		// Check for a dedicated Act timeline (res://dialog/timelines/act_{enemyId}_{option}.dtl)
+		if (_enemy != null)
+		{
+			string optionKey = _enemy.ActOptions[index].ToLower().Replace(" ", "_");
+			string actPath   = $"res://dialog/timelines/act_{_enemy.EnemyId}_{optionKey}.dtl";
+			if (ResourceLoader.Exists(actPath))
+			{
+				GameManager.Instance.SetState(GameState.Dialog);
+				DialogicBridge.Instance.ConnectTimelineEnded(
+					new Callable(this, MethodName.OnActDialogEnded));
+				DialogicBridge.Instance.StartTimelineWithFlags(actPath);
+				return; // enemy turn runs after the timeline ends
+			}
+		}
+
+		// Fall back to inline result text
 		string result;
 		if (_enemy?.ActResultTexts is { Length: > 0 } && index < _enemy.ActResultTexts.Length
 			&& !string.IsNullOrEmpty(_enemy.ActResultTexts[index]))
@@ -308,6 +323,12 @@ public partial class BattleScene : Node2D
 				_ = RunEnemyTurn();
 			}
 		}
+	}
+
+	private void OnActDialogEnded()
+	{
+		GameManager.Instance.SetState(GameState.Battle);
+		_ = RunEnemyTurn();
 	}
 
 	private void HandleItemOption(int index)

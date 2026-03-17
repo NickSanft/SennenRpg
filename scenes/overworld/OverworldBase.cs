@@ -1,22 +1,36 @@
 using Godot;
+using Godot.Collections;
 using System.Collections.Generic;
 using SennenRpg.Autoloads;
+using SennenRpg.Core.Data;
 
 namespace SennenRpg.Scenes.Overworld;
 
 public partial class OverworldBase : Node2D
 {
-	[Export] public string MapId { get; set; } = "";
+	[Export] public string MapId   { get; set; } = "";
 	[Export] public string BgmPath { get; set; } = "";
+
+	/// <summary>
+	/// Encounters rolled during overworld movement. Each entry is checked independently
+	/// using its EncounterChancePerStep (0–100, percentage per step tile).
+	/// Leave empty to disable random encounters on this map.
+	/// </summary>
+	[Export] public Array<EncounterData> RandomEncounterTable { get; set; } = [];
 
 	protected Node2D YSort = null!;
 	protected TileMapLayer? GroundLayer;
 	protected TileMapLayer? WallsLayer;
 	protected TileMapLayer? ObjectsLayer;
-	protected Dictionary<string, Vector2> SpawnPoints { get; } = new();
+	protected Godot.Collections.Dictionary<string, Vector2> SpawnPoints { get; } = new();
 	protected Vector2 DefaultSpawnPosition { get; set; } = Vector2.Zero;
 
 	private CharacterBody2D? _player;
+	private Vector2          _lastPlayerPos;
+	private float            _stepAccumulator;
+	private bool             _encounterLocked; // prevents overlapping battle transitions
+
+	private const float StepDistance = 32f; // pixels per "step" roll
 
 	public override void _Ready()
 	{
@@ -35,9 +49,25 @@ public partial class OverworldBase : Node2D
 		_player = playerScene.Instantiate<CharacterBody2D>();
 		YSort.AddChild(_player);
 		_player.GlobalPosition = GetSpawnPosition();
+		_lastPlayerPos = _player.GlobalPosition;
+
+		// Register SpawnPoint nodes placed in the scene editor.
+		// These override any positions registered in code with the same ID.
+		foreach (var node in GetTree().GetNodesInGroup("spawn_points"))
+		{
+			if (node is SpawnPoint sp)
+			{
+				SpawnPoints[sp.SpawnId] = sp.GlobalPosition;
+				if (sp.SpawnId == "default")
+					DefaultSpawnPosition = sp.GlobalPosition;
+				GD.Print($"[OverworldBase] SpawnPoint registered: '{sp.SpawnId}' @ {sp.GlobalPosition}");
+			}
+		}
 
 		if (!string.IsNullOrEmpty(BgmPath))
 			AudioManager.Instance.PlayBgm(BgmPath);
+
+		ApplyCameraBoundsFromGround();
 
 		const string hudPath   = "res://scenes/hud/GameHud.tscn";
 		if (ResourceLoader.Exists(hudPath))
@@ -48,6 +78,71 @@ public partial class OverworldBase : Node2D
 			AddChild(GD.Load<PackedScene>(pausePath).Instantiate());
 
 		GD.Print($"[OverworldBase] Ready. Map: {MapId}, Player spawned at {_player.GlobalPosition}");
+	}
+
+	public override void _Process(double delta)
+	{
+		if (_player == null || RandomEncounterTable.Count == 0 || _encounterLocked) return;
+		if (GameManager.Instance.CurrentState != GameState.Overworld) return;
+
+		float moved = _player.GlobalPosition.DistanceTo(_lastPlayerPos);
+		if (moved > 0.5f)
+		{
+			_stepAccumulator += moved;
+			_lastPlayerPos = _player.GlobalPosition;
+		}
+
+		while (_stepAccumulator >= StepDistance)
+		{
+			_stepAccumulator -= StepDistance;
+			if (TryRandomEncounter()) return; // battle started — stop rolling
+		}
+	}
+
+	// ── Helpers ───────────────────────────────────────────────────────
+
+	private bool TryRandomEncounter()
+	{
+		int idx = (int)GD.RandRange(0, RandomEncounterTable.Count - 1);
+		var enc = RandomEncounterTable[idx];
+		if (enc == null) return false;
+
+		float roll = (float)GD.RandRange(0.0, 100.0);
+		if (roll >= enc.EncounterChancePerStep) return false;
+
+		_encounterLocked = true;
+		GD.Print($"[OverworldBase] Random encounter triggered (roll {roll:F1} < {enc.EncounterChancePerStep}).");
+		_ = SceneTransition.Instance.ToBattleAsync(enc);
+		return true;
+	}
+
+	/// <summary>
+	/// Reads the Ground TileMapLayer's used rect and applies it as camera limits
+	/// to the PhantomCamera2D inside the player scene.
+	/// </summary>
+	private void ApplyCameraBoundsFromGround()
+	{
+		if (GroundLayer == null || _player == null) return;
+
+		var usedRect = GroundLayer.GetUsedRect();
+		if (!usedRect.HasArea()) return;
+
+		var tileSize = GroundLayer.TileSet?.TileSize ?? new Vector2I(16, 16);
+
+		int left   = usedRect.Position.X * tileSize.X;
+		int top    = usedRect.Position.Y * tileSize.Y;
+		int right  = (usedRect.Position.X + usedRect.Size.X) * tileSize.X;
+		int bottom = (usedRect.Position.Y + usedRect.Size.Y) * tileSize.Y;
+
+		var cam = _player.GetNodeOrNull("PhantomCamera2D");
+		if (cam == null) return;
+
+		cam.Set("limit_left",   left);
+		cam.Set("limit_top",    top);
+		cam.Set("limit_right",  right);
+		cam.Set("limit_bottom", bottom);
+
+		GD.Print($"[OverworldBase] Camera bounds set: L={left} T={top} R={right} B={bottom}");
 	}
 
 	/// <summary>
