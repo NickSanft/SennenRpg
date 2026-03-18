@@ -19,6 +19,7 @@ public partial class DissonanceMinigame : BardMinigameBase
     private int  _beatsElapsed;
     private int  _successfulHits;
     private int  _pressedThisBeat;  // count of presses this beat window
+    private bool _ready;
     private bool _finished;
 
     protected override void OnActivate()
@@ -26,6 +27,7 @@ public partial class DissonanceMinigame : BardMinigameBase
         _beatsElapsed    = 0;
         _successfulHits  = 0;
         _pressedThisBeat = 0;
+        _ready           = false;
         _finished        = false;
         RhythmClock.Instance.Beat += OnBeat;
         QueueRedraw();
@@ -39,6 +41,7 @@ public partial class DissonanceMinigame : BardMinigameBase
     private void OnBeat(int _beatIndex)
     {
         if (_finished) return;
+        if (!_ready) { _ready = true; QueueRedraw(); return; } // countdown beat
         _beatsElapsed++;
         _pressedThisBeat = 0;
         QueueRedraw();

@@ -19,6 +19,7 @@ public abstract partial class BardMinigameBase : Control
     public void Activate()
     {
         Visible = true;
+        GetViewport().GuiReleaseFocus();
         OnActivate();
     }
 

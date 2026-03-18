@@ -15,6 +15,7 @@ public partial class BardicInspirationMinigame : BardMinigameBase
     private int  _beatsElapsed;
     private int  _beatsHeld;
     private bool _holding;
+    private bool _ready;
     private bool _finished;
 
     protected override void OnActivate()
@@ -22,6 +23,7 @@ public partial class BardicInspirationMinigame : BardMinigameBase
         _beatsElapsed = 0;
         _beatsHeld    = 0;
         _holding      = false;
+        _ready        = false;
         _finished     = false;
         RhythmClock.Instance.Beat += OnBeat;
         QueueRedraw();
@@ -35,6 +37,7 @@ public partial class BardicInspirationMinigame : BardMinigameBase
     private void OnBeat(int _beatIndex)
     {
         if (_finished) return;
+        if (!_ready) { _ready = true; QueueRedraw(); return; } // countdown beat
 
         // Check if key was held since last beat
         if (_holding)
@@ -43,7 +46,7 @@ public partial class BardicInspirationMinigame : BardMinigameBase
         _beatsElapsed++;
         QueueRedraw();
 
-        if (_beatsElapsed >= 2)
+        if (_beatsElapsed >= 4)
             Finish();
     }
 
@@ -102,7 +105,7 @@ public partial class BardicInspirationMinigame : BardMinigameBase
 
         // Beat counter
         DrawString(ThemeDB.FallbackFont, new Vector2(VP.X * 0.5f - 20f, barY + barH + 18f),
-                   $"Beat {_beatsElapsed}/2", HorizontalAlignment.Left, -1, 11,
+                   $"Beat {_beatsElapsed}/4", HorizontalAlignment.Left, -1, 11,
                    Colors.White with { A = 0.7f });
     }
 
@@ -112,11 +115,11 @@ public partial class BardicInspirationMinigame : BardMinigameBase
         _finished = true;
         RhythmClock.Instance.Beat -= OnBeat;
 
-        HitGrade grade = _beatsHeld >= 2 ? HitGrade.Perfect
-                       : _beatsHeld >= 1 ? HitGrade.Good
+        HitGrade grade = _beatsHeld >= 4 ? HitGrade.Perfect
+                       : _beatsHeld >= 2 ? HitGrade.Good
                        : HitGrade.Miss;
 
-        GD.Print($"[BardicInspiration] beatsHeld={_beatsHeld}, grade={grade}");
+        GD.Print($"[BardicInspiration] beatsHeld={_beatsHeld}/4, grade={grade}");
         Complete(grade);
     }
 }

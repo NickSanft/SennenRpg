@@ -19,6 +19,7 @@ public partial class SerenadeMinigame : BardMinigameBase
     private int  _beatsElapsed;
     private int  _successCount;
     private bool _pressedThisBeat;
+    private bool _ready;
     private bool _finished;
 
     protected override void OnActivate()
@@ -26,6 +27,7 @@ public partial class SerenadeMinigame : BardMinigameBase
         _beatsElapsed     = 0;
         _successCount     = 0;
         _pressedThisBeat  = false;
+        _ready            = false;
         _finished         = false;
         RhythmClock.Instance.Beat += OnBeat;
         QueueRedraw();
@@ -39,6 +41,7 @@ public partial class SerenadeMinigame : BardMinigameBase
     private void OnBeat(int _beatIndex)
     {
         if (_finished) return;
+        if (!_ready) { _ready = true; QueueRedraw(); return; } // countdown beat
 
         _beatsElapsed++;
         _pressedThisBeat = false;

@@ -2859,10 +2859,8 @@ tile_set = SubResource("TileSet_8m7dc")
 tile_set = SubResource("TileSet_5gidl")
 
 [node name="Npc" parent="Npcs" parent_id_path=PackedInt32Array(613369906) index="0" unique_id=1198639027 instance=ExtResource("3_ikk50")]
-TimelinePath = "res://dialog/characters/npc_test_hello.dtl"
-DisplayName = "Mysterious Figure"
-AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_test_after.dtl")
-AltTimelineFlags = PackedStringArray("met_npc_1")
+TimelinePath = "res://dialog/timelines/shizu.dtl"
+DisplayName = "Shizu"
 
 [node name="MapExit" parent="." index="7" unique_id=1070646756 instance=ExtResource("4_8m7dc")]
 position = Vector2(1, -170)

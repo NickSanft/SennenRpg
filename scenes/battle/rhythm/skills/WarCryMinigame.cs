@@ -14,12 +14,14 @@ public partial class WarCryMinigame : BardMinigameBase
 
     private int  _tapCount;
     private int  _beatsElapsed;
+    private bool _ready;
     private bool _finished;
 
     protected override void OnActivate()
     {
         _tapCount     = 0;
         _beatsElapsed = 0;
+        _ready        = false;
         _finished     = false;
         RhythmClock.Instance.Beat += OnBeat;
         QueueRedraw();
@@ -33,10 +35,11 @@ public partial class WarCryMinigame : BardMinigameBase
     private void OnBeat(int _beatIndex)
     {
         if (_finished) return;
+        if (!_ready) { _ready = true; QueueRedraw(); return; } // countdown beat
         _beatsElapsed++;
         QueueRedraw();
 
-        if (_beatsElapsed >= 2)
+        if (_beatsElapsed >= 4)
             Finish();
     }
 

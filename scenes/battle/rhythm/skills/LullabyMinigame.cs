@@ -13,11 +13,13 @@ public partial class LullabyMinigame : BardMinigameBase
     public override string SkillName        => "Lullaby";
     public override string SkillDescription => "Press the lane keys in sequence.";
 
-    private static readonly int[] LaneSequence = { 0, 2, 1, 3 };
+    private static readonly int[]    LaneSequence = { 0, 1, 2, 3 };
+    private static readonly string[] LaneKeys     = { "Z", "X", "C", "V" };
 
     private int  _currentNote;
     private int  _successCount;
     private int  _beatsElapsed;
+    private bool _ready;
     private bool _finished;
     private bool _lastWasWrong;
 
@@ -26,6 +28,7 @@ public partial class LullabyMinigame : BardMinigameBase
         _currentNote  = 0;
         _successCount = 0;
         _beatsElapsed = 0;
+        _ready        = false;
         _finished     = false;
         _lastWasWrong = false;
         RhythmClock.Instance.Beat += OnBeat;
@@ -40,6 +43,7 @@ public partial class LullabyMinigame : BardMinigameBase
     private void OnBeat(int _beatIndex)
     {
         if (_finished) return;
+        if (!_ready) { _ready = true; QueueRedraw(); return; } // countdown beat
         _beatsElapsed++;
         QueueRedraw();
 
@@ -114,9 +118,9 @@ public partial class LullabyMinigame : BardMinigameBase
                 DrawRect(rect, baseColor with { A = 0.7f }, filled: false, width: 1f);
             }
 
-            // Lane number label
+            // Key label (Z/X/C/V)
             DrawString(ThemeDB.FallbackFont, new Vector2(x + boxSize * 0.5f - 5f, centerY + boxSize * 0.5f + 6f),
-                       $"{lane}", HorizontalAlignment.Left, -1, 12, Colors.White);
+                       LaneKeys[lane], HorizontalAlignment.Left, -1, 12, Colors.White);
         }
 
         // Wrong flash
@@ -128,7 +132,7 @@ public partial class LullabyMinigame : BardMinigameBase
 
         // Instruction label
         DrawString(ThemeDB.FallbackFont, new Vector2(VP.X * 0.5f - 60f, centerY - 18f),
-                   "Press lanes in order", HorizontalAlignment.Left, -1, 11, Colors.White with { A = 0.8f });
+                   "Press Z X C V in order", HorizontalAlignment.Left, -1, 11, Colors.White with { A = 0.8f });
     }
 
     public override void _Process(double _delta)

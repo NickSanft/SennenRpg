@@ -23,7 +23,7 @@ public partial class RhythmStrike : Control
     private const float GoodPx     = 22f;    // matches RhythmArena window
 
     // Speed: note covers (HitZoneX - SpawnX) in exactly ActivationBeats beats
-    private const int ActivationBeats = 2;
+    private const int ActivationBeats = 3;
 
     // ── State ─────────────────────────────────────────────────────────
     private bool  _active;
@@ -58,8 +58,8 @@ public partial class RhythmStrike : Control
     {
         if (!_active) return;
 
-        // If the note has already passed the miss boundary, auto-miss
-        if (_noteX > HitZoneX + GoodPx + 10f && !_hasResult)
+        // If the note has already passed the lane, auto-miss
+        if (_noteX > LaneW && !_hasResult)
             Resolve(HitGrade.Miss);
     }
 
