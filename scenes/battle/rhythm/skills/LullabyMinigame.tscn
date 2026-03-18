@@ -1,0 +1,4 @@
+[gd_scene format=4]
+[ext_resource type="Script" path="res://scenes/battle/rhythm/skills/LullabyMinigame.cs" id="1"]
+[node name="LullabyMinigame" type="Control"]
+script = ExtResource("1")
