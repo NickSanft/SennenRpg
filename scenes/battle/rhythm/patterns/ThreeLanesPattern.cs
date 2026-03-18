@@ -23,14 +23,6 @@ public partial class ThreeLanesPattern : RhythmPatternBase
     {
         if (beatInMeasure != 0 && beatInMeasure != 2) return;
 
-        // Shift the gap lane at the start of each new measure
-        if (beatInMeasure == 0)
-            _gapLane = (_gapLane + 1) % 4;
-
-        for (int lane = 0; lane < 4; lane++)
-        {
-            if (lane == _gapLane) continue;
-            SpawnObstacle(lane);
-        }
+        SpawnObstacle(0);
     }
 }

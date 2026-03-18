@@ -5,22 +5,31 @@ using SennenRpg.Core.Data;
 namespace SennenRpg.Scenes.Battle;
 
 /// <summary>
-/// Single-beat strike minigame that replaces FightBar.
-/// The player presses ui_accept / interact on the beat to deal damage.
-/// Grades against RhythmClock.BeatPhase (0.0 = perfect beat, wrap around at 1.0).
-/// The minigame stays active for ActivationBeats beats; missing all = Miss.
+/// Single-lane note highway for the Fight/Strike action.
+/// A note travels from left to right; the player presses Z (interact/ui_accept)
+/// when the note reaches the hit-zone line on the right side.
+/// Graded by pixel distance from the hit zone, consistent with RhythmArena.
 /// </summary>
 public partial class RhythmStrike : Control
 {
     [Signal] public delegate void StrikeResolvedEventHandler(int grade);
 
-    private const int   ActivationBeats = 2;
-    private const float RingRadiusMin   = 12f;
-    private const float RingRadiusMax   = 50f;
+    // ── Layout ────────────────────────────────────────────────────────
+    private const float LaneW      = 240f;
+    private const float LaneH      = 36f;
+    private const float HitZoneX   = 200f;   // x relative to lane origin
+    private const float SpawnX     = 0f;
+    private const float NoteRadius = 10f;
+    private const float GoodPx     = 22f;    // matches RhythmArena window
 
-    private bool _active;
-    private int  _beatsRemaining;
-    private bool _hasResult;
+    // Speed: note covers (HitZoneX - SpawnX) in exactly ActivationBeats beats
+    private const int ActivationBeats = 2;
+
+    // ── State ─────────────────────────────────────────────────────────
+    private bool  _active;
+    private bool  _hasResult;
+    private float _noteX;
+    private float _speed;
 
     public override void _Ready()
     {
@@ -33,13 +42,14 @@ public partial class RhythmStrike : Control
         RhythmClock.Instance.Beat -= OnBeat;
     }
 
-    /// <summary>Activate the strike window for ActivationBeats beats.</summary>
     public void Activate()
     {
-        _active        = true;
-        _hasResult     = false;
-        _beatsRemaining = ActivationBeats;
-        Visible        = true;
+        float beatInterval = RhythmClock.Instance.BeatInterval;
+        _speed      = (HitZoneX - SpawnX) / (ActivationBeats * beatInterval);
+        _noteX      = SpawnX;
+        _active     = true;
+        _hasResult  = false;
+        Visible     = true;
         QueueRedraw();
         GD.Print("[RhythmStrike] Activated.");
     }
@@ -47,21 +57,22 @@ public partial class RhythmStrike : Control
     private void OnBeat(int _beatIndex)
     {
         if (!_active) return;
-        _beatsRemaining--;
-        QueueRedraw();
 
-        if (_beatsRemaining <= 0 && !_hasResult)
-        {
-            // Ran out of beats without a press → Miss
-            _active = false;
-            Visible = false;
-            EmitSignal(SignalName.StrikeResolved, (int)HitGrade.Miss);
-        }
+        // If the note has already passed the miss boundary, auto-miss
+        if (_noteX > HitZoneX + GoodPx + 10f && !_hasResult)
+            Resolve(HitGrade.Miss);
     }
 
-    public override void _Process(double _delta)
+    public override void _Process(double delta)
     {
-        if (_active) QueueRedraw();
+        if (!_active) return;
+        _noteX += _speed * (float)delta;
+
+        // Auto-miss once the note is well past the hit zone
+        if (_noteX > HitZoneX + GoodPx + 10f && !_hasResult)
+            Resolve(HitGrade.Miss);
+
+        QueueRedraw();
     }
 
     public override void _UnhandledInput(InputEvent e)
@@ -69,38 +80,60 @@ public partial class RhythmStrike : Control
         if (!_active || _hasResult) return;
         if (!e.IsActionPressed("interact") && !e.IsActionPressed("ui_accept")) return;
 
+        float dist = Mathf.Abs(_noteX - HitZoneX);
+        float deviationSec = dist / _speed;
+        Resolve(RhythmConstants.GradeDeviation(deviationSec));
+        GetViewport().SetInputAsHandled();
+    }
+
+    private void Resolve(HitGrade grade)
+    {
         _hasResult = true;
         _active    = false;
         Visible    = false;
-
-        // Deviation from nearest beat boundary
-        float phase     = RhythmClock.Instance.BeatPhase;
-        float deviation = Mathf.Min(phase, 1f - phase) * RhythmClock.Instance.BeatInterval;
-        var   grade     = RhythmConstants.GradeDeviation(deviation);
-
-        GD.Print($"[RhythmStrike] Resolved. Phase={phase:F3}, deviation={deviation*1000:F1}ms, grade={grade}");
+        GD.Print($"[RhythmStrike] Resolved. noteX={_noteX:F1}, grade={grade}");
         EmitSignal(SignalName.StrikeResolved, (int)grade);
-        GetViewport().SetInputAsHandled();
     }
+
+    // ── Drawing ───────────────────────────────────────────────────────
 
     public override void _Draw()
     {
         if (!_active) return;
 
-        float phase  = RhythmClock.Instance.BeatPhase;
-        var   center = Size * 0.5f;
+        var vp     = GetViewportRect().Size;
+        var origin = new Vector2((vp.X - LaneW) * 0.5f, vp.Y * 0.5f - LaneH * 0.5f);
 
-        // Outer convergence ring — shrinks from max to min over the beat
-        float outerR = Mathf.Lerp(RingRadiusMax, RingRadiusMin, phase);
-        DrawArc(center, outerR, 0, Mathf.Tau, 48, Colors.White with { A = 0.6f }, 2f);
+        // Lane background
+        DrawRect(new Rect2(origin, new Vector2(LaneW, LaneH)),
+                 new Color(0.06f, 0.06f, 0.10f, 1f));
+        DrawRect(new Rect2(origin, new Vector2(LaneW, LaneH)),
+                 Colors.White, filled: false, width: 2f);
 
-        // Inner target ring — pulses bright at beat 0
-        float pulse = Mathf.Max(0f, 1f - phase * 3f);
-        DrawArc(center, RingRadiusMin, 0, Mathf.Tau, 48,
-                Colors.Yellow with { A = 0.4f + pulse * 0.6f }, 3f);
+        // Hit-zone line
+        float hitScreenX = origin.X + HitZoneX;
+        DrawLine(new Vector2(hitScreenX, origin.Y),
+                 new Vector2(hitScreenX, origin.Y + LaneH),
+                 Colors.White with { A = 0.8f }, 2f);
 
-        // Hit prompt
-        DrawString(ThemeDB.FallbackFont, center + new Vector2(-18f, 22f),
-                   "Press on beat!", HorizontalAlignment.Left, -1, 11, Colors.White with { A = 0.8f });
+        // Beat pulse glow on the hit zone
+        float pulse = Mathf.Max(0f, 1f - RhythmClock.Instance.BeatPhase * 4f);
+        if (pulse > 0f)
+            DrawLine(new Vector2(hitScreenX, origin.Y),
+                     new Vector2(hitScreenX, origin.Y + LaneH),
+                     Colors.White with { A = pulse * 0.6f }, 6f);
+
+        // Travelling note
+        float noteScreenX = origin.X + _noteX;
+        float noteCentreY = origin.Y + LaneH * 0.5f;
+        DrawCircle(new Vector2(noteScreenX, noteCentreY), NoteRadius, Colors.Yellow);
+        DrawArc(new Vector2(noteScreenX, noteCentreY), NoteRadius, 0, Mathf.Tau, 24,
+                Colors.White, 2f);
+
+        // Prompt
+        DrawString(ThemeDB.FallbackFont,
+                   new Vector2(origin.X, origin.Y - 10f),
+                   "Press Z to strike!",
+                   HorizontalAlignment.Left, -1, 12, Colors.White);
     }
 }

@@ -27,14 +27,6 @@ public partial class LaneSweepPattern : RhythmPatternBase
         // Only spawn on strong beats (0 and 2)
         if (beatInMeasure != 0 && beatInMeasure != 2) return;
 
-        // Rotate the safe lane every measure
-        if (beatInMeasure == 0)
-            _safeLane = (_safeLane + 1) % 4;
-
-        for (int lane = 0; lane < 4; lane++)
-        {
-            if (lane == _safeLane) continue;
-            SpawnObstacle(lane);
-        }
+        SpawnObstacle(0);
     }
 }

@@ -21,7 +21,6 @@ public partial class AllLanesPattern : RhythmPatternBase
         // Burst on beat 0 of every measure
         if (beatInMeasure != 0) return;
 
-        for (int lane = 0; lane < 4; lane++)
-            SpawnObstacle(lane, damage: 2); // higher damage on a missed burst
+        SpawnObstacle(0, damage: 2);
     }
 }

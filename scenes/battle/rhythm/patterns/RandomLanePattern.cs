@@ -24,7 +24,7 @@ public partial class RandomLanePattern : RhythmPatternBase
         if (phase >= 0.5f && !_halfBeatFired)
         {
             _halfBeatFired = true;
-            SpawnObstacle((int)GD.RandRange(0, 3));
+            SpawnObstacle(0);
         }
         if (phase < 0.5f)
             _halfBeatFired = false;
@@ -32,6 +32,6 @@ public partial class RandomLanePattern : RhythmPatternBase
 
     protected override void SpawnOnBeat(int beatInMeasure, int totalBeat)
     {
-        SpawnObstacle((int)GD.RandRange(0, 3));
+        SpawnObstacle(0);
     }
 }

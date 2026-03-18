@@ -21,17 +21,18 @@ public partial class RhythmArena : Node2D
 {
     [Signal] public delegate void PhaseEndedEventHandler();
     [Signal] public delegate void PlayerHurtEventHandler(int damage);
+    [Signal] public delegate void NoteHitEventHandler(int grade);
 
     // ── Arena geometry constants ──────────────────────────────────────
     public const float ArenaHalfW  = 112f;
-    public const float ArenaHalfH  = 72f;
+    public const float ArenaHalfH  = 18f;
     public const float HitZoneX    = 90f;
     public const float SpawnX      = -96f;
     public const int   BeatsUntilArrival = 3;
     public const float LaneHeight  = 36f;
 
     /// <summary>Y-centre of each lane relative to arena centre.</summary>
-    public static readonly float[] LaneCenterY = { -54f, -18f, 18f, 54f };
+    public static readonly float[] LaneCenterY = { 0f };
 
     // ── Hit-window constants (pixels) ─────────────────────────────────
     /// <summary>Pixel distance from HitZone that corresponds to GoodWindowSec at base speed.</summary>
@@ -170,6 +171,7 @@ public partial class RhythmArena : Node2D
                 float deviationSec = bestDist / best.TravelSpeed;
                 var   grade        = RhythmConstants.GradeDeviation(deviationSec);
                 best.Resolve(grade);
+                EmitSignal(SignalName.NoteHit, (int)grade);
                 ShowFeedback(grade, lane);
             }
             // No obstacle nearby → false press, no effect (good UX)

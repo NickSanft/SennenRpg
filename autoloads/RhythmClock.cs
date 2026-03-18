@@ -35,6 +35,7 @@ public partial class RhythmClock : Node
     private AudioStreamPlayer? _bgmPlayer;
     private int   _lastBeatIndex = -1;
     private bool  _running;
+    private float _freeRunPos;   // accumulated seconds when running without a player
 
     public override void _Ready()
     {
@@ -68,6 +69,24 @@ public partial class RhythmClock : Node
             SetBpm(bpm);
     }
 
+    /// <summary>
+    /// Start the clock without an audio player, using delta accumulation.
+    /// Useful when no BGM file is configured — guarantees Beat signals fire
+    /// so all rhythm minigames work even without audio.
+    /// </summary>
+    public void StartFreeRunning(float bpm = 0f)
+    {
+        if (bpm > 0f) SetBpm(bpm);
+        _bgmPlayer     = null;
+        _freeRunPos    = 0f;
+        _lastBeatIndex = -1;
+        BeatIndex      = 0;
+        MeasureIndex   = 0;
+        BeatInMeasure  = 0;
+        BeatPhase      = 0f;
+        _running       = true;
+    }
+
     /// <summary>Stop tracking beats. Call when leaving the battle scene.</summary>
     public void Stop()
     {
@@ -75,11 +94,25 @@ public partial class RhythmClock : Node
         _bgmPlayer = null;
     }
 
-    public override void _Process(double _delta)
+    public override void _Process(double delta)
     {
-        if (!_running || _bgmPlayer == null || !_bgmPlayer.Playing) return;
+        if (!_running) return;
 
-        float pos = _bgmPlayer.GetPlaybackPosition();
+        float pos;
+        if (_bgmPlayer != null && _bgmPlayer.Playing)
+        {
+            pos = _bgmPlayer.GetPlaybackPosition();
+        }
+        else if (_bgmPlayer == null)
+        {
+            // Free-running: accumulate delta so beats fire without audio
+            _freeRunPos += (float)delta;
+            pos          = _freeRunPos;
+        }
+        else
+        {
+            return; // player attached but not playing yet
+        }
         if (pos < 0f) pos = 0f;
 
         int newBeat = (int)(pos / BeatInterval);

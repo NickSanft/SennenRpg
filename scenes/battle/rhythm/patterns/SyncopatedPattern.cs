@@ -32,8 +32,7 @@ public partial class SyncopatedPattern : RhythmPatternBase
         if (phase >= 0.5f && !_halfBeatFired)
         {
             _halfBeatFired = true;
-            int lane = _laneSequence[_halfBeatCount % _laneSequence.Length];
-            SpawnObstacle(lane);
+            SpawnObstacle(0);
             _halfBeatCount++;
         }
         if (phase < 0.5f)

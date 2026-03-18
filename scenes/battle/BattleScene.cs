@@ -6,7 +6,7 @@ using SennenRpg.Core.Data;
 
 namespace SennenRpg.Scenes.Battle;
 
-public enum BattleState { Intro, PlayerTurn, EnemyTurn, RhythmPhase, StrikePhase, Victory, Defeat }
+public enum BattleState { Intro, PlayerTurn, EnemyTurn, RhythmPhase, StrikePhase, SkillPhase, Victory, Defeat }
 
 /// <summary>
 /// Root battle scene state machine — rhythm RPG version.
@@ -35,6 +35,14 @@ public partial class BattleScene : Node2D
 	private RhythmStrike    _rhythmStrike   = null!;
 	private EnemyNameplate  _enemyNameplate = null!;
 	private Node2D          _enemyVisual    = null!;
+
+	private CharmMinigame    _charmMinigame  = null!;
+	private BardMinigameBase[] _bardSkills   = null!;
+	private int              _currentSkillIndex;
+	private PerformanceScore _performance    = new();
+
+	private static readonly string[] DefaultBardSkillNames =
+		{ "Bardic Inspiration", "Lullaby", "War Cry", "Serenade", "Dissonance" };
 
 	private PackedScene? _damageNumberScene;
 
@@ -67,6 +75,26 @@ public partial class BattleScene : Node2D
 		_rhythmArena.PhaseEnded      += OnRhythmPhaseEnded;
 		_rhythmArena.PlayerHurt      += OnPlayerHurt;
 
+		// Instantiate Charm and Bard skills programmatically
+		_charmMinigame = InstantiateFullRect<CharmMinigame>("res://scenes/battle/rhythm/CharmMinigame.tscn");
+		_bardSkills = new BardMinigameBase[]
+		{
+			InstantiateFullRect<BardMinigameBase>("res://scenes/battle/rhythm/skills/BardicInspirationMinigame.tscn"),
+			InstantiateFullRect<BardMinigameBase>("res://scenes/battle/rhythm/skills/LullabyMinigame.tscn"),
+			InstantiateFullRect<BardMinigameBase>("res://scenes/battle/rhythm/skills/WarCryMinigame.tscn"),
+			InstantiateFullRect<BardMinigameBase>("res://scenes/battle/rhythm/skills/SerenadeMinigame.tscn"),
+			InstantiateFullRect<BardMinigameBase>("res://scenes/battle/rhythm/skills/DissonanceMinigame.tscn"),
+		};
+
+		_charmMinigame.CharmCompleted += OnCharmCompleted;
+		foreach (var skill in _bardSkills)
+			skill.SkillCompleted += OnSkillCompleted;
+
+		// Performance tracking
+		_rhythmArena.NoteHit    += grade => _performance.Record((HitGrade)grade);
+		_rhythmArena.PlayerHurt += _ => _performance.Record(HitGrade.Miss);
+		_rhythmStrike.StrikeResolved += grade => _performance.Record((HitGrade)grade);
+
 		// Load encounter
 		var encounter = BattleRegistry.Instance.GetPendingEncounter();
 		if (encounter != null && encounter.Enemies.Count > 0)
@@ -86,27 +114,31 @@ public partial class BattleScene : Node2D
 
 	// ── BGM ───────────────────────────────────────────────────────────
 
+	private const string DefaultBattleBgmPath =
+		"res://assets/music/Divora - Ominous Augury - DND 7 - 10 Corruption Can Be Fun.wav";
+
 	private void StartBattleBgm(EncounterData? encounter)
 	{
-		// Resolve BGM path: encounter > enemy > default
+		// Resolve BGM path: encounter > enemy > project default
 		string bgmPath = encounter?.BattleBgmPath ?? "";
 		if (string.IsNullOrEmpty(bgmPath))
 			bgmPath = _enemy?.BattleBgmPath ?? "";
+		if (string.IsNullOrEmpty(bgmPath))
+			bgmPath = DefaultBattleBgmPath;
 
-		// Resolve BPM: encounter > enemy > default
+		// Resolve BPM: encounter > enemy > default (180)
 		float bpm = (encounter?.BattleBpm ?? 0f) > 0f ? encounter!.BattleBpm
 				  : (_enemy?.BattleBpm ?? 0f) > 0f    ? _enemy!.BattleBpm
 				  : RhythmConstants.DefaultBpm;
 
-		if (!string.IsNullOrEmpty(bgmPath) && ResourceLoader.Exists(bgmPath))
+		if (ResourceLoader.Exists(bgmPath))
 		{
 			AudioManager.Instance.PlayBgm(bgmPath, fadeTime: 0.1f, bpm: bpm);
 		}
 		else
 		{
-			// No audio file — just configure the clock with the correct BPM
-			RhythmClock.Instance.SetBpm(bpm);
-			GD.Print($"[BattleScene] No battle BGM found. RhythmClock BPM set to {bpm}.");
+			RhythmClock.Instance.StartFreeRunning(bpm);
+			GD.Print($"[BattleScene] No battle BGM found. RhythmClock free-running at {bpm} BPM.");
 		}
 	}
 
@@ -149,11 +181,26 @@ public partial class BattleScene : Node2D
 		_actionMenu.Visible     = newState == BattleState.PlayerTurn;
 		_subMenu.Visible        = false;
 		_rhythmStrike.Visible   = false;
+		_rhythmArena.Visible    = false;
 		_enemyNameplate.Visible = newState is BattleState.PlayerTurn or BattleState.EnemyTurn;
+
+		_charmMinigame.Visible = false;
+		foreach (var skill in _bardSkills)
+			skill.Visible = false;
+
 		GD.Print($"[BattleScene] State → {newState}");
 
 		if (newState == BattleState.PlayerTurn)
 			_actionMenu.FocusFirst();
+	}
+
+	private T InstantiateFullRect<T>(string path) where T : Control
+	{
+		var node = GD.Load<PackedScene>(path).Instantiate<T>();
+		node.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+		node.Visible = false;
+		AddChild(node);
+		return node;
 	}
 
 	private void SpawnDamageNumber(int damage, bool isCrit)
@@ -222,22 +269,21 @@ public partial class BattleScene : Node2D
 			_ = RunEnemyTurn();
 	}
 
-	// ── Perform (Bard Skills) — stub for Phase 5 ─────────────────────
+	// ── Perform (Bard Skills) ─────────────────────────────────────────
 
 	private void OnPerformSelected()
 	{
 		GD.Print("[BattleScene] PERFORM selected");
-		if (_enemy?.ActOptions is { Length: > 0 })
-		{
-			_subMenuMode = SubMenuMode.Perform;
-			_actionMenu.Visible = false;
-			_subMenu.Populate(_enemy.ActOptions);
-			_subMenu.Visible = true;
-		}
-		else
-		{
-			ShowDialogText("* There's nothing to perform here.");
-		}
+		_subMenuMode = SubMenuMode.Perform;
+		_actionMenu.Visible = false;
+
+		// Use enemy's BardicActOptions if set, otherwise default skills
+		string[] options = _enemy?.BardicActOptions is { Length: > 0 }
+			? _enemy.BardicActOptions
+			: DefaultBardSkillNames;
+
+		_subMenu.Populate(options);
+		_subMenu.Visible = true;
 	}
 
 	// ── Item ──────────────────────────────────────────────────────────
@@ -288,50 +334,27 @@ public partial class BattleScene : Node2D
 		if (_subMenuMode == SubMenuMode.Mercy) { HandleMercyOption(index); return; }
 		if (_subMenuMode == SubMenuMode.Items)  { HandleItemOption(index);  return; }
 
-		// Perform mode — Phase 5 will wire full Bard skill minigames.
-		// For now, fall back to the legacy Act logic so existing enemies remain functional.
-		GD.Print($"[BattleScene] Perform option {index} selected");
+		// Perform mode — launch the Bard skill minigame
+		GD.Print($"[BattleScene] Skill option {index} selected");
+		_currentSkillIndex = index;
 
-		if (_enemy?.ActOptions[index] == "Check")
+		// Check if this option maps to "Charm" (opens CharmMinigame)
+		string[] options = _enemy?.BardicActOptions is { Length: > 0 }
+			? _enemy.BardicActOptions
+			: DefaultBardSkillNames;
+
+		if (index < options.Length && options[index] == "Charm")
 		{
-			string check = $"* {_enemy.DisplayName}\n* {_enemy.FlavorText}\n* ATK {_enemy.Stats?.Attack ?? 0}  DEF {_enemy.Stats?.Defense ?? 0}";
-			ShowDialogText(check);
-			_ = RunEnemyTurn();
+			SetState(BattleState.SkillPhase);
+			_charmMinigame.Activate();
 			return;
 		}
 
-		if (_enemy?.ActMercyValues is { Length: > 0 } && index < _enemy.ActMercyValues.Length)
-			_mercyPercent = Mathf.Clamp(_mercyPercent + _enemy.ActMercyValues[index], 0, 100);
-
-		_enemyCanBeSpared = _mercyPercent >= 100 && (_enemy?.CanBeSpared ?? false);
-		_enemyNameplate.UpdateMercy(_mercyPercent, _enemyCanBeSpared);
-
-		if (_enemy != null)
-		{
-			string optionKey = _enemy.ActOptions[index].ToLower().Replace(" ", "_");
-			string actPath   = $"res://dialog/timelines/act_{_enemy.EnemyId}_{optionKey}.dtl";
-			if (ResourceLoader.Exists(actPath))
-			{
-				GameManager.Instance.SetState(GameState.Dialog);
-				DialogicBridge.Instance.ConnectTimelineEnded(
-					new Callable(this, MethodName.OnActDialogEnded));
-				DialogicBridge.Instance.StartTimelineWithFlags(actPath);
-				return;
-			}
-		}
-
-		string result;
-		if (_enemy?.ActResultTexts is { Length: > 0 } && index < _enemy.ActResultTexts.Length
-			&& !string.IsNullOrEmpty(_enemy.ActResultTexts[index]))
-			result = $"* {_enemy.ActResultTexts[index]}";
-		else
-			result = $"* You try: {_enemy?.ActOptions[index] ?? "???"}";
-
-		if (_enemyCanBeSpared)
-			result += "\n* You can now spare them!";
-
-		ShowDialogText(result);
-		_ = RunEnemyTurn();
+		// Map option index to Bard skill
+		int skillIndex = index < _bardSkills.Length ? index : 0;
+		_currentSkillIndex = skillIndex;
+		SetState(BattleState.SkillPhase);
+		_bardSkills[skillIndex].Activate();
 	}
 
 	private void HandleMercyOption(int index)
@@ -361,6 +384,57 @@ public partial class BattleScene : Node2D
 	private void OnActDialogEnded()
 	{
 		GameManager.Instance.SetState(GameState.Battle);
+		_ = RunEnemyTurn();
+	}
+
+	private void OnSkillCompleted(int gradeInt)
+	{
+		var grade = (HitGrade)gradeInt;
+
+		// Apply mercy based on enemy's SkillMercyValues (default 20 if not set)
+		int baseMercy = (_enemy?.SkillMercyValues is { Length: > 0 } && _currentSkillIndex < _enemy.SkillMercyValues.Length)
+			? _enemy.SkillMercyValues[_currentSkillIndex]
+			: 20;
+
+		int mercyGain = Mathf.RoundToInt(baseMercy * RhythmConstants.GradeMultiplier(grade));
+		_mercyPercent = Mathf.Clamp(_mercyPercent + mercyGain, 0, 100);
+		_enemyCanBeSpared = _mercyPercent >= 100 && (_enemy?.CanBeSpared ?? false);
+		_enemyNameplate.UpdateMercy(_mercyPercent, _enemyCanBeSpared);
+
+		string result = grade switch
+		{
+			HitGrade.Perfect => "★ Perfect performance! The enemy is moved.",
+			HitGrade.Good    => "♪ Good! The enemy responds warmly.",
+			_                => "♩ The performance falls flat...",
+		};
+		ShowDialogText($"* {result}");
+		if (_enemyCanBeSpared) ShowDialogText($"* {result}\n* You can spare them now!");
+
+		GD.Print($"[BattleScene] Skill grade={grade}, mercy+{mercyGain} → {_mercyPercent}%");
+		_ = RunEnemyTurn();
+	}
+
+	private void OnCharmCompleted(int successCount, int totalNotes)
+	{
+		float ratio = totalNotes > 0 ? (float)successCount / totalNotes : 0f;
+		var grade = ratio >= 0.75f ? HitGrade.Perfect : ratio >= 0.5f ? HitGrade.Good : HitGrade.Miss;
+
+		int baseMercy = 30; // Charm gives higher base mercy
+		int mercyGain = Mathf.RoundToInt(baseMercy * RhythmConstants.GradeMultiplier(grade));
+		_mercyPercent = Mathf.Clamp(_mercyPercent + mercyGain, 0, 100);
+		_enemyCanBeSpared = _mercyPercent >= 100 && (_enemy?.CanBeSpared ?? false);
+		_enemyNameplate.UpdateMercy(_mercyPercent, _enemyCanBeSpared);
+
+		string result = grade switch
+		{
+			HitGrade.Perfect => "★ Charmed! The enemy can't resist.",
+			HitGrade.Good    => "♪ The enemy seems swayed.",
+			_                => "♩ The charm attempt fizzles.",
+		};
+		ShowDialogText($"* {result} ({successCount}/{totalNotes} notes)");
+		if (_enemyCanBeSpared) ShowDialogText($"* {result} ({successCount}/{totalNotes} notes)\n* You can spare them now!");
+
+		GD.Print($"[BattleScene] Charm {successCount}/{totalNotes}, grade={grade}, mercy+{mercyGain} → {_mercyPercent}%");
 		_ = RunEnemyTurn();
 	}
 
@@ -449,6 +523,7 @@ public partial class BattleScene : Node2D
 	{
 		SetState(BattleState.Victory);
 		RhythmClock.Instance.Stop();
+		AudioManager.Instance.StopBgm(fadeTime: 0.5f);
 
 		if (killed)
 		{
@@ -457,7 +532,7 @@ public partial class BattleScene : Node2D
 			GameManager.Instance.RegisterKill();
 			GameManager.Instance.AddGold(gold);
 			GameManager.Instance.AddExp(exp);
-			ShowDialogText($"* You won!\n* Got {gold} G and {exp} EXP.\n* LV {GameManager.Instance.Love}");
+			ShowDialogText($"* You won!\n* Got {gold} G and {exp} EXP.\n* LV {GameManager.Instance.Love}\n* {_performance.GetSummaryText()}");
 		}
 		else
 		{
@@ -473,6 +548,7 @@ public partial class BattleScene : Node2D
 	{
 		SetState(BattleState.Victory);
 		RhythmClock.Instance.Stop();
+		AudioManager.Instance.StopBgm(fadeTime: 0.5f);
 		ShowDialogText("* You got away safely!");
 		await ToSignal(GetTree().CreateTimer(0.8f), SceneTreeTimer.SignalName.Timeout);
 		await ReturnToOverworld();
@@ -482,6 +558,7 @@ public partial class BattleScene : Node2D
 	{
 		SetState(BattleState.Defeat);
 		RhythmClock.Instance.Stop();
+		AudioManager.Instance.StopBgm(fadeTime: 1.0f);
 		ShowDialogText("* The music fades.\n\n* GAME OVER");
 		await ToSignal(GetTree().CreateTimer(2.0f), SceneTreeTimer.SignalName.Timeout);
 		await SceneTransition.Instance.GoToAsync("res://scenes/menus/MainMenu.tscn");
