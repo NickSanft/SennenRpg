@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+        <!-- Needed so the GdUnit4 addon bridge compiles against the API -->
+        <DefineConstants>$(DefineConstants);GDUNIT4NET_API_V5</DefineConstants>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+        <PackageReference Include="gdUnit4.api"          Version="5.0.0" />
+        <PackageReference Include="gdUnit4.test.adapter" Version="3.0.0" />
+        <!-- GodotSharp satisfies Godot.* type references in the test files -->
+        <PackageReference Include="GodotSharp"           Version="4.6.1" />
+    </ItemGroup>
+
+    <!--
+        Tests marked [RequireGodotRuntime] run INSIDE the Godot editor via the
+        GdUnit4 panel and cannot run with `dotnet test`.
+
+        To run from the editor:
+          1. Open the GdUnit4 panel (bottom dock in Godot)
+          2. Right-click this folder → Run Tests
+
+        To run headless:
+          godot --headless -s addons/gdUnit4/bin/GdUnitCmdTool.gd -d res://tests/gdunit/
+    -->
+
+</Project>
