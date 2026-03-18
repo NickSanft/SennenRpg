@@ -19,7 +19,7 @@
 &"portraits": {
 "default": {
 "export_overrides": {
-"image": "res://assets/sprites/portraits/test_npc_portrait.svg"
+"image": "\"res://assets/sprites/portraits/Shizu_Portrait.jpeg\""
 },
 "mirror": false,
 "offset": Vector2(0, 0),
