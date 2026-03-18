@@ -1,0 +1,6 @@
+[gd_scene format=4]
+
+[ext_resource type="Script" path="res://scenes/battle/rhythm/patterns/ThreeLanesPattern.cs" id="1"]
+
+[node name="ThreeLanesPattern" type="Node"]
+script = ExtResource("1")
