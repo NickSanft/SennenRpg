@@ -2859,6 +2859,7 @@ tile_set = SubResource("TileSet_8m7dc")
 tile_set = SubResource("TileSet_5gidl")
 
 [node name="Npc" parent="Npcs" parent_id_path=PackedInt32Array(613369906) index="0" unique_id=1198639027 instance=ExtResource("3_ikk50")]
+position = Vector2(0, 1)
 TimelinePath = "res://dialog/timelines/shizu.dtl"
 DisplayName = "Shizu"
 

@@ -1,3 +1,6 @@
-I am Shizukana Ito.
-I play the Erhu.
-...you can leave now.
+join TestNpc center
+TestNpc: I am Shizukana Ito.
+TestNpc: I play the Erhu.
+TestNpc: ...you can leave now.
+[signal arg="flag:met_shizu"]
+leave --All--

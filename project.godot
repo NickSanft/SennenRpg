@@ -56,7 +56,6 @@ directories/dtl_directory={
 "battle_victory": "res://dialog/timelines/battle_victory.dtl",
 "npc_foran": "res://dialog/timelines/npc_foran.dtl",
 "npc_test_after": "res://dialog/timelines/npc_test_after.dtl",
-"npc_test_hello": "res://dialog/characters/npc_test_hello.dtl",
 "save_point_prompt": "res://dialog/timelines/save_point_prompt.dtl",
 "timelines/npc_test_hello": "res://dialog/timelines/shizu.dtl"
 }
