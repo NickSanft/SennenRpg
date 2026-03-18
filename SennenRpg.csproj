@@ -1,21 +1,17 @@
-﻿<Project Sdk="Godot.NET.Sdk/4.6.1">
+<Project Sdk="Godot.NET.Sdk/4.6.1">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
-        <!-- Required for the GdUnit4 addon's C# bridge to compile -->
-        <DefineConstants>$(DefineConstants);GDUNIT4NET_API_V5</DefineConstants>
     </PropertyGroup>
 
-    <!-- Exclude the standalone NUnit test project — it has its own csproj and
-         must not be compiled as part of the Godot game build. -->
+    <!-- Exclude projects/folders that have their own csproj from Godot's
+         recursive file sweep — they must not be compiled as part of the game. -->
     <ItemGroup>
         <Compile Remove="SennenRpg.Tests/**" />
-    </ItemGroup>
-    <ItemGroup>
-      <PackageReference Include="gdUnit4.api" Version="5.0.0" />
+        <Compile Remove="tests/gdunit/**" />
     </ItemGroup>
 
 </Project>
