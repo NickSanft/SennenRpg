@@ -1,6 +1,4 @@
-join TestNpc center
-TestNpc: You have found the blueberry patch!
-TestNpc: This was made by the great Cinderblock the Fallowhearted.
-TestNpc: I don't even know what I just said.
-leave --All--
+You have found the blueberry patch!
+This was made by the great Cinderblock the Fallowhearted.
+I don't even know what I just said.
 [signal arg="flag:met_npc_1"]
