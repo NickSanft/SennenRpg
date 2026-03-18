@@ -19,12 +19,12 @@ columns = 2
 [node name="FightButton" type="Button" parent="GridContainer"]
 layout_mode = 2
 custom_minimum_size = Vector2(140, 36)
-text = "FIGHT"
+text = "STRIKE"
 
 [node name="ActButton" type="Button" parent="GridContainer"]
 layout_mode = 2
 custom_minimum_size = Vector2(140, 36)
-text = "ACT"
+text = "PERFORM"
 
 [node name="ItemButton" type="Button" parent="GridContainer"]
 layout_mode = 2

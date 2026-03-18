@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://core/data/EnemyData.cs" id="1_EnemyData"]
 [ext_resource type="Script" path="res://core/data/CharacterStats.cs" id="2_CharacterStats"]
-[ext_resource type="PackedScene" path="res://scenes/battle/patterns/Pattern006.tscn" id="3_pattern"]
+[ext_resource type="PackedScene" path="res://scenes/battle/rhythm/patterns/SyncopatedPattern.tscn" id="3_pattern"]
 
 [sub_resource type="Resource" id="CharacterStats_1"]
 script = ExtResource("2_CharacterStats")

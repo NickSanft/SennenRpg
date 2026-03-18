@@ -6,15 +6,17 @@ using SennenRpg.Core.Data;
 
 namespace SennenRpg.Scenes.Battle;
 
-public enum BattleState { Intro, PlayerTurn, EnemyTurn, DodgePhase, Victory, Defeat }
+public enum BattleState { Intro, PlayerTurn, EnemyTurn, RhythmPhase, StrikePhase, Victory, Defeat }
 
 /// <summary>
-/// Root battle scene state machine.
-/// Phase 13: FightBar timing minigame, Act mercy system, Spare/Flee under Mercy.
+/// Root battle scene state machine — rhythm RPG version.
+/// Fight uses RhythmStrike (single-beat timing).
+/// Enemy turn uses RhythmArena (4-lane note highway).
+/// PERFORM opens the Bard skills sub-menu (skills implemented in Phase 5).
 /// </summary>
 public partial class BattleScene : Node2D
 {
-	private enum SubMenuMode { Act, Mercy, Items }
+	private enum SubMenuMode { Perform, Mercy, Items }
 
 	private BattleState _state;
 	private EnemyData?  _enemy;
@@ -23,15 +25,16 @@ public partial class BattleScene : Node2D
 	private int         _mercyPercent;
 	private SubMenuMode _subMenuMode;
 
+	// ── Node references ───────────────────────────────────────────────
 	private Node2D          _enemyArea      = null!;
 	private Label           _dialogLabel    = null!;
 	private ActionMenu      _actionMenu     = null!;
 	private SubMenu         _subMenu        = null!;
 	private BattleHUD       _battleHud      = null!;
-	private DodgeBox        _dodgeBox       = null!;
-	private FightBar        _fightBar       = null!;
+	private RhythmArena     _rhythmArena    = null!;
+	private RhythmStrike    _rhythmStrike   = null!;
 	private EnemyNameplate  _enemyNameplate = null!;
-	private Node2D          _enemyVisual    = null!; // Sprite2D or Polygon2D placeholder
+	private Node2D          _enemyVisual    = null!;
 
 	private PackedScene? _damageNumberScene;
 
@@ -42,27 +45,29 @@ public partial class BattleScene : Node2D
 		_actionMenu     = GetNode<ActionMenu>("ActionMenu");
 		_subMenu        = GetNode<SubMenu>("SubMenu");
 		_battleHud      = GetNode<BattleHUD>("BattleHUD");
-		_dodgeBox       = GetNode<DodgeBox>("DodgeBox");
-		_fightBar       = GetNode<FightBar>("FightBar");
+		_rhythmArena    = GetNode<RhythmArena>("RhythmArena");
+		_rhythmStrike   = GetNode<RhythmStrike>("RhythmStrike");
 		_enemyNameplate = GetNode<EnemyNameplate>("EnemyNameplate");
 
 		const string dmgPath = "res://scenes/battle/ui/DamageNumber.tscn";
 		if (ResourceLoader.Exists(dmgPath))
 			_damageNumberScene = GD.Load<PackedScene>(dmgPath);
 
-		_actionMenu.FightSelected += OnFightSelected;
-		_actionMenu.ActSelected   += OnActSelected;
-		_actionMenu.ItemSelected  += OnItemSelected;
-		_actionMenu.MercySelected += OnMercySelected;
-		_subMenu.OptionSelected   += OnSubMenuOptionSelected;
-		_subMenu.Cancelled        += OnSubMenuCancelled;
-		_fightBar.Confirmed       += OnFightBarConfirmed;
+		// Wire action menu
+		_actionMenu.FightSelected   += OnFightSelected;
+		_actionMenu.PerformSelected += OnPerformSelected;
+		_actionMenu.ItemSelected    += OnItemSelected;
+		_actionMenu.MercySelected   += OnMercySelected;
 
-		_dodgeBox.PhaseEnded += OnDodgePhaseEnded;
-		var soul = _dodgeBox.GetNodeOrNull<Soul>("Soul");
-		if (soul != null)
-			soul.Died += OnPlayerDied;
+		_subMenu.OptionSelected += OnSubMenuOptionSelected;
+		_subMenu.Cancelled      += OnSubMenuCancelled;
 
+		// Wire rhythm nodes
+		_rhythmStrike.StrikeResolved += OnStrikeResolved;
+		_rhythmArena.PhaseEnded      += OnRhythmPhaseEnded;
+		_rhythmArena.PlayerHurt      += OnPlayerHurt;
+
+		// Load encounter
 		var encounter = BattleRegistry.Instance.GetPendingEncounter();
 		if (encounter != null && encounter.Enemies.Count > 0)
 			_enemy = encounter.Enemies[0];
@@ -71,9 +76,38 @@ public partial class BattleScene : Node2D
 
 		_enemyCurrentHp = _enemy?.Stats?.MaxHp ?? 10;
 
+		// Start battle BGM with BPM
+		StartBattleBgm(encounter);
+
 		SetupEnemySprite();
 		_enemyNameplate.Setup(_enemy?.DisplayName ?? "???");
 		_ = RunIntro();
+	}
+
+	// ── BGM ───────────────────────────────────────────────────────────
+
+	private void StartBattleBgm(EncounterData? encounter)
+	{
+		// Resolve BGM path: encounter > enemy > default
+		string bgmPath = encounter?.BattleBgmPath ?? "";
+		if (string.IsNullOrEmpty(bgmPath))
+			bgmPath = _enemy?.BattleBgmPath ?? "";
+
+		// Resolve BPM: encounter > enemy > default
+		float bpm = (encounter?.BattleBpm ?? 0f) > 0f ? encounter!.BattleBpm
+				  : (_enemy?.BattleBpm ?? 0f) > 0f    ? _enemy!.BattleBpm
+				  : RhythmConstants.DefaultBpm;
+
+		if (!string.IsNullOrEmpty(bgmPath) && ResourceLoader.Exists(bgmPath))
+		{
+			AudioManager.Instance.PlayBgm(bgmPath, fadeTime: 0.1f, bpm: bpm);
+		}
+		else
+		{
+			// No audio file — just configure the clock with the correct BPM
+			RhythmClock.Instance.SetBpm(bpm);
+			GD.Print($"[BattleScene] No battle BGM found. RhythmClock BPM set to {bpm}.");
+		}
 	}
 
 	// ── Setup ─────────────────────────────────────────────────────────
@@ -82,25 +116,24 @@ public partial class BattleScene : Node2D
 	{
 		if (_enemy?.BattleSprite != null)
 		{
-			var sprite = new Sprite2D();
-			sprite.Texture = _enemy.BattleSprite;
+			var sprite = new Sprite2D { Texture = _enemy.BattleSprite };
 			_enemyVisual = sprite;
 		}
 		else
 		{
-			// Colored polygon placeholder — replaced when real art is added to EnemyData
-			var poly = new Polygon2D();
-			poly.Polygon = [
-				new Vector2(-20, -28), new Vector2(20, -28),
-				new Vector2(20,  28),  new Vector2(-20, 28)
-			];
-			poly.Color = new Color(0.55f, 0.3f, 0.85f, 1f); // soft purple
+			var poly = new Polygon2D
+			{
+				Polygon = [
+					new Vector2(-20, -28), new Vector2(20, -28),
+					new Vector2(20,  28),  new Vector2(-20, 28)
+				],
+				Color = new Color(0.55f, 0.3f, 0.85f, 1f)
+			};
 			_enemyVisual = poly;
 		}
 
 		_enemyArea.AddChild(_enemyVisual);
 
-		// Idle bob — works on both Sprite2D and Polygon2D
 		var tween = CreateTween().SetLoops();
 		tween.TweenProperty(_enemyVisual, "position:y",  4f, 0.6f)
 			 .SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Sine);
@@ -115,7 +148,7 @@ public partial class BattleScene : Node2D
 		_state = newState;
 		_actionMenu.Visible     = newState == BattleState.PlayerTurn;
 		_subMenu.Visible        = false;
-		_fightBar.Visible       = false;
+		_rhythmStrike.Visible   = false;
 		_enemyNameplate.Visible = newState is BattleState.PlayerTurn or BattleState.EnemyTurn;
 		GD.Print($"[BattleScene] State → {newState}");
 
@@ -127,7 +160,6 @@ public partial class BattleScene : Node2D
 	{
 		if (_damageNumberScene == null) return;
 		var num = _damageNumberScene.Instantiate<DamageNumber>();
-		// Position above the enemy, with slight random horizontal offset for variety
 		num.Position = _enemyArea.Position + new Vector2((float)GD.RandRange(-16.0, 16.0), -30f);
 		AddChild(num);
 		num.Play(damage, isCrit);
@@ -149,30 +181,38 @@ public partial class BattleScene : Node2D
 		SetState(BattleState.PlayerTurn);
 	}
 
-	// ── Action handlers ───────────────────────────────────────────────
+	// ── Fight — RhythmStrike ──────────────────────────────────────────
 
 	private void OnFightSelected()
 	{
-		GD.Print("[BattleScene] Fight selected — showing FightBar.");
+		GD.Print("[BattleScene] STRIKE selected.");
 		_actionMenu.Visible = false;
-		ShowDialogText("* Choose the moment!");
-		_fightBar.Visible = true;
-		_fightBar.Activate();
+		SetState(BattleState.StrikePhase);
+		ShowDialogText("* Press on the beat!");
+		_rhythmStrike.Visible = true;
+		_rhythmStrike.Activate();
 	}
 
-	private void OnFightBarConfirmed(float accuracy)
+	private void OnStrikeResolved(int gradeInt)
 	{
-		_fightBar.Visible = false;
+		var grade = (HitGrade)gradeInt;
+		_rhythmStrike.Visible = false;
 
-		int atk  = GameManager.Instance.PlayerStats.Attack;
-		int def  = _enemy?.Stats?.Defense ?? 0;
-		float mult  = 1.0f + accuracy * 0.5f;  // 1.0× to 1.5× based on accuracy
-		int damage  = Mathf.Max(1, Mathf.RoundToInt(atk * mult) - def);
+		int   atk    = GameManager.Instance.PlayerStats.Attack;
+		int   def    = _enemy?.Stats?.Defense ?? 0;
+		float mult   = RhythmConstants.GradeMultiplier(grade);
+		int   damage = Mathf.Max(1, Mathf.RoundToInt(atk * mult) - def);
 		_enemyCurrentHp -= damage;
 
-		bool isCrit = accuracy > 0.8f;
-		string hitLabel = isCrit ? "Critical!" : accuracy > 0.4f ? "Hit!" : "Weak hit.";
-		GD.Print($"[BattleScene] {hitLabel} Accuracy {accuracy:F2}, mult {mult:F2}, damage {damage}. Enemy HP: {_enemyCurrentHp}");
+		bool   isCrit   = grade == HitGrade.Perfect;
+		string hitLabel = grade switch
+		{
+			HitGrade.Perfect => "Perfect hit!",
+			HitGrade.Good    => "Hit!",
+			_                => "Weak hit."
+		};
+
+		GD.Print($"[BattleScene] {hitLabel} grade={grade}, mult={mult:F2}, damage={damage}. Enemy HP: {_enemyCurrentHp}");
 		SpawnDamageNumber(damage, isCrit);
 		ShowDialogText($"* {hitLabel}\n* {_enemy?.DisplayName ?? "???"} took {damage} damage.");
 
@@ -182,21 +222,25 @@ public partial class BattleScene : Node2D
 			_ = RunEnemyTurn();
 	}
 
-	private void OnActSelected()
+	// ── Perform (Bard Skills) — stub for Phase 5 ─────────────────────
+
+	private void OnPerformSelected()
 	{
-		GD.Print("[BattleScene] Act selected");
+		GD.Print("[BattleScene] PERFORM selected");
 		if (_enemy?.ActOptions is { Length: > 0 })
 		{
-			_subMenuMode = SubMenuMode.Act;
+			_subMenuMode = SubMenuMode.Perform;
 			_actionMenu.Visible = false;
 			_subMenu.Populate(_enemy.ActOptions);
 			_subMenu.Visible = true;
 		}
 		else
 		{
-			ShowDialogText("* There's nothing useful to do.");
+			ShowDialogText("* There's nothing to perform here.");
 		}
 	}
+
+	// ── Item ──────────────────────────────────────────────────────────
 
 	private void OnItemSelected()
 	{
@@ -222,6 +266,8 @@ public partial class BattleScene : Node2D
 		_subMenu.Visible = true;
 	}
 
+	// ── Mercy ─────────────────────────────────────────────────────────
+
 	private void OnMercySelected()
 	{
 		GD.Print("[BattleScene] Mercy selected");
@@ -233,26 +279,19 @@ public partial class BattleScene : Node2D
 		_subMenu.Visible = true;
 	}
 
+	// ── Sub-menu dispatch ─────────────────────────────────────────────
+
 	private void OnSubMenuOptionSelected(int index)
 	{
 		_subMenu.Visible = false;
 
-		if (_subMenuMode == SubMenuMode.Mercy)
-		{
-			HandleMercyOption(index);
-			return;
-		}
+		if (_subMenuMode == SubMenuMode.Mercy) { HandleMercyOption(index); return; }
+		if (_subMenuMode == SubMenuMode.Items)  { HandleItemOption(index);  return; }
 
-		if (_subMenuMode == SubMenuMode.Items)
-		{
-			HandleItemOption(index);
-			return;
-		}
+		// Perform mode — Phase 5 will wire full Bard skill minigames.
+		// For now, fall back to the legacy Act logic so existing enemies remain functional.
+		GD.Print($"[BattleScene] Perform option {index} selected");
 
-		// Act mode
-		GD.Print($"[BattleScene] Act option {index} selected");
-
-		// "Check" always shows stats, regardless of array data
 		if (_enemy?.ActOptions[index] == "Check")
 		{
 			string check = $"* {_enemy.DisplayName}\n* {_enemy.FlavorText}\n* ATK {_enemy.Stats?.Attack ?? 0}  DEF {_enemy.Stats?.Defense ?? 0}";
@@ -261,14 +300,12 @@ public partial class BattleScene : Node2D
 			return;
 		}
 
-		// Apply mercy value for this act
 		if (_enemy?.ActMercyValues is { Length: > 0 } && index < _enemy.ActMercyValues.Length)
 			_mercyPercent = Mathf.Clamp(_mercyPercent + _enemy.ActMercyValues[index], 0, 100);
 
 		_enemyCanBeSpared = _mercyPercent >= 100 && (_enemy?.CanBeSpared ?? false);
 		_enemyNameplate.UpdateMercy(_mercyPercent, _enemyCanBeSpared);
 
-		// Check for a dedicated Act timeline (res://dialog/timelines/act_{enemyId}_{option}.dtl)
 		if (_enemy != null)
 		{
 			string optionKey = _enemy.ActOptions[index].ToLower().Replace(" ", "_");
@@ -279,11 +316,10 @@ public partial class BattleScene : Node2D
 				DialogicBridge.Instance.ConnectTimelineEnded(
 					new Callable(this, MethodName.OnActDialogEnded));
 				DialogicBridge.Instance.StartTimelineWithFlags(actPath);
-				return; // enemy turn runs after the timeline ends
+				return;
 			}
 		}
 
-		// Fall back to inline result text
 		string result;
 		if (_enemy?.ActResultTexts is { Length: > 0 } && index < _enemy.ActResultTexts.Length
 			&& !string.IsNullOrEmpty(_enemy.ActResultTexts[index]))
@@ -300,24 +336,20 @@ public partial class BattleScene : Node2D
 
 	private void HandleMercyOption(int index)
 	{
-		if (index == 0) // Spare
+		if (index == 0)
 		{
 			if (_enemyCanBeSpared)
-			{
 				_ = HandleVictory(killed: false);
-			}
 			else
 			{
 				ShowDialogText("* You show mercy.\n* But it doesn't seem to care.");
 				_ = RunEnemyTurn();
 			}
 		}
-		else // Flee
+		else
 		{
-			bool escaped = GD.RandRange(0, 1) == 0; // 50% chance
-			GD.Print($"[BattleScene] Flee attempt. Escaped: {escaped}");
-			if (escaped)
-				_ = HandleFlee();
+			bool escaped = GD.RandRange(0, 1) == 0;
+			if (escaped) _ = HandleFlee();
 			else
 			{
 				ShowDialogText("* But you couldn't get away!");
@@ -335,26 +367,15 @@ public partial class BattleScene : Node2D
 	private void HandleItemOption(int index)
 	{
 		var inv = GameManager.Instance.InventoryItemPaths;
-		if (index >= inv.Count)
-		{
-			ShowDialogText("* Nothing happened.");
-			_ = RunEnemyTurn();
-			return;
-		}
+		if (index >= inv.Count) { ShowDialogText("* Nothing happened."); _ = RunEnemyTurn(); return; }
 
 		string path = inv[index];
 		var item = ResourceLoader.Exists(path) ? GD.Load<ItemData>(path) : null;
-		if (item == null)
-		{
-			ShowDialogText("* That item seems to have vanished.");
-			_ = RunEnemyTurn();
-			return;
-		}
+		if (item == null) { ShowDialogText("* That item seems to have vanished."); _ = RunEnemyTurn(); return; }
 
 		GameManager.Instance.RemoveItem(path);
 		GameManager.Instance.HealPlayer(item.HealAmount);
 		ShowDialogText($"* Used {item.DisplayName}.\n* Restored {item.HealAmount} HP.");
-		GD.Print($"[BattleScene] Used item: {item.DisplayName}. HP: {GameManager.Instance.PlayerStats.CurrentHp}/{GameManager.Instance.PlayerStats.MaxHp}");
 		_ = RunEnemyTurn();
 	}
 
@@ -370,7 +391,6 @@ public partial class BattleScene : Node2D
 	{
 		SetState(BattleState.EnemyTurn);
 
-		// If the enemy has a Dialogic timeline for its turn, play it and wait for it to finish.
 		string battlePath = _enemy?.BattleTimelinePath ?? "";
 		if (!string.IsNullOrEmpty(battlePath) && ResourceLoader.Exists(battlePath))
 		{
@@ -383,53 +403,44 @@ public partial class BattleScene : Node2D
 		}
 		else
 		{
-			// Plain-text fallback — show a random dialog line, then wait briefly.
-			string line;
-			if (_enemy?.BattleDialogLines is { Length: > 0 })
-				line = _enemy.BattleDialogLines[(int)GD.RandRange(0, _enemy.BattleDialogLines.Length - 1)];
-			else
-				line = $"* {_enemy?.DisplayName ?? "???"} prepares to attack...";
+			string line = _enemy?.BattleDialogLines is { Length: > 0 }
+				? _enemy.BattleDialogLines[(int)GD.RandRange(0, _enemy.BattleDialogLines.Length - 1)]
+				: $"* {_enemy?.DisplayName ?? "???"} prepares to attack...";
 
 			ShowDialogText(line);
 			await ToSignal(GetTree().CreateTimer(0.7f), SceneTreeTimer.SignalName.Timeout);
 		}
 
-		BeginDodgePhase();
+		BeginRhythmPhase();
 	}
 
-	private void BeginDodgePhase()
+	private void BeginRhythmPhase()
 	{
-		SetState(BattleState.DodgePhase);
-		_dodgeBox.Visible = true;
+		SetState(BattleState.RhythmPhase);
 
-		if (_enemy?.AttackPatternScene != null)
-		{
-			var pattern = _enemy.AttackPatternScene.Instantiate();
-			_dodgeBox.BulletContainer.AddChild(pattern);
-			GD.Print($"[BattleScene] Pattern spawned: {_enemy.AttackPatternScene.ResourcePath}");
-		}
-		else
-		{
-			GD.Print("[BattleScene] No attack pattern — empty dodge phase.");
-		}
+		PackedScene? patternScene = _enemy?.AttackPatternScene;
+		_rhythmArena.StartPhase(patternScene, totalMeasures: 2);
 
-		_dodgeBox.StartPhase(3.0f);
+		GD.Print($"[BattleScene] RhythmPhase started. Pattern: {patternScene?.ResourcePath ?? "none"}");
 	}
 
-	private void OnDodgePhaseEnded()
+	private void OnRhythmPhaseEnded()
 	{
-		GD.Print("[BattleScene] Dodge phase ended.");
-		_dodgeBox.Visible = false;
-		foreach (Node child in _dodgeBox.BulletContainer.GetChildren())
-			child.QueueFree();
+		GD.Print("[BattleScene] Rhythm phase ended.");
 		SetState(BattleState.PlayerTurn);
 	}
 
-	private void OnPlayerDied()
+	private void OnPlayerHurt(int damage)
 	{
-		GD.Print("[BattleScene] Player died — defeat.");
-		_dodgeBox.Visible = false;
-		_ = HandleDefeat();
+		GameManager.Instance.HurtPlayer(damage);
+		int hp = GameManager.Instance.PlayerStats.CurrentHp;
+		GD.Print($"[BattleScene] Player hurt for {damage}. HP: {hp}");
+
+		if (hp <= 0)
+		{
+			_rhythmArena.Visible = false;
+			_ = HandleDefeat();
+		}
 	}
 
 	// ── Victory / Defeat / Flee ───────────────────────────────────────
@@ -437,6 +448,7 @@ public partial class BattleScene : Node2D
 	private async Task HandleVictory(bool killed)
 	{
 		SetState(BattleState.Victory);
+		RhythmClock.Instance.Stop();
 
 		if (killed)
 		{
@@ -460,6 +472,7 @@ public partial class BattleScene : Node2D
 	private async Task HandleFlee()
 	{
 		SetState(BattleState.Victory);
+		RhythmClock.Instance.Stop();
 		ShowDialogText("* You got away safely!");
 		await ToSignal(GetTree().CreateTimer(0.8f), SceneTreeTimer.SignalName.Timeout);
 		await ReturnToOverworld();
@@ -468,7 +481,8 @@ public partial class BattleScene : Node2D
 	private async Task HandleDefeat()
 	{
 		SetState(BattleState.Defeat);
-		ShowDialogText("* You feel your sins crawling on your back.\n\n* GAME OVER");
+		RhythmClock.Instance.Stop();
+		ShowDialogText("* The music fades.\n\n* GAME OVER");
 		await ToSignal(GetTree().CreateTimer(2.0f), SceneTreeTimer.SignalName.Timeout);
 		await SceneTransition.Instance.GoToAsync("res://scenes/menus/MainMenu.tscn");
 	}
@@ -478,7 +492,6 @@ public partial class BattleScene : Node2D
 		string map = GameManager.Instance.LastMapPath;
 		if (string.IsNullOrEmpty(map))
 			map = "res://scenes/overworld/TestRoom.tscn";
-		GD.Print($"[BattleScene] Returning to {map}");
 		await SceneTransition.Instance.GoToAsync(map);
 	}
 }

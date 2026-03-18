@@ -32,14 +32,12 @@ public partial class Pattern004 : Node
 
 		int count = (int)GD.RandRange(1, 3);
 		for (int i = 0; i < count; i++)
-		{
-			SpawnOne();
-		}
+			SpawnOne(BulletScene);
 	}
 
-	private void SpawnOne()
+	private void SpawnOne(PackedScene bulletScene)
 	{
-		var bullet = BulletScene.Instantiate<BouncingBullet>();
+		var bullet = bulletScene.Instantiate<BouncingBullet>();
 
 		// Pick a random edge to spawn from
 		int edge = (int)GD.RandRange(0, 4);

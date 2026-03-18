@@ -32,12 +32,12 @@ public partial class Pattern006 : Node
 
 		int count = (int)GD.RandRange(1, 3);
 		for (int i = 0; i < count; i++)
-			SpawnOne();
+			SpawnOne(BulletScene);
 	}
 
-	private void SpawnOne()
+	private void SpawnOne(PackedScene bulletScene)
 	{
-		var bullet = BulletScene.Instantiate<ZigZagBullet>();
+		var bullet = bulletScene.Instantiate<ZigZagBullet>();
 		bullet.Position      = new Vector2((float)GD.RandRange(-SpawnHalfX, SpawnHalfX), SpawnY);
 		bullet.Speed         = (float)GD.RandRange(55.0, 88.0);
 		bullet.OscAmplitude  = (float)GD.RandRange(12.0, 30.0);

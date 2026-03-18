@@ -14,20 +14,19 @@ public partial class SceneTransition : CanvasLayer
 
 	public override void _Ready()
 	{
-		Instance = this;
+		Instance    = this;
 		ProcessMode = ProcessModeEnum.Always;
-		Layer = 100; // Render on top of everything
+		Layer       = 100;
 
 		_overlay = new ColorRect
 		{
-			Color = Colors.Black,
-			Modulate = new Color(1, 1, 1, 0), // Transparent initially
+			Color    = Colors.Black,
+			Modulate = new Color(1, 1, 1, 0),
 			AnchorsPreset = (int)Control.LayoutPreset.FullRect
 		};
 		AddChild(_overlay);
 	}
 
-	/// <summary>Transition to a new scene with an animation.</summary>
 	public async Task GoToAsync(string scenePath, TransitionType type = TransitionType.Fade)
 	{
 		await PlayOut(type);
@@ -35,7 +34,11 @@ public partial class SceneTransition : CanvasLayer
 		await PlayIn(type);
 	}
 
-	/// <summary>Start a battle encounter. Stores the encounter for BattleScene to read.</summary>
+	/// <summary>
+	/// Start a battle encounter.
+	/// Resolves battle BGM path and BPM from the encounter data and stores them
+	/// so BattleScene can start the correct audio track.
+	/// </summary>
 	public async Task ToBattleAsync(EncounterData encounter)
 	{
 		BattleRegistry.Instance.SetPendingEncounter(encounter);
@@ -46,7 +49,8 @@ public partial class SceneTransition : CanvasLayer
 	{
 		_overlay.Color = type == TransitionType.BattleFlash ? Colors.White : Colors.Black;
 		var tween = CreateTween();
-		tween.TweenProperty(_overlay, "modulate:a", 1.0f, type == TransitionType.BattleFlash ? 0.08f : 0.2f);
+		tween.TweenProperty(_overlay, "modulate:a", 1.0f,
+			type == TransitionType.BattleFlash ? 0.08f : 0.2f);
 		await ToSignal(tween, Tween.SignalName.Finished);
 	}
 

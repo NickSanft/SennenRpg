@@ -4,8 +4,8 @@
 [ext_resource type="PackedScene" uid="uid://dxc3n8mp1oqv5" path="res://scenes/battle/ActionMenu.tscn" id="2_actionmenu"]
 [ext_resource type="PackedScene" uid="uid://djpw6hct3n2qk" path="res://scenes/battle/SubMenu.tscn" id="3_submenu"]
 [ext_resource type="PackedScene" uid="uid://bwn5qxp8fj4r3" path="res://scenes/battle/BattleHUD.tscn" id="4_battlehud"]
-[ext_resource type="PackedScene" uid="uid://bk8wqmf3ydpx6" path="res://scenes/battle/dodge/DodgeBox.tscn" id="5_dodgebox"]
-[ext_resource type="PackedScene" uid="uid://bpv3wqt8nxhk4" path="res://scenes/battle/FightBar.tscn" id="6_fightbar"]
+[ext_resource type="PackedScene" path="res://scenes/battle/rhythm/RhythmArena.tscn" id="5_rhythmarena"]
+[ext_resource type="PackedScene" path="res://scenes/battle/rhythm/RhythmStrike.tscn" id="6_rhythmstrike"]
 [ext_resource type="PackedScene" uid="uid://enmplt5k6j7s8" path="res://scenes/battle/ui/EnemyNameplate.tscn" id="7_nameplate"]
 
 [node name="BattleScene" type="Node2D"]
@@ -19,7 +19,7 @@ anchor_bottom = 1.0
 color = Color(0.08, 0.08, 0.08, 1)
 
 [node name="EnemyArea" type="Node2D" parent="."]
-position = Vector2(320, 120)
+position = Vector2(320, 100)
 
 [node name="DialogBox" type="PanelContainer" parent="."]
 layout_mode = 3
@@ -52,17 +52,15 @@ offset_right = 570.0
 offset_bottom = 430.0
 visible = false
 
-[node name="DodgeBox" parent="." instance=ExtResource("5_dodgebox")]
+[node name="RhythmArena" parent="." instance=ExtResource("5_rhythmarena")]
 position = Vector2(320, 200)
 visible = false
 
-[node name="FightBar" parent="." instance=ExtResource("6_fightbar")]
+[node name="RhythmStrike" parent="." instance=ExtResource("6_rhythmstrike")]
 layout_mode = 3
-anchors_preset = 0
-offset_left = 20.0
-offset_top = 348.0
-offset_right = 320.0
-offset_bottom = 372.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 visible = false
 
 [node name="EnemyNameplate" parent="." instance=ExtResource("7_nameplate")]
