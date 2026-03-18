@@ -1,22 +1,46 @@
 [gd_resource type="Resource" script_class="DialogicStyle" format=3 uid="uid://bnebjtd32nu25"]
 
-[ext_resource type="Script" uid="uid://bwg6yncmh2cml" path="res://addons/dialogic/Resources/dialogic_style_layer.gd" id="1_pa8kl"]
-[ext_resource type="Script" uid="uid://dv08k6ljua6fm" path="res://addons/dialogic/Resources/dialogic_style.gd" id="2_cchl1"]
-[ext_resource type="PackedScene" uid="uid://by6waso0mjpjp" path="res://addons/dialogic/Modules/DefaultLayoutParts/Layer_SpeakerPortraitTextbox/textbox_with_speaker_portrait.tscn" id="2_t0i47"]
+[ext_resource type="Script" uid="uid://dv08k6ljua6fm" path="res://addons/dialogic/Resources/dialogic_style.gd" id="1_style"]
+[ext_resource type="Script" uid="uid://bwg6yncmh2cml" path="res://addons/dialogic/Resources/dialogic_style_layer.gd" id="2_layer"]
+[ext_resource type="PackedScene" uid="uid://c1k5m0w3r40xf" path="res://addons/dialogic/Modules/DefaultLayoutParts/Layer_FullBackground/full_background_layer.tscn" id="3_bg"]
+[ext_resource type="PackedScene" uid="uid://cy1y14inwkplb" path="res://addons/dialogic/Modules/DefaultLayoutParts/Layer_VN_Portraits/vn_portrait_layer.tscn" id="4_portraits"]
+[ext_resource type="PackedScene" uid="uid://cn674foxwedqu" path="res://addons/dialogic/Modules/DefaultLayoutParts/Layer_Input/full_advance_input_layer.tscn" id="5_input"]
+[ext_resource type="PackedScene" uid="uid://bquja8jyk8kbr" path="res://addons/dialogic/Modules/DefaultLayoutParts/Layer_VN_Textbox/vn_textbox_layer.tscn" id="6_textbox"]
+[ext_resource type="PackedScene" uid="uid://dhk6j6eb6e3q" path="res://addons/dialogic/Modules/DefaultLayoutParts/Layer_VN_Choices/vn_choice_layer.tscn" id="7_choices"]
 
-[sub_resource type="Resource" id="Resource_t0i47"]
-script = ExtResource("1_pa8kl")
+[sub_resource type="Resource" id="Resource_base"]
+script = ExtResource("2_layer")
 
-[sub_resource type="Resource" id="Resource_tolc2"]
-script = ExtResource("1_pa8kl")
-scene = ExtResource("2_t0i47")
+[sub_resource type="Resource" id="Resource_bg"]
+script = ExtResource("2_layer")
+scene = ExtResource("3_bg")
+
+[sub_resource type="Resource" id="Resource_portraits"]
+script = ExtResource("2_layer")
+scene = ExtResource("4_portraits")
+
+[sub_resource type="Resource" id="Resource_input"]
+script = ExtResource("2_layer")
+scene = ExtResource("5_input")
+
+[sub_resource type="Resource" id="Resource_textbox"]
+script = ExtResource("2_layer")
+scene = ExtResource("6_textbox")
+
+[sub_resource type="Resource" id="Resource_choices"]
+script = ExtResource("2_layer")
+scene = ExtResource("7_choices")
 
 [resource]
-script = ExtResource("2_cchl1")
+script = ExtResource("1_style")
 name = "Default"
-layer_list = Array[String](["10"])
+layer_list = Array[String](["10", "11", "12", "13", "14"])
 layer_info = {
-"": SubResource("Resource_t0i47"),
-"10": SubResource("Resource_tolc2")
+"": SubResource("Resource_base"),
+"10": SubResource("Resource_bg"),
+"11": SubResource("Resource_portraits"),
+"12": SubResource("Resource_input"),
+"13": SubResource("Resource_textbox"),
+"14": SubResource("Resource_choices")
 }
-metadata/_latest_layer = "10"
+metadata/_latest_layer = "14"

@@ -73,13 +73,13 @@ public partial class DissonanceMinigame : BardMinigameBase
     public override void _Draw()
     {
         // Dark background
-        DrawRect(new Rect2(0f, 0f, Size.X, Size.Y), new Color(0.06f, 0.06f, 0.10f, 1f));
+        DrawRect(new Rect2(0f, 0f, VP.X, VP.Y), new Color(0.06f, 0.06f, 0.10f, 1f));
 
         float phase   = RhythmClock.Instance.BeatPhase;
-        float timelineW = Size.X * 0.8f;
+        float timelineW = VP.X * 0.8f;
         float timelineH = 16f;
-        float timelineX = (Size.X - timelineW) * 0.5f;
-        float timelineY = Size.Y * 0.45f - timelineH * 0.5f;
+        float timelineX = (VP.X - timelineW) * 0.5f;
+        float timelineY = VP.Y * 0.45f - timelineH * 0.5f;
 
         // Timeline background
         DrawRect(new Rect2(timelineX, timelineY, timelineW, timelineH),
@@ -114,12 +114,12 @@ public partial class DissonanceMinigame : BardMinigameBase
                  Colors.White with { A = 0.6f }, 2f);
 
         // Success count
-        DrawString(ThemeDB.FallbackFont, new Vector2(Size.X * 0.5f - 25f, timelineY + timelineH + 20f),
+        DrawString(ThemeDB.FallbackFont, new Vector2(VP.X * 0.5f - 25f, timelineY + timelineH + 20f),
                    $"{_successfulHits}/3 hits", HorizontalAlignment.Left, -1, 11,
                    Colors.White with { A = 0.8f });
 
         // Instruction
-        DrawString(ThemeDB.FallbackFont, new Vector2(Size.X * 0.5f - 80f, Size.Y - 12f),
+        DrawString(ThemeDB.FallbackFont, new Vector2(VP.X * 0.5f - 80f, VP.Y - 12f),
                    "Press BETWEEN the beats", HorizontalAlignment.Left, -1, 11,
                    Colors.White with { A = 0.8f });
     }

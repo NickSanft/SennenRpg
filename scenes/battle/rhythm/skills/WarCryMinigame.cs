@@ -59,11 +59,11 @@ public partial class WarCryMinigame : BardMinigameBase
     public override void _Draw()
     {
         // Dark background
-        DrawRect(new Rect2(0f, 0f, Size.X, Size.Y), new Color(0.06f, 0.06f, 0.10f, 1f));
+        DrawRect(new Rect2(0f, 0f, VP.X, VP.Y), new Color(0.06f, 0.06f, 0.10f, 1f));
 
         float phase  = RhythmClock.Instance.BeatPhase;
         float pulse  = Mathf.Max(0f, 1f - phase * 4f);
-        var   center = Size * 0.5f;
+        var   center = VP * 0.5f;
 
         // Progress circle around beat indicator
         float radius = 30f;
@@ -85,7 +85,7 @@ public partial class WarCryMinigame : BardMinigameBase
                    "HITS", HorizontalAlignment.Left, -1, 11, Colors.White with { A = 0.7f });
 
         // Instruction label
-        DrawString(ThemeDB.FallbackFont, new Vector2(center.X - 55f, Size.Y - 12f),
+        DrawString(ThemeDB.FallbackFont, new Vector2(center.X - 55f, VP.Y - 12f),
                    "TAP FAST! Z / Enter", HorizontalAlignment.Left, -1, 11,
                    Colors.White with { A = 0.8f });
     }

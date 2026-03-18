@@ -74,13 +74,13 @@ public partial class BardicInspirationMinigame : BardMinigameBase
     public override void _Draw()
     {
         // Dark background
-        DrawRect(new Rect2(0f, 0f, Size.X, Size.Y), new Color(0.06f, 0.06f, 0.10f, 1f));
+        DrawRect(new Rect2(0f, 0f, VP.X, VP.Y), new Color(0.06f, 0.06f, 0.10f, 1f));
 
         // Breath bar — fills while holding, uses BeatPhase for pulse glow
-        float barW  = Size.X * 0.7f;
+        float barW  = VP.X * 0.7f;
         float barH  = 20f;
-        float barX  = (Size.X - barW) * 0.5f;
-        float barY  = Size.Y * 0.5f - barH * 0.5f;
+        float barX  = (VP.X - barW) * 0.5f;
+        float barY  = VP.Y * 0.5f - barH * 0.5f;
 
         DrawRect(new Rect2(barX, barY, barW, barH), new Color(0.2f, 0.2f, 0.3f, 1f));
 
@@ -97,11 +97,11 @@ public partial class BardicInspirationMinigame : BardMinigameBase
         DrawRect(new Rect2(barX, barY, barW, barH), Colors.White with { A = 0.6f }, filled: false, width: 2f);
 
         // Label
-        DrawString(ThemeDB.FallbackFont, new Vector2(Size.X * 0.5f - 50f, barY - 12f),
+        DrawString(ThemeDB.FallbackFont, new Vector2(VP.X * 0.5f - 50f, barY - 12f),
                    "Hold Z / Enter", HorizontalAlignment.Left, -1, 13, Colors.White);
 
         // Beat counter
-        DrawString(ThemeDB.FallbackFont, new Vector2(Size.X * 0.5f - 20f, barY + barH + 18f),
+        DrawString(ThemeDB.FallbackFont, new Vector2(VP.X * 0.5f - 20f, barY + barH + 18f),
                    $"Beat {_beatsElapsed}/2", HorizontalAlignment.Left, -1, 11,
                    Colors.White with { A = 0.7f });
     }

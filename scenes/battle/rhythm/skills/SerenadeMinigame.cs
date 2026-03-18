@@ -77,13 +77,13 @@ public partial class SerenadeMinigame : BardMinigameBase
     public override void _Draw()
     {
         // Dark background
-        DrawRect(new Rect2(0f, 0f, Size.X, Size.Y), new Color(0.06f, 0.06f, 0.10f, 1f));
+        DrawRect(new Rect2(0f, 0f, VP.X, VP.Y), new Color(0.06f, 0.06f, 0.10f, 1f));
 
         float phase  = RhythmClock.Instance.BeatPhase;
         float pulse  = Mathf.Max(0f, 1f - phase * 3f);
-        float startX = Size.X * 0.15f;
-        float spacing = Size.X * 0.7f / (TotalOpportunities - 1);
-        float ringY  = Size.Y * 0.45f;
+        float startX = VP.X * 0.15f;
+        float spacing = VP.X * 0.7f / (TotalOpportunities - 1);
+        float ringY  = VP.Y * 0.45f;
 
         // 3 ring indicators showing upcoming beat slots
         for (int i = 0; i < TotalOpportunities; i++)
@@ -116,12 +116,12 @@ public partial class SerenadeMinigame : BardMinigameBase
         }
 
         // Success indicator
-        DrawString(ThemeDB.FallbackFont, new Vector2(Size.X * 0.5f - 30f, ringY + 30f),
+        DrawString(ThemeDB.FallbackFont, new Vector2(VP.X * 0.5f - 30f, ringY + 30f),
                    $"{_successCount}/{TotalOpportunities} on beat", HorizontalAlignment.Left, -1, 11,
                    Colors.White with { A = 0.8f });
 
         // Instruction
-        DrawString(ThemeDB.FallbackFont, new Vector2(Size.X * 0.5f - 65f, Size.Y - 12f),
+        DrawString(ThemeDB.FallbackFont, new Vector2(VP.X * 0.5f - 65f, VP.Y - 12f),
                    "Press EXACTLY on the beat!", HorizontalAlignment.Left, -1, 11,
                    Colors.White with { A = 0.8f });
     }

@@ -172,28 +172,12 @@ public partial class DialogicBridge : Node
 	}
 
 	/// <summary>
-	/// Runs after every timeline ends. Reads all Dialogic variables back into
-	/// GameManager so flags set inside a timeline are visible immediately in C#.
+	/// Runs after every timeline ends.
+	/// Flag syncing is handled in real-time by OnDialogicSignal ("flag:xyz" convention),
+	/// so no post-timeline variable sweep is needed.
 	/// </summary>
 	private void OnTimelineEndedInternal()
 	{
-		if (_dialogic == null) return;
-		var varSubsystem = _dialogic.Call("get_subsystem", "VAR").AsGodotObject();
-		if (varSubsystem == null) return;
-
-		var all = varSubsystem.Call("get_all").AsGodotDictionary();
-		if (all == null) return;
-
-		foreach (var key in all.Keys)
-		{
-			string name = key.AsString();
-			var value = all[key];
-			// Write booleans back as flags; ignore numeric/string-only variables
-			if (value.VariantType == Variant.Type.Bool)
-			{
-				GameManager.Instance.SetFlag(name, value.AsBool());
-			}
-		}
-		GD.Print($"[DialogicBridge] Post-timeline sync: {all.Count} variable(s) checked.");
+		GD.Print("[DialogicBridge] Timeline ended.");
 	}
 }

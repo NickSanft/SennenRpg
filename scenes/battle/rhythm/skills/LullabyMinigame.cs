@@ -76,13 +76,13 @@ public partial class LullabyMinigame : BardMinigameBase
     public override void _Draw()
     {
         // Dark background
-        DrawRect(new Rect2(0f, 0f, Size.X, Size.Y), new Color(0.06f, 0.06f, 0.10f, 1f));
+        DrawRect(new Rect2(0f, 0f, VP.X, VP.Y), new Color(0.06f, 0.06f, 0.10f, 1f));
 
         float boxSize  = 40f;
         float spacing  = 12f;
         float totalW   = 4 * boxSize + 3 * spacing;
-        float startX   = (Size.X - totalW) * 0.5f;
-        float centerY  = Size.Y * 0.5f - boxSize * 0.5f;
+        float startX   = (VP.X - totalW) * 0.5f;
+        float centerY  = VP.Y * 0.5f - boxSize * 0.5f;
 
         float phase = RhythmClock.Instance.BeatPhase;
         float pulse = Mathf.Max(0f, 1f - phase * 3f);
@@ -122,12 +122,12 @@ public partial class LullabyMinigame : BardMinigameBase
         // Wrong flash
         if (_lastWasWrong)
         {
-            DrawRect(new Rect2(0f, 0f, Size.X, Size.Y), new Color(1f, 0f, 0f, 0.15f));
+            DrawRect(new Rect2(0f, 0f, VP.X, VP.Y), new Color(1f, 0f, 0f, 0.15f));
             _lastWasWrong = false;
         }
 
         // Instruction label
-        DrawString(ThemeDB.FallbackFont, new Vector2(Size.X * 0.5f - 60f, centerY - 18f),
+        DrawString(ThemeDB.FallbackFont, new Vector2(VP.X * 0.5f - 60f, centerY - 18f),
                    "Press lanes in order", HorizontalAlignment.Left, -1, 11, Colors.White with { A = 0.8f });
     }
 

@@ -11,6 +11,9 @@ public abstract partial class BardMinigameBase : Control
     public abstract string SkillName        { get; }
     public abstract string SkillDescription { get; }
 
+    /// <summary>Viewport size — use instead of Size, which is always (0,0) inside a Node2D parent.</summary>
+    protected Vector2 VP => GetViewportRect().Size;
+
     protected abstract void OnActivate();
 
     public void Activate()
