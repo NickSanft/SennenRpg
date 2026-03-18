@@ -561,7 +561,7 @@ public partial class BattleScene : Node2D
 		AudioManager.Instance.StopBgm(fadeTime: 1.0f);
 		ShowDialogText("* The music fades.\n\n* GAME OVER");
 		await ToSignal(GetTree().CreateTimer(2.0f), SceneTreeTimer.SignalName.Timeout);
-		await SceneTransition.Instance.GoToAsync("res://scenes/menus/MainMenu.tscn");
+		await SceneTransition.Instance.GoToAsync("res://scenes/menus/GameOver.tscn");
 	}
 
 	private async Task ReturnToOverworld()

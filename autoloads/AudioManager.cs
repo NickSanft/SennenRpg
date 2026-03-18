@@ -37,7 +37,7 @@ public partial class AudioManager : Node
 	/// Play a new BGM track, crossfading from the current one.
 	/// Pass bpm > 0 to synchronise RhythmClock to this track.
 	/// </summary>
-	public void PlayBgm(string path, float fadeTime = 1.0f, float bpm = 0f)
+	public void PlayBgm(string path, float fadeTime = 1.0f, float bpm = 0f, float beatOffsetSec = 0f)
 	{
 		if (!ResourceLoader.Exists(path)) return;
 
@@ -52,7 +52,7 @@ public partial class AudioManager : Node
 		// Attach rhythm clock to the new player before the fade completes
 		// so beat tracking is accurate from the first frame.
 		float effectiveBpm = bpm > 0f ? bpm : RhythmConstants.DefaultBpm;
-		RhythmClock.Instance.AttachPlayer(incoming, effectiveBpm);
+		RhythmClock.Instance.AttachPlayer(incoming, effectiveBpm, beatOffsetSec);
 
 		var tween = CreateTween();
 		tween.TweenProperty(outgoing, "volume_db", -80f, fadeTime);

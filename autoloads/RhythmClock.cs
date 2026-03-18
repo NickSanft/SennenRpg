@@ -32,6 +32,12 @@ public partial class RhythmClock : Node
     /// <summary>Seconds remaining until the next beat fires.</summary>
     public float TimeToNextBeat => BeatInterval * (1f - BeatPhase);
 
+    /// <summary>
+    /// Seconds from the start of the audio file to beat 0.
+    /// Set this if the track has silence or a pickup before the first beat.
+    /// </summary>
+    public float BeatOffsetSec { get; private set; }
+
     private AudioStreamPlayer? _bgmPlayer;
     private int   _lastBeatIndex = -1;
     private bool  _running;
@@ -55,15 +61,20 @@ public partial class RhythmClock : Node
     /// Call this immediately after AudioStreamPlayer.Play() so beat 0 aligns with the
     /// first frame of audio.
     /// </summary>
-    public void AttachPlayer(AudioStreamPlayer player, float bpm = 0f)
+    /// <param name="beatOffsetSec">
+    /// Seconds from the start of the audio stream to the first beat.
+    /// Leave at 0 if the track starts right on beat 1.
+    /// </param>
+    public void AttachPlayer(AudioStreamPlayer player, float bpm = 0f, float beatOffsetSec = 0f)
     {
-        _bgmPlayer    = player;
+        _bgmPlayer     = player;
+        BeatOffsetSec  = beatOffsetSec;
         _lastBeatIndex = -1;
-        BeatIndex     = 0;
-        MeasureIndex  = 0;
-        BeatInMeasure = 0;
-        BeatPhase     = 0f;
-        _running      = true;
+        BeatIndex      = 0;
+        MeasureIndex   = 0;
+        BeatInMeasure  = 0;
+        BeatPhase      = 0f;
+        _running       = true;
 
         if (bpm > 0f)
             SetBpm(bpm);
@@ -101,7 +112,12 @@ public partial class RhythmClock : Node
         float pos;
         if (_bgmPlayer != null && _bgmPlayer.Playing)
         {
-            pos = _bgmPlayer.GetPlaybackPosition();
+            // Compensate for Godot's output latency so the clock reflects
+            // what the player actually hears, not what's in the mix buffer.
+            float rawPos = _bgmPlayer.GetPlaybackPosition()
+                         + (float)AudioServer.GetTimeSinceLastMix()
+                         - (float)AudioServer.GetOutputLatency();
+            pos = Mathf.Max(0f, rawPos - BeatOffsetSec);
         }
         else if (_bgmPlayer == null)
         {
@@ -113,7 +129,6 @@ public partial class RhythmClock : Node
         {
             return; // player attached but not playing yet
         }
-        if (pos < 0f) pos = 0f;
 
         int newBeat = (int)(pos / BeatInterval);
         BeatPhase   = (pos % BeatInterval) / BeatInterval;

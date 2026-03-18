@@ -40,3 +40,6 @@ text = "NEW GAME"
 
 [node name="ContinueButton" type="Button" parent="UI/Center/VBox"]
 text = "CONTINUE"
+
+[node name="QuitButton" type="Button" parent="UI/Center/VBox"]
+text = "QUIT"

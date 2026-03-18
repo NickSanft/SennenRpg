@@ -11,17 +11,20 @@ public partial class MainMenu : Node2D
 {
 	private Button _newGameButton  = null!;
 	private Button _continueButton = null!;
+	private Button _quitButton     = null!;
 	private bool   _transitioning  = false;
 
 	public override void _Ready()
 	{
 		_newGameButton  = GetNode<Button>("UI/Center/VBox/NewGameButton");
 		_continueButton = GetNode<Button>("UI/Center/VBox/ContinueButton");
+		_quitButton     = GetNode<Button>("UI/Center/VBox/QuitButton");
 
 		_continueButton.Disabled = !SaveManager.Instance.HasSave();
 
 		_newGameButton.Pressed  += OnNewGamePressed;
 		_continueButton.Pressed += OnContinuePressed;
+		_quitButton.Pressed     += () => GetTree().Quit();
 	}
 
 	private void OnNewGamePressed()
