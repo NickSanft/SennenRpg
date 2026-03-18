@@ -121,21 +121,16 @@ public partial class DialogicBridge : Node
 	}
 
 	/// <summary>
-	/// Set a Dialogic variable. The variable must be defined in the Dialogic editor first.
+	/// Set a Dialogic variable. Variables are created dynamically at runtime if not
+	/// already defined in the Dialogic editor — useful for per-battle data like
+	/// enemy_name, damage, gold_gained, etc.
 	/// Call this before StartTimeline to pass data into a timeline.
 	/// </summary>
 	public void SetVariable(string name, Variant value)
 	{
 		if (_dialogic == null) return;
 		var varSubsystem = _dialogic.Call("get_subsystem", "VAR").AsGodotObject();
-		if (varSubsystem == null) return;
-
-		// Only set if the variable is already defined in Dialogic
-		bool exists = varSubsystem.Call("has", name).AsBool();
-		if (exists)
-			varSubsystem.Call("set_variable", name, value);
-		else
-			GD.PushWarning($"[DialogicBridge] Variable '{name}' is not defined in Dialogic. Define it in the Dialogic editor before setting it.");
+		varSubsystem?.Call("set_variable", name, value);
 	}
 
 	/// <summary>Get a Dialogic variable. Call this after timeline_ended to read choice results.</summary>

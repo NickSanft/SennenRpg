@@ -32,14 +32,33 @@ RhythmClock="*res://autoloads/RhythmClock.cs"
 
 directories/dch_directory={
 "Foran": "res://dialog/characters/Foran.dch",
-"TestNpc": "res://dialog/characters/TestNpc.dch",
+"TestNpc": "res://dialog/characters/Shizu.dch",
 "unit_test_character": "res://addons/dialogic/Tests/Resources/unit_test_character.dch"
 }
 directories/dtl_directory={
+"battle_charm_result": "res://dialog/timelines/battle_charm_result.dtl",
+"battle_charm_spare_ready": "res://dialog/timelines/battle_charm_spare_ready.dtl",
+"battle_enemy_dialog": "res://dialog/timelines/battle_enemy_dialog.dtl",
+"battle_fled": "res://dialog/timelines/battle_fled.dtl",
+"battle_flee_blocked": "res://dialog/timelines/battle_flee_blocked.dtl",
+"battle_game_over": "res://dialog/timelines/battle_game_over.dtl",
+"battle_hit": "res://dialog/timelines/battle_hit.dtl",
+"battle_intro": "res://dialog/timelines/battle_intro.dtl",
+"battle_item_gone": "res://dialog/timelines/battle_item_gone.dtl",
+"battle_item_nothing": "res://dialog/timelines/battle_item_nothing.dtl",
+"battle_item_used": "res://dialog/timelines/battle_item_used.dtl",
+"battle_mercy_ignored": "res://dialog/timelines/battle_mercy_ignored.dtl",
+"battle_no_items": "res://dialog/timelines/battle_no_items.dtl",
+"battle_skill_result": "res://dialog/timelines/battle_skill_result.dtl",
+"battle_skill_spare_ready": "res://dialog/timelines/battle_skill_spare_ready.dtl",
+"battle_spared": "res://dialog/timelines/battle_spared.dtl",
+"battle_strike_prompt": "res://dialog/timelines/battle_strike_prompt.dtl",
+"battle_victory": "res://dialog/timelines/battle_victory.dtl",
 "npc_foran": "res://dialog/timelines/npc_foran.dtl",
 "npc_test_after": "res://dialog/timelines/npc_test_after.dtl",
 "npc_test_hello": "res://dialog/characters/npc_test_hello.dtl",
-"save_point_prompt": "res://dialog/timelines/save_point_prompt.dtl"
+"save_point_prompt": "res://dialog/timelines/save_point_prompt.dtl",
+"timelines/npc_test_hello": "res://dialog/timelines/shizu.dtl"
 }
 layout/style_directory={
 "": "res://assets/styles/Default.tres",
@@ -48,6 +67,22 @@ layout/style_directory={
 layout/style_list=["res://assets/styles/Default.tres"]
 layout/default_style="res://assets/styles/Default.tres"
 glossary/default_case_sensitive=true
+variables={
+"charm_result": "",
+"damage": "",
+"enemy_dialog": "",
+"enemy_name": "",
+"exp_gained": "",
+"gold_gained": "",
+"heal_amount": "",
+"hit_label": "",
+"item_name": "",
+"love": "",
+"notes_success": "",
+"notes_total": "",
+"performance_summary": "",
+"skill_result": ""
+}
 
 [dotnet]
 
