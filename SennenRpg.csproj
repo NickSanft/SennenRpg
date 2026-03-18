@@ -5,6 +5,17 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+        <!-- Required for the GdUnit4 addon's C# bridge to compile -->
+        <DefineConstants>$(DefineConstants);GDUNIT4NET_API_V5</DefineConstants>
     </PropertyGroup>
+
+    <!-- Exclude the standalone NUnit test project — it has its own csproj and
+         must not be compiled as part of the Godot game build. -->
+    <ItemGroup>
+        <Compile Remove="SennenRpg.Tests/**" />
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="gdUnit4.api" Version="5.0.0" />
+    </ItemGroup>
 
 </Project>
