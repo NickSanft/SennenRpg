@@ -149,7 +149,7 @@ shape = SubResource("CircleShape2D_8afob")
 [node name="PhantomCamera2D" type="Node2D" parent="." unique_id=95020246]
 script = ExtResource("3_lvxji")
 priority = 10
-zoom = Vector2(3, 3)
+zoom = Vector2(5, 5)
 snap_to_pixel = true
 tween_resource = SubResource("Resource_75vfm")
 metadata/_custom_type_script = "uid://bhexx6mj1xv3q"

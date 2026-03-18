@@ -242,8 +242,9 @@ public partial class RhythmArena : Node2D
 
     private void OnPatternFinished()
     {
-        // Give 2 extra beats of grace for in-flight obstacles then end
-        float grace = 2f * RhythmClock.Instance.BeatInterval;
+        // Grace must be at least BeatsUntilArrival so the last note spawned
+        // has time to travel to the hit zone before the phase ends.
+        float grace = (BeatsUntilArrival + 1) * RhythmClock.Instance.BeatInterval;
         GetTree().CreateTimer(grace).Timeout += EndPhase;
     }
 
