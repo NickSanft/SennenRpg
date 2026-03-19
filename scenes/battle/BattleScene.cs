@@ -131,9 +131,11 @@ public partial class BattleScene : Node2D
 				  : (_enemy?.BattleBpm ?? 0f) > 0f    ? _enemy!.BattleBpm
 				  : RhythmConstants.DefaultBpm;
 
+		float beatOffset = (_enemy?.BattleBeatOffsetSec ?? 0f);
+
 		if (ResourceLoader.Exists(bgmPath))
 		{
-			AudioManager.Instance.PlayBgm(bgmPath, fadeTime: 0.1f, bpm: bpm);
+			AudioManager.Instance.PlayBgm(bgmPath, fadeTime: 0.1f, bpm: bpm, beatOffsetSec: beatOffset);
 		}
 		else
 		{

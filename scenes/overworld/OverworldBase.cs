@@ -123,25 +123,30 @@ public partial class OverworldBase : Node2D
 	/// </summary>
 	private void ApplyCameraBoundsFromGround()
 	{
-		if (GroundLayer == null || _player == null) return;
+		if (_player == null) return;
 
-		var usedRect = GroundLayer.GetUsedRect();
+		// Prefer the nested "Ground/Ground" layer which holds actual tiles;
+		// fall back to the top-level Ground layer if the nested one is absent.
+		var groundLayer = GetNodeOrNull<TileMapLayer>("Ground/Ground") ?? GroundLayer;
+		if (groundLayer == null) return;
+
+		var usedRect = groundLayer.GetUsedRect();
 		if (!usedRect.HasArea()) return;
 
-		var tileSize = GroundLayer.TileSet?.TileSize ?? new Vector2I(16, 16);
+		var tileSize = groundLayer.TileSet?.TileSize ?? new Vector2I(16, 16);
+		var origin   = groundLayer.GlobalPosition;
 
-		int left   = usedRect.Position.X * tileSize.X;
-		int top    = usedRect.Position.Y * tileSize.Y;
-		int right  = (usedRect.Position.X + usedRect.Size.X) * tileSize.X;
-		int bottom = (usedRect.Position.Y + usedRect.Size.Y) * tileSize.Y;
+		int left   = (int)origin.X + usedRect.Position.X * tileSize.X;
+		int top    = (int)origin.Y + usedRect.Position.Y * tileSize.Y;
+		int right  = (int)origin.X + (usedRect.Position.X + usedRect.Size.X) * tileSize.X;
+		int bottom = (int)origin.Y + (usedRect.Position.Y + usedRect.Size.Y) * tileSize.Y;
 
-		var cam = _player.GetNodeOrNull("PhantomCamera2D");
-		if (cam == null) return;
-
-		cam.Set("limit_left",   left);
-		cam.Set("limit_top",    top);
-		cam.Set("limit_right",  right);
-		cam.Set("limit_bottom", bottom);
+		// Apply to PhantomCamera2D so it clamps movement to the map bounds.
+		var pcam = _player.GetNodeOrNull("PhantomCamera2D");
+		pcam?.Set("limit_left",   left);
+		pcam?.Set("limit_top",    top);
+		pcam?.Set("limit_right",  right);
+		pcam?.Set("limit_bottom", bottom);
 
 		GD.Print($"[OverworldBase] Camera bounds set: L={left} T={top} R={right} B={bottom}");
 	}

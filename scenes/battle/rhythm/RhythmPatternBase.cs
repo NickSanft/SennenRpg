@@ -27,6 +27,7 @@ public abstract partial class RhythmPatternBase : Node
     private int  _beatsSinceStart;
     private bool _initialized;
     private bool _finished;
+    private bool _alignedToMeasure;
 
     /// <summary>Called by RhythmArena before AddChild — sets the arena reference.</summary>
     public void Initialize(RhythmArena arena, int totalMeasures)
@@ -51,6 +52,14 @@ public abstract partial class RhythmPatternBase : Node
     private void OnBeatInternal(int absoluteBeat)
     {
         if (_finished) return;
+
+        // Wait for the start of a measure before spawning anything,
+        // so notes always land on the music's beat grid.
+        if (!_alignedToMeasure)
+        {
+            if (RhythmClock.Instance.BeatInMeasure != 0) return;
+            _alignedToMeasure = true;
+        }
 
         int beatInMeasure = _beatsSinceStart % RhythmConstants.BeatsPerMeasure;
         SpawnOnBeat(beatInMeasure, _beatsSinceStart);

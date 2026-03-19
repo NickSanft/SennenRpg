@@ -146,10 +146,13 @@ shape = SubResource("CapsuleShape2D_x7p2l")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InteractRange" unique_id=962320122]
 shape = SubResource("CircleShape2D_8afob")
 
-[node name="PhantomCamera2D" type="Node2D" parent="." unique_id=95020246]
+[node name="PhantomCamera2D" type="Node2D" parent="." unique_id=95020246 node_paths=PackedStringArray("follow_target")]
 script = ExtResource("3_lvxji")
 priority = 10
+follow_mode = 2
+follow_target = NodePath("..")
 zoom = Vector2(5, 5)
 snap_to_pixel = true
+tween_on_load = false
 tween_resource = SubResource("Resource_75vfm")
 metadata/_custom_type_script = "uid://bhexx6mj1xv3q"

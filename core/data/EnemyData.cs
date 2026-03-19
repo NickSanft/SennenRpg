@@ -16,6 +16,11 @@ public partial class EnemyData : Resource
     [Export] public float BattleBpm { get; set; } = 0f;
 	/// <summary>BGM to play during this enemy's battle. Leave empty for the default battle track.</summary>
 	[Export] public string BattleBgmPath { get; set; } = "";
+	/// <summary>
+	/// Seconds from the start of the audio file to the first beat.
+	/// Set this if the track has silence or a musical intro before beat 1.
+	/// </summary>
+	[Export] public float BattleBeatOffsetSec { get; set; } = 0f;
 	/// <summary>Which Bard skills this enemy responds to. Parallel to SkillMercyValues.</summary>
 	[Export] public string[] BardicActOptions { get; set; } = [];
 	/// <summary>Mercy % granted by each successful Bard skill. Parallel to BardicActOptions.</summary>
