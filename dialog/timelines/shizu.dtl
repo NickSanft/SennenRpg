@@ -1,6 +1,12 @@
 join TestNpc center
-TestNpc: I am Shizukana Ito.
-TestNpc: I play the Erhu.
-TestNpc: ...you can leave now.
-[signal arg="flag:met_shizu"]
+if {met_shizu}:
+	TestNpc: ...You again.
+	TestNpc: I still don't know what a Fallowhearted is.
+	TestNpc: Maybe it's someone who follows their heart?
+	TestNpc: Or maybe Cinderblock just made it up.
+else:
+	TestNpc: I am Shizukana Ito.
+	TestNpc: I play the Erhu.
+	TestNpc: ...you can leave now.
+	[signal arg="flag:met_shizu"]
 leave --All--

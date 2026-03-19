@@ -1,5 +1,6 @@
 using Godot;
 using SennenRpg.Autoloads;
+using SennenRpg.Core.Data;
 using SennenRpg.Core.Interfaces;
 
 namespace SennenRpg.Scenes.Overworld;
@@ -15,9 +16,13 @@ public partial class Npc : CharacterBody2D, IInteractable
 	[Export] public string DisplayName { get; set; } = "???";
 	[Export] public FacingDirection DefaultFacing { get; set; } = FacingDirection.Down;
 
-	/// <summary>Alternate timelines shown when a matching flag is set. Checked in order — first match wins.</summary>
-	[Export] public string[] AltTimelinePaths { get; set; } = [];
-	[Export] public string[] AltTimelineFlags { get; set; } = [];
+	/// <summary>
+	/// Alternate dialog branches shown when a flag condition is met.
+	/// Checked in order — the first option whose RequiredFlag is set wins.
+	/// If none match, TimelinePath is used.
+	/// Each entry is an <see cref="NpcDialogOption"/> sub-resource set in the Godot inspector.
+	/// </summary>
+	[Export] public NpcDialogOption[] AltDialogOptions { get; set; } = [];
 
 	private AnimatedSprite2D? _sprite;
 	private Label? _promptLabel;
@@ -99,13 +104,24 @@ public partial class Npc : CharacterBody2D, IInteractable
 	public void HidePrompt() { if (_promptLabel != null) _promptLabel.Visible = false; }
 
 	private string ChooseTimeline()
+		=> SelectTimeline(TimelinePath, AltDialogOptions, GameManager.Instance.GetFlag);
+
+	/// <summary>
+	/// Pure selection logic: returns the path from the first option whose RequiredFlag
+	/// is set by <paramref name="flagChecker"/>, or <paramref name="defaultPath"/> if none match.
+	/// Exposed as public static so it can be unit-tested without a Godot scene.
+	/// </summary>
+	public static string SelectTimeline(
+		string defaultPath,
+		NpcDialogOption[] options,
+		Func<string, bool> flagChecker)
 	{
-		for (int i = 0; i < AltTimelineFlags.Length && i < AltTimelinePaths.Length; i++)
+		foreach (var opt in options)
 		{
-			if (GameManager.Instance.GetFlag(AltTimelineFlags[i]))
-				return AltTimelinePaths[i];
+			if (!string.IsNullOrEmpty(opt.RequiredFlag) && flagChecker(opt.RequiredFlag))
+				return opt.TimelinePath;
 		}
-		return TimelinePath;
+		return defaultPath;
 	}
 
 	private void FaceToward(Vector2 targetPosition)
@@ -140,8 +156,9 @@ public partial class Npc : CharacterBody2D, IInteractable
 	{
 		if (!string.IsNullOrEmpty(NpcId))
 		{
-			GameManager.Instance.SetFlag($"talked_to_{NpcId}", true);
-			GD.Print($"[Npc] Flag set: talked_to_{NpcId}");
+			string flag = Flags.TalkedTo(NpcId);
+			GameManager.Instance.SetFlag(flag, true);
+			GD.Print($"[Npc] Flag set: {flag}");
 		}
 
 		// Reset to default facing so the NPC doesn't stay turned toward the player
