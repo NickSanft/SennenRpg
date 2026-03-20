@@ -42,5 +42,8 @@ text = "RESUME"
 [node name="SaveButton" type="Button" parent="Overlay/Panel/VBox"]
 text = "SAVE"
 
+[node name="ItemsButton" type="Button" parent="Overlay/Panel/VBox"]
+text = "ITEMS"
+
 [node name="MainMenuButton" type="Button" parent="Overlay/Panel/VBox"]
 text = "MAIN MENU"

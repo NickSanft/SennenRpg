@@ -24,6 +24,9 @@ public partial class Npc : CharacterBody2D, IInteractable
 	/// </summary>
 	[Export] public NpcDialogOption[] AltDialogOptions { get; set; } = [];
 
+	/// <summary>Label text shown in the interaction prompt. Override in subclasses.</summary>
+	protected virtual string PromptText => "[Z] Talk";
+
 	private AnimatedSprite2D? _sprite;
 	private Label? _promptLabel;
 
@@ -64,7 +67,7 @@ public partial class Npc : CharacterBody2D, IInteractable
 
 		// Interact prompt — hidden by default
 		_promptLabel = new Label();
-		_promptLabel.Text = $"[Z] Talk";
+		_promptLabel.Text = PromptText;
 		_promptLabel.Position = new Vector2(-20, -50);
 		_promptLabel.AddThemeColorOverride("font_color", Colors.Yellow);
 		_promptLabel.AddThemeFontSizeOverride("font_size", 8);
@@ -75,7 +78,7 @@ public partial class Npc : CharacterBody2D, IInteractable
 		PlayFacingIdle(DefaultFacing);
 	}
 
-	public void Interact(Node player)
+	public virtual void Interact(Node player)
 	{
 		GD.Print($"[Npc] Interact called on {DisplayName}. TimelinePath: '{TimelinePath}'");
 		if (string.IsNullOrEmpty(TimelinePath)) { GD.Print("[Npc] No timeline path set — aborting."); return; }
@@ -98,7 +101,7 @@ public partial class Npc : CharacterBody2D, IInteractable
 		GD.Print("[Npc] StartTimelineWithFlags called.");
 	}
 
-	public string GetInteractPrompt() => $"Talk to {DisplayName}";
+	public virtual string GetInteractPrompt() => $"Talk to {DisplayName}";
 
 	public void ShowPrompt() { if (_promptLabel != null) _promptLabel.Visible = true; }
 	public void HidePrompt() { if (_promptLabel != null) _promptLabel.Visible = false; }
@@ -124,7 +127,7 @@ public partial class Npc : CharacterBody2D, IInteractable
 		return defaultPath;
 	}
 
-	private void FaceToward(Vector2 targetPosition)
+	protected void FaceToward(Vector2 targetPosition)
 	{
 		Vector2 delta = targetPosition - GlobalPosition;
 		FacingDirection dir;
@@ -139,7 +142,7 @@ public partial class Npc : CharacterBody2D, IInteractable
 		PlayFacingIdle(dir);
 	}
 
-	private void PlayFacingIdle(FacingDirection dir)
+	protected void PlayFacingIdle(FacingDirection dir)
 	{
 		if (_sprite?.SpriteFrames == null) return;
 		string anim = dir switch

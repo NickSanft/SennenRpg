@@ -1,4 +1,5 @@
 using Godot;
+using SennenRpg.Core.Data;
 
 namespace SennenRpg.Scenes.Overworld;
 
@@ -8,7 +9,8 @@ namespace SennenRpg.Scenes.Overworld;
 /// </summary>
 public partial class TestRoom : OverworldBase
 {
-	private const string NpcScene    = "res://scenes/overworld/objects/npc.tscn";
+	private const string NpcScene      = "res://scenes/overworld/objects/npc.tscn";
+	private const string VendorScene   = "res://scenes/overworld/objects/VendorNpc.tscn";
 	private const string ForanTimeline = "res://dialog/timelines/npc_foran.dtl";
 
 	public override void _Ready()
@@ -33,12 +35,27 @@ public partial class TestRoom : OverworldBase
 		var npcScene = GD.Load<PackedScene>(NpcScene);
 
 		// ── Foran ─────────────────────────────────────────────────────
-		// Stand next to the Mysterious Figure NPC (which is at world (0,0))
 		var foran = npcScene.Instantiate<Npc>();
 		foran.NpcId        = "foran_testroom";
 		foran.DisplayName  = "Foran";
 		foran.TimelinePath = ForanTimeline;
 		YSort.AddChild(foran);
 		foran.GlobalPosition = new Vector2(32, 0);
+
+		// ── Merchant ───────────────────────────────────────────────────
+		// Positioned to the right of Foran, facing left toward the player.
+		var vendorScene = GD.Load<PackedScene>(VendorScene);
+		var merchant    = vendorScene.Instantiate<VendorNpc>();
+		merchant.NpcId        = "merchant_testroom";
+		merchant.DisplayName  = "Merchant";
+		merchant.DefaultFacing = FacingDirection.Side;
+		merchant.ShopStock    =
+		[
+			new ShopItemEntry { ItemDataPath = "res://resources/items/item_001.tres", Price = 8  },
+			new ShopItemEntry { ItemDataPath = "res://resources/items/item_002.tres", Price = 20 },
+			new ShopItemEntry { ItemDataPath = "res://resources/items/item_003.tres", Price = 35 },
+		];
+		YSort.AddChild(merchant);
+		merchant.GlobalPosition = new Vector2(80, 0);
 	}
 }

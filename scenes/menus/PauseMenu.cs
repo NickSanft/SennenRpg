@@ -6,13 +6,17 @@ namespace SennenRpg.Scenes.Menus;
 /// <summary>
 /// Pause overlay shown when the player presses ESC (menu action) during the overworld.
 /// Instantiated by OverworldBase so every map gets it automatically.
+/// Manages InventoryMenu as a sibling — opening it hides PauseMenu until the player backs out.
 /// </summary>
 public partial class PauseMenu : CanvasLayer
 {
 	private Button _resumeButton   = null!;
 	private Button _saveButton     = null!;
+	private Button _itemsButton    = null!;
 	private Button _mainMenuButton = null!;
 	private bool   _transitioning  = false;
+
+	private InventoryMenu? _inventoryMenu;
 
 	public override void _Ready()
 	{
@@ -21,11 +25,27 @@ public partial class PauseMenu : CanvasLayer
 
 		_resumeButton   = GetNode<Button>("Overlay/Panel/VBox/ResumeButton");
 		_saveButton     = GetNode<Button>("Overlay/Panel/VBox/SaveButton");
+		_itemsButton    = GetNode<Button>("Overlay/Panel/VBox/ItemsButton");
 		_mainMenuButton = GetNode<Button>("Overlay/Panel/VBox/MainMenuButton");
 
 		_resumeButton.Pressed   += Resume;
 		_saveButton.Pressed     += OnSavePressed;
+		_itemsButton.Pressed    += OnItemsPressed;
 		_mainMenuButton.Pressed += OnMainMenuPressed;
+
+		// Instantiate InventoryMenu as a sibling so its visibility is independent of PauseMenu
+		const string invPath = "res://scenes/menus/InventoryMenu.tscn";
+		if (ResourceLoader.Exists(invPath))
+		{
+			_inventoryMenu = GD.Load<PackedScene>(invPath).Instantiate<InventoryMenu>();
+			_inventoryMenu.Closed += OnInventoryClosed;
+			AddSibling(_inventoryMenu);
+		}
+		else
+		{
+			GD.PushWarning("[PauseMenu] InventoryMenu.tscn not found — ITEMS button will be disabled.");
+			_itemsButton.Disabled = true;
+		}
 	}
 
 	public override void _UnhandledInput(InputEvent @event)
@@ -70,6 +90,22 @@ public partial class PauseMenu : CanvasLayer
 				_saveButton.Disabled = false;
 			}
 		};
+	}
+
+	private void OnItemsPressed()
+	{
+		if (_inventoryMenu == null) return;
+		Visible = false; // hide PauseMenu while inventory is open
+		_inventoryMenu.Open();
+		GD.Print("[PauseMenu] Inventory opened.");
+	}
+
+	private void OnInventoryClosed()
+	{
+		// Re-show PauseMenu when the player backs out of inventory
+		Visible = true;
+		_itemsButton.GrabFocus();
+		GD.Print("[PauseMenu] Inventory closed, PauseMenu restored.");
 	}
 
 	private void OnMainMenuPressed()

@@ -1,0 +1,11 @@
+[gd_scene format=4 uid="uid://cvendornpc001"]
+
+[ext_resource type="Script" path="res://scenes/overworld/objects/VendorNpc.cs" id="1_VendorNpc"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_vendor"]
+
+[node name="VendorNpc" type="CharacterBody2D"]
+script = ExtResource("1_VendorNpc")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CapsuleShape2D_vendor")
