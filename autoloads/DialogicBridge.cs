@@ -1,4 +1,5 @@
 using Godot;
+using SennenRpg.Core.Data;
 
 namespace SennenRpg.Autoloads;
 
@@ -16,6 +17,28 @@ public partial class DialogicBridge : Node
 
 	private Node _dialogic = null!;
 	private float _safetyTimer;
+
+	/// <summary>
+	/// Battle-specific variables that must always exist so {variable} interpolation works
+	/// in battle .dtl files regardless of what the Dialogic editor has saved to project.godot.
+	/// </summary>
+	private static readonly string[] BattleVars =
+	[
+		"enemy_name", "damage", "hit_label", "enemy_dialog",
+		"charm_result", "skill_result", "performance_summary",
+		"exp_gained", "gold_gained", "love",
+		"notes_success", "notes_total", "item_name", "heal_amount",
+	];
+
+	/// <summary>
+	/// Story flags that timeline conditions may branch on.
+	/// Pre-initialised to false so {flag_name} in a condition always resolves,
+	/// even before the flag has ever been set in GameManager.
+	/// </summary>
+	private static readonly string[] StoryFlagVars =
+	[
+		Flags.MetShizu,
+	];
 
 	public override void _Ready()
 	{
@@ -41,6 +64,27 @@ public partial class DialogicBridge : Node
 		// Sync Dialogic variables back to GameManager after every timeline ends.
 		if (_dialogic.HasSignal("timeline_ended"))
 			_dialogic.Connect("timeline_ended", new Callable(this, MethodName.OnTimelineEndedInternal));
+
+		// Defer variable initialisation by one frame so Dialogic's subsystems (including VAR)
+		// have finished their own _Ready() before we try to call get_subsystem("VAR").
+		Callable.From(InitialiseDialogicVariables).CallDeferred();
+	}
+
+	/// <summary>
+	/// Seeds all known variables into the Dialogic VAR subsystem so they always exist.
+	/// This prevents "unknown variable" errors when the Godot editor regenerates project.godot
+	/// and removes manually-added variable declarations.
+	/// Called deferred (one frame after _Ready) so the VAR subsystem is available.
+	/// </summary>
+	private void InitialiseDialogicVariables()
+	{
+		foreach (var name in BattleVars)
+			ForceSetVariable(name, Variant.From(""));
+
+		foreach (var name in StoryFlagVars)
+			ForceSetVariable(name, Variant.From(false));
+
+		GD.Print($"[DialogicBridge] Initialised {BattleVars.Length + StoryFlagVars.Length} Dialogic variables.");
 	}
 
 	/// <summary>
@@ -68,33 +112,20 @@ public partial class DialogicBridge : Node
 	/// <summary>
 	/// Syncs all GameManager flags and common variables to Dialogic, then starts the timeline.
 	/// Use this instead of StartTimeline when the timeline may branch on game state.
-	/// Variables that aren't defined in the Dialogic editor are silently skipped.
+	/// Variables are created in the VAR subsystem if they don't already exist.
 	/// </summary>
 	public void StartTimelineWithFlags(string timelinePath)
 	{
 		if (_dialogic == null) return;
 
-		var varSubsystem = _dialogic.Call("get_subsystem", "VAR").AsGodotObject();
-		if (varSubsystem != null)
-		{
-			// Sync all GameManager flags — quietly skip any not defined in Dialogic
-			foreach (var kvp in GameManager.Instance.Flags)
-			{
-				if (varSubsystem.Call("has", kvp.Key).AsBool())
-					varSubsystem.Call("set_variable", kvp.Key, Variant.From(kvp.Value));
-			}
+		// Sync all GameManager flags and common player variables directly into
+		// current_state_info['variables'], creating entries that don't yet exist.
+		foreach (var kvp in GameManager.Instance.Flags)
+			ForceSetVariable(kvp.Key, Variant.From(kvp.Value));
 
-			// Sync common numeric/string variables if they exist in Dialogic
-			void TrySync(string name, Variant value)
-			{
-				if (varSubsystem.Call("has", name).AsBool())
-					varSubsystem.Call("set_variable", name, value);
-			}
-
-			TrySync("playerName", Variant.From(GameManager.Instance.PlayerName));
-			TrySync("gold",       Variant.From(GameManager.Instance.Gold));
-			TrySync("love",       Variant.From(GameManager.Instance.Love));
-		}
+		ForceSetVariable("playerName", Variant.From(GameManager.Instance.PlayerName));
+		ForceSetVariable("gold",       Variant.From(GameManager.Instance.Gold));
+		ForceSetVariable("love",       Variant.From(GameManager.Instance.Love));
 
 		StartTimeline(timelinePath);
 	}
@@ -131,6 +162,21 @@ public partial class DialogicBridge : Node
 		if (_dialogic == null) return;
 		var varSubsystem = _dialogic.Call("get_subsystem", "VAR").AsGodotObject();
 		varSubsystem?.Call("set_variable", name, value);
+	}
+
+	/// <summary>
+	/// Writes a variable directly into Dialogic's current_state_info['variables'] dictionary,
+	/// creating the entry if it doesn't already exist.
+	/// Use this instead of SetVariable when the variable may not be pre-declared in the editor.
+	/// </summary>
+	private void ForceSetVariable(string name, Variant value)
+	{
+		if (_dialogic == null) return;
+		var stateInfo = _dialogic.Get("current_state_info").AsGodotDictionary();
+		if (stateInfo == null) return;
+		var variables = stateInfo["variables"].AsGodotDictionary();
+		if (variables == null) return;
+		variables[name] = value;
 	}
 
 	/// <summary>Get a Dialogic variable. Call this after timeline_ended to read choice results.</summary>
