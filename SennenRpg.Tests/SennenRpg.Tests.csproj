@@ -23,6 +23,9 @@
     <ItemGroup>
         <Compile Include="../core/data/RhythmConstants.cs" />
         <Compile Include="../core/data/PerformanceScore.cs" />
+        <Compile Include="../core/data/Flags.cs" />
+        <Compile Include="../core/data/ItemLogic.cs" />
+        <Compile Include="../core/data/ShopLogic.cs" />
     </ItemGroup>
 
 </Project>
