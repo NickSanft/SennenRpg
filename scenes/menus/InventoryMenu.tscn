@@ -1,0 +1,53 @@
+[gd_scene format=4 uid="uid://bx4klm30aq1vn"]
+
+[ext_resource type="Script" path="res://scenes/menus/InventoryMenu.cs" id="1_InvMenu"]
+
+[node name="InventoryMenu" type="CanvasLayer"]
+script = ExtResource("1_InvMenu")
+
+[node name="Overlay" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.7)
+
+[node name="Panel" type="PanelContainer" parent="Overlay"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -120.0
+offset_top = -100.0
+offset_right = 120.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Overlay/Panel"]
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="Overlay/Panel/VBox"]
+text = "ITEMS"
+horizontal_alignment = 1
+
+[node name="Spacer1" type="Control" parent="Overlay/Panel/VBox"]
+custom_minimum_size = Vector2(0, 6)
+
+[node name="EmptyLabel" type="Label" parent="Overlay/Panel/VBox"]
+text = "No items."
+horizontal_alignment = 1
+
+[node name="ItemRows" type="VBoxContainer" parent="Overlay/Panel/VBox"]
+
+[node name="Spacer2" type="Control" parent="Overlay/Panel/VBox"]
+custom_minimum_size = Vector2(0, 8)
+
+[node name="FeedbackLabel" type="Label" parent="Overlay/Panel/VBox"]
+text = ""
+horizontal_alignment = 1
+
+[node name="BackButton" type="Button" parent="Overlay/Panel/VBox"]
+text = "BACK"
