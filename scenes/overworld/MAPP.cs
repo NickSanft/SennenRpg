@@ -9,13 +9,21 @@ namespace SennenRpg.Scenes.Overworld;
 /// </summary>
 public partial class MAPP : OverworldBase
 {
-	private const string NpcScene    = "res://scenes/overworld/objects/npc.tscn";
 	private const string MapExitScene = "res://scenes/overworld/objects/MapExit.tscn";
+
+	// Per-character NPC scenes — open any of these in the editor to assign a sprite sheet
+	private const string SceneKriora = "res://scenes/overworld/objects/npcs/NpcKriora.tscn";
+	private const string SceneShizu  = "res://scenes/overworld/objects/npcs/NpcShizu.tscn";
+	private const string SceneLily   = "res://scenes/overworld/objects/npcs/NpcLily.tscn";
+	private const string SceneGus    = "res://scenes/overworld/objects/npcs/NpcGus.tscn";
+	private const string SceneBrix   = "res://scenes/overworld/objects/npcs/NpcBrix.tscn";
+	private const string SceneBhata  = "res://scenes/overworld/objects/npcs/NpcBhata.tscn";
+	private const string SceneRain   = "res://scenes/overworld/objects/npcs/NpcRain.tscn";
 
 	public override void _Ready()
 	{
-		MapId  = "mapp_tavern";
-		BgmPath = "";
+		MapId   = "mapp_tavern";
+		BgmPath = "res://assets/music/Divora - New Beginnings - DND 4 - 02 Carillion Forest.wav";
 
 		// Player returns to TestRoom through the south door
 		SpawnPoints["from_mapp_exit"] = new Vector2(0, 120);
@@ -142,10 +150,8 @@ public partial class MAPP : OverworldBase
 
 	private void SpawnNpcs()
 	{
-		var npcScene = GD.Load<PackedScene>(NpcScene);
-
 		// ── Kriora — bar matron, behind the counter ─────────────────────────
-		SpawnNpc(npcScene, new NpcConfig
+		SpawnNpc(SceneKriora, new NpcConfig
 		{
 			Id          = "kriora_mapp",
 			Name        = "Kriora",
@@ -159,7 +165,7 @@ public partial class MAPP : OverworldBase
 		});
 
 		// ── Shizu — mysterious traveller, corner seat ───────────────────────
-		SpawnNpc(npcScene, new NpcConfig
+		SpawnNpc(SceneShizu, new NpcConfig
 		{
 			Id          = "shizu_mapp",
 			Name        = "Shizu",
@@ -173,7 +179,7 @@ public partial class MAPP : OverworldBase
 		});
 
 		// ── Lily — waitress, moving between tables ──────────────────────────
-		SpawnNpc(npcScene, new NpcConfig
+		SpawnNpc(SceneLily, new NpcConfig
 		{
 			Id           = "lily_mapp",
 			Name         = "Lily",
@@ -189,7 +195,7 @@ public partial class MAPP : OverworldBase
 		});
 
 		// ── Gus — old miner, by the fireplace ──────────────────────────────
-		SpawnNpc(npcScene, new NpcConfig
+		SpawnNpc(SceneGus, new NpcConfig
 		{
 			Id          = "gus_mapp",
 			Name        = "Gus",
@@ -203,7 +209,7 @@ public partial class MAPP : OverworldBase
 		});
 
 		// ── Brix — mercenary, alone at east table ───────────────────────────
-		SpawnNpc(npcScene, new NpcConfig
+		SpawnNpc(SceneBrix, new NpcConfig
 		{
 			Id          = "brix_mapp",
 			Name        = "Brix",
@@ -217,7 +223,7 @@ public partial class MAPP : OverworldBase
 		});
 
 		// ── Bhata — scholar, centre table with books ────────────────────────
-		SpawnNpc(npcScene, new NpcConfig
+		SpawnNpc(SceneBhata, new NpcConfig
 		{
 			Id          = "bhata_mapp",
 			Name        = "Bhata",
@@ -231,7 +237,7 @@ public partial class MAPP : OverworldBase
 		});
 
 		// ── Rain — bard, near the south wall ───────────────────────────────
-		SpawnNpc(npcScene, new NpcConfig
+		SpawnNpc(SceneRain, new NpcConfig
 		{
 			Id           = "rain_mapp",
 			Name         = "Rain",
@@ -247,9 +253,9 @@ public partial class MAPP : OverworldBase
 		});
 	}
 
-	private void SpawnNpc(PackedScene scene, NpcConfig cfg)
+	private void SpawnNpc(string scenePath, NpcConfig cfg)
 	{
-		var npc = scene.Instantiate<Npc>();
+		var npc = GD.Load<PackedScene>(scenePath).Instantiate<Npc>();
 		npc.NpcId            = cfg.Id;
 		npc.DisplayName      = cfg.Name;
 		npc.PlaceholderColor = cfg.Color;

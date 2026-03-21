@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://cx7s6xfveqfcm"
+path="res://.godot/imported/Divora - New Beginnings - DND 4 - 02 Carillion Forest_original.wav-8d601925dfa54c73b3653ad514c0f47f.sample"
+
+[deps]
+
+source_file="res://assets/music/Divora - New Beginnings - DND 4 - 02 Carillion Forest_original.wav"
+dest_files=["res://.godot/imported/Divora - New Beginnings - DND 4 - 02 Carillion Forest_original.wav-8d601925dfa54c73b3653ad514c0f47f.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

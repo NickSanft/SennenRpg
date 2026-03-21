@@ -1,0 +1,8 @@
+[gd_scene format=4 uid="uid://npc_bhata_scene"]
+
+[ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="1_bhata"]
+
+[node name="NpcBhata" instance=ExtResource("1_bhata")]
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = null
