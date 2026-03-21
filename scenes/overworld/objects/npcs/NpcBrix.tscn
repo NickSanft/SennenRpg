@@ -1,8 +1,7 @@
-[gd_scene format=4 uid="uid://npc_brix_scene"]
+[gd_scene format=3 uid="uid://djjgkkxqyp83y"]
 
 [ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="1_brix"]
 
-[node name="NpcBrix" instance=ExtResource("1_brix")]
+[node name="NpcBrix" unique_id=1151915070 instance=ExtResource("1_brix")]
 
-[node name="Sprite" type="AnimatedSprite2D" parent="."]
-sprite_frames = null
+[node name="Sprite2" type="AnimatedSprite2D" parent="." index="2" unique_id=1877837077]

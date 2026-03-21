@@ -1,8 +1,7 @@
-[gd_scene format=4 uid="uid://npc_gus_scene"]
+[gd_scene format=3 uid="uid://bi8fu7boyl8k8"]
 
 [ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="1_gus"]
 
-[node name="NpcGus" instance=ExtResource("1_gus")]
+[node name="NpcGus" unique_id=2033406307 instance=ExtResource("1_gus")]
 
-[node name="Sprite" type="AnimatedSprite2D" parent="."]
-sprite_frames = null
+[node name="Sprite2" type="AnimatedSprite2D" parent="." index="2" unique_id=1242631991]

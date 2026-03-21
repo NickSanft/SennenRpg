@@ -1,8 +1,7 @@
-[gd_scene format=4 uid="uid://npc_lily_scene"]
+[gd_scene format=3 uid="uid://h0l0emkjtq8k"]
 
 [ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="1_lily"]
 
-[node name="NpcLily" instance=ExtResource("1_lily")]
+[node name="NpcLily" unique_id=25986387 instance=ExtResource("1_lily")]
 
-[node name="Sprite" type="AnimatedSprite2D" parent="."]
-sprite_frames = null
+[node name="Sprite2" type="AnimatedSprite2D" parent="." index="2" unique_id=560477111]
