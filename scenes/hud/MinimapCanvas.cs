@@ -19,6 +19,8 @@ public partial class MinimapCanvas : Control
 
 	public override void _Draw()
 	{
+		if (Size.X < 4f || Size.Y < 4f) return; // not laid out yet
+
 		DrawRect(new Rect2(Vector2.Zero, Size), BgColour);
 		DrawRect(new Rect2(Vector2.Zero, Size), BorderColour, filled: false, width: 1f);
 
@@ -91,9 +93,10 @@ public partial class MinimapCanvas : Control
 	{
 		float nx = (worldPos.X - bounds.Position.X) / bounds.Size.X;
 		float ny = (worldPos.Y - bounds.Position.Y) / bounds.Size.Y;
+		float margin = Mathf.Min(2f, Size.X * 0.1f);
 		return new Vector2(
-			Mathf.Clamp(nx * Size.X, 2f, Size.X - 2f),
-			Mathf.Clamp(ny * Size.Y, 2f, Size.Y - 2f)
+			Mathf.Clamp(nx * Size.X, margin, Size.X - margin),
+			Mathf.Clamp(ny * Size.Y, margin, Size.Y - margin)
 		);
 	}
 }
