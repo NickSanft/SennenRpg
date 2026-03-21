@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Interfaces;
 
@@ -6,17 +7,29 @@ namespace SennenRpg.Scenes.Player;
 
 public partial class Player : CharacterBody2D
 {
-	[Export] public float MoveSpeed { get; set; } = 80f;
-
+	[Export] public float MoveSpeed      { get; set; } = 80f;
+	[Export] public float RunSpeed       { get; set; } = 140f;
 	[Export] public float InteractRadius { get; set; } = 32f;
 
 	private AnimatedSprite2D _sprite = null!;
+	private Area2D _interactRange = null!;
+	private readonly HashSet<IInteractable> _candidates = new();
 	private IInteractable? _nearbyInteractable;
 
 	public override void _Ready()
 	{
 		_sprite = GetNode<AnimatedSprite2D>("Sprite");
 		AddToGroup("player");
+
+		_interactRange = GetNode<Area2D>("InteractRange");
+		var collShape = _interactRange.GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
+		if (collShape?.Shape is CircleShape2D circle)
+			circle.Radius = InteractRadius;
+
+		_interactRange.BodyEntered += body => { if (body is IInteractable i) _candidates.Add(i); };
+		_interactRange.BodyExited  += body => { if (body is IInteractable i) _candidates.Remove(i); };
+		_interactRange.AreaEntered += area => { if (area is IInteractable i) _candidates.Add(i); };
+		_interactRange.AreaExited  += area => { if (area is IInteractable i) _candidates.Remove(i); };
 
 		// Placeholder visual — visible until real sprites are assigned
 		if (_sprite.SpriteFrames == null)
@@ -41,22 +54,31 @@ public partial class Player : CharacterBody2D
 		}
 
 		var direction = Input.GetVector("move_left", "move_right", "move_up", "move_down");
-		Velocity = direction * MoveSpeed;
+		bool running  = Input.IsActionPressed("run") && direction != Vector2.Zero;
+		Velocity = direction * (running ? RunSpeed : MoveSpeed);
 
 		if (direction != Vector2.Zero)
+		{
 			UpdateAnimation(direction);
+			if (_sprite.SpriteFrames != null)
+				_sprite.SpeedScale = running ? 1.5f : 1.0f;
+		}
 		else
+		{
 			PlayIdleAnimation();
+			if (_sprite.SpriteFrames != null)
+				_sprite.SpeedScale = 1.0f;
+		}
 
 		MoveAndSlide();
 
-		// Distance-based interactable detection — find the closest interactable in range
+		// Pick the closest candidate within the InteractRange Area2D
 		IInteractable? previous = _nearbyInteractable;
 		_nearbyInteractable = null;
-		float closest = InteractRadius;
-		foreach (var node in GetTree().GetNodesInGroup("interactable"))
+		float closest = float.MaxValue;
+		foreach (var candidate in _candidates)
 		{
-			if (node is Node2D n && node is IInteractable candidate)
+			if (candidate is Node2D n)
 			{
 				float dist = GlobalPosition.DistanceTo(n.GlobalPosition);
 				if (dist < closest)
@@ -67,7 +89,6 @@ public partial class Player : CharacterBody2D
 			}
 		}
 
-		// Show/hide interact prompts when the nearest interactable changes
 		if (_nearbyInteractable != previous)
 		{
 			previous?.HidePrompt();

@@ -2868,6 +2868,7 @@ position = Vector2(1, -170)
 TargetMapPath = "res://scenes/overworld/Room2.tscn"
 TargetSpawnId = "from_test_room"
 AutoTrigger = true
+ExitHint = 1
 
 [node name="SavePoint" parent="." index="8" unique_id=1286621093 instance=ExtResource("5_5gidl")]
 position = Vector2(-69, -96)

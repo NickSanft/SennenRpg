@@ -3,6 +3,7 @@ using Godot.Collections;
 using System.Collections.Generic;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
+using SennenRpg.Scenes.Hud;
 
 namespace SennenRpg.Scenes.Overworld;
 
@@ -77,6 +78,14 @@ public partial class OverworldBase : Node2D
 		const string pausePath = "res://scenes/menus/PauseMenu.tscn";
 		if (ResourceLoader.Exists(pausePath))
 			AddChild(GD.Load<PackedScene>(pausePath).Instantiate());
+
+		const string areaLabelPath = "res://scenes/hud/AreaNameLabel.tscn";
+		if (!string.IsNullOrEmpty(MapId) && ResourceLoader.Exists(areaLabelPath))
+		{
+			var areaLabel = GD.Load<PackedScene>(areaLabelPath).Instantiate<AreaNameLabel>();
+			AddChild(areaLabel);
+			areaLabel.ShowAreaName(MapId);
+		}
 
 		GD.Print($"[OverworldBase] Ready. Map: {MapId}, Player spawned at {_player.GlobalPosition}");
 	}

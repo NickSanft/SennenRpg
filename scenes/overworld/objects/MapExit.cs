@@ -8,14 +8,18 @@ namespace SennenRpg.Scenes.Overworld;
 /// Transitions the player to another map.
 /// AutoTrigger = true  → fires on body_entered (walk-in exits, like Undertale room edges).
 /// AutoTrigger = false → waits for the player to press interact (doors).
+/// ExitHint            → draws a pulsing directional arrow to hint at off-screen exits.
 /// </summary>
 public partial class MapExit : Area2D, IInteractable
 {
-	[Export] public string TargetMapPath { get; set; } = "";
-	[Export] public string TargetSpawnId { get; set; } = "default";
-	[Export] public bool AutoTrigger { get; set; } = false;
+	public enum ExitHintDirection { None = 0, Up = 1, Down = 2, Left = 3, Right = 4 }
 
-	private bool _triggered = false;
+	[Export] public string            TargetMapPath { get; set; } = "";
+	[Export] public string            TargetSpawnId { get; set; } = "default";
+	[Export] public bool              AutoTrigger   { get; set; } = false;
+	[Export] public ExitHintDirection ExitHint      { get; set; } = ExitHintDirection.None;
+
+	private bool   _triggered = false;
 	private Label? _promptLabel;
 
 	public override void _Ready()
@@ -32,6 +36,9 @@ public partial class MapExit : Area2D, IInteractable
 			_promptLabel.Visible = false;
 			AddChild(_promptLabel);
 		}
+
+		if (ExitHint != ExitHintDirection.None)
+			SpawnArrow(ExitHint);
 
 		BodyEntered += OnBodyEntered;
 	}
@@ -57,5 +64,38 @@ public partial class MapExit : Area2D, IInteractable
 
 		GameManager.Instance.SetLastSpawn(TargetSpawnId);
 		_ = SceneTransition.Instance.GoToAsync(TargetMapPath);
+	}
+
+	private void SpawnArrow(ExitHintDirection dir)
+	{
+		var arrow = new Polygon2D();
+		arrow.Color = new Color(1f, 1f, 0.3f, 0.85f);
+
+		arrow.Polygon = dir switch
+		{
+			ExitHintDirection.Up    => [new Vector2(0, -12), new Vector2(-6, -4), new Vector2(6, -4)],
+			ExitHintDirection.Down  => [new Vector2(0,  12), new Vector2(-6,  4), new Vector2(6,  4)],
+			ExitHintDirection.Left  => [new Vector2(-12, 0), new Vector2(-4, -6), new Vector2(-4, 6)],
+			ExitHintDirection.Right => [new Vector2( 12, 0), new Vector2(  4, -6), new Vector2( 4, 6)],
+			_ => []
+		};
+
+		// Offset so the arrow sits just inside the visible edge, not on the trigger centre
+		arrow.Position = dir switch
+		{
+			ExitHintDirection.Up    => new Vector2(0, -20),
+			ExitHintDirection.Down  => new Vector2(0,  20),
+			ExitHintDirection.Left  => new Vector2(-20, 0),
+			ExitHintDirection.Right => new Vector2( 20, 0),
+			_ => Vector2.Zero
+		};
+
+		AddChild(arrow);
+
+		// Pulse: fade between 0.4 and 1.0, looping
+		arrow.Modulate = new Color(1, 1, 1, 0.4f);
+		var tween = CreateTween().SetLoops();
+		tween.TweenProperty(arrow, "modulate:a", 1.0f, 0.6f);
+		tween.TweenProperty(arrow, "modulate:a", 0.4f, 0.6f);
 	}
 }
