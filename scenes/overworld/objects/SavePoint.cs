@@ -1,6 +1,7 @@
 using Godot;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Interfaces;
+using SennenRpg.Scenes.Hud;
 
 namespace SennenRpg.Scenes.Overworld;
 
@@ -12,24 +13,20 @@ public partial class SavePoint : Area2D, IInteractable
 {
 	[Export] public string SavePointId { get; set; } = "default";
 
-	private Label? _promptLabel;
-	private bool   _dialogOpen = false;
+	private InteractPromptBubble? _prompt;
+	private bool                   _dialogOpen = false;
 
 	public override void _Ready()
 	{
 		AddToGroup("interactable");
 
-		_promptLabel = new Label();
-		_promptLabel.Text = "[Z] Save";
-		_promptLabel.Position = new Vector2(-20, -24);
-		_promptLabel.AddThemeColorOverride("font_color", Colors.Yellow);
-		_promptLabel.AddThemeFontSizeOverride("font_size", 8);
-		_promptLabel.Visible = false;
-		AddChild(_promptLabel);
+		_prompt = new InteractPromptBubble("[Z] Save");
+		_prompt.Position = new Vector2(0, -24);
+		AddChild(_prompt);
 	}
 
-	public void ShowPrompt() { if (_promptLabel != null) _promptLabel.Visible = true; }
-	public void HidePrompt() { if (_promptLabel != null) _promptLabel.Visible = false; }
+	public void ShowPrompt() => _prompt?.ShowBubble();
+	public void HidePrompt() => _prompt?.HideBubble();
 	public string GetInteractPrompt() => "Save";
 
 	public void Interact(Node player)
@@ -50,7 +47,17 @@ public partial class SavePoint : Area2D, IInteractable
 	{
 		SaveManager.Instance.SaveGame();
 		GD.Print($"[SavePoint] Game saved at '{SavePointId}'.");
+		SpawnSaveToast();
 		Close();
+	}
+
+	private void SpawnSaveToast()
+	{
+		const string path = "res://scenes/hud/AreaNameLabel.tscn";
+		if (!ResourceLoader.Exists(path)) return;
+		var toast = GD.Load<PackedScene>(path).Instantiate<AreaNameLabel>();
+		GetTree().CurrentScene.AddChild(toast);
+		toast.Show("Game Saved");
 	}
 
 	private void OnCancelled() => Close();

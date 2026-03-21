@@ -22,6 +22,14 @@ public partial class AreaNameLabel : CanvasLayer
 		_label.Modulate = Colors.Transparent;
 	}
 
+	/// <summary>Displays an arbitrary string and plays the fade sequence.</summary>
+	public void Show(string text)
+	{
+		if (string.IsNullOrEmpty(text)) return;
+		_label.Text = text;
+		PlayFade();
+	}
+
 	/// <summary>
 	/// Converts a snake_case MapId to a title-cased display string and plays the fade sequence.
 	/// Silently does nothing if mapId is null or empty.
@@ -31,8 +39,12 @@ public partial class AreaNameLabel : CanvasLayer
 		if (string.IsNullOrEmpty(mapId)) return;
 
 		_label.Text = ToDisplayName(mapId);
-		_label.Modulate = Colors.Transparent;
+		PlayFade();
+	}
 
+	private void PlayFade()
+	{
+		_label.Modulate = Colors.Transparent;
 		var tween = CreateTween();
 		tween.TweenProperty(_label, "modulate", Colors.White, FadeInSec);
 		tween.TweenInterval(HoldSec);

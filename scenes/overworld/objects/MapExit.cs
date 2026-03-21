@@ -19,22 +19,20 @@ public partial class MapExit : Area2D, IInteractable
 	[Export] public bool              AutoTrigger   { get; set; } = false;
 	[Export] public ExitHintDirection ExitHint      { get; set; } = ExitHintDirection.None;
 
-	private bool   _triggered = false;
-	private Label? _promptLabel;
+	private bool                   _triggered = false;
+	private InteractPromptBubble? _prompt;
 
 	public override void _Ready()
 	{
+		AddToGroup("map_exits");
+
 		if (!AutoTrigger)
 		{
 			AddToGroup("interactable");
 
-			_promptLabel = new Label();
-			_promptLabel.Text = "[Z] Enter";
-			_promptLabel.Position = new Vector2(-20, -20);
-			_promptLabel.AddThemeColorOverride("font_color", Colors.Yellow);
-			_promptLabel.AddThemeFontSizeOverride("font_size", 8);
-			_promptLabel.Visible = false;
-			AddChild(_promptLabel);
+			_prompt = new InteractPromptBubble("[Z] Enter");
+			_prompt.Position = new Vector2(0, -20);
+			AddChild(_prompt);
 		}
 
 		if (ExitHint != ExitHintDirection.None)
@@ -43,8 +41,8 @@ public partial class MapExit : Area2D, IInteractable
 		BodyEntered += OnBodyEntered;
 	}
 
-	public void ShowPrompt() { if (_promptLabel != null) _promptLabel.Visible = true; }
-	public void HidePrompt() { if (_promptLabel != null) _promptLabel.Visible = false; }
+	public void ShowPrompt() => _prompt?.ShowBubble();
+	public void HidePrompt() => _prompt?.HideBubble();
 
 	private void OnBodyEntered(Node2D body)
 	{

@@ -33,9 +33,9 @@ public partial class Npc : CharacterBody2D, IInteractable
 	/// </summary>
 	[Export] public float TalkCooldownSec { get; set; } = 0.5f;
 
-	private AnimatedSprite2D? _sprite;
-	private Label? _promptLabel;
-	private float _talkCooldown;
+	private AnimatedSprite2D?      _sprite;
+	private InteractPromptBubble? _prompt;
+	private float                  _talkCooldown;
 
 	public override void _Ready()
 	{
@@ -72,14 +72,9 @@ public partial class Npc : CharacterBody2D, IInteractable
 		nameLabel.AddThemeFontSizeOverride("font_size", 8);
 		AddChild(nameLabel);
 
-		// Interact prompt — hidden by default
-		_promptLabel = new Label();
-		_promptLabel.Text = PromptText;
-		_promptLabel.Position = new Vector2(-20, -50);
-		_promptLabel.AddThemeColorOverride("font_color", Colors.Yellow);
-		_promptLabel.AddThemeFontSizeOverride("font_size", 8);
-		_promptLabel.Visible = false;
-		AddChild(_promptLabel);
+		_prompt = new InteractPromptBubble(PromptText);
+		_prompt.Position = new Vector2(0, -50);
+		AddChild(_prompt);
 
 		// Apply the default facing direction
 		PlayFacingIdle(DefaultFacing);
@@ -117,8 +112,8 @@ public partial class Npc : CharacterBody2D, IInteractable
 
 	public virtual string GetInteractPrompt() => $"Talk to {DisplayName}";
 
-	public void ShowPrompt() { if (_promptLabel != null) _promptLabel.Visible = true; }
-	public void HidePrompt() { if (_promptLabel != null) _promptLabel.Visible = false; }
+	public void ShowPrompt() => _prompt?.ShowBubble();
+	public void HidePrompt() => _prompt?.HideBubble();
 
 	private string ChooseTimeline()
 		=> SelectTimeline(TimelinePath, AltDialogOptions, GameManager.Instance.GetFlag);

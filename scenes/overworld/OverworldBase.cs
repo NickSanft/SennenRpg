@@ -30,6 +30,7 @@ public partial class OverworldBase : Node2D
 	private Vector2          _lastPlayerPos;
 	private float            _stepAccumulator;
 	private bool             _encounterLocked; // prevents overlapping battle transitions
+	private Rect2            _worldBounds;
 
 	private const float StepDistance = 32f; // pixels per "step" roll
 
@@ -86,6 +87,10 @@ public partial class OverworldBase : Node2D
 			AddChild(areaLabel);
 			areaLabel.ShowAreaName(MapId);
 		}
+
+		var minimap = new SennenRpg.Scenes.Hud.MinimapHud();
+		AddChild(minimap);
+		minimap.Initialise(_worldBounds);
 
 		GD.Print($"[OverworldBase] Ready. Map: {MapId}, Player spawned at {_player.GlobalPosition}");
 	}
@@ -149,6 +154,8 @@ public partial class OverworldBase : Node2D
 		int top    = (int)origin.Y + usedRect.Position.Y * tileSize.Y;
 		int right  = (int)origin.X + (usedRect.Position.X + usedRect.Size.X) * tileSize.X;
 		int bottom = (int)origin.Y + (usedRect.Position.Y + usedRect.Size.Y) * tileSize.Y;
+
+		_worldBounds = new Rect2(left, top, right - left, bottom - top);
 
 		// Apply to PhantomCamera2D so it clamps movement to the map bounds.
 		var pcam = _player.GetNodeOrNull("PhantomCamera2D");
