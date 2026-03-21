@@ -27,7 +27,12 @@ public sealed class FlagsTests
     {
         // Add every public const string from Flags here.
         // A duplicate would indicate a copy-paste error.
-        string[] all = [Flags.MetShizu];
+        string[] all =
+        [
+            Flags.MetShizu,
+            Flags.GotItemFromForan,
+            Flags.SeenNorthExitHint,
+        ];
         Assert.That(all, Is.Unique, "Each Flags constant must map to a distinct string.");
     }
 
@@ -37,6 +42,8 @@ public sealed class FlagsTests
     // parse them with a simple string.Substring(5) call.
 
     [TestCase(Flags.MetShizu)]
+    [TestCase(Flags.GotItemFromForan)]
+    [TestCase(Flags.SeenNorthExitHint)]
     public void Constant_IsLowercaseSnakeCase(string value)
     {
         Assert.That(value, Is.EqualTo(value.ToLowerInvariant()),

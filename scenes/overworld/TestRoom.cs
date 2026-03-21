@@ -9,9 +9,11 @@ namespace SennenRpg.Scenes.Overworld;
 /// </summary>
 public partial class TestRoom : OverworldBase
 {
-	private const string NpcScene      = "res://scenes/overworld/objects/npc.tscn";
-	private const string VendorScene   = "res://scenes/overworld/objects/VendorNpc.tscn";
-	private const string ForanTimeline = "res://dialog/timelines/npc_foran.dtl";
+	private const string NpcScene         = "res://scenes/overworld/objects/npc.tscn";
+	private const string VendorScene      = "res://scenes/overworld/objects/VendorNpc.tscn";
+	private const string WalkInScene      = "res://scenes/overworld/objects/WalkInTrigger.tscn";
+	private const string ForanTimeline    = "res://dialog/timelines/npc_foran.dtl";
+	private const string NorthExitTimeline = "res://dialog/timelines/walkin_north_exit.dtl";
 
 	public override void _Ready()
 	{
@@ -28,13 +30,15 @@ public partial class TestRoom : OverworldBase
 		base._Ready();
 
 		SpawnNpcs();
+		SpawnTriggers();
 	}
 
 	private void SpawnNpcs()
 	{
 		var npcScene = GD.Load<PackedScene>(NpcScene);
 
-		// ── Foran ─────────────────────────────────────────────────────
+		// ── Foran ──────────────────────────────────────────────────────────────
+		// Demonstrates give_item: — gives a Potion on first meeting.
 		var foran = npcScene.Instantiate<Npc>();
 		foran.NpcId        = "foran_testroom";
 		foran.DisplayName  = "Foran";
@@ -42,14 +46,13 @@ public partial class TestRoom : OverworldBase
 		YSort.AddChild(foran);
 		foran.GlobalPosition = new Vector2(32, 0);
 
-		// ── Merchant ───────────────────────────────────────────────────
-		// Positioned to the right of Foran, facing left toward the player.
+		// ── Merchant ───────────────────────────────────────────────────────────
 		var vendorScene = GD.Load<PackedScene>(VendorScene);
 		var merchant    = vendorScene.Instantiate<VendorNpc>();
-		merchant.NpcId        = "merchant_testroom";
-		merchant.DisplayName  = "Merchant";
+		merchant.NpcId         = "merchant_testroom";
+		merchant.DisplayName   = "Merchant";
 		merchant.DefaultFacing = FacingDirection.Side;
-		merchant.ShopStock    =
+		merchant.ShopStock     =
 		[
 			new ShopItemEntry { ItemDataPath = "res://resources/items/item_001.tres", Price = 8  },
 			new ShopItemEntry { ItemDataPath = "res://resources/items/item_002.tres", Price = 20 },
@@ -57,5 +60,25 @@ public partial class TestRoom : OverworldBase
 		];
 		YSort.AddChild(merchant);
 		merchant.GlobalPosition = new Vector2(80, 0);
+	}
+
+	private void SpawnTriggers()
+	{
+		// ── North exit hint ────────────────────────────────────────────────────
+		// Demonstrates WalkInTrigger: Foran warns the player the first time they
+		// approach the northern map exit (MapExit is at y ≈ -170).
+		// The trigger is positioned midway between the save point and the exit.
+		var walkInScene = GD.Load<PackedScene>(WalkInScene);
+		var northHint   = walkInScene.Instantiate<WalkInTrigger>();
+		northHint.TimelinePath = NorthExitTimeline;
+		northHint.OnceFlag     = Flags.SeenNorthExitHint;
+
+		// Widen the collision area to span the passable corridor north of the save point.
+		var shape = northHint.GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
+		if (shape?.Shape is RectangleShape2D rect)
+			rect.Size = new Vector2(96, 32);
+
+		AddChild(northHint);
+		northHint.GlobalPosition = new Vector2(0, -130);
 	}
 }

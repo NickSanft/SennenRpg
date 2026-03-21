@@ -57,7 +57,8 @@ directories/dtl_directory={
 "npc_foran": "res://dialog/timelines/npc_foran.dtl",
 "npc_test_after": "res://dialog/timelines/npc_test_after.dtl",
 "save_point_prompt": "res://dialog/timelines/save_point_prompt.dtl",
-"timelines/npc_test_hello": "res://dialog/timelines/shizu.dtl"
+"timelines/npc_test_hello": "res://dialog/timelines/shizu.dtl",
+"walkin_north_exit": "res://dialog/timelines/walkin_north_exit.dtl"
 }
 layout/style_directory={
 "": "res://assets/styles/Default.tres",

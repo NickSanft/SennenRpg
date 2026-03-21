@@ -19,6 +19,14 @@ public static class Flags
     /// <summary>Set the first time the player speaks to Shizukana Ito.</summary>
     public const string MetShizu = "met_shizu";
 
+    /// <summary>Set when Foran gives the player a Potion during their first conversation.</summary>
+    public const string GotItemFromForan = "got_item_from_foran";
+
+    // ── Environment flags ─────────────────────────────────────────────────────
+
+    /// <summary>Set when the player walks close to the northern exit in the test room.</summary>
+    public const string SeenNorthExitHint = "seen_north_exit_hint";
+
     // ── Helper ───────────────────────────────────────────────────────────────
 
     /// <summary>

@@ -27,8 +27,15 @@ public partial class Npc : CharacterBody2D, IInteractable
 	/// <summary>Label text shown in the interaction prompt. Override in subclasses.</summary>
 	protected virtual string PromptText => "[Z] Talk";
 
+	/// <summary>
+	/// Seconds the player must wait before re-triggering this NPC after a conversation ends.
+	/// Prevents accidental immediate re-triggers when the player is still holding the interact key.
+	/// </summary>
+	[Export] public float TalkCooldownSec { get; set; } = 0.5f;
+
 	private AnimatedSprite2D? _sprite;
 	private Label? _promptLabel;
+	private float _talkCooldown;
 
 	public override void _Ready()
 	{
@@ -78,8 +85,15 @@ public partial class Npc : CharacterBody2D, IInteractable
 		PlayFacingIdle(DefaultFacing);
 	}
 
+	public override void _Process(double delta)
+	{
+		if (_talkCooldown > 0f)
+			_talkCooldown -= (float)delta;
+	}
+
 	public virtual void Interact(Node player)
 	{
+		if (_talkCooldown > 0f) return;
 		GD.Print($"[Npc] Interact called on {DisplayName}. TimelinePath: '{TimelinePath}'");
 		if (string.IsNullOrEmpty(TimelinePath)) { GD.Print("[Npc] No timeline path set — aborting."); return; }
 
@@ -157,6 +171,8 @@ public partial class Npc : CharacterBody2D, IInteractable
 
 	private void OnTimelineEnded()
 	{
+		_talkCooldown = TalkCooldownSec;
+
 		if (!string.IsNullOrEmpty(NpcId))
 		{
 			string flag = Flags.TalkedTo(NpcId);

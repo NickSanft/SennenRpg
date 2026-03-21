@@ -38,6 +38,8 @@ public partial class DialogicBridge : Node
 	private static readonly string[] StoryFlagVars =
 	[
 		Flags.MetShizu,
+		Flags.GotItemFromForan,
+		Flags.SeenNorthExitHint,
 	];
 
 	public override void _Ready()
@@ -196,19 +198,30 @@ public partial class DialogicBridge : Node
 	}
 
 	/// <summary>
-	/// Called by Dialogic's signal_event. Argument format:
-	///   "flag:my_flag_name"  → sets GameManager flag "my_flag_name" to true
-	///   anything else         → just emits DialogicSignalReceived for game code to handle
+	/// Called by Dialogic's signal_event. Dispatches based on the argument prefix:
+	///   "flag:{name}"      → sets GameManager flag "{name}" to true
+	///   "give_item:{path}" → adds the item at "{path}" to inventory
+	///   anything else      → forwarded via DialogicSignalReceived for game code to handle
+	/// See <see cref="SennenRpg.Core.Data.DialogicSignalParser"/> for the full convention.
 	/// </summary>
 	private void OnDialogicSignal(Variant argument)
 	{
 		string sig = argument.AsString();
-		if (sig.StartsWith("flag:"))
+		var (type, arg) = DialogicSignalParser.Parse(sig);
+
+		switch (type)
 		{
-			string flagName = sig.Substring(5);
-			GameManager.Instance.SetFlag(flagName, true);
-			GD.Print($"[DialogicBridge] Flag set via timeline signal: '{flagName}'");
+			case DialogicSignalParser.TypeFlag:
+				GameManager.Instance.SetFlag(arg, true);
+				GD.Print($"[DialogicBridge] Flag set via timeline signal: '{arg}'");
+				break;
+
+			case DialogicSignalParser.TypeGiveItem:
+				GameManager.Instance.AddItem(arg);
+				GD.Print($"[DialogicBridge] Item given via timeline signal: '{arg}'");
+				break;
 		}
+
 		EmitSignal(SignalName.DialogicSignalReceived, argument);
 	}
 
