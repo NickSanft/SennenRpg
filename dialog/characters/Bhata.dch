@@ -1,0 +1,22 @@
+{
+"@path": "res://addons/dialogic/Resources/character.gd",
+"@subpath": NodePath(""),
+&"_translation_id": "",
+&"color": Color(0.2, 0.7, 0.65, 1),
+&"custom_info": {
+"prefix": "",
+"sound_mood_default": "",
+"sound_moods": {},
+"style": "",
+"suffix": ""
+},
+&"default_portrait": "",
+&"description": "A tall, lanky man of dark complexion with tousled black hair. Wears a green and brown cloak and wields a two-handed crossbow",
+&"display_name": "Bhata",
+&"mirror": false,
+&"nicknames": [""],
+&"offset": Vector2(0, 0),
+&"portraits": {
+},
+&"scale": 1.0
+}

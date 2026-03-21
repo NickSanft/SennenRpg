@@ -230,7 +230,10 @@ public partial class DialogicBridge : Node
 	public void ConnectTimelineEnded(Callable callback)
 	{
 		if (_dialogic == null) return;
-		// Connect with ONE_SHOT so the callback fires once and disconnects automatically
+		// Guard against double-connection (can happen when a previous timeline failed to
+		// start and never emitted timeline_ended, leaving a stale ONE_SHOT in place).
+		if (_dialogic.IsConnected("timeline_ended", callback))
+			_dialogic.Disconnect("timeline_ended", callback);
 		_dialogic.Connect("timeline_ended", callback, (uint)ConnectFlags.OneShot);
 	}
 

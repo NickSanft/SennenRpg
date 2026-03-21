@@ -1,0 +1,22 @@
+{
+"@path": "res://addons/dialogic/Resources/character.gd",
+"@subpath": NodePath(""),
+&"_translation_id": "",
+&"color": Color(0.55, 0.38, 0.2, 1),
+&"custom_info": {
+"prefix": "",
+"sound_mood_default": "",
+"sound_moods": {},
+"style": "",
+"suffix": ""
+},
+&"default_portrait": "",
+&"description": "A hippie dwarf.",
+&"display_name": "Gus",
+&"mirror": false,
+&"nicknames": ["Old Gus"],
+&"offset": Vector2(0, 0),
+&"portraits": {
+},
+&"scale": 1.0
+}
