@@ -33,9 +33,20 @@ public partial class Npc : CharacterBody2D, IInteractable
 	/// </summary>
 	[Export] public float TalkCooldownSec { get; set; } = 0.5f;
 
+	/// <summary>
+	/// World-space waypoints the NPC walks between when idle.
+	/// The NPC starts at its spawn position, visits each point in order, then returns home.
+	/// Leave empty to keep the NPC stationary.
+	/// </summary>
+	[Export] public Vector2[] PatrolPoints { get; set; } = [];
+	[Export] public float     PatrolSpeed  { get; set; } = 30f;
+	[Export] public float     PatrolPause  { get; set; } = 0.5f;
+
 	private AnimatedSprite2D?      _sprite;
 	private InteractPromptBubble? _prompt;
 	private float                  _talkCooldown;
+	private Vector2                _patrolOrigin;
+	private Tween?                 _patrolTween;
 
 	public override void _Ready()
 	{
@@ -78,6 +89,9 @@ public partial class Npc : CharacterBody2D, IInteractable
 
 		// Apply the default facing direction
 		PlayFacingIdle(DefaultFacing);
+
+		if (PatrolPoints.Length >= 1)
+			Callable.From(StartPatrol).CallDeferred();
 	}
 
 	public override void _Process(double delta)
@@ -89,6 +103,7 @@ public partial class Npc : CharacterBody2D, IInteractable
 	public virtual void Interact(Node player)
 	{
 		if (_talkCooldown > 0f) return;
+		_patrolTween?.Pause();
 		GD.Print($"[Npc] Interact called on {DisplayName}. TimelinePath: '{TimelinePath}'");
 		if (string.IsNullOrEmpty(TimelinePath)) { GD.Print("[Npc] No timeline path set — aborting."); return; }
 
@@ -136,6 +151,48 @@ public partial class Npc : CharacterBody2D, IInteractable
 		return defaultPath;
 	}
 
+	// ── Patrol ────────────────────────────────────────────────────────────────
+
+	private void StartPatrol()
+	{
+		_patrolOrigin = GlobalPosition;
+		_patrolTween?.Kill();
+		_patrolTween = CreateTween().SetLoops();
+
+		// Full route: origin → each waypoint → back to origin
+		var prev = _patrolOrigin;
+		foreach (var dest in PatrolPoints)
+		{
+			AppendLeg(prev, dest);
+			prev = dest;
+		}
+		AppendLeg(prev, _patrolOrigin);
+	}
+
+	private void AppendLeg(Vector2 from, Vector2 to)
+	{
+		float dist = from.DistanceTo(to);
+		if (dist < 1f) return;
+
+		_patrolTween!.TweenCallback(Callable.From(() => SetPatrolFacing(from, to)));
+		_patrolTween.TweenProperty(this, "global_position", to, dist / PatrolSpeed)
+					.SetTrans(Tween.TransitionType.Linear);
+		_patrolTween.TweenInterval(PatrolPause);
+	}
+
+	private void SetPatrolFacing(Vector2 from, Vector2 to)
+	{
+		var dir = to - from;
+		bool horizontal = Mathf.Abs(dir.X) > Mathf.Abs(dir.Y);
+		if (_sprite != null && horizontal)
+			_sprite.FlipH = dir.X < 0;
+		PlayFacingIdle(horizontal ? FacingDirection.Side
+					 : dir.Y > 0  ? FacingDirection.Down
+					 :               FacingDirection.Up);
+	}
+
+	// ── Helpers ───────────────────────────────────────────────────────────────
+
 	protected void FaceToward(Vector2 targetPosition)
 	{
 		Vector2 delta = targetPosition - GlobalPosition;
@@ -167,6 +224,7 @@ public partial class Npc : CharacterBody2D, IInteractable
 	private void OnTimelineEnded()
 	{
 		_talkCooldown = TalkCooldownSec;
+		_patrolTween?.Play();
 
 		if (!string.IsNullOrEmpty(NpcId))
 		{
