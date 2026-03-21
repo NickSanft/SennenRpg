@@ -1,7 +1,11 @@
 using Godot;
+using System.Collections.Generic;
 using SennenRpg.Core.Data;
 
 namespace SennenRpg.Autoloads;
+
+/// <summary>Represents a single line from a dialog timeline.</summary>
+public record DialogLine(string Speaker, string Text);
 
 /// <summary>
 /// C# bridge to Dialogic 2 (a GDScript plugin).
@@ -14,6 +18,13 @@ public partial class DialogicBridge : Node
 	public static DialogicBridge Instance { get; private set; } = null!;
 
 	[Signal] public delegate void DialogicSignalReceivedEventHandler(Variant argument);
+	[Signal] public delegate void HistoryUpdatedEventHandler();
+
+	private const int MaxHistoryLines = 50;
+	private readonly List<DialogLine> _history = new();
+
+	/// <summary>Read-only view of the most recent dialog lines, oldest first.</summary>
+	public IReadOnlyList<DialogLine> DialogHistory => _history;
 
 	private Node _dialogic = null!;
 	private float _safetyTimer;
@@ -67,9 +78,35 @@ public partial class DialogicBridge : Node
 		if (_dialogic.HasSignal("timeline_ended"))
 			_dialogic.Connect("timeline_ended", new Callable(this, MethodName.OnTimelineEndedInternal));
 
+		// Hook into the TEXT subsystem to capture each spoken line for the history log.
+		// Uses CallDeferred so the Text subsystem is fully initialised.
+		Callable.From(ConnectTextSubsystem).CallDeferred();
+
 		// Defer variable initialisation by one frame so Dialogic's subsystems (including VAR)
 		// have finished their own _Ready() before we try to call get_subsystem("VAR").
 		Callable.From(InitialiseDialogicVariables).CallDeferred();
+	}
+
+	private void ConnectTextSubsystem()
+	{
+		var textNode = _dialogic?.Get("Text").AsGodotObject();
+		if (textNode == null) return;
+		if (textNode.HasSignal("text_finished"))
+			textNode.Connect("text_finished", new Callable(this, MethodName.OnTextFinished));
+	}
+
+	private void OnTextFinished(Godot.Collections.Dictionary info)
+	{
+		string text    = info.ContainsKey("text")      ? info["text"].AsString()      : "";
+		string speaker = info.ContainsKey("character") ? info["character"].AsString()  : "";
+
+		if (string.IsNullOrWhiteSpace(text)) return;
+
+		_history.Add(new DialogLine(speaker, text));
+		if (_history.Count > MaxHistoryLines)
+			_history.RemoveAt(0);
+
+		EmitSignal(SignalName.HistoryUpdated);
 	}
 
 	/// <summary>

@@ -92,6 +92,8 @@ public partial class OverworldBase : Node2D
 		AddChild(minimap);
 		minimap.Initialise(_worldBounds);
 
+		AddChild(new SennenRpg.Scenes.Hud.DialogHistoryOverlay());
+
 		GD.Print($"[OverworldBase] Ready. Map: {MapId}, Player spawned at {_player.GlobalPosition}");
 	}
 

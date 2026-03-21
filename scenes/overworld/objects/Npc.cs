@@ -47,6 +47,7 @@ public partial class Npc : CharacterBody2D, IInteractable
 	private float                  _talkCooldown;
 	private Vector2                _patrolOrigin;
 	private Tween?                 _patrolTween;
+	private bool                   _emoteShown;
 
 	public override void _Ready()
 	{
@@ -127,7 +128,16 @@ public partial class Npc : CharacterBody2D, IInteractable
 
 	public virtual string GetInteractPrompt() => $"Talk to {DisplayName}";
 
-	public void ShowPrompt() => _prompt?.ShowBubble();
+	public void ShowPrompt()
+	{
+		_prompt?.ShowBubble();
+		if (!_emoteShown)
+		{
+			_emoteShown = true;
+			SpawnEmote();
+		}
+	}
+
 	public void HidePrompt() => _prompt?.HideBubble();
 
 	private string ChooseTimeline()
@@ -149,6 +159,28 @@ public partial class Npc : CharacterBody2D, IInteractable
 				return opt.TimelinePath;
 		}
 		return defaultPath;
+	}
+
+	// ── Emote ─────────────────────────────────────────────────────────────────
+
+	private void SpawnEmote()
+	{
+		bool alreadyMet = !string.IsNullOrEmpty(NpcId)
+					   && GameManager.Instance.GetFlag(Flags.TalkedTo(NpcId));
+		string glyph = alreadyMet ? "?" : "!";
+
+		var label = new Label { Text = glyph };
+		label.AddThemeColorOverride("font_color", Colors.White);
+		label.AddThemeFontSizeOverride("font_size", 14);
+		label.Position = new Vector2(-4f, -68f);
+		AddChild(label);
+
+		var tween = CreateTween();
+		tween.TweenProperty(label, "position:y", label.Position.Y - 10f, 0.45f)
+			 .SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
+		tween.Parallel().TweenProperty(label, "modulate:a", 0f, 0.45f)
+			 .SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.In);
+		tween.TweenCallback(Callable.From(label.QueueFree));
 	}
 
 	// ── Patrol ────────────────────────────────────────────────────────────────

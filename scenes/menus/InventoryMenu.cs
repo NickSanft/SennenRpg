@@ -17,6 +17,7 @@ public partial class InventoryMenu : CanvasLayer
 	private VBoxContainer   _itemRows      = null!;
 	private Label           _feedbackLabel = null!;
 	private Button          _backButton    = null!;
+	private Label           _descLabel     = null!;
 
 	public override void _Ready()
 	{
@@ -27,6 +28,20 @@ public partial class InventoryMenu : CanvasLayer
 		_itemRows      = GetNode<VBoxContainer>("Overlay/Panel/VBox/ItemRows");
 		_feedbackLabel = GetNode<Label>("Overlay/Panel/VBox/FeedbackLabel");
 		_backButton    = GetNode<Button>("Overlay/Panel/VBox/BackButton");
+
+		// Description area inserted before FeedbackLabel
+		var vbox = GetNode<VBoxContainer>("Overlay/Panel/VBox");
+		_descLabel = new Label
+		{
+			Text                = "",
+			AutowrapMode        = TextServer.AutowrapMode.Word,
+			HorizontalAlignment = HorizontalAlignment.Center,
+		};
+		_descLabel.AddThemeFontSizeOverride("font_size", 8);
+		_descLabel.AddThemeColorOverride("font_color", new Color(0.8f, 0.8f, 0.8f));
+		_descLabel.SizeFlagsHorizontal = Control.SizeFlags.Expand | Control.SizeFlags.Fill;
+		vbox.AddChild(_descLabel);
+		vbox.MoveChild(_descLabel, _feedbackLabel.GetIndex());
 
 		_backButton.Pressed += Close;
 	}
@@ -60,6 +75,7 @@ public partial class InventoryMenu : CanvasLayer
 			child.QueueFree();
 
 		_feedbackLabel.Text = "";
+		_descLabel.Text     = "";
 
 		var paths = GameManager.Instance.InventoryItemPaths;
 		_emptyLabel.Visible = paths.Count == 0;
@@ -94,22 +110,28 @@ public partial class InventoryMenu : CanvasLayer
 		nameLabel.SizeFlagsHorizontal = Control.SizeFlags.Expand | Control.SizeFlags.Fill;
 		nameLabel.AddThemeFontSizeOverride("font_size", 10);
 
-		string descText = item.HealAmount > 0 ? $"+{item.HealAmount} HP" : item.Description;
-		var descLabel = new Label { Text = descText };
-		descLabel.SizeFlagsHorizontal = Control.SizeFlags.Expand | Control.SizeFlags.Fill;
-		descLabel.AddThemeFontSizeOverride("font_size", 10);
+		var hpLabel = new Label();
+		hpLabel.Text = item.HealAmount > 0 ? $"+{item.HealAmount} HP" : "";
+		hpLabel.AddThemeFontSizeOverride("font_size", 10);
+		hpLabel.AddThemeColorOverride("font_color", new Color(0.5f, 1f, 0.5f));
 
 		var useButton = new Button { Text = "USE", Name = "UseButton" };
 		useButton.Disabled = !ItemLogic.CanUseItem(
 			item.HealAmount,
 			GameManager.Instance.PlayerStats.CurrentHp,
 			GameManager.Instance.PlayerStats.MaxHp);
-		useButton.Pressed += () => OnUseItem(item, path);
+		useButton.Pressed      += () => OnUseItem(item, path);
+		useButton.FocusEntered += () => ShowDesc(item);
 
 		row.AddChild(nameLabel);
-		row.AddChild(descLabel);
+		row.AddChild(hpLabel);
 		row.AddChild(useButton);
 		return row;
+	}
+
+	private void ShowDesc(ItemData item)
+	{
+		_descLabel.Text = !string.IsNullOrEmpty(item.Description) ? item.Description : item.DisplayName;
 	}
 
 	private void OnUseItem(ItemData item, string path)
