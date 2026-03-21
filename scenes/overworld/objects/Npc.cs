@@ -24,6 +24,15 @@ public partial class Npc : CharacterBody2D, IInteractable
 	/// </summary>
 	[Export] public NpcDialogOption[] AltDialogOptions { get; set; } = [];
 
+	/// <summary>
+	/// Path to the Dialogic character .dch resource. When set, the examine option
+	/// is available and shows the character's description.
+	/// </summary>
+	[Export] public string CharacterPath { get; set; } = "";
+
+	/// <summary>Body colour used when no sprite sheet is assigned.</summary>
+	[Export] public Color PlaceholderColor { get; set; } = new Color(1f, 0.75f, 0.3f);
+
 	/// <summary>Label text shown in the interaction prompt. Override in subclasses.</summary>
 	protected virtual string PromptText => "[Z] Talk";
 
@@ -48,11 +57,21 @@ public partial class Npc : CharacterBody2D, IInteractable
 	private Vector2                _patrolOrigin;
 	private Tween?                 _patrolTween;
 	private bool                   _emoteShown;
+	private string                 _characterDescription = "";
+	private Node?                  _pendingPlayer;
 
 	public override void _Ready()
 	{
 		AddToGroup("interactable");
 		_sprite = GetNodeOrNull<AnimatedSprite2D>("Sprite");
+
+		// Load character description from .dch if a path is provided
+		if (!string.IsNullOrEmpty(CharacterPath) && ResourceLoader.Exists(CharacterPath))
+		{
+			var charRes = GD.Load<Resource>(CharacterPath);
+			if (charRes != null)
+				_characterDescription = charRes.Get("description").AsString();
+		}
 
 		if (_sprite?.SpriteFrames == null)
 		{
@@ -62,7 +81,7 @@ public partial class Npc : CharacterBody2D, IInteractable
 				new Vector2(-6, -14), new Vector2(6, -14),
 				new Vector2(6, 4),    new Vector2(-6, 4)
 			];
-			body.Color = new Color(1f, 0.75f, 0.3f); // Orange
+			body.Color = PlaceholderColor;
 
 			// Placeholder head
 			var head = new Polygon2D();
@@ -104,16 +123,45 @@ public partial class Npc : CharacterBody2D, IInteractable
 	public virtual void Interact(Node player)
 	{
 		if (_talkCooldown > 0f) return;
-		_patrolTween?.Pause();
-		GD.Print($"[Npc] Interact called on {DisplayName}. TimelinePath: '{TimelinePath}'");
-		if (string.IsNullOrEmpty(TimelinePath)) { GD.Print("[Npc] No timeline path set — aborting."); return; }
+		if (DialogicBridge.Instance.IsRunning()) { GD.Print("[Npc] Dialog already running — aborting."); return; }
 
-		bool running = DialogicBridge.Instance.IsRunning();
-		GD.Print($"[Npc] IsRunning = {running}");
-		if (running) { GD.Print("[Npc] Dialog already running — aborting."); return; }
+		_patrolTween?.Pause();
+		_pendingPlayer = player;
 
 		if (player is Node2D p2d)
 			FaceToward(p2d.GlobalPosition);
+
+		// Show TALK/EXAMINE/CANCEL menu when a character description is available
+		if (!string.IsNullOrEmpty(_characterDescription))
+		{
+			GameManager.Instance.SetState(GameState.Dialog);
+			var menu = new NpcInteractMenu();
+			GetTree().Root.AddChild(menu);
+			menu.Open(_characterDescription);
+			menu.TalkSelected += OnMenuTalkSelected;
+			menu.Cancelled    += OnMenuCancelled;
+			return;
+		}
+
+		StartTalkSequence();
+	}
+
+	private void OnMenuTalkSelected()
+	{
+		StartTalkSequence();
+	}
+
+	private void OnMenuCancelled()
+	{
+		_pendingPlayer = null;
+		_patrolTween?.Play();
+		GameManager.Instance.SetState(GameState.Overworld);
+	}
+
+	private void StartTalkSequence()
+	{
+		GD.Print($"[Npc] Interact called on {DisplayName}. TimelinePath: '{TimelinePath}'");
+		if (string.IsNullOrEmpty(TimelinePath)) { GD.Print("[Npc] No timeline path set — aborting."); return; }
 
 		GameManager.Instance.SetState(GameState.Dialog);
 

@@ -1,0 +1,7 @@
+[gd_scene format=4 uid="uid://mapp_tavern_scene"]
+
+[ext_resource type="PackedScene" uid="uid://bs06dan353qo1" path="res://scenes/overworld/overworld_base.tscn" id="1_mapp01"]
+[ext_resource type="Script" path="res://scenes/overworld/MAPP.cs" id="2_mapp02"]
+
+[node name="MAPP" instance=ExtResource("1_mapp01")]
+script = ExtResource("2_mapp02")

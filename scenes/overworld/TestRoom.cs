@@ -11,6 +11,7 @@ public partial class TestRoom : OverworldBase
 {
 	private const string NpcScene          = "res://scenes/overworld/objects/npc.tscn";
 	private const string VendorScene       = "res://scenes/overworld/objects/VendorNpc.tscn";
+	private const string MapExitScene      = "res://scenes/overworld/objects/MapExit.tscn";
 	private const string WalkInScene       = "res://scenes/overworld/objects/WalkInTrigger.tscn";
 	private const string ChestScene        = "res://scenes/overworld/objects/Chest.tscn";
 	private const string SignScene         = "res://scenes/overworld/objects/InteractSign.tscn";
@@ -24,6 +25,9 @@ public partial class TestRoom : OverworldBase
 		// Player arrives here after walking back from Room2
 		SpawnPoints["from_room2"] = new Vector2(240, 120);
 
+		// Player arrives here after exiting MAPP tavern
+		SpawnPoints["from_mapp"] = new Vector2(50, -35);
+
 		// Save point spawn — player loads here after saving in this room
 		SpawnPoints["test_room"] = new Vector2(200, 100);
 
@@ -35,6 +39,7 @@ public partial class TestRoom : OverworldBase
 		SpawnTriggers();
 		SpawnChests();
 		SpawnSigns();
+		SpawnMappExit();
 	}
 
 	private void SpawnNpcs()
@@ -97,6 +102,20 @@ public partial class TestRoom : OverworldBase
 		];
 		AddChild(sign);
 		sign.GlobalPosition = new Vector2(-90, 80);
+	}
+
+	private void SpawnMappExit()
+	{
+		// ── MAPP tavern door ─────────────────────────────────────────────────
+		// Placed just north of the existing NPCs so the player walks into it.
+		var exitScene = GD.Load<PackedScene>(MapExitScene);
+		var mappExit  = exitScene.Instantiate<MapExit>();
+		mappExit.TargetMapPath = "res://scenes/overworld/MAPP.tscn";
+		mappExit.TargetSpawnId = "from_mapp_exit";
+		mappExit.AutoTrigger   = false;
+		mappExit.ExitHint      = MapExit.ExitHintDirection.Up;
+		AddChild(mappExit);
+		mappExit.GlobalPosition = new Vector2(50, -50);
 	}
 
 	private void SpawnTriggers()

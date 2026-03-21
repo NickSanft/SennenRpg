@@ -31,7 +31,13 @@ RhythmClock="*res://autoloads/RhythmClock.cs"
 [dialogic]
 
 directories/dch_directory={
+"Bhata": "res://dialog/characters/Bhata.dch",
+"Brix": "res://dialog/characters/Brix.dch",
 "Foran": "res://dialog/characters/Foran.dch",
+"Gus": "res://dialog/characters/Gus.dch",
+"Kriora": "res://dialog/characters/Kriora.dch",
+"Lily": "res://dialog/characters/Lily.dch",
+"Rain": "res://dialog/characters/Rain.dch",
 "TestNpc": "res://dialog/characters/Shizu.dch",
 "unit_test_character": "res://addons/dialogic/Tests/Resources/unit_test_character.dch"
 }
@@ -54,7 +60,21 @@ directories/dtl_directory={
 "battle_spared": "res://dialog/timelines/battle_spared.dtl",
 "battle_strike_prompt": "res://dialog/timelines/battle_strike_prompt.dtl",
 "battle_victory": "res://dialog/timelines/battle_victory.dtl",
+"npc_bhata": "res://dialog/timelines/npc_bhata.dtl",
+"npc_bhata_again": "res://dialog/timelines/npc_bhata_again.dtl",
+"npc_brix": "res://dialog/timelines/npc_brix.dtl",
+"npc_brix_again": "res://dialog/timelines/npc_brix_again.dtl",
 "npc_foran": "res://dialog/timelines/npc_foran.dtl",
+"npc_gus": "res://dialog/timelines/npc_gus.dtl",
+"npc_gus_again": "res://dialog/timelines/npc_gus_again.dtl",
+"npc_kriora": "res://dialog/timelines/npc_kriora.dtl",
+"npc_kriora_again": "res://dialog/timelines/npc_kriora_again.dtl",
+"npc_lily": "res://dialog/timelines/npc_lily.dtl",
+"npc_lily_again": "res://dialog/timelines/npc_lily_again.dtl",
+"npc_rain": "res://dialog/timelines/npc_rain.dtl",
+"npc_rain_again": "res://dialog/timelines/npc_rain_again.dtl",
+"npc_shizu": "res://dialog/timelines/npc_shizu.dtl",
+"npc_shizu_again": "res://dialog/timelines/npc_shizu_again.dtl",
 "npc_test_after": "res://dialog/timelines/npc_test_after.dtl",
 "save_point_prompt": "res://dialog/timelines/save_point_prompt.dtl",
 "timelines/npc_test_hello": "res://dialog/timelines/shizu.dtl",
