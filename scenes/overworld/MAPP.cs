@@ -28,6 +28,10 @@ public partial class MAPP : OverworldBase
 	private const string ShizuBgmPath         = "res://assets/music/Divora - Origins Of The Gyre - DND 6 - 01 Origins Of The Gyre - Full.wav";
 	private const string FrogTexturePath      = "res://assets/sprites/npcs/GusGiantFrog.png";
 	private const string TilesetPath          = "res://assets/tilesets/mapp_tiles.png";
+	private const string BarkeepScene         = "res://scenes/overworld/objects/VendorNpc.tscn";
+	private const string BarkeepTimeline      = "res://dialog/timelines/npc_barkeep.dtl";
+	private const string AleItemPath          = "res://resources/items/item_004.tres";
+	private const string SignScene            = "res://scenes/overworld/objects/InteractSign.tscn";
 
 	public override void _Ready()
 	{
@@ -45,8 +49,16 @@ public partial class MAPP : OverworldBase
 		base._Ready();
 
 		BuildTileMap();
+		SpawnCeilingBeams();
+		SpawnRugs();
 		SpawnFurniture();
-		PulseFlame(GetNode<ColorRect>("Flame"));
+		SpawnBarStools();
+		SpawnMantelpiece();
+		SpawnWallDecorations();
+		SpawnLayeredFlame(GetNode<ColorRect>("Flame"));
+		SpawnDrinkProp();
+		SpawnBarkeep();
+		SpawnNoticeboard();
 		SpawnExit();
 		SpawnJournal();
 
@@ -908,13 +920,367 @@ public partial class MAPP : OverworldBase
 		}
 	}
 
-	// ── Flame ──────────────────────────────────────────────────────────────────
+	// ── Ceiling beams ──────────────────────────────────────────────────────────
 
-	private void PulseFlame(ColorRect flame)
+	private void SpawnCeilingBeams()
 	{
-		var tween = CreateTween().SetLoops();
-		tween.TweenProperty(flame, "modulate:a", 0.6f, 0.4f).SetTrans(Tween.TransitionType.Sine);
-		tween.TweenProperty(flame, "modulate:a", 1.0f, 0.4f).SetTrans(Tween.TransitionType.Sine);
+		var beamColor = new Color(0.14f, 0.07f, 0.03f);
+		// Three horizontal rafters spanning the full room width, z behind NPCs
+		float[] beamYs = [-38f, -14f, 10f];
+		foreach (float y in beamYs)
+		{
+			var beam = new ColorRect
+			{
+				Color  = beamColor,
+				Size   = new Vector2(310f, 4f),
+				ZIndex = -5,
+			};
+			AddChild(beam);
+			beam.GlobalPosition = new Vector2(-155f, y);
+		}
+	}
+
+	// ── Rugs ───────────────────────────────────────────────────────────────────
+
+	private void SpawnRugs()
+	{
+		// Deep crimson rugs — one under each table cluster, one by the fireplace
+		var rugColor    = new Color(0.48f, 0.08f, 0.08f, 0.85f);
+		var rugBorder   = new Color(0.60f, 0.20f, 0.10f, 0.80f);
+		var rugCenters  = new (Vector2 center, Vector2 size)[]
+		{
+			(new Vector2(-60f,  40f), new Vector2(46f, 34f)),
+			(new Vector2( 60f,  40f), new Vector2(46f, 34f)),
+			(new Vector2(  0f, -10f), new Vector2(46f, 34f)),
+			(new Vector2(-108f,  8f), new Vector2(32f, 28f)), // hearth area
+		};
+
+		foreach (var (center, size) in rugCenters)
+		{
+			float hw = size.X * 0.5f, hh = size.Y * 0.5f;
+
+			// Border stripe (slightly larger)
+			AddPoly(center, new Vector2[]
+			{
+				new Vector2(-hw - 2f, -hh - 2f), new Vector2(hw + 2f, -hh - 2f),
+				new Vector2(hw + 2f,   hh + 2f), new Vector2(-hw - 2f,  hh + 2f),
+			}, rugBorder, zIndex: -8);
+
+			// Main rug
+			AddPoly(center, new Vector2[]
+			{
+				new Vector2(-hw, -hh), new Vector2(hw, -hh),
+				new Vector2(hw,   hh), new Vector2(-hw,  hh),
+			}, rugColor, zIndex: -8);
+		}
+	}
+
+	// ── Bar stools ─────────────────────────────────────────────────────────────
+
+	private void SpawnBarStools()
+	{
+		// A row of 6 round stools along the south face of the bar (y ≈ -40)
+		float[] stoolXs = [-90f, -54f, -18f, 18f, 54f, 90f];
+		float   stoolY  = -40f;
+
+		foreach (float x in stoolXs)
+		{
+			var pos = new Vector2(x, stoolY);
+
+			// Collision
+			AddStaticRect(pos, new Vector2(8f, 6f));
+
+			// Seat (octagon approximation)
+			AddPoly(pos, new Vector2[]
+			{
+				new Vector2(-3f, -4f), new Vector2(3f, -4f),
+				new Vector2(4f,  -2f), new Vector2(4f,  2f),
+				new Vector2(3f,   4f), new Vector2(-3f,  4f),
+				new Vector2(-4f,  2f), new Vector2(-4f, -2f),
+			}, new Color(0.25f, 0.14f, 0.06f), zIndex: -6);
+
+			// Seat highlight
+			AddPoly(pos + new Vector2(-1f, -1f), new Vector2[]
+			{
+				new Vector2(-2f, -2f), new Vector2(2f, -2f),
+				new Vector2(2f,   0f), new Vector2(-2f,  0f),
+			}, new Color(0.35f, 0.20f, 0.10f), zIndex: -5);
+		}
+	}
+
+	// ── Fireplace mantelpiece ──────────────────────────────────────────────────
+
+	private void SpawnMantelpiece()
+	{
+		// The Firebox ColorRect sits at world x=-150 to -122, y=-40 to -8 (center: -136, -24)
+		var center = new Vector2(-136f, -40f);
+
+		// Stone shelf — slightly wider than the firebox
+		AddPoly(center, new Vector2[]
+		{
+			new Vector2(-16f, 0f), new Vector2(16f, 0f),
+			new Vector2(16f,  5f), new Vector2(-16f, 5f),
+		}, new Color(0.55f, 0.50f, 0.44f), zIndex: -4); // stone face
+
+		AddPoly(center, new Vector2[]
+		{
+			new Vector2(-16f, -3f), new Vector2(16f, -3f),
+			new Vector2(16f,   0f), new Vector2(-16f,  0f),
+		}, new Color(0.42f, 0.38f, 0.33f), zIndex: -4); // shelf top (darker)
+
+		// Left candle holder
+		SpawnMantleCandle(center + new Vector2(-10f, -2f));
+
+		// Skull trophy (centre)
+		SpawnMantleSkull(center + new Vector2(0f, -2f));
+
+		// Right candle holder
+		SpawnMantleCandle(center + new Vector2(10f, -2f));
+	}
+
+	private void SpawnMantleCandle(Vector2 pos)
+	{
+		// Holder base
+		AddPoly(pos, new Vector2[] {
+			new Vector2(-2f, 0f), new Vector2(2f, 0f),
+			new Vector2(2f, 2f),  new Vector2(-2f, 2f),
+		}, new Color(0.5f, 0.38f, 0.12f), zIndex: -3);
+		// Wax
+		AddPoly(pos + new Vector2(0f, -5f), new Vector2[] {
+			new Vector2(-1f, 0f), new Vector2(1f, 0f),
+			new Vector2(1f, 4f),  new Vector2(-1f, 4f),
+		}, CandleWax, zIndex: -3);
+		// Flame
+		AddPoly(pos + new Vector2(0f, -6f), new Vector2[] {
+			new Vector2(0f, -3f), new Vector2(1f, -1f),
+			new Vector2(0f,  0f), new Vector2(-1f, -1f),
+		}, CandleFlame, zIndex: -2);
+	}
+
+	private void SpawnMantleSkull(Vector2 pos)
+	{
+		// Cranium
+		AddPoly(pos + new Vector2(0f, -4f), new Vector2[] {
+			new Vector2(-2f, -2f), new Vector2(2f, -2f),
+			new Vector2(3f,   0f), new Vector2(-3f,  0f),
+		}, new Color(0.88f, 0.85f, 0.76f), zIndex: -3);
+		// Jaw
+		AddPoly(pos + new Vector2(0f, -2f), new Vector2[] {
+			new Vector2(-2f, 0f), new Vector2(2f, 0f),
+			new Vector2(1f,  2f), new Vector2(-1f, 2f),
+		}, new Color(0.80f, 0.77f, 0.68f), zIndex: -3);
+		// Eye sockets (dark dots)
+		AddPoly(pos + new Vector2(-1f, -5f), new Vector2[] {
+			new Vector2(-0.8f, -0.8f), new Vector2(0.8f, -0.8f),
+			new Vector2(0.8f,  0.8f),  new Vector2(-0.8f,  0.8f),
+		}, new Color(0.1f, 0.08f, 0.06f), zIndex: -2);
+		AddPoly(pos + new Vector2(1f, -5f), new Vector2[] {
+			new Vector2(-0.8f, -0.8f), new Vector2(0.8f, -0.8f),
+			new Vector2(0.8f,  0.8f),  new Vector2(-0.8f,  0.8f),
+		}, new Color(0.1f, 0.08f, 0.06f), zIndex: -2);
+	}
+
+	// ── Wall decorations ───────────────────────────────────────────────────────
+
+	private void SpawnWallDecorations()
+	{
+		// Mounted antlers on east side of north wall
+		SpawnMountedAntlers(new Vector2(65f, -90f));
+
+		// Painted banner on west side of north wall
+		SpawnBanner(new Vector2(-65f, -90f));
+	}
+
+	private void SpawnMountedAntlers(Vector2 pos)
+	{
+		var woodColor   = new Color(0.45f, 0.28f, 0.10f);
+		var antlerColor = new Color(0.72f, 0.56f, 0.30f);
+
+		// Mounting plaque
+		AddPoly(pos, new Vector2[] {
+			new Vector2(-8f, -3f), new Vector2(8f, -3f),
+			new Vector2(8f,  3f),  new Vector2(-8f, 3f),
+		}, woodColor, zIndex: -4);
+
+		// Left antler branch (three segments pointing up-left)
+		AddPoly(pos + new Vector2(-4f, -3f), new Vector2[] {
+			new Vector2(-1f, 0f), new Vector2(1f, 0f),
+			new Vector2(0f, -7f),
+		}, antlerColor, zIndex: -4);
+		AddPoly(pos + new Vector2(-6f, -7f), new Vector2[] {
+			new Vector2(-1f, 0f), new Vector2(1f, 0f),
+			new Vector2(-2f, -5f),
+		}, antlerColor, zIndex: -4);
+		AddPoly(pos + new Vector2(-3f, -7f), new Vector2[] {
+			new Vector2(-1f, 0f), new Vector2(1f, 0f),
+			new Vector2( 2f, -4f),
+		}, antlerColor, zIndex: -4);
+
+		// Right antler (mirrored)
+		AddPoly(pos + new Vector2(4f, -3f), new Vector2[] {
+			new Vector2(-1f, 0f), new Vector2(1f, 0f),
+			new Vector2(0f, -7f),
+		}, antlerColor, zIndex: -4);
+		AddPoly(pos + new Vector2(6f, -7f), new Vector2[] {
+			new Vector2(-1f, 0f), new Vector2(1f, 0f),
+			new Vector2( 2f, -5f),
+		}, antlerColor, zIndex: -4);
+		AddPoly(pos + new Vector2(3f, -7f), new Vector2[] {
+			new Vector2(-1f, 0f), new Vector2(1f, 0f),
+			new Vector2(-2f, -4f),
+		}, antlerColor, zIndex: -4);
+	}
+
+	private void SpawnBanner(Vector2 pos)
+	{
+		// Banner cloth (deep purple with gold trim)
+		AddPoly(pos + new Vector2(0f, -3f), new Vector2[] {
+			new Vector2(-7f, -9f), new Vector2(7f, -9f),
+			new Vector2(7f,   7f), new Vector2(-7f,  7f),
+		}, new Color(0.28f, 0.10f, 0.42f), zIndex: -4); // purple field
+
+		// Gold border strip
+		AddPoly(pos + new Vector2(0f, -3f), new Vector2[] {
+			new Vector2(-7f, -9f), new Vector2(-5f, -9f),
+			new Vector2(-5f,  7f), new Vector2(-7f,  7f),
+		}, new Color(0.75f, 0.55f, 0.12f), zIndex: -3);
+		AddPoly(pos + new Vector2(0f, -3f), new Vector2[] {
+			new Vector2( 5f, -9f), new Vector2(7f, -9f),
+			new Vector2( 7f,  7f), new Vector2(5f,  7f),
+		}, new Color(0.75f, 0.55f, 0.12f), zIndex: -3);
+
+		// Decorative rune glyph (simple cross)
+		AddPoly(pos + new Vector2(0f, -3f), new Vector2[] {
+			new Vector2(-1f, -5f), new Vector2(1f, -5f),
+			new Vector2(1f,  3f),  new Vector2(-1f, 3f),
+		}, new Color(0.85f, 0.65f, 0.18f), zIndex: -3);
+		AddPoly(pos + new Vector2(0f, -3f), new Vector2[] {
+			new Vector2(-4f, -1f), new Vector2(4f, -1f),
+			new Vector2(4f,  1f),  new Vector2(-4f, 1f),
+		}, new Color(0.85f, 0.65f, 0.18f), zIndex: -3);
+
+		// Bottom point of banner (pennant cut)
+		AddPoly(pos + new Vector2(0f, 4f), new Vector2[] {
+			new Vector2(-7f, 0f), new Vector2(7f, 0f),
+			new Vector2(0f, 6f),
+		}, new Color(0.28f, 0.10f, 0.42f), zIndex: -4);
+	}
+
+	// ── Layered flame ──────────────────────────────────────────────────────────
+
+	private void SpawnLayeredFlame(ColorRect oldFlame)
+	{
+		oldFlame.Visible = false; // replace with layered Polygon2D flames
+
+		// Flame centre: matches the Flame ColorRect centre (–136, –25)
+		var centre = new Vector2(-136f, -25f);
+
+		var layers = new (Vector2[] poly, Color color, float zIndex, float period, float scaleMin, float scaleMax)[]
+		{
+			// Base layer — wide amber
+			(new Vector2[] {
+				new Vector2(-8f, 8f), new Vector2(8f, 8f),
+				new Vector2(5f,  0f), new Vector2(0f, -14f), new Vector2(-5f, 0f),
+			}, new Color(1.0f, 0.45f, 0.05f, 0.95f), -7f, 0.42f, 0.90f, 1.08f),
+
+			// Middle layer — orange
+			(new Vector2[] {
+				new Vector2(-5f, 6f), new Vector2(5f, 6f),
+				new Vector2(3f,  0f), new Vector2(0f, -12f), new Vector2(-3f, 0f),
+			}, new Color(1.0f, 0.62f, 0.10f, 0.90f), -6f, 0.35f, 0.88f, 1.10f),
+
+			// Tip layer — yellow-white
+			(new Vector2[] {
+				new Vector2(-2.5f, 3f), new Vector2(2.5f, 3f),
+				new Vector2(0f, -10f),
+			}, new Color(1.0f, 0.90f, 0.45f, 0.85f), -5f, 0.26f, 0.82f, 1.16f),
+		};
+
+		float yShift = 2.5f; // how many pixels each layer bobs up/down
+		foreach (var (poly, color, zIdx, period, scaleMin, scaleMax) in layers)
+		{
+			var flame = new Polygon2D { Color = color, ZIndex = (int)zIdx, Polygon = poly };
+			AddChild(flame);
+			flame.GlobalPosition = centre;
+
+			// Scale pulse
+			var t = CreateTween().SetLoops();
+			t.TweenProperty(flame, "scale:y", scaleMax, period)
+				.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+			t.TweenProperty(flame, "scale:y", scaleMin, period)
+				.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+
+			// Vertical bob (offset per layer so they don't move in sync)
+			float offset = period * 0.33f;
+			var t2 = CreateTween().SetLoops();
+			t2.TweenProperty(flame, "position:y", centre.Y - yShift, period * 1.1f)
+				.SetTrans(Tween.TransitionType.Sine).SetDelay(offset);
+			t2.TweenProperty(flame, "position:y", centre.Y + 0.5f, period * 1.1f)
+				.SetTrans(Tween.TransitionType.Sine);
+
+			yShift += 1.0f; // each higher layer bobs a bit more
+		}
+	}
+
+	// ── Drink prop ─────────────────────────────────────────────────────────────
+
+	private void SpawnDrinkProp()
+	{
+		var mug = new BarDrinkProp();
+		AddChild(mug);
+		mug.GlobalPosition = new Vector2(80f, -62f); // on the bar counter, east side
+	}
+
+	// ── Barkeep ────────────────────────────────────────────────────────────────
+
+	private void SpawnBarkeep()
+	{
+		var scene    = GD.Load<PackedScene>(BarkeepScene);
+		var barkeep  = scene.Instantiate<VendorNpc>();
+
+		barkeep.NpcId          = "barkeep_mapp";
+		barkeep.DisplayName    = "Barkeep";
+		barkeep.PlaceholderColor = new Color(0.55f, 0.38f, 0.18f);
+		barkeep.TimelinePath   = BarkeepTimeline;
+		barkeep.CharacterPath  = "res://dialog/characters/Barkeep.dch";
+		barkeep.DefaultFacing  = FacingDirection.Down;
+
+		var aleEntry = new SennenRpg.Core.Data.ShopItemEntry
+		{
+			ItemDataPath = AleItemPath,
+			Price        = 5,
+		};
+		barkeep.ShopStock = [aleEntry];
+
+		YSort.AddChild(barkeep);
+		barkeep.GlobalPosition = new Vector2(0f, -85f);
+	}
+
+	// ── Notice board ───────────────────────────────────────────────────────────
+
+	private void SpawnNoticeboard()
+	{
+		var scene = GD.Load<PackedScene>(SignScene);
+		var board = scene.Instantiate<InteractSign>();
+
+		board.SignTitle = "Notice Board";
+		board.Lines     =
+		[
+			"The MAPP — serving the finest ales since 1057.",
+			"",
+			"REWARD: 50 gold for information regarding the",
+			"  recent incident in Seade. Contact K.B.",
+			"",
+			"LOST: One horse. Brown. Answers to 'Horse'.",
+			"  Contact Brix (he is right here).",
+			"",
+			"Rooms available upstairs. Ask the barkeep.",
+			"No dragons. No familiars. No exceptions.",
+			"  (Exceptions may be negotiated.)",
+		];
+
+		AddChild(board);
+		board.GlobalPosition = new Vector2(130f, 50f);
 	}
 
 	// ── Exit ──────────────────────────────────────────────────────────────────

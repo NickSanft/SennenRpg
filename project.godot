@@ -31,6 +31,7 @@ RhythmClock="*res://autoloads/RhythmClock.cs"
 [dialogic]
 
 directories/dch_directory={
+"Barkeep": "res://dialog/characters/Barkeep.dch",
 "Bhata": "res://dialog/characters/Bhata.dch",
 "Brix": "res://dialog/characters/Brix.dch",
 "Ferret": "res://dialog/characters/Ferret.dch",
@@ -66,6 +67,7 @@ directories/dtl_directory={
 "battle_strike_prompt": "res://dialog/timelines/battle_strike_prompt.dtl",
 "battle_victory": "res://dialog/timelines/battle_victory.dtl",
 "cutscene_lily_effect": "res://dialog/timelines/cutscene_lily_effect.dtl",
+"npc_barkeep": "res://dialog/timelines/npc_barkeep.dtl",
 "npc_bhata": "res://dialog/timelines/npc_bhata.dtl",
 "npc_bhata_again": "res://dialog/timelines/npc_bhata_again.dtl",
 "npc_brix": "res://dialog/timelines/npc_brix.dtl",

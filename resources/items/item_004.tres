@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ItemData" format=3 uid="uid://itm004ale001"]
+
+[ext_resource type="Script" path="res://core/data/ItemData.cs" id="1_ItemData"]
+
+[resource]
+script = ExtResource("1_ItemData")
+ItemId = "item_004"
+DisplayName = "Ale"
+Description = "A frothy mug of dark tavern ale. Restores 8 HP. Best enjoyed slowly."
+HealAmount = 8
