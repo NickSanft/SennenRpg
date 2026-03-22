@@ -1,7 +1,72 @@
 [gd_scene format=3 uid="uid://i4fwbygs3mgq"]
 
 [ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="1_kriora"]
+[ext_resource type="Texture2D" uid="uid://bh50h604bxtax" path="res://assets/sprites/npcs/Kriora.png" id="2_26bbb"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_o1iew"]
+atlas = ExtResource("2_26bbb")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_capxq"]
+atlas = ExtResource("2_26bbb")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yocmn"]
+atlas = ExtResource("2_26bbb")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gvria"]
+atlas = ExtResource("2_26bbb")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0n5nd"]
+atlas = ExtResource("2_26bbb")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0u41r"]
+atlas = ExtResource("2_26bbb")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_fjuys"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_o1iew")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_capxq")
+}],
+"loop": true,
+"name": &"idle_down",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_yocmn")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gvria")
+}],
+"loop": true,
+"name": &"idle_side",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0n5nd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0u41r")
+}],
+"loop": true,
+"name": &"idle_up",
+"speed": 5.0
+}]
 
 [node name="NpcKriora" unique_id=878890192 instance=ExtResource("1_kriora")]
+
+[node name="Sprite" parent="." index="0" unique_id=1912760606]
+sprite_frames = SubResource("SpriteFrames_fjuys")
+animation = &"idle_up"
 
 [node name="Sprite2" type="AnimatedSprite2D" parent="." index="2" unique_id=654394369]
