@@ -28,6 +28,15 @@ public static class Flags
     /// <summary>Set when Bhata's ferret materialises floating in purple energy.</summary>
     public const string BhataFerretAppeared = "bhata_ferret_appeared";
 
+    /// <summary>Set when light-blue crystals appear at Kriora's feet.</summary>
+    public const string KrioraCrystalsAppeared = "kriora_crystals_appeared";
+
+    /// <summary>Set when Gus transforms into a giant frog.</summary>
+    public const string GusTransformedToFrog = "gus_transformed_to_frog";
+
+    /// <summary>Set when Shizu's music note aura activates and BGM changes.</summary>
+    public const string ShizuMusicAuraActive = "shizu_music_aura_active";
+
     // ── Environment flags ─────────────────────────────────────────────────────
 
     /// <summary>Set when the player walks close to the northern exit in the test room.</summary>

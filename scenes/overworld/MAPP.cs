@@ -17,15 +17,24 @@ public partial class MAPP : OverworldBase
 	private const string HorseTimeline      = "res://dialog/timelines/npc_horse.dtl";
 	private const string FerretScene        = "res://scenes/overworld/objects/npcs/NpcFerret.tscn";
 	private const string FerretTimeline     = "res://dialog/timelines/npc_ferret.dtl";
-	private const string BrixHorseSignal    = "brix_horse_spawn";
-	private const string LilyAltSignal      = "lily_alt_ended";
-	private const string BhataFerretSignal  = "bhata_ferret_spawn";
-	private const string LilyCutscenePath   = "res://dialog/timelines/cutscene_lily_effect.dtl";
+	private const string BrixHorseSignal      = "brix_horse_spawn";
+	private const string LilyAltSignal        = "lily_alt_ended";
+	private const string BhataFerretSignal    = "bhata_ferret_spawn";
+	private const string KrioraCrystalsSignal = "kriora_crystals_spawn";
+	private const string GusTransformSignal   = "gus_frog_transform";
+	private const string ShizuAuraSignal      = "shizu_music_aura";
+	private const string LilyCutscenePath     = "res://dialog/timelines/cutscene_lily_effect.dtl";
+	private const string ShizuBgmPath         = "res://assets/music/Divora - Origins Of The Gyre - DND 6 - 01 Origins Of The Gyre - Full.wav";
+	private const string FrogTexturePath      = "res://assets/sprites/npcs/GusGiantFrog.png";
 
 	public override void _Ready()
 	{
 		MapId   = "mapp_tavern";
 		BgmPath = "res://assets/music/Divora - New Beginnings - DND 4 - 02 Carillion Forest.wav";
+
+		// If Shizu's aura already fired, switch BGM before base._Ready() plays the track
+		if (GameManager.Instance.GetFlag(Flags.ShizuMusicAuraActive))
+			BgmPath = ShizuBgmPath;
 
 		// Player returns to TestRoom through the south door
 		SpawnPoints["from_mapp_exit"] = new Vector2(0, 120);
@@ -44,6 +53,18 @@ public partial class MAPP : OverworldBase
 		if (GameManager.Instance.GetFlag(Flags.BhataFerretAppeared))
 			InstantiateFerret(FerretWorldPosition(), withPoof: false);
 
+		// Restore Kriora crystals on re-entry
+		if (GameManager.Instance.GetFlag(Flags.KrioraCrystalsAppeared))
+			SpawnKrioraCrystals(KrioraWorldPosition(), withPoof: false);
+
+		// Restore Gus frog on re-entry
+		if (GameManager.Instance.GetFlag(Flags.GusTransformedToFrog))
+			TransformGusToFrog(withPoof: false);
+
+		// Restore Shizu music notes on re-entry
+		if (GameManager.Instance.GetFlag(Flags.ShizuMusicAuraActive))
+			SpawnMusicNoteAura(ShizuWorldPosition());
+
 		// Listen for the custom signal fired at the end of npc_brix_again.dtl
 		DialogicBridge.Instance.DialogicSignalReceived += OnDialogicSignal;
 	}
@@ -60,9 +81,12 @@ public partial class MAPP : OverworldBase
 	{
 		switch (arg.AsString())
 		{
-			case BrixHorseSignal:   OnBrixHorseSignal();   break;
-			case LilyAltSignal:     OnLilyAltSignal();     break;
-			case BhataFerretSignal: OnBhataFerretSignal(); break;
+			case BrixHorseSignal:      OnBrixHorseSignal();      break;
+			case LilyAltSignal:        OnLilyAltSignal();        break;
+			case BhataFerretSignal:    OnBhataFerretSignal();     break;
+			case KrioraCrystalsSignal: OnKrioraCrystalsSignal();  break;
+			case GusTransformSignal:   OnGusTransformSignal();    break;
+			case ShizuAuraSignal:      OnShizuAuraSignal();       break;
 		}
 	}
 
@@ -226,6 +250,277 @@ public partial class MAPP : OverworldBase
 			pulseTween.TweenProperty(orb, "modulate:a", 1.0f, 0.6f + alphaOffset * 0.3f)
 				.SetTrans(Tween.TransitionType.Sine);
 		}
+	}
+
+	// ── Kriora crystal event ───────────────────────────────────────────────────
+
+	private void OnKrioraCrystalsSignal()
+	{
+		if (GameManager.Instance.GetFlag(Flags.KrioraCrystalsAppeared)) return;
+		GameManager.Instance.SetFlag(Flags.KrioraCrystalsAppeared, true);
+		DialogicBridge.Instance.ConnectTimelineEnded(
+			new Callable(this, MethodName.OnKrioraAltEnded));
+	}
+
+	private void OnKrioraAltEnded()
+	{
+		var pos = KrioraWorldPosition();
+		SpawnPoof(pos);
+		GetTree().CreateTimer(0.3f).Connect("timeout",
+			Callable.From(() => SpawnKrioraCrystals(pos, withPoof: true)));
+	}
+
+	private Vector2 KrioraWorldPosition()
+	{
+		var kriora = YSort.GetNodeOrNull<Npc>("Kriora");
+		return kriora?.GlobalPosition ?? new Vector2(-80f, -40f);
+	}
+
+	private void SpawnKrioraCrystals(Vector2 worldPos, bool withPoof)
+	{
+		// Crystal offsets around the NPC's feet
+		var offsets = new (Vector2 offset, float height, float angle)[]
+		{
+			(new Vector2(-10f,  6f),  12f, -15f),
+			(new Vector2(  8f,  8f),  10f,  20f),
+			(new Vector2(-18f,  4f),   8f, -30f),
+			(new Vector2( 16f,  5f),   9f,  10f),
+			(new Vector2(  2f,  9f),  14f,   5f),
+			(new Vector2(-24f,  7f),   7f, -45f),
+			(new Vector2( 22f,  3f),   8f,  35f),
+		};
+
+		var crystalColor = new Color(0.35f, 0.80f, 1.00f); // light blue
+
+		foreach (var (offset, height, angleDeg) in offsets)
+		{
+			float a = Mathf.DegToRad(angleDeg);
+			// Elongated diamond: tip up, base down
+			var crystal = new Polygon2D
+			{
+				Color    = crystalColor,
+				ZIndex   = 5,
+				Rotation = a,
+				Polygon  = new Vector2[]
+				{
+					new Vector2( 0f,        -height),
+					new Vector2( height * 0.28f, 0f),
+					new Vector2( 0f,         height * 0.35f),
+					new Vector2(-height * 0.28f, 0f),
+				},
+			};
+			AddChild(crystal);
+			crystal.GlobalPosition = worldPos + offset;
+
+			if (withPoof)
+			{
+				crystal.Scale = Vector2.Zero;
+				var popTween = CreateTween();
+				popTween.TweenProperty(crystal, "scale", Vector2.One, 0.3f)
+					.SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
+			}
+
+			// Slow shimmer: alpha pulse
+			float delay = GD.Randf() * 0.8f;
+			var shimmer = CreateTween().SetLoops();
+			shimmer.TweenProperty(crystal, "modulate:a", 0.5f, 1.1f + delay * 0.3f)
+				.SetTrans(Tween.TransitionType.Sine).SetDelay(delay);
+			shimmer.TweenProperty(crystal, "modulate:a", 1.0f, 1.1f + delay * 0.3f)
+				.SetTrans(Tween.TransitionType.Sine);
+
+			// Faint inner highlight (smaller white diamond overlaid)
+			var highlight = new Polygon2D
+			{
+				Color   = new Color(0.85f, 0.97f, 1.0f, 0.55f),
+				ZIndex  = 6,
+				Polygon = new Vector2[]
+				{
+					new Vector2( 0f,          -height * 0.55f),
+					new Vector2( height * 0.12f, 0f),
+					new Vector2( 0f,           height * 0.15f),
+					new Vector2(-height * 0.12f, 0f),
+				},
+			};
+			AddChild(highlight);
+			highlight.GlobalPosition = crystal.GlobalPosition;
+			highlight.Rotation       = a;
+		}
+	}
+
+	// ── Gus frog event ─────────────────────────────────────────────────────────
+
+	private void OnGusTransformSignal()
+	{
+		if (GameManager.Instance.GetFlag(Flags.GusTransformedToFrog)) return;
+		GameManager.Instance.SetFlag(Flags.GusTransformedToFrog, true);
+		DialogicBridge.Instance.ConnectTimelineEnded(
+			new Callable(this, MethodName.OnGusAltEnded));
+	}
+
+	private void OnGusAltEnded()
+	{
+		var gus = YSort.GetNodeOrNull<Npc>("Gus");
+		if (gus == null) return;
+		SpawnPoof(gus.GlobalPosition);
+		GetTree().CreateTimer(0.2f).Connect("timeout",
+			Callable.From(() => TransformGusToFrog(withPoof: true)));
+	}
+
+	private void TransformGusToFrog(bool withPoof)
+	{
+		var gus    = YSort.GetNodeOrNull<Npc>("Gus");
+		var sprite = gus?.GetNodeOrNull<AnimatedSprite2D>("Sprite");
+		if (sprite == null) return;
+
+		var tex = GD.Load<Texture2D>(FrogTexturePath);
+		var frames = new SpriteFrames();
+
+		foreach (var animName in new[] { "idle_down", "idle_side", "idle_up" })
+		{
+			frames.AddAnimation(animName);
+			frames.SetAnimationLoop(animName, true);
+			frames.SetAnimationSpeed(animName, 3.0f);
+
+			for (int f = 0; f < 2; f++)
+			{
+				var atlas = new AtlasTexture
+				{
+					Atlas  = tex,
+					Region = new Rect2(f * 32, 0, 32, 32),
+				};
+				frames.AddFrame(animName, atlas);
+			}
+		}
+
+		sprite.SpriteFrames = frames;
+		sprite.Play("idle_side");
+
+		if (withPoof)
+		{
+			gus!.Scale = Vector2.Zero;
+			var tween = CreateTween();
+			tween.TweenProperty(gus, "scale", Vector2.One, 0.35f)
+				 .SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
+		}
+	}
+
+	// ── Shizu music aura event ─────────────────────────────────────────────────
+
+	private void OnShizuAuraSignal()
+	{
+		if (GameManager.Instance.GetFlag(Flags.ShizuMusicAuraActive)) return;
+		GameManager.Instance.SetFlag(Flags.ShizuMusicAuraActive, true);
+		DialogicBridge.Instance.ConnectTimelineEnded(
+			new Callable(this, MethodName.OnShizuAltEnded));
+	}
+
+	private void OnShizuAltEnded()
+	{
+		AudioManager.Instance.PlayBgm(ShizuBgmPath);
+		SpawnMusicNoteAura(ShizuWorldPosition());
+	}
+
+	private Vector2 ShizuWorldPosition()
+	{
+		var shizu = YSort.GetNodeOrNull<Npc>("Shizu");
+		return shizu?.GlobalPosition ?? new Vector2(60f, -20f);
+	}
+
+	private void SpawnMusicNoteAura(Vector2 worldPos)
+	{
+		// Four notes, staggered, drifting upward and looping
+		var noteColors = new Color[]
+		{
+			new Color(0.85f, 0.70f, 1.00f), // lavender
+			new Color(1.00f, 0.85f, 0.95f), // rose white
+			new Color(0.70f, 0.90f, 1.00f), // sky blue
+			new Color(1.00f, 1.00f, 0.80f), // pale yellow
+		};
+
+		var baseOffsets = new Vector2[]
+		{
+			new Vector2(-8f,  -4f),
+			new Vector2( 6f,  -8f),
+			new Vector2(-14f,-12f),
+			new Vector2( 12f, -2f),
+		};
+
+		for (int i = 0; i < 4; i++)
+		{
+			var note   = BuildMusicNote(noteColors[i]);
+			AddChild(note);
+			Vector2 basePos = worldPos + baseOffsets[i] + new Vector2(0f, -8f);
+			note.GlobalPosition = basePos;
+
+			float period = 1.6f + i * 0.25f;
+			float delay  = i * 0.4f;
+			float rise   = 28f + i * 4f;
+
+			// Rise and fade loop: move up, fade out, snap back, repeat
+			var tween = CreateTween().SetLoops();
+			tween.TweenProperty(note, "global_position:y", basePos.Y - rise, period)
+				.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out)
+				.SetDelay(delay);
+			tween.Parallel()
+				.TweenProperty(note, "modulate:a", 0f, period * 0.35f)
+				.SetDelay(delay + period * 0.65f)
+				.SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
+			tween.TweenCallback(Callable.From(() =>
+			{
+				note.GlobalPosition = basePos;
+				note.Modulate       = note.Modulate with { A = 1f };
+			}));
+		}
+	}
+
+	/// <summary>Builds a simple pixel-art music note from two Polygon2D shapes.</summary>
+	private static Node2D BuildMusicNote(Color color)
+	{
+		var root = new Node2D { ZIndex = 15 };
+
+		// Note head — small tilted oval approximated as a diamond
+		var head = new Polygon2D
+		{
+			Color   = color,
+			Polygon = new Vector2[]
+			{
+				new Vector2( 0f, -2f),
+				new Vector2( 3f,  0f),
+				new Vector2( 0f,  2f),
+				new Vector2(-3f,  0f),
+			},
+		};
+		root.AddChild(head);
+
+		// Stem — thin rectangle going up from right side of head
+		var stem = new Polygon2D
+		{
+			Color   = color,
+			Polygon = new Vector2[]
+			{
+				new Vector2( 3f,  0f),
+				new Vector2( 4f,  0f),
+				new Vector2( 4f, -9f),
+				new Vector2( 3f, -9f),
+			},
+		};
+		root.AddChild(stem);
+
+		// Flag — small diagonal stroke at top of stem
+		var flag = new Polygon2D
+		{
+			Color   = color,
+			Polygon = new Vector2[]
+			{
+				new Vector2( 4f,  -9f),
+				new Vector2( 8f,  -6f),
+				new Vector2( 7f,  -5f),
+				new Vector2( 3f,  -8f),
+			},
+		};
+		root.AddChild(flag);
+
+		return root;
 	}
 
 	/// <summary>Returns a world position just to the right of Brix.</summary>
