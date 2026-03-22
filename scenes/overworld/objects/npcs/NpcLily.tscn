@@ -1,7 +1,72 @@
 [gd_scene format=3 uid="uid://h0l0emkjtq8k"]
 
 [ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="1_lily"]
+[ext_resource type="Texture2D" uid="uid://dn01v75edaqwf" path="res://assets/sprites/npcs/Lily.png" id="2_1afhr"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_o4pp0"]
+atlas = ExtResource("2_1afhr")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w0tk7"]
+atlas = ExtResource("2_1afhr")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m0njj"]
+atlas = ExtResource("2_1afhr")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7t2s7"]
+atlas = ExtResource("2_1afhr")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_oeme0"]
+atlas = ExtResource("2_1afhr")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6hdoj"]
+atlas = ExtResource("2_1afhr")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_887hi"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_o4pp0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w0tk7")
+}],
+"loop": true,
+"name": &"idle_down",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m0njj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7t2s7")
+}],
+"loop": true,
+"name": &"idle_side",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_oeme0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6hdoj")
+}],
+"loop": true,
+"name": &"idle_up",
+"speed": 5.0
+}]
 
 [node name="NpcLily" unique_id=25986387 instance=ExtResource("1_lily")]
+
+[node name="Sprite" parent="." index="0" unique_id=1912760606]
+sprite_frames = SubResource("SpriteFrames_887hi")
+animation = &"idle_up"
 
 [node name="Sprite2" type="AnimatedSprite2D" parent="." index="2" unique_id=560477111]
