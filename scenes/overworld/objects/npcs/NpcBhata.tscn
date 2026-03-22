@@ -1,7 +1,72 @@
 [gd_scene format=3 uid="uid://df13wf3777wpt"]
 
 [ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="1_bhata"]
+[ext_resource type="Texture2D" uid="uid://5sgl35t312vb" path="res://assets/sprites/npcs/Bhata.png" id="2_qmh18"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_oyqvj"]
+atlas = ExtResource("2_qmh18")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wj6xc"]
+atlas = ExtResource("2_qmh18")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iecmm"]
+atlas = ExtResource("2_qmh18")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7r8l3"]
+atlas = ExtResource("2_qmh18")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_b0xl1"]
+atlas = ExtResource("2_qmh18")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_b0fu6"]
+atlas = ExtResource("2_qmh18")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_282bm"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_oyqvj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wj6xc")
+}],
+"loop": true,
+"name": &"idle_down",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_iecmm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7r8l3")
+}],
+"loop": true,
+"name": &"idle_side",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_b0xl1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_b0fu6")
+}],
+"loop": true,
+"name": &"idle_up",
+"speed": 5.0
+}]
 
 [node name="NpcBhata" unique_id=1686585218 instance=ExtResource("1_bhata")]
+
+[node name="Sprite" parent="." index="0" unique_id=1912760606]
+sprite_frames = SubResource("SpriteFrames_282bm")
+animation = &"idle_side"
 
 [node name="Sprite2" type="AnimatedSprite2D" parent="." index="2" unique_id=1406257065]
