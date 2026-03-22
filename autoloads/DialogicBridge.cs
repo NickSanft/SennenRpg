@@ -260,6 +260,14 @@ public partial class DialogicBridge : Node
 				GameManager.Instance.AddItem(arg);
 				GD.Print($"[DialogicBridge] Item given via timeline signal: '{arg}'");
 				break;
+
+			case DialogicSignalParser.TypeRemoveGold:
+				if (int.TryParse(arg, out int goldAmount))
+				{
+					GameManager.Instance.RemoveGold(goldAmount);
+					GD.Print($"[DialogicBridge] Removed {goldAmount} gold via timeline signal.");
+				}
+				break;
 		}
 
 		EmitSignal(SignalName.DialogicSignalReceived, argument);

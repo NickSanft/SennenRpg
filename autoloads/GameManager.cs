@@ -73,7 +73,17 @@ public partial class GameManager : Node
 		RecalculateRoute();
 	}
 
-	public void AddGold(int amount) => Gold += amount;
+	public void AddGold(int amount)
+	{
+		Gold += amount;
+		EmitSignal(SignalName.PlayerStatsChanged);
+	}
+
+	public void RemoveGold(int amount)
+	{
+		Gold = Mathf.Max(0, Gold - amount);
+		EmitSignal(SignalName.PlayerStatsChanged);
+	}
 	public void AddExp(int amount)  => Exp  += amount;
 
 	public void AddItem(string resourcePath)    => InventoryItemPaths.Add(resourcePath);
@@ -132,7 +142,7 @@ public partial class GameManager : Node
 	public void ResetForNewGame()
 	{
 		TotalKills = 0;
-		Gold = 0;
+		Gold = 100;
 		Exp  = 0;
 		Love = 1;
 		LastMapPath = "";

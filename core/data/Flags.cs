@@ -25,6 +25,9 @@ public static class Flags
     /// <summary>Set when Brix's horse magically materialises next to him.</summary>
     public const string BrixHorseAppeared = "brix_horse_appeared";
 
+    /// <summary>Set when Bhata's ferret materialises floating in purple energy.</summary>
+    public const string BhataFerretAppeared = "bhata_ferret_appeared";
+
     // ── Environment flags ─────────────────────────────────────────────────────
 
     /// <summary>Set when the player walks close to the northern exit in the test room.</summary>

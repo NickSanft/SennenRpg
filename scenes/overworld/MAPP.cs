@@ -15,8 +15,11 @@ public partial class MAPP : OverworldBase
 	private const string MapExitScene       = "res://scenes/overworld/objects/MapExit.tscn";
 	private const string HorseScene         = "res://scenes/overworld/objects/npcs/NpcHorse.tscn";
 	private const string HorseTimeline      = "res://dialog/timelines/npc_horse.dtl";
+	private const string FerretScene        = "res://scenes/overworld/objects/npcs/NpcFerret.tscn";
+	private const string FerretTimeline     = "res://dialog/timelines/npc_ferret.dtl";
 	private const string BrixHorseSignal    = "brix_horse_spawn";
 	private const string LilyAltSignal      = "lily_alt_ended";
+	private const string BhataFerretSignal  = "bhata_ferret_spawn";
 	private const string LilyCutscenePath   = "res://dialog/timelines/cutscene_lily_effect.dtl";
 
 	public override void _Ready()
@@ -37,6 +40,10 @@ public partial class MAPP : OverworldBase
 		if (GameManager.Instance.GetFlag(Flags.BrixHorseAppeared))
 			InstantiateHorse(HorseWorldPosition(), withPoof: false);
 
+		// Restore the ferret on re-entry if it has already appeared
+		if (GameManager.Instance.GetFlag(Flags.BhataFerretAppeared))
+			InstantiateFerret(FerretWorldPosition(), withPoof: false);
+
 		// Listen for the custom signal fired at the end of npc_brix_again.dtl
 		DialogicBridge.Instance.DialogicSignalReceived += OnDialogicSignal;
 	}
@@ -53,8 +60,9 @@ public partial class MAPP : OverworldBase
 	{
 		switch (arg.AsString())
 		{
-			case BrixHorseSignal: OnBrixHorseSignal(); break;
-			case LilyAltSignal:   OnLilyAltSignal();   break;
+			case BrixHorseSignal:   OnBrixHorseSignal();   break;
+			case LilyAltSignal:     OnLilyAltSignal();     break;
+			case BhataFerretSignal: OnBhataFerretSignal(); break;
 		}
 	}
 
@@ -101,6 +109,125 @@ public partial class MAPP : OverworldBase
 		GameManager.Instance.SetState(GameState.Overworld);
 	}
 
+	// ── Ferret event ───────────────────────────────────────────────────────────
+
+	private void OnBhataFerretSignal()
+	{
+		if (GameManager.Instance.GetFlag(Flags.BhataFerretAppeared)) return;
+		GameManager.Instance.SetFlag(Flags.BhataFerretAppeared, true);
+
+		DialogicBridge.Instance.ConnectTimelineEnded(
+			new Callable(this, MethodName.OnBhataAltEnded));
+	}
+
+	private void OnBhataAltEnded()
+	{
+		var pos = FerretWorldPosition();
+		SpawnPurplePoof(pos);
+		GetTree().CreateTimer(0.2f).Connect("timeout",
+			Callable.From(() => InstantiateFerret(pos, withPoof: true)));
+	}
+
+	private Vector2 FerretWorldPosition()
+	{
+		var bhata = YSort.GetNodeOrNull<Npc>("Bhata");
+		return (bhata?.GlobalPosition ?? new Vector2(-60f, 20f)) + new Vector2(-28f, -12f);
+	}
+
+	private void InstantiateFerret(Vector2 globalPos, bool withPoof)
+	{
+		var npcScene = GD.Load<PackedScene>(FerretScene);
+		var ferret   = npcScene.Instantiate<Npc>();
+
+		ferret.NpcId         = "mapp_ferret";
+		ferret.DisplayName   = "Ferret";
+		ferret.TimelinePath  = FerretTimeline;
+		ferret.CharacterPath = "res://dialog/characters/Ferret.dch";
+		ferret.DefaultFacing = FacingDirection.Side;
+
+		YSort.AddChild(ferret);
+		ferret.GlobalPosition = globalPos;
+
+		// Floating bob: oscillate y endlessly
+		float baseY = ferret.Position.Y;
+		var bobTween = CreateTween().SetLoops();
+		bobTween.TweenProperty(ferret, "position:y", baseY - 6f, 0.9f)
+			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+		bobTween.TweenProperty(ferret, "position:y", baseY, 0.9f)
+			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+
+		// Purple energy orbs orbiting the ferret
+		SpawnEnergyAura(ferret);
+
+		if (withPoof)
+		{
+			ferret.Scale = Vector2.Zero;
+			var tween = CreateTween();
+			tween.TweenProperty(ferret, "scale", Vector2.One, 0.35f)
+				 .SetTrans(Tween.TransitionType.Back)
+				 .SetEase(Tween.EaseType.Out);
+		}
+	}
+
+	private void SpawnEnergyAura(Node2D parent)
+	{
+		var orbColors = new Color[]
+		{
+			new Color(0.70f, 0.10f, 1.00f), // deep violet
+			new Color(0.85f, 0.30f, 1.00f), // bright purple
+			new Color(0.55f, 0.05f, 0.85f), // dark magenta
+		};
+
+		int orbCount = 6;
+		float radius = 14f;
+
+		for (int i = 0; i < orbCount; i++)
+		{
+			float startAngle = (Mathf.Tau / orbCount) * i;
+
+			// Build a tiny diamond polygon
+			var orb = new Polygon2D
+			{
+				Color    = orbColors[i % orbColors.Length],
+				ZIndex   = 10,
+				Polygon  = new Vector2[]
+				{
+					new Vector2( 0f, -3f),
+					new Vector2( 2f,  0f),
+					new Vector2( 0f,  3f),
+					new Vector2(-2f,  0f),
+				},
+			};
+			parent.AddChild(orb);
+
+			// Position the orb at its starting angle
+			orb.Position = new Vector2(
+				Mathf.Cos(startAngle) * radius,
+				Mathf.Sin(startAngle) * radius * 0.45f); // flatten vertically
+
+			// Orbit: 16-step linear approximation of a circle
+			int steps = 16;
+			var orbTween = CreateTween().SetLoops();
+			for (int s = 1; s <= steps; s++)
+			{
+				float angle = startAngle + (Mathf.Tau / steps) * s;
+				var target  = new Vector2(
+					Mathf.Cos(angle) * radius,
+					Mathf.Sin(angle) * radius * 0.45f);
+				orbTween.TweenProperty(orb, "position", target, 2.0f / steps)
+					.SetTrans(Tween.TransitionType.Linear);
+			}
+
+			// Alpha pulse
+			var pulseTween = CreateTween().SetLoops();
+			float alphaOffset = (float)i / orbCount;
+			pulseTween.TweenProperty(orb, "modulate:a", 0.4f, 0.6f + alphaOffset * 0.3f)
+				.SetTrans(Tween.TransitionType.Sine);
+			pulseTween.TweenProperty(orb, "modulate:a", 1.0f, 0.6f + alphaOffset * 0.3f)
+				.SetTrans(Tween.TransitionType.Sine);
+		}
+	}
+
 	/// <summary>Returns a world position just to the right of Brix.</summary>
 	private Vector2 HorseWorldPosition()
 	{
@@ -140,6 +267,47 @@ public partial class MAPP : OverworldBase
 			new Color(0.55f, 0.85f, 1.00f), // sky blue
 			new Color(1.00f, 0.90f, 0.45f), // gold
 			new Color(1.00f, 1.00f, 1.00f), // white
+		};
+
+		var rng = new RandomNumberGenerator();
+		rng.Randomize();
+
+		for (int i = 0; i < 16; i++)
+		{
+			float angle  = rng.RandfRange(0f, Mathf.Tau);
+			float radius = rng.RandfRange(6f, 36f);
+			float size   = rng.RandfRange(4f, 9f);
+			var   offset = new Vector2(Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius);
+
+			var spark = new ColorRect
+			{
+				Color  = colors[i % colors.Length],
+				Size   = new Vector2(size, size),
+				ZIndex = 20,
+			};
+			AddChild(spark);
+			spark.GlobalPosition = worldPos + offset - new Vector2(size * 0.5f, size * 0.5f);
+
+			var tween = CreateTween();
+			tween.TweenProperty(spark, "global_position",
+				spark.GlobalPosition + offset * 0.5f, 0.45f)
+				.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
+			tween.Parallel()
+				.TweenProperty(spark, "modulate:a", 0f, 0.45f)
+				.SetDelay(0.05f)
+				.SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
+			tween.TweenCallback(Callable.From(spark.QueueFree));
+		}
+	}
+
+	private void SpawnPurplePoof(Vector2 worldPos)
+	{
+		var colors = new Color[]
+		{
+			new Color(0.70f, 0.10f, 1.00f), // deep violet
+			new Color(0.85f, 0.30f, 1.00f), // bright purple
+			new Color(0.55f, 0.05f, 0.85f), // dark magenta
+			new Color(1.00f, 1.00f, 1.00f), // white flash
 		};
 
 		var rng = new RandomNumberGenerator();

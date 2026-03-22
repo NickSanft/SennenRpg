@@ -33,6 +33,7 @@ RhythmClock="*res://autoloads/RhythmClock.cs"
 directories/dch_directory={
 "Bhata": "res://dialog/characters/Bhata.dch",
 "Brix": "res://dialog/characters/Brix.dch",
+"Ferret": "res://dialog/characters/Ferret.dch",
 "Foran": "res://dialog/characters/Foran.dch",
 "Gus": "res://dialog/characters/Gus.dch",
 "Horse": "res://dialog/characters/Horse.dch",
@@ -66,6 +67,7 @@ directories/dtl_directory={
 "npc_bhata_again": "res://dialog/timelines/npc_bhata_again.dtl",
 "npc_brix": "res://dialog/timelines/npc_brix.dtl",
 "npc_brix_again": "res://dialog/timelines/npc_brix_again.dtl",
+"npc_ferret": "res://dialog/timelines/npc_ferret.dtl",
 "npc_foran": "res://dialog/timelines/npc_foran.dtl",
 "npc_gus": "res://dialog/timelines/npc_gus.dtl",
 "npc_gus_again": "res://dialog/timelines/npc_gus_again.dtl",

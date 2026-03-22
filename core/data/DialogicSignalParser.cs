@@ -6,18 +6,21 @@ namespace SennenRpg.Core.Data;
 /// Supported conventions (set in the Dialogic timeline editor):
 ///   [signal arg="flag:{name}"]       → set GameManager flag "{name}" to true
 ///   [signal arg="give_item:{path}"]  → add item at res:// "{path}" to inventory
+///   [signal arg="remove_gold:{n}"]   → remove n gold from the player (floored at 0)
 ///   [signal arg="{anything else}"]   → forwarded as a custom signal for game code to handle
 ///
 /// Extracted as a pure static class so it can be unit-tested without the Godot runtime.
 /// </summary>
 public static class DialogicSignalParser
 {
-	public const string TypeFlag     = "flag";
-	public const string TypeGiveItem = "give_item";
-	public const string TypeCustom   = "custom";
+	public const string TypeFlag       = "flag";
+	public const string TypeGiveItem   = "give_item";
+	public const string TypeRemoveGold = "remove_gold";
+	public const string TypeCustom     = "custom";
 
-	private const string FlagPrefix     = "flag:";
-	private const string GiveItemPrefix = "give_item:";
+	private const string FlagPrefix       = "flag:";
+	private const string GiveItemPrefix   = "give_item:";
+	private const string RemoveGoldPrefix = "remove_gold:";
 
 	/// <summary>
 	/// Parses a raw Dialogic signal string into a (type, argument) pair.
@@ -30,6 +33,9 @@ public static class DialogicSignalParser
 
 		if (signal.StartsWith(GiveItemPrefix))
 			return (TypeGiveItem, signal.Substring(GiveItemPrefix.Length));
+
+		if (signal.StartsWith(RemoveGoldPrefix))
+			return (TypeRemoveGold, signal.Substring(RemoveGoldPrefix.Length));
 
 		return (TypeCustom, signal);
 	}
