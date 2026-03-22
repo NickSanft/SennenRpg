@@ -1,7 +1,82 @@
-[gd_scene format=4 uid="uid://mapp_tavern_scene"]
+[gd_scene format=3 uid="uid://mapp_tavern_scene"]
 
 [ext_resource type="PackedScene" uid="uid://bs06dan353qo1" path="res://scenes/overworld/overworld_base.tscn" id="1_mapp01"]
 [ext_resource type="Script" path="res://scenes/overworld/MAPP.cs" id="2_mapp02"]
+[ext_resource type="PackedScene" uid="uid://i4fwbygs3mgq" path="res://scenes/overworld/objects/npcs/NpcKriora.tscn" id="3_kriora"]
+[ext_resource type="PackedScene" uid="uid://d1qdl5d5ojtr7" path="res://scenes/overworld/objects/npcs/NpcShizu.tscn" id="4_shizu"]
+[ext_resource type="PackedScene" uid="uid://h0l0emkjtq8k" path="res://scenes/overworld/objects/npcs/NpcLily.tscn" id="5_lily"]
+[ext_resource type="PackedScene" uid="uid://bi8fu7boyl8k8" path="res://scenes/overworld/objects/npcs/NpcGus.tscn" id="6_gus"]
+[ext_resource type="PackedScene" uid="uid://djjgkkxqyp83y" path="res://scenes/overworld/objects/npcs/NpcBrix.tscn" id="7_brix"]
+[ext_resource type="PackedScene" uid="uid://df13wf3777wpt" path="res://scenes/overworld/objects/npcs/NpcBhata.tscn" id="8_bhata"]
+[ext_resource type="PackedScene" uid="uid://bo2ok2ivtbl18" path="res://scenes/overworld/objects/npcs/NpcRain.tscn" id="9_rain"]
+
 
 [node name="MAPP" instance=ExtResource("1_mapp01")]
 script = ExtResource("2_mapp02")
+
+[node name="Kriora" parent="YSort" instance=ExtResource("3_kriora")]
+position = Vector2(0, -40)
+NpcId = "kriora_mapp"
+DisplayName = "Kriora"
+PlaceholderColor = Color(0.75, 0.25, 0.18, 1)
+DefaultFacing = 0
+CharacterPath = "res://dialog/characters/Kriora.dch"
+TimelinePath = "res://dialog/timelines/npc_kriora.dtl"
+
+[node name="Shizu" parent="YSort" instance=ExtResource("4_shizu")]
+position = Vector2(-120, 60)
+NpcId = "shizu_mapp"
+DisplayName = "Shizu"
+PlaceholderColor = Color(0.55, 0.1, 0.75, 1)
+DefaultFacing = 2
+CharacterPath = "res://dialog/characters/Shizu.dch"
+TimelinePath = "res://dialog/timelines/npc_shizu.dtl"
+
+[node name="Lily" parent="YSort" instance=ExtResource("5_lily")]
+position = Vector2(-40, 30)
+NpcId = "lily_mapp"
+DisplayName = "Lily"
+PlaceholderColor = Color(0.95, 0.6, 0.7, 1)
+DefaultFacing = 0
+CharacterPath = "res://dialog/characters/Lily.dch"
+TimelinePath = "res://dialog/timelines/npc_lily.dtl"
+PatrolPoints = PackedVector2Array(-60, 40, 60, 40, -40, 30)
+PatrolSpeed = 25.0
+
+[node name="Gus" parent="YSort" instance=ExtResource("6_gus")]
+position = Vector2(-110, 20)
+NpcId = "gus_mapp"
+DisplayName = "Gus"
+PlaceholderColor = Color(0.6, 0.42, 0.22, 1)
+DefaultFacing = 2
+CharacterPath = "res://dialog/characters/Gus.dch"
+TimelinePath = "res://dialog/timelines/npc_gus.dtl"
+
+[node name="Brix" parent="YSort" instance=ExtResource("7_brix")]
+position = Vector2(100, 20)
+NpcId = "brix_mapp"
+DisplayName = "Brix"
+PlaceholderColor = Color(0.4, 0.42, 0.46, 1)
+DefaultFacing = 2
+CharacterPath = "res://dialog/characters/Brix.dch"
+TimelinePath = "res://dialog/timelines/npc_brix.dtl"
+
+[node name="Bhata" parent="YSort" instance=ExtResource("8_bhata")]
+position = Vector2(30, -10)
+NpcId = "bhata_mapp"
+DisplayName = "Bhata"
+PlaceholderColor = Color(0.25, 0.75, 0.7, 1)
+DefaultFacing = 0
+CharacterPath = "res://dialog/characters/Bhata.dch"
+TimelinePath = "res://dialog/timelines/npc_bhata.dtl"
+
+[node name="Rain" parent="YSort" instance=ExtResource("9_rain")]
+position = Vector2(50, 100)
+NpcId = "rain_mapp"
+DisplayName = "Rain"
+PlaceholderColor = Color(0.35, 0.55, 0.95, 1)
+DefaultFacing = 1
+CharacterPath = "res://dialog/characters/Rain.dch"
+TimelinePath = "res://dialog/timelines/npc_rain.dtl"
+PatrolPoints = PackedVector2Array(60, 90, 40, 100, 50, 100)
+PatrolSpeed = 18.0

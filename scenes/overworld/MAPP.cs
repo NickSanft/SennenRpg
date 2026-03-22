@@ -5,20 +5,12 @@ namespace SennenRpg.Scenes.Overworld;
 
 /// <summary>
 /// The MAPP tavern — a lively indoor space with seven regulars.
-/// Entered from TestRoom; exits back via a door near the south wall.
+/// NPCs are placed directly in MAPP.tscn (visible in the editor).
+/// This script handles the background visuals, map config, and the exit trigger.
 /// </summary>
 public partial class MAPP : OverworldBase
 {
 	private const string MapExitScene = "res://scenes/overworld/objects/MapExit.tscn";
-
-	// Per-character NPC scenes — open any of these in the editor to assign a sprite sheet
-	private const string SceneKriora = "res://scenes/overworld/objects/npcs/NpcKriora.tscn";
-	private const string SceneShizu  = "res://scenes/overworld/objects/npcs/NpcShizu.tscn";
-	private const string SceneLily   = "res://scenes/overworld/objects/npcs/NpcLily.tscn";
-	private const string SceneGus    = "res://scenes/overworld/objects/npcs/NpcGus.tscn";
-	private const string SceneBrix   = "res://scenes/overworld/objects/npcs/NpcBrix.tscn";
-	private const string SceneBhata  = "res://scenes/overworld/objects/npcs/NpcBhata.tscn";
-	private const string SceneRain   = "res://scenes/overworld/objects/npcs/NpcRain.tscn";
 
 	public override void _Ready()
 	{
@@ -32,7 +24,7 @@ public partial class MAPP : OverworldBase
 		base._Ready();
 
 		DrawTavernBackground();
-		SpawnNpcs();
+		ConfigureAltDialogs();
 		SpawnExit();
 	}
 
@@ -43,10 +35,10 @@ public partial class MAPP : OverworldBase
 		// Floor — warm wooden tone
 		var floor = new ColorRect
 		{
-			Color        = new Color(0.42f, 0.28f, 0.16f),
-			Position     = new Vector2(-160, -120),
-			Size         = new Vector2(320, 280),
-			ZIndex       = -10,
+			Color    = new Color(0.42f, 0.28f, 0.16f),
+			Position = new Vector2(-160, -120),
+			Size     = new Vector2(320, 280),
+			ZIndex   = -10,
 		};
 		AddChild(floor);
 
@@ -101,7 +93,6 @@ public partial class MAPP : OverworldBase
 
 		PulseFlame(flame);
 
-		// Two round tables
 		AddTable(new Vector2(-60, 40));
 		AddTable(new Vector2( 60, 40));
 		AddTable(new Vector2(  0, -10));
@@ -146,170 +137,39 @@ public partial class MAPP : OverworldBase
 		tween.TweenProperty(flame, "modulate:a", 1.0f, 0.4f).SetTrans(Tween.TransitionType.Sine);
 	}
 
-	// ── NPCs ──────────────────────────────────────────────────────────────────
+	// ── Alt dialog ────────────────────────────────────────────────────────────
 
-	private void SpawnNpcs()
+	/// <summary>
+	/// NpcDialogOption is a C# [GlobalClass] and cannot be serialised as a sub_resource
+	/// in .tscn files, so we assign AltDialogOptions here after the scene is ready.
+	/// </summary>
+	private void ConfigureAltDialogs()
 	{
-		// ── Kriora — bar matron, behind the counter ─────────────────────────
-		SpawnNpc(SceneKriora, new NpcConfig
-		{
-			Id          = "kriora_mapp",
-			Name        = "Kriora",
-			Pos         = new Vector2(0, -40),
-			Color       = new Color(0.75f, 0.25f, 0.18f),
-			Facing      = FacingDirection.Down,
-			CharPath    = "res://dialog/characters/Kriora.dch",
-			Timeline    = "res://dialog/timelines/npc_kriora.dtl",
-			AltFlag     = "talked_to_kriora_mapp",
-			AltTimeline = "res://dialog/timelines/npc_kriora_again.dtl",
-		});
-
-		// ── Shizu — mysterious traveller, corner seat ───────────────────────
-		SpawnNpc(SceneShizu, new NpcConfig
-		{
-			Id          = "shizu_mapp",
-			Name        = "Shizu",
-			Pos         = new Vector2(-120, 60),
-			Color       = new Color(0.55f, 0.1f, 0.75f),
-			Facing      = FacingDirection.Side,
-			CharPath    = "res://dialog/characters/Shizu.dch",
-			Timeline    = "res://dialog/timelines/npc_shizu.dtl",
-			AltFlag     = "talked_to_shizu_mapp",
-			AltTimeline = "res://dialog/timelines/npc_shizu_again.dtl",
-		});
-
-		// ── Lily — waitress, moving between tables ──────────────────────────
-		SpawnNpc(SceneLily, new NpcConfig
-		{
-			Id           = "lily_mapp",
-			Name         = "Lily",
-			Pos          = new Vector2(-40, 30),
-			Color        = new Color(0.95f, 0.6f, 0.7f),
-			Facing       = FacingDirection.Down,
-			CharPath     = "res://dialog/characters/Lily.dch",
-			Timeline     = "res://dialog/timelines/npc_lily.dtl",
-			AltFlag      = "talked_to_lily_mapp",
-			AltTimeline  = "res://dialog/timelines/npc_lily_again.dtl",
-			PatrolPoints = [new Vector2(-60, 40), new Vector2(60, 40), new Vector2(-40, 30)],
-			PatrolSpeed  = 25f,
-		});
-
-		// ── Gus — old miner, by the fireplace ──────────────────────────────
-		SpawnNpc(SceneGus, new NpcConfig
-		{
-			Id          = "gus_mapp",
-			Name        = "Gus",
-			Pos         = new Vector2(-110, 20),
-			Color       = new Color(0.6f, 0.42f, 0.22f),
-			Facing      = FacingDirection.Side,
-			CharPath    = "res://dialog/characters/Gus.dch",
-			Timeline    = "res://dialog/timelines/npc_gus.dtl",
-			AltFlag     = "talked_to_gus_mapp",
-			AltTimeline = "res://dialog/timelines/npc_gus_again.dtl",
-		});
-
-		// ── Brix — mercenary, alone at east table ───────────────────────────
-		SpawnNpc(SceneBrix, new NpcConfig
-		{
-			Id          = "brix_mapp",
-			Name        = "Brix",
-			Pos         = new Vector2(100, 20),
-			Color       = new Color(0.4f, 0.42f, 0.46f),
-			Facing      = FacingDirection.Side,
-			CharPath    = "res://dialog/characters/Brix.dch",
-			Timeline    = "res://dialog/timelines/npc_brix.dtl",
-			AltFlag     = "talked_to_brix_mapp",
-			AltTimeline = "res://dialog/timelines/npc_brix_again.dtl",
-		});
-
-		// ── Bhata — scholar, centre table with books ────────────────────────
-		SpawnNpc(SceneBhata, new NpcConfig
-		{
-			Id          = "bhata_mapp",
-			Name        = "Bhata",
-			Pos         = new Vector2(30, -10),
-			Color       = new Color(0.25f, 0.75f, 0.70f),
-			Facing      = FacingDirection.Down,
-			CharPath    = "res://dialog/characters/Bhata.dch",
-			Timeline    = "res://dialog/timelines/npc_bhata.dtl",
-			AltFlag     = "talked_to_bhata_mapp",
-			AltTimeline = "res://dialog/timelines/npc_bhata_again.dtl",
-		});
-
-		// ── Rain — bard, near the south wall ───────────────────────────────
-		SpawnNpc(SceneRain, new NpcConfig
-		{
-			Id           = "rain_mapp",
-			Name         = "Rain",
-			Pos          = new Vector2(50, 100),
-			Color        = new Color(0.35f, 0.55f, 0.95f),
-			Facing       = FacingDirection.Up,
-			CharPath     = "res://dialog/characters/Rain.dch",
-			Timeline     = "res://dialog/timelines/npc_rain.dtl",
-			AltFlag      = "talked_to_rain_mapp",
-			AltTimeline  = "res://dialog/timelines/npc_rain_again.dtl",
-			PatrolPoints = [new Vector2(60, 90), new Vector2(40, 100), new Vector2(50, 100)],
-			PatrolSpeed  = 18f,
-		});
+		SetAlt("Kriora", "talked_to_kriora_mapp", "res://dialog/timelines/npc_kriora_again.dtl");
+		SetAlt("Shizu",  "talked_to_shizu_mapp",  "res://dialog/timelines/npc_shizu_again.dtl");
+		SetAlt("Lily",   "talked_to_lily_mapp",   "res://dialog/timelines/npc_lily_again.dtl");
+		SetAlt("Gus",    "talked_to_gus_mapp",    "res://dialog/timelines/npc_gus_again.dtl");
+		SetAlt("Brix",   "talked_to_brix_mapp",   "res://dialog/timelines/npc_brix_again.dtl");
+		SetAlt("Bhata",  "talked_to_bhata_mapp",  "res://dialog/timelines/npc_bhata_again.dtl");
+		SetAlt("Rain",   "talked_to_rain_mapp",   "res://dialog/timelines/npc_rain_again.dtl");
 	}
 
-	private void SpawnNpc(string scenePath, NpcConfig cfg)
+	private void SetAlt(string nodeName, string flag, string timeline)
 	{
-		var npc = GD.Load<PackedScene>(scenePath).Instantiate<Npc>();
-		npc.NpcId            = cfg.Id;
-		npc.DisplayName      = cfg.Name;
-		npc.PlaceholderColor = cfg.Color;
-		npc.DefaultFacing    = cfg.Facing;
-		npc.CharacterPath    = cfg.CharPath;
-		npc.TimelinePath     = cfg.Timeline;
-		npc.PatrolPoints     = cfg.PatrolPoints;
-		npc.PatrolSpeed      = cfg.PatrolSpeed;
-
-		if (!string.IsNullOrEmpty(cfg.AltFlag))
-		{
-			npc.AltDialogOptions =
-			[
-				new NpcDialogOption
-				{
-					RequiredFlag = cfg.AltFlag,
-					TimelinePath = cfg.AltTimeline,
-				}
-			];
-		}
-
-		YSort.AddChild(npc);
-		npc.GlobalPosition = cfg.Pos;
+		var npc = YSort.GetNodeOrNull<Npc>(nodeName);
+		if (npc == null) { GD.PushWarning($"[MAPP] NPC node '{nodeName}' not found for alt dialog setup."); return; }
+		npc.AltDialogOptions = [new NpcDialogOption { RequiredFlag = flag, TimelinePath = timeline }];
 	}
 
 	// ── Exit ──────────────────────────────────────────────────────────────────
 
 	private void SpawnExit()
 	{
-		var exitScene = GD.Load<PackedScene>(MapExitScene);
-		var exit      = exitScene.Instantiate<MapExit>();
-
+		var exit = GD.Load<PackedScene>(MapExitScene).Instantiate<MapExit>();
 		exit.TargetMapPath = "res://scenes/overworld/TestRoom.tscn";
 		exit.TargetSpawnId = "from_mapp";
 		exit.AutoTrigger   = true;
-
 		AddChild(exit);
 		exit.GlobalPosition = new Vector2(0, 168);
-	}
-
-	// ── Helper record ─────────────────────────────────────────────────────────
-
-	private record NpcConfig
-	{
-		public string         Id           { get; init; } = "";
-		public string         Name         { get; init; } = "";
-		public Vector2        Pos          { get; init; }
-		public Color          Color        { get; init; } = new Color(1f, 0.75f, 0.3f);
-		public FacingDirection Facing      { get; init; } = FacingDirection.Down;
-		public string         CharPath     { get; init; } = "";
-		public string         Timeline     { get; init; } = "";
-		public string         AltFlag      { get; init; } = "";
-		public string         AltTimeline  { get; init; } = "";
-		public Vector2[]      PatrolPoints { get; init; } = [];
-		public float          PatrolSpeed  { get; init; } = 30f;
 	}
 }

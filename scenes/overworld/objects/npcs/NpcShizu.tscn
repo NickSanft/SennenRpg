@@ -3,5 +3,6 @@
 [ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="1_shizu"]
 
 [node name="NpcShizu" unique_id=1304910095 instance=ExtResource("1_shizu")]
+DisplayName = "Shizu"
 
 [node name="Sprite2" type="AnimatedSprite2D" parent="." index="2" unique_id=1264565081]
