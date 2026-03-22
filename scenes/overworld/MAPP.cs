@@ -12,10 +12,12 @@ namespace SennenRpg.Scenes.Overworld;
 /// </summary>
 public partial class MAPP : OverworldBase
 {
-	private const string MapExitScene     = "res://scenes/overworld/objects/MapExit.tscn";
-	private const string HorseScene       = "res://scenes/overworld/objects/npcs/NpcHorse.tscn";
-	private const string HorseTimeline    = "res://dialog/timelines/npc_horse.dtl";
-	private const string BrixHorseSignal  = "brix_horse_spawn";
+	private const string MapExitScene       = "res://scenes/overworld/objects/MapExit.tscn";
+	private const string HorseScene         = "res://scenes/overworld/objects/npcs/NpcHorse.tscn";
+	private const string HorseTimeline      = "res://dialog/timelines/npc_horse.dtl";
+	private const string BrixHorseSignal    = "brix_horse_spawn";
+	private const string LilyAltSignal      = "lily_alt_ended";
+	private const string LilyCutscenePath   = "res://dialog/timelines/cutscene_lily_effect.dtl";
 
 	public override void _Ready()
 	{
@@ -45,13 +47,22 @@ public partial class MAPP : OverworldBase
 			DialogicBridge.Instance.DialogicSignalReceived -= OnDialogicSignal;
 	}
 
-	// ── Horse event ────────────────────────────────────────────────────────────
+	// ── Signal dispatch ────────────────────────────────────────────────────────
 
 	private void OnDialogicSignal(Variant arg)
 	{
-		if (arg.AsString() != BrixHorseSignal) return;
-		if (GameManager.Instance.GetFlag(Flags.BrixHorseAppeared)) return;
+		switch (arg.AsString())
+		{
+			case BrixHorseSignal: OnBrixHorseSignal(); break;
+			case LilyAltSignal:   OnLilyAltSignal();   break;
+		}
+	}
 
+	// ── Horse event ────────────────────────────────────────────────────────────
+
+	private void OnBrixHorseSignal()
+	{
+		if (GameManager.Instance.GetFlag(Flags.BrixHorseAppeared)) return;
 		GameManager.Instance.SetFlag(Flags.BrixHorseAppeared, true);
 
 		// Wait for the dialog box to close before materialising the horse
@@ -66,6 +77,28 @@ public partial class MAPP : OverworldBase
 		// Short delay so the poof flash leads the horse pop-in
 		GetTree().CreateTimer(0.2f).Connect("timeout",
 			Callable.From(() => InstantiateHorse(pos, withPoof: true)));
+	}
+
+	// ── Lily cutscene ──────────────────────────────────────────────────────────
+
+	private void OnLilyAltSignal()
+	{
+		// Wait for Lily's dialog box to close, then play the player's inner monologue
+		DialogicBridge.Instance.ConnectTimelineEnded(
+			new Callable(this, MethodName.OnLilyAltEnded));
+	}
+
+	private void OnLilyAltEnded()
+	{
+		GameManager.Instance.SetState(GameState.Dialog);
+		DialogicBridge.Instance.ConnectTimelineEnded(
+			new Callable(this, MethodName.OnLilyCutsceneEnded));
+		DialogicBridge.Instance.StartTimeline(LilyCutscenePath);
+	}
+
+	private void OnLilyCutsceneEnded()
+	{
+		GameManager.Instance.SetState(GameState.Overworld);
 	}
 
 	/// <summary>Returns a world position just to the right of Brix.</summary>
