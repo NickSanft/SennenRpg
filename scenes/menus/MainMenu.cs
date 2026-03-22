@@ -32,7 +32,7 @@ public partial class MainMenu : Node2D
 		if (_transitioning) return;
 		_transitioning = true;
 		GameManager.Instance.ResetForNewGame();
-		_ = SceneTransition.Instance.GoToAsync("res://scenes/overworld/TestRoom.tscn");
+		_ = SceneTransition.Instance.GoToAsync("res://scenes/overworld/MAPP.tscn");
 	}
 
 	private void OnContinuePressed()
