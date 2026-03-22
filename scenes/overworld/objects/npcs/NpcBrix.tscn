@@ -11,6 +11,22 @@ region = Rect2(0, 0, 32, 32)
 atlas = ExtResource("2_0cca4")
 region = Rect2(32, 0, 32, 32)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_0cca4"]
+atlas = ExtResource("2_0cca4")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nbx2s"]
+atlas = ExtResource("2_0cca4")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_18bir"]
+atlas = ExtResource("2_0cca4")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pqxkl"]
+atlas = ExtResource("2_0cca4")
+region = Rect2(32, 0, 32, 32)
+
 [sub_resource type="SpriteFrames" id="SpriteFrames_nbx2s"]
 animations = [{
 "frames": [{
@@ -24,12 +40,24 @@ animations = [{
 "name": &"idle_down",
 "speed": 5.0
 }, {
-"frames": [],
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0cca4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nbx2s")
+}],
 "loop": true,
 "name": &"idle_side",
 "speed": 5.0
 }, {
-"frames": [],
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_18bir")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pqxkl")
+}],
 "loop": true,
 "name": &"idle_up",
 "speed": 5.0
@@ -39,6 +67,6 @@ animations = [{
 
 [node name="Sprite" parent="." index="0" unique_id=1912760606]
 sprite_frames = SubResource("SpriteFrames_nbx2s")
-animation = &"idle_side"
+animation = &"idle_up"
 
 [node name="Sprite2" type="AnimatedSprite2D" parent="." index="2" unique_id=1877837077]

@@ -23,6 +23,7 @@ public partial class MAPP : OverworldBase
 	private const string KrioraCrystalsSignal = "kriora_crystals_spawn";
 	private const string GusTransformSignal   = "gus_frog_transform";
 	private const string ShizuAuraSignal      = "shizu_music_aura";
+	private const string RainAltSignal        = "rain_alt_ended";
 	private const string LilyCutscenePath     = "res://dialog/timelines/cutscene_lily_effect.dtl";
 	private const string ShizuBgmPath         = "res://assets/music/Divora - Origins Of The Gyre - DND 6 - 01 Origins Of The Gyre - Full.wav";
 	private const string FrogTexturePath      = "res://assets/sprites/npcs/GusGiantFrog.png";
@@ -87,6 +88,7 @@ public partial class MAPP : OverworldBase
 			case KrioraCrystalsSignal: OnKrioraCrystalsSignal();  break;
 			case GusTransformSignal:   OnGusTransformSignal();    break;
 			case ShizuAuraSignal:      OnShizuAuraSignal();       break;
+			case RainAltSignal:        OnRainAltSignal();         break;
 		}
 	}
 
@@ -109,12 +111,14 @@ public partial class MAPP : OverworldBase
 		// Short delay so the poof flash leads the horse pop-in
 		GetTree().CreateTimer(0.2f).Connect("timeout",
 			Callable.From(() => InstantiateHorse(pos, withPoof: true)));
+		CheckAllAltDialogsDone();
 	}
 
 	// ── Lily cutscene ──────────────────────────────────────────────────────────
 
 	private void OnLilyAltSignal()
 	{
+		GameManager.Instance.SetFlag(Flags.LilyAltDone, true);
 		// Wait for Lily's dialog box to close, then play the player's inner monologue
 		DialogicBridge.Instance.ConnectTimelineEnded(
 			new Callable(this, MethodName.OnLilyAltEnded));
@@ -131,6 +135,7 @@ public partial class MAPP : OverworldBase
 	private void OnLilyCutsceneEnded()
 	{
 		GameManager.Instance.SetState(GameState.Overworld);
+		CheckAllAltDialogsDone();
 	}
 
 	// ── Ferret event ───────────────────────────────────────────────────────────
@@ -150,6 +155,7 @@ public partial class MAPP : OverworldBase
 		SpawnPurplePoof(pos);
 		GetTree().CreateTimer(0.2f).Connect("timeout",
 			Callable.From(() => InstantiateFerret(pos, withPoof: true)));
+		CheckAllAltDialogsDone();
 	}
 
 	private Vector2 FerretWorldPosition()
@@ -268,6 +274,7 @@ public partial class MAPP : OverworldBase
 		SpawnPoof(pos);
 		GetTree().CreateTimer(0.3f).Connect("timeout",
 			Callable.From(() => SpawnKrioraCrystals(pos, withPoof: true)));
+		CheckAllAltDialogsDone();
 	}
 
 	private Vector2 KrioraWorldPosition()
@@ -364,6 +371,7 @@ public partial class MAPP : OverworldBase
 		SpawnPoof(gus.GlobalPosition);
 		GetTree().CreateTimer(0.2f).Connect("timeout",
 			Callable.From(() => TransformGusToFrog(withPoof: true)));
+		CheckAllAltDialogsDone();
 	}
 
 	private void TransformGusToFrog(bool withPoof)
@@ -418,6 +426,7 @@ public partial class MAPP : OverworldBase
 	{
 		AudioManager.Instance.PlayBgm(ShizuBgmPath);
 		SpawnMusicNoteAura(ShizuWorldPosition());
+		CheckAllAltDialogsDone();
 	}
 
 	private Vector2 ShizuWorldPosition()
@@ -521,6 +530,54 @@ public partial class MAPP : OverworldBase
 		root.AddChild(flag);
 
 		return root;
+	}
+
+	// ── Rain alt event ─────────────────────────────────────────────────────────
+
+	private void OnRainAltSignal()
+	{
+		GameManager.Instance.SetFlag(Flags.RainAltDone, true);
+		DialogicBridge.Instance.ConnectTimelineEnded(
+			new Callable(this, MethodName.OnRainAltEnded));
+	}
+
+	private void OnRainAltEnded()
+	{
+		CheckAllAltDialogsDone();
+	}
+
+	// ── "SHE HAS ARISEN" trigger ───────────────────────────────────────────────
+
+	private void CheckAllAltDialogsDone()
+	{
+		if (GameManager.Instance.GetFlag(Flags.AllAltDialogsDone)) return;
+
+		bool allDone =
+			GameManager.Instance.GetFlag(Flags.BrixHorseAppeared)     &&
+			GameManager.Instance.GetFlag(Flags.LilyAltDone)           &&
+			GameManager.Instance.GetFlag(Flags.BhataFerretAppeared)   &&
+			GameManager.Instance.GetFlag(Flags.KrioraCrystalsAppeared) &&
+			GameManager.Instance.GetFlag(Flags.GusTransformedToFrog)  &&
+			GameManager.Instance.GetFlag(Flags.ShizuMusicAuraActive)  &&
+			GameManager.Instance.GetFlag(Flags.RainAltDone);
+
+		if (!allDone) return;
+
+		GameManager.Instance.SetFlag(Flags.AllAltDialogsDone, true);
+		StartArisesCutscene();
+	}
+
+	private void StartArisesCutscene()
+	{
+		GameManager.Instance.SetState(GameState.Dialog);
+		var cutscene = new ArisesCutscene();
+		AddChild(cutscene);
+		cutscene.Finished += OnArisesCutsceneFinished;
+	}
+
+	private void OnArisesCutsceneFinished()
+	{
+		GameManager.Instance.SetState(GameState.Overworld);
 	}
 
 	/// <summary>Returns a world position just to the right of Brix.</summary>

@@ -37,6 +37,15 @@ public static class Flags
     /// <summary>Set when Shizu's music note aura activates and BGM changes.</summary>
     public const string ShizuMusicAuraActive = "shizu_music_aura_active";
 
+    /// <summary>Set once Lily's alt dialog has been seen at least once.</summary>
+    public const string LilyAltDone = "lily_alt_done";
+
+    /// <summary>Set once Rain's alt dialog has been seen at least once.</summary>
+    public const string RainAltDone = "rain_alt_done";
+
+    /// <summary>Set when all seven MAPP NPCs have completed their alt dialogs.</summary>
+    public const string AllAltDialogsDone = "all_alt_dialogs_done";
+
     // ── Environment flags ─────────────────────────────────────────────────────
 
     /// <summary>Set when the player walks close to the northern exit in the test room.</summary>
