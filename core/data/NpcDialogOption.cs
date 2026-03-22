@@ -6,8 +6,8 @@ namespace SennenRpg.Core.Data;
 /// A single conditional dialog branch for an NPC.
 /// The NPC plays this timeline when RequiredFlag is set in GameManager.
 ///
-/// Attach these as sub-resources to an Npc node's AltDialogOptions array in the Godot inspector.
-/// Options are checked in array order — the first one whose flag is set wins.
+/// Use with Npc.SelectTimeline or manually to represent a conditional dialog branch.
+/// Options are checked in order — the first one whose flag is set wins.
 /// If none match, the Npc's default TimelinePath is used.
 ///
 /// Use flag name constants from <see cref="Flags"/> for RequiredFlag to prevent typos.

@@ -110,6 +110,8 @@ PlaceholderColor = Color(0.75, 0.25, 0.18, 1)
 DefaultFacing = 0
 CharacterPath = "res://dialog/characters/Kriora.dch"
 TimelinePath = "res://dialog/timelines/npc_kriora.dtl"
+AltRequiredFlags = PackedStringArray("talked_to_kriora_mapp")
+AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_kriora_again.dtl")
 
 [node name="Shizu" parent="YSort" instance=ExtResource("4_shizu")]
 position = Vector2(-120, 60)
@@ -119,6 +121,8 @@ PlaceholderColor = Color(0.55, 0.1, 0.75, 1)
 DefaultFacing = 2
 CharacterPath = "res://dialog/characters/Shizu.dch"
 TimelinePath = "res://dialog/timelines/npc_shizu.dtl"
+AltRequiredFlags = PackedStringArray("talked_to_shizu_mapp")
+AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_shizu_again.dtl")
 
 [node name="Lily" parent="YSort" instance=ExtResource("5_lily")]
 position = Vector2(-40, 30)
@@ -128,6 +132,8 @@ PlaceholderColor = Color(0.95, 0.6, 0.7, 1)
 DefaultFacing = 0
 CharacterPath = "res://dialog/characters/Lily.dch"
 TimelinePath = "res://dialog/timelines/npc_lily.dtl"
+AltRequiredFlags = PackedStringArray("talked_to_lily_mapp")
+AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_lily_again.dtl")
 PatrolPoints = PackedVector2Array(-60, 40, 60, 40, -40, 30)
 PatrolSpeed = 25.0
 
@@ -139,6 +145,8 @@ PlaceholderColor = Color(0.6, 0.42, 0.22, 1)
 DefaultFacing = 2
 CharacterPath = "res://dialog/characters/Gus.dch"
 TimelinePath = "res://dialog/timelines/npc_gus.dtl"
+AltRequiredFlags = PackedStringArray("talked_to_gus_mapp")
+AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_gus_again.dtl")
 
 [node name="Brix" parent="YSort" instance=ExtResource("7_brix")]
 position = Vector2(100, 20)
@@ -148,6 +156,8 @@ PlaceholderColor = Color(0.4, 0.42, 0.46, 1)
 DefaultFacing = 2
 CharacterPath = "res://dialog/characters/Brix.dch"
 TimelinePath = "res://dialog/timelines/npc_brix.dtl"
+AltRequiredFlags = PackedStringArray("talked_to_brix_mapp")
+AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_brix_again.dtl")
 
 [node name="Bhata" parent="YSort" instance=ExtResource("8_bhata")]
 position = Vector2(30, -10)
@@ -157,6 +167,8 @@ PlaceholderColor = Color(0.25, 0.75, 0.7, 1)
 DefaultFacing = 0
 CharacterPath = "res://dialog/characters/Bhata.dch"
 TimelinePath = "res://dialog/timelines/npc_bhata.dtl"
+AltRequiredFlags = PackedStringArray("talked_to_bhata_mapp")
+AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_bhata_again.dtl")
 
 [node name="Rain" parent="YSort" instance=ExtResource("9_rain")]
 position = Vector2(50, 100)
@@ -166,5 +178,7 @@ PlaceholderColor = Color(0.35, 0.55, 0.95, 1)
 DefaultFacing = 1
 CharacterPath = "res://dialog/characters/Rain.dch"
 TimelinePath = "res://dialog/timelines/npc_rain.dtl"
+AltRequiredFlags = PackedStringArray("talked_to_rain_mapp")
+AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_rain_again.dtl")
 PatrolPoints = PackedVector2Array(60, 90, 40, 100, 50, 100)
 PatrolSpeed = 18.0

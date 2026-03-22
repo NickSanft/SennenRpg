@@ -6,8 +6,8 @@ using SennenRpg.Scenes.Overworld;
 namespace SennenRpg.Tests.GdUnit;
 
 /// <summary>
-/// GdUnit4 tests for Npc.SelectTimeline and NpcDialogOption.
-/// Requires the Godot runtime so that NpcDialogOption (a Resource subclass) can be instantiated.
+/// Tests for Npc.SelectTimeline (pure C# logic, no Godot runtime required)
+/// and NpcDialogOption property round-trips (requires Godot runtime for Resource).
 /// Run from the GdUnit4 panel in the Godot editor, or via:
 ///   godot --headless -s addons/gdUnit4/bin/GdUnitCmdTool.gd
 /// </summary>
@@ -17,93 +17,85 @@ public sealed class NpcDialogTest
     // ── No options ────────────────────────────────────────────────────────────
 
     [TestCase]
-    [RequireGodotRuntime]
     public void SelectTimeline_NoOptions_ReturnsDefault()
     {
-        string result = Npc.SelectTimeline("default.dtl", [], _ => false);
+        string result = Npc.SelectTimeline("default.dtl", [], [], _ => false);
         AssertThat(result).IsEqual("default.dtl");
     }
 
     [TestCase]
-    [RequireGodotRuntime]
     public void SelectTimeline_EmptyDefaultPath_ReturnsEmpty()
     {
-        string result = Npc.SelectTimeline("", [], _ => false);
+        string result = Npc.SelectTimeline("", [], [], _ => false);
         AssertThat(result).IsEqual("");
     }
 
     // ── Single option ─────────────────────────────────────────────────────────
 
     [TestCase]
-    [RequireGodotRuntime]
     public void SelectTimeline_FlagNotSet_ReturnsDefault()
     {
-        var opts = Options(("some_flag", "alt.dtl"));
-        string result = Npc.SelectTimeline("default.dtl", opts, _ => false);
+        string result = Npc.SelectTimeline("default.dtl", ["some_flag"], ["alt.dtl"], _ => false);
         AssertThat(result).IsEqual("default.dtl");
     }
 
     [TestCase]
-    [RequireGodotRuntime]
     public void SelectTimeline_FlagSet_ReturnsAlt()
     {
-        var opts = Options(("some_flag", "alt.dtl"));
-        string result = Npc.SelectTimeline("default.dtl", opts, flag => flag == "some_flag");
+        string result = Npc.SelectTimeline("default.dtl", ["some_flag"], ["alt.dtl"], flag => flag == "some_flag");
         AssertThat(result).IsEqual("alt.dtl");
     }
 
     // ── Multiple options ──────────────────────────────────────────────────────
 
     [TestCase]
-    [RequireGodotRuntime]
     public void SelectTimeline_FirstMatchWins_WhenBothFlagsSet()
     {
-        var opts = Options(("flag_a", "a.dtl"), ("flag_b", "b.dtl"));
-        string result = Npc.SelectTimeline("default.dtl", opts, _ => true);
+        string result = Npc.SelectTimeline("default.dtl", ["flag_a", "flag_b"], ["a.dtl", "b.dtl"], _ => true);
         AssertThat(result).IsEqual("a.dtl");
     }
 
     [TestCase]
-    [RequireGodotRuntime]
     public void SelectTimeline_OnlySecondFlagSet_ReturnsSecondPath()
     {
-        var opts = Options(("flag_a", "a.dtl"), ("flag_b", "b.dtl"));
-        string result = Npc.SelectTimeline("default.dtl", opts, flag => flag == "flag_b");
+        string result = Npc.SelectTimeline("default.dtl", ["flag_a", "flag_b"], ["a.dtl", "b.dtl"], flag => flag == "flag_b");
         AssertThat(result).IsEqual("b.dtl");
     }
 
     [TestCase]
-    [RequireGodotRuntime]
     public void SelectTimeline_NoFlagsSet_ReturnsDefault()
     {
-        var opts = Options(("flag_a", "a.dtl"), ("flag_b", "b.dtl"));
-        string result = Npc.SelectTimeline("default.dtl", opts, _ => false);
+        string result = Npc.SelectTimeline("default.dtl", ["flag_a", "flag_b"], ["a.dtl", "b.dtl"], _ => false);
         AssertThat(result).IsEqual("default.dtl");
     }
 
     // ── Edge cases ────────────────────────────────────────────────────────────
 
     [TestCase]
-    [RequireGodotRuntime]
     public void SelectTimeline_OptionWithEmptyFlag_IsSkipped()
     {
-        // An option with no RequiredFlag set should never match
-        var opts = Options(("", "skipped.dtl"));
-        string result = Npc.SelectTimeline("default.dtl", opts, _ => true);
+        // An entry with an empty flag should never match
+        string result = Npc.SelectTimeline("default.dtl", [""], ["skipped.dtl"], _ => true);
         AssertThat(result).IsEqual("default.dtl");
     }
 
     [TestCase]
-    [RequireGodotRuntime]
+    public void SelectTimeline_UnequalArrayLengths_UsesShortestCount()
+    {
+        // Extra paths beyond the flags array are ignored
+        string result = Npc.SelectTimeline("default.dtl", ["flag_a"], ["a.dtl", "extra.dtl"], flag => flag == "flag_a");
+        AssertThat(result).IsEqual("a.dtl");
+    }
+
+    [TestCase]
     public void SelectTimeline_UsesFlagConstants()
     {
-        // Verify that Flags.MetShizu works as a RequiredFlag value
-        var opts = Options((Flags.MetShizu, "shizu_alt.dtl"));
-        string result = Npc.SelectTimeline("shizu.dtl", opts, flag => flag == Flags.MetShizu);
+        string result = Npc.SelectTimeline("shizu.dtl", [Flags.MetShizu], ["shizu_alt.dtl"], flag => flag == Flags.MetShizu);
         AssertThat(result).IsEqual("shizu_alt.dtl");
     }
 
     // ── NpcDialogOption properties ────────────────────────────────────────────
+    // NpcDialogOption is a Godot Resource subclass — requires the Godot runtime.
 
     [TestCase]
     [RequireGodotRuntime]
@@ -125,15 +117,5 @@ public sealed class NpcDialogTest
         };
         AssertThat(opt.RequiredFlag).IsEqual(Flags.MetShizu);
         AssertThat(opt.TimelinePath).IsEqual("res://dialog/timelines/shizu.dtl");
-    }
-
-    // ── Helper ────────────────────────────────────────────────────────────────
-
-    private static NpcDialogOption[] Options(params (string flag, string path)[] entries)
-    {
-        var opts = new NpcDialogOption[entries.Length];
-        for (int i = 0; i < entries.Length; i++)
-            opts[i] = new NpcDialogOption { RequiredFlag = entries[i].flag, TimelinePath = entries[i].path };
-        return opts;
     }
 }

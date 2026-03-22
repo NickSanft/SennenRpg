@@ -1,3 +1,4 @@
+using System;
 using Godot;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
@@ -18,11 +19,12 @@ public partial class Npc : CharacterBody2D, IInteractable
 
 	/// <summary>
 	/// Alternate dialog branches shown when a flag condition is met.
-	/// Checked in order — the first option whose RequiredFlag is set wins.
+	/// Parallel arrays — index N of AltRequiredFlags pairs with index N of AltTimelinePaths.
+	/// Checked in order; the first entry whose flag is set wins.
 	/// If none match, TimelinePath is used.
-	/// Each entry is an <see cref="NpcDialogOption"/> sub-resource set in the Godot inspector.
 	/// </summary>
-	[Export] public NpcDialogOption[] AltDialogOptions { get; set; } = [];
+	[Export] public string[] AltRequiredFlags { get; set; } = [];
+	[Export] public string[] AltTimelinePaths { get; set; } = [];
 
 	/// <summary>
 	/// Path to the Dialogic character .dch resource. When set, the examine option
@@ -189,22 +191,25 @@ public partial class Npc : CharacterBody2D, IInteractable
 	public void HidePrompt() => _prompt?.HideBubble();
 
 	private string ChooseTimeline()
-		=> SelectTimeline(TimelinePath, AltDialogOptions, GameManager.Instance.GetFlag);
+		=> SelectTimeline(TimelinePath, AltRequiredFlags, AltTimelinePaths, GameManager.Instance.GetFlag);
 
 	/// <summary>
-	/// Pure selection logic: returns the path from the first option whose RequiredFlag
-	/// is set by <paramref name="flagChecker"/>, or <paramref name="defaultPath"/> if none match.
+	/// Pure selection logic: iterates the parallel flag/path arrays and returns the path
+	/// for the first flag that <paramref name="flagChecker"/> returns true for.
+	/// Falls back to <paramref name="defaultPath"/> if nothing matches.
 	/// Exposed as public static so it can be unit-tested without a Godot scene.
 	/// </summary>
 	public static string SelectTimeline(
 		string defaultPath,
-		NpcDialogOption[] options,
+		string[] altRequiredFlags,
+		string[] altTimelinePaths,
 		Func<string, bool> flagChecker)
 	{
-		foreach (var opt in options)
+		int count = Math.Min(altRequiredFlags.Length, altTimelinePaths.Length);
+		for (int i = 0; i < count; i++)
 		{
-			if (!string.IsNullOrEmpty(opt.RequiredFlag) && flagChecker(opt.RequiredFlag))
-				return opt.TimelinePath;
+			if (!string.IsNullOrEmpty(altRequiredFlags[i]) && flagChecker(altRequiredFlags[i]))
+				return altTimelinePaths[i];
 		}
 		return defaultPath;
 	}

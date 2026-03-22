@@ -1,12 +1,11 @@
 using Godot;
-using SennenRpg.Core.Data;
 
 namespace SennenRpg.Scenes.Overworld;
 
 /// <summary>
 /// The MAPP tavern — a lively indoor space with seven regulars.
 /// NPCs are placed directly in MAPP.tscn (visible in the editor).
-/// This script handles the background visuals, map config, and the exit trigger.
+/// This script handles the map config, flame animation, and the exit trigger.
 /// </summary>
 public partial class MAPP : OverworldBase
 {
@@ -24,7 +23,6 @@ public partial class MAPP : OverworldBase
 		base._Ready();
 
 		PulseFlame(GetNode<ColorRect>("Flame"));
-		ConfigureAltDialogs();
 		SpawnExit();
 	}
 
@@ -33,30 +31,6 @@ public partial class MAPP : OverworldBase
 		var tween = CreateTween().SetLoops();
 		tween.TweenProperty(flame, "modulate:a", 0.6f, 0.4f).SetTrans(Tween.TransitionType.Sine);
 		tween.TweenProperty(flame, "modulate:a", 1.0f, 0.4f).SetTrans(Tween.TransitionType.Sine);
-	}
-
-	// ── Alt dialog ────────────────────────────────────────────────────────────
-
-	/// <summary>
-	/// NpcDialogOption is a C# [GlobalClass] and cannot be serialised as a sub_resource
-	/// in .tscn files, so we assign AltDialogOptions here after the scene is ready.
-	/// </summary>
-	private void ConfigureAltDialogs()
-	{
-		SetAlt("Kriora", "talked_to_kriora_mapp", "res://dialog/timelines/npc_kriora_again.dtl");
-		SetAlt("Shizu",  "talked_to_shizu_mapp",  "res://dialog/timelines/npc_shizu_again.dtl");
-		SetAlt("Lily",   "talked_to_lily_mapp",   "res://dialog/timelines/npc_lily_again.dtl");
-		SetAlt("Gus",    "talked_to_gus_mapp",    "res://dialog/timelines/npc_gus_again.dtl");
-		SetAlt("Brix",   "talked_to_brix_mapp",   "res://dialog/timelines/npc_brix_again.dtl");
-		SetAlt("Bhata",  "talked_to_bhata_mapp",  "res://dialog/timelines/npc_bhata_again.dtl");
-		SetAlt("Rain",   "talked_to_rain_mapp",   "res://dialog/timelines/npc_rain_again.dtl");
-	}
-
-	private void SetAlt(string nodeName, string flag, string timeline)
-	{
-		var npc = YSort.GetNodeOrNull<Npc>(nodeName);
-		if (npc == null) { GD.PushWarning($"[MAPP] NPC node '{nodeName}' not found for alt dialog setup."); return; }
-		npc.AltDialogOptions = [new NpcDialogOption { RequiredFlag = flag, TimelinePath = timeline }];
 	}
 
 	// ── Exit ──────────────────────────────────────────────────────────────────

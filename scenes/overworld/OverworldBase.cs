@@ -190,8 +190,8 @@ public partial class OverworldBase : Node2D
 			}
 
 			TryPreload(npc.TimelinePath);
-			foreach (var opt in npc.AltDialogOptions)
-				TryPreload(opt.TimelinePath);
+			foreach (var path in npc.AltTimelinePaths)
+				TryPreload(path);
 		}
 		if (count > 0)
 			GD.Print($"[OverworldBase] Preloading {count} NPC timeline(s) in background.");
