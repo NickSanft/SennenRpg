@@ -22,6 +22,9 @@ public static class Flags
     /// <summary>Set when Foran gives the player a Potion during their first conversation.</summary>
     public const string GotItemFromForan = "got_item_from_foran";
 
+    /// <summary>Set when Brix's horse magically materialises next to him.</summary>
+    public const string BrixHorseAppeared = "brix_horse_appeared";
+
     // ── Environment flags ─────────────────────────────────────────────────────
 
     /// <summary>Set when the player walks close to the northern exit in the test room.</summary>

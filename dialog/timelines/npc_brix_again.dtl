@@ -1,2 +1,3 @@
 Brix: Hi again.
 Brix: ...I miss my horse.
+[signal arg="brix_horse_spawn"]
