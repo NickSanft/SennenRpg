@@ -57,7 +57,10 @@ public partial class Npc : CharacterBody2D, IInteractable
 	private InteractPromptBubble? _prompt;
 	private float                  _talkCooldown;
 	private Vector2                _patrolOrigin;
-	private Tween?                 _patrolTween;
+	private Vector2[]              _patrolRoute  = [];
+	private int                    _patrolIndex  = 0;
+	private float                  _patrolWait   = 0f;  // countdown between waypoints
+	private bool                   _patrolActive = false;
 	private bool                   _emoteShown;
 	private string                 _characterDescription = "";
 	private Node?                  _pendingPlayer;
@@ -122,12 +125,50 @@ public partial class Npc : CharacterBody2D, IInteractable
 			_talkCooldown -= (float)delta;
 	}
 
+	public override void _PhysicsProcess(double delta)
+	{
+		TickPatrol((float)delta);
+	}
+
+	private void TickPatrol(float delta)
+	{
+		if (!_patrolActive || _patrolRoute.Length == 0) return;
+
+		if (_patrolWait > 0f)
+		{
+			_patrolWait -= delta;
+			Velocity = Vector2.Zero;
+			return;
+		}
+
+		Vector2 target   = _patrolRoute[_patrolIndex];
+		Vector2 toTarget = target - GlobalPosition;
+		float   dist     = toTarget.Length();
+
+		if (dist < 2f)
+		{
+			// Reached waypoint — snap, pause, advance index
+			GlobalPosition = target;
+			Velocity       = Vector2.Zero;
+			_patrolWait    = PatrolPause;
+			_patrolIndex   = (_patrolIndex + 1) % _patrolRoute.Length;
+			SetPatrolFacing(target, _patrolRoute[_patrolIndex]);
+		}
+		else
+		{
+			Velocity = toTarget.Normalized() * PatrolSpeed;
+			MoveAndSlide();
+			SetPatrolFacing(GlobalPosition, GlobalPosition + Velocity);
+		}
+	}
+
 	public virtual void Interact(Node player)
 	{
 		if (_talkCooldown > 0f) return;
 		if (DialogicBridge.Instance.IsRunning()) { GD.Print("[Npc] Dialog already running — aborting."); return; }
 
-		_patrolTween?.Pause();
+		_patrolActive  = false;
+		Velocity       = Vector2.Zero;
 		_pendingPlayer = player;
 
 		if (player is Node2D p2d)
@@ -156,7 +197,7 @@ public partial class Npc : CharacterBody2D, IInteractable
 	private void OnMenuCancelled()
 	{
 		_pendingPlayer = null;
-		_patrolTween?.Play();
+		_patrolActive  = PatrolPoints.Length >= 1;
 		GameManager.Instance.SetState(GameState.Overworld);
 	}
 
@@ -241,28 +282,18 @@ public partial class Npc : CharacterBody2D, IInteractable
 	private void StartPatrol()
 	{
 		_patrolOrigin = GlobalPosition;
-		_patrolTween?.Kill();
-		_patrolTween = CreateTween().SetLoops();
 
-		// Full route: origin → each waypoint → back to origin
-		var prev = _patrolOrigin;
-		foreach (var dest in PatrolPoints)
-		{
-			AppendLeg(prev, dest);
-			prev = dest;
-		}
-		AppendLeg(prev, _patrolOrigin);
-	}
+		// Full route: waypoints in order, then back to origin (loops via modulo)
+		_patrolRoute    = new Vector2[PatrolPoints.Length + 1];
+		for (int i = 0; i < PatrolPoints.Length; i++)
+			_patrolRoute[i] = PatrolPoints[i];
+		_patrolRoute[PatrolPoints.Length] = _patrolOrigin;
 
-	private void AppendLeg(Vector2 from, Vector2 to)
-	{
-		float dist = from.DistanceTo(to);
-		if (dist < 1f) return;
+		_patrolIndex  = 0;
+		_patrolWait   = 0f;
+		_patrolActive = true;
 
-		_patrolTween!.TweenCallback(Callable.From(() => SetPatrolFacing(from, to)));
-		_patrolTween.TweenProperty(this, "global_position", to, dist / PatrolSpeed)
-					.SetTrans(Tween.TransitionType.Linear);
-		_patrolTween.TweenInterval(PatrolPause);
+		SetPatrolFacing(_patrolOrigin, _patrolRoute[0]);
 	}
 
 	private void SetPatrolFacing(Vector2 from, Vector2 to)
@@ -309,7 +340,7 @@ public partial class Npc : CharacterBody2D, IInteractable
 	private void OnTimelineEnded()
 	{
 		_talkCooldown = TalkCooldownSec;
-		_patrolTween?.Play();
+		_patrolActive = PatrolPoints.Length >= 1;
 
 		if (!string.IsNullOrEmpty(NpcId))
 		{

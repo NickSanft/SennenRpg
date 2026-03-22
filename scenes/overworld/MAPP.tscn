@@ -53,29 +53,6 @@ offset_right = -126.0
 offset_bottom = -14.0
 z_index = -7
 
-[node name="Table1" type="ColorRect" parent="."]
-color = Color(0.35, 0.22, 0.12, 1)
-offset_left = -74.0
-offset_top = 30.0
-offset_right = -46.0
-offset_bottom = 50.0
-z_index = -6
-
-[node name="Table2" type="ColorRect" parent="."]
-color = Color(0.35, 0.22, 0.12, 1)
-offset_left = 46.0
-offset_top = 30.0
-offset_right = 74.0
-offset_bottom = 50.0
-z_index = -6
-
-[node name="Table3" type="ColorRect" parent="."]
-color = Color(0.35, 0.22, 0.12, 1)
-offset_left = -14.0
-offset_top = -20.0
-offset_right = 14.0
-offset_bottom = 0.0
-z_index = -6
 
 
 [node name="Door" type="ColorRect" parent="."]
@@ -150,7 +127,7 @@ CharacterPath = "res://dialog/characters/Lily.dch"
 TimelinePath = "res://dialog/timelines/npc_lily.dtl"
 AltRequiredFlags = PackedStringArray("talked_to_lily_mapp")
 AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_lily_again.dtl")
-PatrolPoints = PackedVector2Array(-60, 40, 60, 40, -40, 30)
+PatrolPoints = PackedVector2Array(-50, 20, 50, 20, 0, 65)
 PatrolSpeed = 25.0
 
 [node name="Gus" parent="YSort" instance=ExtResource("6_gus")]

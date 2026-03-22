@@ -45,6 +45,7 @@ public partial class MAPP : OverworldBase
 		base._Ready();
 
 		BuildTileMap();
+		SpawnFurniture();
 		PulseFlame(GetNode<ColorRect>("Flame"));
 		SpawnExit();
 		SpawnJournal();
@@ -703,6 +704,134 @@ public partial class MAPP : OverworldBase
 		var journal = new JournalProp();
 		AddChild(journal);
 		journal.GlobalPosition = new Vector2(-60f, 35f); // resting on Table1
+	}
+
+	// ── Furniture ──────────────────────────────────────────────────────────────
+
+	private static readonly Color TableSurface   = new Color(0.36f, 0.22f, 0.11f);
+	private static readonly Color TableHighlight = new Color(0.46f, 0.30f, 0.15f);
+	private static readonly Color TableEdge      = new Color(0.20f, 0.12f, 0.06f);
+	private static readonly Color ChairSeat      = new Color(0.30f, 0.18f, 0.09f);
+	private static readonly Color ChairBack      = new Color(0.20f, 0.12f, 0.05f);
+	private static readonly Color CandleWax      = new Color(0.92f, 0.88f, 0.72f);
+	private static readonly Color CandleFlame    = new Color(1.00f, 0.68f, 0.12f);
+
+	private void SpawnFurniture()
+	{
+		// Table1 and Table2 get three chairs each (north + two south)
+		SpawnTableSet(new Vector2(-60f, 40f), northChair: true);
+		SpawnTableSet(new Vector2( 60f, 40f), northChair: true);
+		// Table3 sits just below the bar — only south chairs fit
+		SpawnTableSet(new Vector2(  0f, -10f), northChair: false);
+	}
+
+	private void SpawnTableSet(Vector2 center, bool northChair)
+	{
+		// Chairs drawn first so the table surface renders on top of them
+		if (northChair)
+			SpawnChair(center + new Vector2(0f, -20f), backrestAtTop: true);
+
+		SpawnChair(center + new Vector2(-9f, 18f), backrestAtTop: false);
+		SpawnChair(center + new Vector2( 9f, 18f), backrestAtTop: false);
+
+		SpawnTable(center);
+	}
+
+	private void SpawnTable(Vector2 pos)
+	{
+		// Collision — covers the full surface + front edge footprint
+		AddStaticRect(pos + new Vector2(0f, 2.5f), new Vector2(28f, 17f));
+
+		// Drop shadow (slightly offset, dark semi-transparent)
+		AddPoly(pos + new Vector2(2f, 3f), new Vector2[]
+		{
+			new Vector2(-14f, -6f), new Vector2(14f, -6f),
+			new Vector2(12f,  11f), new Vector2(-12f, 11f),
+		}, new Color(0f, 0f, 0f, 0.35f), zIndex: -7);
+
+		// Front edge — trapezoid giving a 3-D raised look
+		AddPoly(pos, new Vector2[]
+		{
+			new Vector2(-14f,  6f), new Vector2(14f,  6f),
+			new Vector2( 11f, 11f), new Vector2(-11f, 11f),
+		}, TableEdge, zIndex: -5);
+
+		// Table surface
+		AddPoly(pos, new Vector2[]
+		{
+			new Vector2(-14f, -6f), new Vector2(14f, -6f),
+			new Vector2( 14f,  6f), new Vector2(-14f,  6f),
+		}, TableSurface, zIndex: -5);
+
+		// Highlight strip near the north edge of the surface
+		AddPoly(pos, new Vector2[]
+		{
+			new Vector2(-13f, -5f), new Vector2(13f, -5f),
+			new Vector2( 13f, -2f), new Vector2(-13f, -2f),
+		}, TableHighlight, zIndex: -4);
+
+		// Candle: wax pillar
+		AddPoly(pos + new Vector2(0f, 1f), new Vector2[]
+		{
+			new Vector2(-1.5f, -4f), new Vector2(1.5f, -4f),
+			new Vector2( 1.5f,  2f), new Vector2(-1.5f,  2f),
+		}, CandleWax, zIndex: -4);
+
+		// Candle: small flame
+		AddPoly(pos + new Vector2(0f, 1f), new Vector2[]
+		{
+			new Vector2( 0f, -7f),
+			new Vector2( 2f, -5f),
+			new Vector2( 0f, -4f),
+			new Vector2(-2f, -5f),
+		}, CandleFlame, zIndex: -3);
+	}
+
+	private void SpawnChair(Vector2 pos, bool backrestAtTop)
+	{
+		// Collision — seat footprint only (backrest is vertical, not a floor obstacle)
+		AddStaticRect(pos, new Vector2(10f, 8f));
+
+		// Seat
+		AddPoly(pos, new Vector2[]
+		{
+			new Vector2(-5f, -4f), new Vector2(5f, -4f),
+			new Vector2( 5f,  4f), new Vector2(-5f,  4f),
+		}, ChairSeat, zIndex: -6);
+
+		// Backrest — thin bar on the far side from the table
+		float by = backrestAtTop ? -4f : 4f;
+		float bh = backrestAtTop ? -3f :  3f;
+		AddPoly(pos, new Vector2[]
+		{
+			new Vector2(-5f, by), new Vector2(5f, by),
+			new Vector2( 5f, by + bh), new Vector2(-5f, by + bh),
+		}, ChairBack, zIndex: -6);
+
+		// Seat highlight (top-left corner strip)
+		AddPoly(pos, new Vector2[]
+		{
+			new Vector2(-4f, -3f), new Vector2(1f, -3f),
+			new Vector2( 1f, -1f), new Vector2(-4f, -1f),
+		}, new Color(ChairSeat.R + 0.08f, ChairSeat.G + 0.05f, ChairSeat.B + 0.02f), zIndex: -5);
+	}
+
+	/// <summary>Adds a Polygon2D as a direct child of the MAPP node.</summary>
+	private void AddPoly(Vector2 worldPos, Vector2[] polygon, Color color, int zIndex)
+	{
+		var poly = new Polygon2D { Color = color, ZIndex = zIndex, Polygon = polygon };
+		AddChild(poly);
+		poly.GlobalPosition = worldPos;
+	}
+
+	/// <summary>Adds a StaticBody2D with a rectangular collision shape.</summary>
+	private void AddStaticRect(Vector2 worldPos, Vector2 size)
+	{
+		var body  = new StaticBody2D();
+		var shape = new CollisionShape2D { Shape = new RectangleShape2D { Size = size } };
+		body.AddChild(shape);
+		AddChild(body);
+		body.GlobalPosition = worldPos;
 	}
 
 	// ── Tile map ───────────────────────────────────────────────────────────────
