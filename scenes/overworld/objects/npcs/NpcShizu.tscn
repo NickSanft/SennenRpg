@@ -1,8 +1,73 @@
 [gd_scene format=3 uid="uid://d1qdl5d5ojtr7"]
 
 [ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="1_shizu"]
+[ext_resource type="Texture2D" uid="uid://dgajxoyy2qmdv" path="res://assets/sprites/npcs/Shizu.png" id="2_54cxc"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tjxgf"]
+atlas = ExtResource("2_54cxc")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_g7ib5"]
+atlas = ExtResource("2_54cxc")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gyyb8"]
+atlas = ExtResource("2_54cxc")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uyves"]
+atlas = ExtResource("2_54cxc")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ifxo3"]
+atlas = ExtResource("2_54cxc")
+region = Rect2(64, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bnbi1"]
+atlas = ExtResource("2_54cxc")
+region = Rect2(96, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_v02lv"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tjxgf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_g7ib5")
+}],
+"loop": true,
+"name": &"idle_down",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gyyb8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uyves")
+}],
+"loop": true,
+"name": &"idle_side",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ifxo3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bnbi1")
+}],
+"loop": true,
+"name": &"idle_up",
+"speed": 5.0
+}]
 
 [node name="NpcShizu" unique_id=1304910095 instance=ExtResource("1_shizu")]
 DisplayName = "Shizu"
+
+[node name="Sprite" parent="." index="0" unique_id=1912760606]
+sprite_frames = SubResource("SpriteFrames_v02lv")
+animation = &"idle_up"
 
 [node name="Sprite2" type="AnimatedSprite2D" parent="." index="2" unique_id=1264565081]
