@@ -103,6 +103,46 @@ public sealed class DialogicSignalParserTests
         Assert.That(arg,  Is.EqualTo(signal));
     }
 
+    // ── remove_gold: prefix ───────────────────────────────────────────────────
+
+    [Test]
+    public void Parse_RemoveGoldSignal_ReturnsTypeRemoveGold()
+    {
+        var (type, _) = DialogicSignalParser.Parse("remove_gold:10");
+        Assert.That(type, Is.EqualTo(DialogicSignalParser.TypeRemoveGold));
+    }
+
+    [Test]
+    public void Parse_RemoveGoldSignal_ExtractsAmount()
+    {
+        var (_, arg) = DialogicSignalParser.Parse("remove_gold:10");
+        Assert.That(arg, Is.EqualTo("10"));
+    }
+
+    [TestCase("remove_gold:10",  "10")]
+    [TestCase("remove_gold:50",  "50")]
+    [TestCase("remove_gold:100", "100")]
+    public void Parse_RemoveGoldSignal_ExtractsCorrectAmount(string signal, string expected)
+    {
+        var (_, arg) = DialogicSignalParser.Parse(signal);
+        Assert.That(arg, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void Parse_RemoveGoldPrefix_WithEmptyAmount_ReturnsEmptyArgument()
+    {
+        var (type, arg) = DialogicSignalParser.Parse("remove_gold:");
+        Assert.That(type, Is.EqualTo(DialogicSignalParser.TypeRemoveGold));
+        Assert.That(arg,  Is.EqualTo(""));
+    }
+
+    [Test]
+    public void Parse_StringContainingRemoveGoldNotAtStart_IsCustom()
+    {
+        var (type, _) = DialogicSignalParser.Parse("not_remove_gold:10");
+        Assert.That(type, Is.EqualTo(DialogicSignalParser.TypeCustom));
+    }
+
     // ── type constants ────────────────────────────────────────────────────────
 
     [Test]
@@ -111,6 +151,7 @@ public sealed class DialogicSignalParserTests
         string[] types = [
             DialogicSignalParser.TypeFlag,
             DialogicSignalParser.TypeGiveItem,
+            DialogicSignalParser.TypeRemoveGold,
             DialogicSignalParser.TypeCustom,
         ];
         Assert.That(types, Is.Unique, "Each signal type constant must map to a distinct string.");

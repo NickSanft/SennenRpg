@@ -45,6 +45,7 @@ public partial class MAPP : OverworldBase
 
 		PulseFlame(GetNode<ColorRect>("Flame"));
 		SpawnExit();
+		SpawnJournal();
 
 		// Restore the horse on re-entry if it has already appeared
 		if (GameManager.Instance.GetFlag(Flags.BrixHorseAppeared))
@@ -691,6 +692,15 @@ public partial class MAPP : OverworldBase
 				.SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
 			tween.TweenCallback(Callable.From(spark.QueueFree));
 		}
+	}
+
+	// ── Journal ────────────────────────────────────────────────────────────────
+
+	private void SpawnJournal()
+	{
+		var journal = new JournalProp();
+		AddChild(journal);
+		journal.GlobalPosition = new Vector2(-60f, 35f); // resting on Table1
 	}
 
 	// ── Flame ──────────────────────────────────────────────────────────────────
