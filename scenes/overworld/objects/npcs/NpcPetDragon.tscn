@@ -1,0 +1,54 @@
+[gd_scene format=3 uid="uid://petdragon_sp01"]
+
+[ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="1_npdragon"]
+[ext_resource type="Texture2D" path="res://assets/sprites/npcs/PetDragon.png" id="2_npdragon"]
+
+[sub_resource type="AtlasTexture" id="AtlasTex_pdragon1"]
+atlas = ExtResource("2_npdragon")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTex_pdragon2"]
+atlas = ExtResource("2_npdragon")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_pdragon"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTex_pdragon1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTex_pdragon2")
+}],
+"loop": true,
+"name": &"idle_down",
+"speed": 2.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTex_pdragon1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTex_pdragon2")
+}],
+"loop": true,
+"name": &"idle_side",
+"speed": 2.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTex_pdragon1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTex_pdragon2")
+}],
+"loop": true,
+"name": &"idle_up",
+"speed": 2.0
+}]
+
+[node name="NpcPetDragon" instance=ExtResource("1_npdragon")]
+
+[node name="Sprite" parent="." index="0"]
+sprite_frames = SubResource("SpriteFrames_pdragon")
+animation = &"idle_side"
