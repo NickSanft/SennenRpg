@@ -27,6 +27,7 @@ public partial class MAPP : OverworldBase
 	private const string LilyCutscenePath     = "res://dialog/timelines/cutscene_lily_effect.dtl";
 	private const string ShizuBgmPath         = "res://assets/music/Divora - Origins Of The Gyre - DND 6 - 01 Origins Of The Gyre - Full.wav";
 	private const string FrogTexturePath      = "res://assets/sprites/npcs/GusGiantFrog.png";
+	private const string TilesetPath          = "res://assets/tilesets/mapp_tiles.png";
 
 	public override void _Ready()
 	{
@@ -43,6 +44,7 @@ public partial class MAPP : OverworldBase
 
 		base._Ready();
 
+		BuildTileMap();
 		PulseFlame(GetNode<ColorRect>("Flame"));
 		SpawnExit();
 		SpawnJournal();
@@ -701,6 +703,80 @@ public partial class MAPP : OverworldBase
 		var journal = new JournalProp();
 		AddChild(journal);
 		journal.GlobalPosition = new Vector2(-60f, 35f); // resting on Table1
+	}
+
+	// ── Tile map ───────────────────────────────────────────────────────────────
+
+	private static readonly Vector2I TileFloorA  = new Vector2I(0, 0); // dark wood
+	private static readonly Vector2I TileFloorB  = new Vector2I(1, 0); // light wood
+	private static readonly Vector2I TileWall    = new Vector2I(2, 0); // stone brick
+	private static readonly Vector2I TileBar     = new Vector2I(3, 0); // bar counter
+	private static readonly Vector2I TileHearth  = new Vector2I(4, 0); // flagstone
+
+	private void BuildTileMap()
+	{
+		var tex = GD.Load<Texture2D>(TilesetPath);
+
+		var source = new TileSetAtlasSource();
+		source.Texture            = tex;
+		source.TextureRegionSize  = new Vector2I(16, 16);
+		source.CreateTile(TileFloorA);
+		source.CreateTile(TileFloorB);
+		source.CreateTile(TileWall);
+		source.CreateTile(TileBar);
+		source.CreateTile(TileHearth);
+
+		var tileSet = new TileSet();
+		tileSet.TileSize = new Vector2I(16, 16);
+		tileSet.AddSource(source, 0);
+
+		var layer = new TileMapLayer { TileSet = tileSet, ZIndex = -10 };
+		AddChild(layer);
+
+		PlaceTiles(layer);
+	}
+
+	private static void PlaceTiles(TileMapLayer layer)
+	{
+		// ── Floor (wood planks) — full room interior, y = -3 to +10 ──────────
+		for (int x = -10; x <= 9; x++)
+		{
+			for (int y = -3; y <= 10; y++)
+			{
+				// Alternate tiles based on column for a plank-strip look
+				var tile = (Mathf.Abs(x) % 3 == 0) ? TileFloorB : TileFloorA;
+				layer.SetCell(new Vector2I(x, y), 0, tile);
+			}
+		}
+
+		// ── Fireplace hearth (flagstone, west wall) ───────────────────────────
+		for (int x = -10; x <= -8; x++)
+			for (int y = -3; y <= 0; y++)
+				layer.SetCell(new Vector2I(x, y), 0, TileHearth);
+
+		// ── Bar counter strip ─────────────────────────────────────────────────
+		// y = -4 → world y -64 to -48: replaces Bar + BarTop ColorRects
+		for (int x = -8; x <= 7; x++)
+		{
+			layer.SetCell(new Vector2I(x, -4), 0, TileBar);
+			layer.SetCell(new Vector2I(x, -5), 0, TileBar);
+		}
+
+		// ── North wall (stone brick) ──────────────────────────────────────────
+		for (int x = -10; x <= 9; x++)
+			for (int y = -8; y <= -6; y++)
+				layer.SetCell(new Vector2I(x, y), 0, TileWall);
+
+		// ── South wall strip ──────────────────────────────────────────────────
+		for (int x = -10; x <= 9; x++)
+			layer.SetCell(new Vector2I(x, 10), 0, TileWall);
+
+		// ── Side wall edges ───────────────────────────────────────────────────
+		for (int y = -8; y <= 10; y++)
+		{
+			layer.SetCell(new Vector2I(-10, y), 0, TileWall);
+			layer.SetCell(new Vector2I(9,   y), 0, TileWall);
+		}
 	}
 
 	// ── Flame ──────────────────────────────────────────────────────────────────

@@ -13,41 +13,29 @@
 [ext_resource type="PackedScene" uid="uid://petfairy_sp01" path="res://scenes/overworld/objects/npcs/NpcPetFairy.tscn" id="11_petfairy"]
 [ext_resource type="PackedScene" uid="uid://petwcat_sp01" path="res://scenes/overworld/objects/npcs/NpcPetWitchCat.tscn" id="12_petwcat"]
 
+[sub_resource type="Gradient" id="Gradient_fire_lgt"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(1, 0.62, 0.12, 1, 1, 0.62, 0.12, 0)
+
+[sub_resource type="GradientTexture2D" id="GradTex_fire_lgt"]
+gradient = SubResource("Gradient_fire_lgt")
+width = 128
+height = 128
+fill = 1
+
+[sub_resource type="Gradient" id="Gradient_candle_lgt"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(1, 0.88, 0.42, 1, 1, 0.88, 0.42, 0)
+
+[sub_resource type="GradientTexture2D" id="GradTex_candle_lgt"]
+gradient = SubResource("Gradient_candle_lgt")
+width = 64
+height = 64
+fill = 1
 
 [node name="MAPP" instance=ExtResource("1_mapp01")]
 script = ExtResource("2_mapp02")
 
-[node name="Floor" type="ColorRect" parent="."]
-color = Color(0.42, 0.28, 0.16, 1)
-offset_left = -160.0
-offset_top = -120.0
-offset_right = 160.0
-offset_bottom = 160.0
-z_index = -10
-
-[node name="WallPanel" type="ColorRect" parent="."]
-color = Color(0.25, 0.14, 0.08, 1)
-offset_left = -160.0
-offset_top = -120.0
-offset_right = 160.0
-offset_bottom = -60.0
-z_index = -9
-
-[node name="Bar" type="ColorRect" parent="."]
-color = Color(0.32, 0.20, 0.10, 1)
-offset_left = -120.0
-offset_top = -60.0
-offset_right = 120.0
-offset_bottom = -44.0
-z_index = -8
-
-[node name="BarTop" type="ColorRect" parent="."]
-color = Color(0.50, 0.35, 0.18, 1)
-offset_left = -120.0
-offset_top = -64.0
-offset_right = 120.0
-offset_bottom = -58.0
-z_index = -7
 
 [node name="Firebox" type="ColorRect" parent="."]
 color = Color(0.15, 0.10, 0.08, 1)
@@ -89,13 +77,6 @@ offset_right = 14.0
 offset_bottom = 0.0
 z_index = -6
 
-[node name="SouthWall" type="ColorRect" parent="."]
-color = Color(0.20, 0.12, 0.06, 1)
-offset_left = -160.0
-offset_top = 155.0
-offset_right = 160.0
-offset_bottom = 167.0
-z_index = -8
 
 [node name="Door" type="ColorRect" parent="."]
 color = Color(0.30, 0.20, 0.10, 1)
@@ -104,6 +85,38 @@ offset_top = 155.0
 offset_right = 14.0
 offset_bottom = 167.0
 z_index = -7
+
+[node name="FireLight" type="PointLight2D" parent="."]
+texture = SubResource("GradTex_fire_lgt")
+color = Color(1, 0.62, 0.12, 1)
+energy = 0.85
+texture_scale = 3.2
+position = Vector2(-136, -24)
+z_index = 50
+
+[node name="Table1Light" type="PointLight2D" parent="."]
+texture = SubResource("GradTex_candle_lgt")
+color = Color(1, 0.88, 0.42, 1)
+energy = 0.45
+texture_scale = 1.6
+position = Vector2(-60, 32)
+z_index = 50
+
+[node name="Table2Light" type="PointLight2D" parent="."]
+texture = SubResource("GradTex_candle_lgt")
+color = Color(1, 0.88, 0.42, 1)
+energy = 0.45
+texture_scale = 1.6
+position = Vector2(60, 32)
+z_index = 50
+
+[node name="Table3Light" type="PointLight2D" parent="."]
+texture = SubResource("GradTex_candle_lgt")
+color = Color(1, 0.88, 0.42, 1)
+energy = 0.4
+texture_scale = 1.6
+position = Vector2(0, -18)
+z_index = 50
 
 [node name="Kriora" parent="YSort" instance=ExtResource("3_kriora")]
 position = Vector2(0, -40)
