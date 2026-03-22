@@ -1,7 +1,44 @@
 [gd_scene format=3 uid="uid://djjgkkxqyp83y"]
 
 [ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="1_brix"]
+[ext_resource type="Texture2D" uid="uid://kfrk7uj5jb3q" path="res://assets/sprites/npcs/Brix.png" id="2_0cca4"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4urpb"]
+atlas = ExtResource("2_0cca4")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_e33cb"]
+atlas = ExtResource("2_0cca4")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_nbx2s"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4urpb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_e33cb")
+}],
+"loop": true,
+"name": &"idle_down",
+"speed": 5.0
+}, {
+"frames": [],
+"loop": true,
+"name": &"idle_side",
+"speed": 5.0
+}, {
+"frames": [],
+"loop": true,
+"name": &"idle_up",
+"speed": 5.0
+}]
 
 [node name="NpcBrix" unique_id=1151915070 instance=ExtResource("1_brix")]
+
+[node name="Sprite" parent="." index="0" unique_id=1912760606]
+sprite_frames = SubResource("SpriteFrames_nbx2s")
+animation = &"idle_side"
 
 [node name="Sprite2" type="AnimatedSprite2D" parent="." index="2" unique_id=1877837077]

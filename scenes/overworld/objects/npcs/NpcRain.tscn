@@ -1,7 +1,72 @@
 [gd_scene format=3 uid="uid://bo2ok2ivtbl18"]
 
 [ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="1_rain"]
+[ext_resource type="Texture2D" uid="uid://deon3nwlaxa13" path="res://assets/sprites/npcs/Rain.png" id="2_pjd6p"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xifyi"]
+atlas = ExtResource("2_pjd6p")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_t6vym"]
+atlas = ExtResource("2_pjd6p")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_a0a3r"]
+atlas = ExtResource("2_pjd6p")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_upy3m"]
+atlas = ExtResource("2_pjd6p")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hjhs2"]
+atlas = ExtResource("2_pjd6p")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_q8ekh"]
+atlas = ExtResource("2_pjd6p")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_i6fir"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xifyi")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_t6vym")
+}],
+"loop": true,
+"name": &"idle_down",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a0a3r")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_upy3m")
+}],
+"loop": true,
+"name": &"idle_side",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hjhs2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_q8ekh")
+}],
+"loop": true,
+"name": &"idle_up",
+"speed": 5.0
+}]
 
 [node name="NpcRain" unique_id=2108417018 instance=ExtResource("1_rain")]
+
+[node name="Sprite" parent="." index="0" unique_id=1912760606]
+sprite_frames = SubResource("SpriteFrames_i6fir")
+animation = &"idle_up"
 
 [node name="Sprite2" type="AnimatedSprite2D" parent="." index="2" unique_id=1295025495]
