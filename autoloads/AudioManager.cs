@@ -90,6 +90,19 @@ public partial class AudioManager : Node
 			.SetTrans(Tween.TransitionType.Sine);
 	}
 
+	/// <summary>
+	/// Smoothly moves the ambience player to <paramref name="targetDb"/> over
+	/// <paramref name="duration"/> seconds. Does nothing if ambience is not playing.
+	/// Use this for permanent in-session volume shifts (e.g. after a story event).
+	/// </summary>
+	public void FadeAmbienceTo(float targetDb, float duration)
+	{
+		if (!_ambPlayer.Playing) return;
+		var tween = CreateTween();
+		tween.TweenProperty(_ambPlayer, "volume_db", targetDb, duration)
+			.SetTrans(Tween.TransitionType.Sine);
+	}
+
 	/// <summary>Fade out and stop the ambient track.</summary>
 	public void StopAmbience(float fadeTime = 1.5f)
 	{

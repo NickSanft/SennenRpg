@@ -74,7 +74,8 @@ public partial class MAPP : OverworldBase
 			AnimateCandleFlame(flame);
 
 		SpawnStaircase();
-		AudioManager.Instance.PlayAmbience(AmbiencePath);
+		// Short fade-in simulates a door swinging open onto a busy room
+		AudioManager.Instance.PlayAmbience(AmbiencePath, fadeTime: 0.4f);
 		ApplyFirelightTints();
 		StartClinkCycle();
 
@@ -780,6 +781,9 @@ public partial class MAPP : OverworldBase
 	private void OnArisesCutsceneFinished()
 	{
 		GameManager.Instance.SetState(GameState.Overworld);
+		// Drop the ambience ~40% to sell "the tavern falls silent" as a real world change.
+		// -12 dB is the normal level; -20 dB is roughly 40% quieter in perceived loudness.
+		AudioManager.Instance.FadeAmbienceTo(-20f, 3f);
 	}
 
 	/// <summary>Returns a world position just to the right of Brix.</summary>

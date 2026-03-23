@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dw1vhhwmxb1x3"]
 
-[ext_resource type="Script" uid="uid://bnq82lxdcn2ej" path="res://scenes/overworld/objects/Npc.cs" id="1_v0osc"]
+[ext_resource type="Script" uid="uid://bi3wfnx6tig2u" path="res://scenes/overworld/objects/Npc.cs" id="1_v0osc"]
 [ext_resource type="Texture2D" uid="uid://brxf7eeheunts" path="res://assets/sprites/player/player.png" id="2_cyou6"]
 [ext_resource type="Texture2D" uid="uid://dgajxoyy2qmdv" path="res://assets/sprites/npcs/Shizu.png" id="2_oiep1"]
 
