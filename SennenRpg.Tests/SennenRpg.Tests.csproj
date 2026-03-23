@@ -28,6 +28,7 @@
         <Compile Include="../core/data/ShopLogic.cs" />
         <Compile Include="../core/data/DialogicSignalParser.cs" />
         <Compile Include="../core/data/JournalData.cs" />
+        <Compile Include="../core/data/NpcLogic.cs" />
     </ItemGroup>
 
 </Project>
