@@ -15,11 +15,11 @@ public partial class MAPP : OverworldBase
 {
 	private const string HorseScene         = "res://scenes/overworld/objects/npcs/NpcHorse.tscn";
 	private const string HorseTimeline      = "res://dialog/timelines/npc_horse.dtl";
-	private const string FerretScene        = "res://scenes/overworld/objects/npcs/NpcFerret.tscn";
-	private const string FerretTimeline     = "res://dialog/timelines/npc_ferret.dtl";
+	private const string FalafelScene       = "res://scenes/overworld/objects/npcs/NpcFalafel.tscn";
+	private const string FalafelTimeline    = "res://dialog/timelines/npc_falafel.dtl";
 	private const string BrixHorseSignal      = "brix_horse_spawn";
 	private const string LilyAltSignal        = "lily_alt_ended";
-	private const string BhataFerretSignal    = "bhata_ferret_spawn";
+	private const string BhataFalafelSignal   = "bhata_falafel_spawn";
 	private const string KrioraCrystalsSignal = "kriora_crystals_spawn";
 	private const string GusTransformSignal   = "gus_frog_transform";
 	private const string ShizuAuraSignal      = "shizu_music_aura";
@@ -77,9 +77,9 @@ public partial class MAPP : OverworldBase
 		if (GameManager.Instance.GetFlag(Flags.BrixHorseAppeared))
 			InstantiateHorse(HorseWorldPosition(), withPoof: false);
 
-		// Restore the ferret on re-entry if it has already appeared
-		if (GameManager.Instance.GetFlag(Flags.BhataFerretAppeared))
-			InstantiateFerret(FerretWorldPosition(), withPoof: false);
+		// Restore Falafel on re-entry if it has already appeared
+		if (GameManager.Instance.GetFlag(Flags.BhataFalafelAppeared))
+			InstantiateFalafel(FalafelWorldPosition(), withPoof: false);
 
 		// Restore Kriora crystals on re-entry
 		if (GameManager.Instance.GetFlag(Flags.KrioraCrystalsAppeared))
@@ -135,7 +135,7 @@ public partial class MAPP : OverworldBase
 		{
 			case BrixHorseSignal:      OnBrixHorseSignal();      break;
 			case LilyAltSignal:        OnLilyAltSignal();        break;
-			case BhataFerretSignal:    OnBhataFerretSignal();     break;
+			case BhataFalafelSignal:   OnBhataFalafelSignal();    break;
 			case KrioraCrystalsSignal: OnKrioraCrystalsSignal();  break;
 			case GusTransformSignal:   OnGusTransformSignal();    break;
 			case ShizuAuraSignal:      OnShizuAuraSignal();       break;
@@ -223,12 +223,12 @@ public partial class MAPP : OverworldBase
 			.SetTrans(Tween.TransitionType.Sine);
 	}
 
-	// ── Ferret event ───────────────────────────────────────────────────────────
+	// ── Falafel event ──────────────────────────────────────────────────────────
 
-	private void OnBhataFerretSignal()
+	private void OnBhataFalafelSignal()
 	{
-		if (GameManager.Instance.GetFlag(Flags.BhataFerretAppeared)) return;
-		GameManager.Instance.SetFlag(Flags.BhataFerretAppeared, true);
+		if (GameManager.Instance.GetFlag(Flags.BhataFalafelAppeared)) return;
+		GameManager.Instance.SetFlag(Flags.BhataFalafelAppeared, true);
 
 		DialogicBridge.Instance.ConnectTimelineEnded(
 			new Callable(this, MethodName.OnBhataAltEnded));
@@ -236,49 +236,49 @@ public partial class MAPP : OverworldBase
 
 	private void OnBhataAltEnded()
 	{
-		var pos = FerretWorldPosition();
+		var pos = FalafelWorldPosition();
 		SpawnPurplePoof(pos);
 		GetTree().CreateTimer(0.2f).Connect("timeout",
-			Callable.From(() => InstantiateFerret(pos, withPoof: true)));
+			Callable.From(() => InstantiateFalafel(pos, withPoof: true)));
 		CheckAllAltDialogsDone();
 	}
 
-	private Vector2 FerretWorldPosition()
+	private Vector2 FalafelWorldPosition()
 	{
 		var bhata = YSort.GetNodeOrNull<Npc>("Bhata");
 		return (bhata?.GlobalPosition ?? new Vector2(-60f, 20f)) + new Vector2(-28f, -12f);
 	}
 
-	private void InstantiateFerret(Vector2 globalPos, bool withPoof)
+	private void InstantiateFalafel(Vector2 globalPos, bool withPoof)
 	{
-		var npcScene = GD.Load<PackedScene>(FerretScene);
-		var ferret   = npcScene.Instantiate<Npc>();
+		var npcScene = GD.Load<PackedScene>(FalafelScene);
+		var falafel  = npcScene.Instantiate<Npc>();
 
-		ferret.NpcId         = "mapp_ferret";
-		ferret.DisplayName   = "Ferret";
-		ferret.TimelinePath  = FerretTimeline;
-		ferret.CharacterPath = "res://dialog/characters/Ferret.dch";
-		ferret.DefaultFacing = FacingDirection.Side;
+		falafel.NpcId         = "mapp_falafel";
+		falafel.DisplayName   = "Falafel";
+		falafel.TimelinePath  = FalafelTimeline;
+		falafel.CharacterPath = "res://dialog/characters/Falafel.dch";
+		falafel.DefaultFacing = FacingDirection.Side;
 
-		YSort.AddChild(ferret);
-		ferret.GlobalPosition = globalPos;
+		YSort.AddChild(falafel);
+		falafel.GlobalPosition = globalPos;
 
 		// Floating bob: oscillate y endlessly
-		float baseY = ferret.Position.Y;
+		float baseY = falafel.Position.Y;
 		var bobTween = CreateTween().SetLoops();
-		bobTween.TweenProperty(ferret, "position:y", baseY - 6f, 0.9f)
+		bobTween.TweenProperty(falafel, "position:y", baseY - 6f, 0.9f)
 			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
-		bobTween.TweenProperty(ferret, "position:y", baseY, 0.9f)
+		bobTween.TweenProperty(falafel, "position:y", baseY, 0.9f)
 			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
 
-		// Purple energy orbs orbiting the ferret
-		SpawnEnergyAura(ferret);
+		// Purple energy orbs orbiting Falafel
+		SpawnEnergyAura(falafel);
 
 		if (withPoof)
 		{
-			ferret.Scale = Vector2.Zero;
+			falafel.Scale = Vector2.Zero;
 			var tween = CreateTween();
-			tween.TweenProperty(ferret, "scale", Vector2.One, 0.35f)
+			tween.TweenProperty(falafel, "scale", Vector2.One, 0.35f)
 				 .SetTrans(Tween.TransitionType.Back)
 				 .SetEase(Tween.EaseType.Out);
 		}
@@ -695,7 +695,7 @@ public partial class MAPP : OverworldBase
 		bool allDone =
 			GameManager.Instance.GetFlag(Flags.BrixHorseAppeared)     &&
 			GameManager.Instance.GetFlag(Flags.LilyAltDone)           &&
-			GameManager.Instance.GetFlag(Flags.BhataFerretAppeared)   &&
+			GameManager.Instance.GetFlag(Flags.BhataFalafelAppeared)  &&
 			GameManager.Instance.GetFlag(Flags.KrioraCrystalsAppeared) &&
 			GameManager.Instance.GetFlag(Flags.GusTransformedToFrog)  &&
 			GameManager.Instance.GetFlag(Flags.ShizuMusicAuraActive)  &&

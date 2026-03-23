@@ -25,8 +25,8 @@ public static class Flags
     /// <summary>Set when Brix's horse magically materialises next to him.</summary>
     public const string BrixHorseAppeared = "brix_horse_appeared";
 
-    /// <summary>Set when Bhata's ferret materialises floating in purple energy.</summary>
-    public const string BhataFerretAppeared = "bhata_ferret_appeared";
+    /// <summary>Set when Bhata's falafel materialises floating in purple energy.</summary>
+    public const string BhataFalafelAppeared = "bhata_falafel_appeared";
 
     /// <summary>Set when light-blue crystals appear at Kriora's feet.</summary>
     public const string KrioraCrystalsAppeared = "kriora_crystals_appeared";

@@ -33,7 +33,7 @@ public sealed class FlagsTests
             Flags.GotItemFromForan,
             Flags.SeenNorthExitHint,
             Flags.BrixHorseAppeared,
-            Flags.BhataFerretAppeared,
+            Flags.BhataFalafelAppeared,
             Flags.KrioraCrystalsAppeared,
             Flags.GusTransformedToFrog,
             Flags.ShizuMusicAuraActive,
@@ -51,8 +51,8 @@ public sealed class FlagsTests
         => Assert.That(Flags.BrixHorseAppeared, Is.EqualTo("brix_horse_appeared"));
 
     [Test]
-    public void BhataFerretAppeared_HasExpectedValue()
-        => Assert.That(Flags.BhataFerretAppeared, Is.EqualTo("bhata_ferret_appeared"));
+    public void BhataFalafelAppeared_HasExpectedValue()
+        => Assert.That(Flags.BhataFalafelAppeared, Is.EqualTo("bhata_falafel_appeared"));
 
     [Test]
     public void KrioraCrystalsAppeared_HasExpectedValue()
@@ -87,7 +87,7 @@ public sealed class FlagsTests
     [TestCase(Flags.GotItemFromForan)]
     [TestCase(Flags.SeenNorthExitHint)]
     [TestCase(Flags.BrixHorseAppeared)]
-    [TestCase(Flags.BhataFerretAppeared)]
+    [TestCase(Flags.BhataFalafelAppeared)]
     [TestCase(Flags.KrioraCrystalsAppeared)]
     [TestCase(Flags.GusTransformedToFrog)]
     [TestCase(Flags.ShizuMusicAuraActive)]

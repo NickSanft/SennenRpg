@@ -1,0 +1,54 @@
+[gd_scene format=3 uid="uid://npc_falafel_sp01"]
+
+[ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="1_nfalafel"]
+[ext_resource type="Texture2D" path="res://assets/sprites/npcs/falafel.png" id="2_nfalafel"]
+
+[sub_resource type="AtlasTexture" id="AtlasTex_falafel1"]
+atlas = ExtResource("2_nfalafel")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTex_falafel2"]
+atlas = ExtResource("2_nfalafel")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_falafel"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTex_falafel1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTex_falafel2")
+}],
+"loop": true,
+"name": &"idle_down",
+"speed": 2.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTex_falafel1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTex_falafel2")
+}],
+"loop": true,
+"name": &"idle_side",
+"speed": 2.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTex_falafel1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTex_falafel2")
+}],
+"loop": true,
+"name": &"idle_up",
+"speed": 2.0
+}]
+
+[node name="NpcFalafel" instance=ExtResource("1_nfalafel")]
+
+[node name="Sprite" parent="." index="0"]
+sprite_frames = SubResource("SpriteFrames_falafel")
+animation = &"idle_side"
