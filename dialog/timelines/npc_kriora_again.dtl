@@ -1,3 +1,5 @@
+join Kriora center
 Kriora: Welcome back.
 Kriora: No, I don't know anything about a mansion exploding in Seade.
+leave Kriora
 [signal arg="kriora_crystals_spawn"]

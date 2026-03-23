@@ -2,7 +2,7 @@
 "@path": "res://addons/dialogic/Resources/character.gd",
 "@subpath": NodePath(""),
 &"_translation_id": "",
-&"color": Color(0.7905952, 0.044311523, 0.9453125, 1),
+&"color": Color(0.76, 0.62, 0.92, 1),
 &"custom_info": {
 "prefix": "",
 "sound_mood_default": "",
@@ -19,12 +19,12 @@
 &"portraits": {
 "default": {
 "export_overrides": {
-"image": "\"res://assets/sprites/portraits/Shizu_Portrait.jpeg\""
+"image": "\"res://assets/sprites/npcs/Shizu_Portrait.png\""
 },
 "mirror": false,
 "offset": Vector2(0, 0),
 "scale": 1,
-"scene": ""
+"scene": "res://scenes/dialog/NpcPortrait.tscn"
 }
 },
 &"scale": 1.0

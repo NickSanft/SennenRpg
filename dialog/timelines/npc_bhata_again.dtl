@@ -1,3 +1,5 @@
+join Bhata center
 Bhata: ...I am not "super into" dwarves.
 Bhata: Whoever is telling you that is uncouth.
+leave Bhata
 [signal arg="bhata_falafel_spawn"]

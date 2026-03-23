@@ -10,13 +10,22 @@
 "style": "",
 "suffix": ""
 },
-&"default_portrait": "",
+&"default_portrait": "default",
 &"description": "A tall, lanky man of dark complexion with tousled black hair. Wears a green and brown cloak and wields a two-handed crossbow",
 &"display_name": "Bhata",
 &"mirror": false,
 &"nicknames": [""],
 &"offset": Vector2(0, 0),
 &"portraits": {
+"default": {
+"export_overrides": {
+"image": "\"res://assets/sprites/npcs/Bhata_Portrait.png\""
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1,
+"scene": "res://scenes/dialog/NpcPortrait.tscn"
+}
 },
 &"scale": 1.0
 }

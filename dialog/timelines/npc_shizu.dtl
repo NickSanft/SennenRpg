@@ -1,2 +1,4 @@
-Shizu: Have you come to listen to my Erhu?
-Shizu: It's not for everyone.
+join TestNpc center
+TestNpc: Have you come to listen to my Erhu?
+TestNpc: It's not for everyone.
+leave TestNpc

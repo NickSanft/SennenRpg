@@ -19,12 +19,12 @@
 &"portraits": {
 "default": {
 "export_overrides": {
-"image": "res://assets/sprites/portraits/player_portrait.svg"
+"image": "\"res://assets/sprites/npcs/Gus_Portrait.png\""
 },
 "mirror": false,
 "offset": Vector2(0, 0),
 "scale": 1,
-"scene": ""
+"scene": "res://scenes/dialog/NpcPortrait.tscn"
 }
 },
 &"scale": 1.0
