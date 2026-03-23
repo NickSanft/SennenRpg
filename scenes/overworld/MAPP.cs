@@ -28,6 +28,7 @@ public partial class MAPP : OverworldBase
 	private const string ShizuBgmPath         = "res://assets/music/Divora - Origins Of The Gyre - DND 6 - 01 Origins Of The Gyre - Full.wav";
 	private const string FrogTexturePath      = "res://assets/sprites/npcs/GusGiantFrog.png";
 	private const string TilesetPath          = "res://assets/tilesets/mapp_tiles.png";
+	private const string AmbiencePath        = "res://assets/audio/sfx/tavern_ambience.ogg";
 	private const string BarkeepScene         = "res://scenes/overworld/objects/VendorNpc.tscn";
 	private const string BarkeepTimeline      = "res://dialog/timelines/npc_barkeep.dtl";
 	private const string AleItemPath          = "res://resources/items/item_004.tres";
@@ -56,9 +57,11 @@ public partial class MAPP : OverworldBase
 		SpawnMantelpiece();
 		SpawnWallDecorations();
 		SpawnLayeredFlame(GetNode<ColorRect>("Flame"));
+		FlickerCandleLights();
 		SpawnDrinkProp();
 		SpawnBarkeep();
 		SpawnNoticeboard();
+		AudioManager.Instance.PlayAmbience(AmbiencePath);
 		SpawnExit();
 		SpawnJournal();
 
@@ -90,6 +93,7 @@ public partial class MAPP : OverworldBase
 	{
 		if (DialogicBridge.Instance != null)
 			DialogicBridge.Instance.DialogicSignalReceived -= OnDialogicSignal;
+		AudioManager.Instance?.StopAmbience();
 	}
 
 	// ── Signal dispatch ────────────────────────────────────────────────────────
@@ -789,14 +793,15 @@ public partial class MAPP : OverworldBase
 			new Vector2( 1.5f,  2f), new Vector2(-1.5f,  2f),
 		}, CandleWax, zIndex: -4);
 
-		// Candle: small flame
-		AddPoly(pos + new Vector2(0f, 1f), new Vector2[]
+		// Candle: small flame (captured so we can animate it)
+		var flame = AddPoly(pos + new Vector2(0f, 1f), new Vector2[]
 		{
 			new Vector2( 0f, -7f),
 			new Vector2( 2f, -5f),
 			new Vector2( 0f, -4f),
 			new Vector2(-2f, -5f),
 		}, CandleFlame, zIndex: -3);
+		AnimateCandleFlame(flame, pos + new Vector2(0f, 1f));
 	}
 
 	private void SpawnChair(Vector2 pos, bool backrestAtTop)
@@ -828,12 +833,13 @@ public partial class MAPP : OverworldBase
 		}, new Color(ChairSeat.R + 0.08f, ChairSeat.G + 0.05f, ChairSeat.B + 0.02f), zIndex: -5);
 	}
 
-	/// <summary>Adds a Polygon2D as a direct child of the MAPP node.</summary>
-	private void AddPoly(Vector2 worldPos, Vector2[] polygon, Color color, int zIndex)
+	/// <summary>Adds a Polygon2D as a direct child of the MAPP node and returns it.</summary>
+	private Polygon2D AddPoly(Vector2 worldPos, Vector2[] polygon, Color color, int zIndex)
 	{
 		var poly = new Polygon2D { Color = color, ZIndex = zIndex, Polygon = polygon };
 		AddChild(poly);
 		poly.GlobalPosition = worldPos;
+		return poly;
 	}
 
 	/// <summary>Adds a StaticBody2D with a rectangular collision shape.</summary>
@@ -1219,6 +1225,74 @@ public partial class MAPP : OverworldBase
 				.SetTrans(Tween.TransitionType.Sine);
 
 			yShift += 1.0f; // each higher layer bobs a bit more
+		}
+	}
+
+	// ── Candle flame animation ─────────────────────────────────────────────────
+
+	private void AnimateCandleFlame(Polygon2D flame, Vector2 basePos)
+	{
+		// Randomise period and start delay so the three table candles don't sync up
+		float period = 0.26f + GD.Randf() * 0.14f;
+		float delay  = GD.Randf() * 0.4f;
+
+		// Scale flicker (squash/stretch vertically)
+		var tScale = CreateTween().SetLoops();
+		tScale.TweenProperty(flame, "scale:y", 1.25f, period)
+			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut)
+			.SetDelay(delay);
+		tScale.TweenProperty(flame, "scale:y", 0.78f, period)
+			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+
+		// Vertical bob in local space
+		var tBob = CreateTween().SetLoops();
+		tBob.TweenProperty(flame, "position:y", basePos.Y - 1.5f, period * 1.2f)
+			.SetTrans(Tween.TransitionType.Sine).SetDelay(delay + period * 0.5f);
+		tBob.TweenProperty(flame, "position:y", basePos.Y + 0.5f, period * 1.2f)
+			.SetTrans(Tween.TransitionType.Sine);
+	}
+
+	// ── Light flicker ──────────────────────────────────────────────────────────
+
+	private void FlickerCandleLights()
+	{
+		// Table candle lights — gentle, staggered pulses
+		var candleLights = new (string name, float baseEnergy)[]
+		{
+			("Table1Light", 0.45f),
+			("Table2Light", 0.45f),
+			("Table3Light", 0.40f),
+		};
+
+		float delay = 0f;
+		foreach (var (name, baseEnergy) in candleLights)
+		{
+			var light = GetNodeOrNull<PointLight2D>(name);
+			if (light == null) continue;
+
+			float period = 0.55f + GD.Randf() * 0.20f;
+			var t = CreateTween().SetLoops();
+			t.TweenProperty(light, "energy", baseEnergy + 0.12f, period)
+				.SetTrans(Tween.TransitionType.Sine).SetDelay(delay);
+			t.TweenProperty(light, "energy", baseEnergy - 0.10f, period)
+				.SetTrans(Tween.TransitionType.Sine);
+
+			delay += 0.20f; // stagger so the three lights don't pulse in unison
+		}
+
+		// Fire light — more aggressive flicker to match the layered flames
+		var fireLight = GetNodeOrNull<PointLight2D>("FireLight");
+		if (fireLight != null)
+		{
+			var t = CreateTween().SetLoops();
+			t.TweenProperty(fireLight, "energy", 1.05f, 0.20f)
+				.SetTrans(Tween.TransitionType.Sine);
+			t.TweenProperty(fireLight, "energy", 0.62f, 0.30f)
+				.SetTrans(Tween.TransitionType.Sine);
+			t.TweenProperty(fireLight, "energy", 0.90f, 0.16f)
+				.SetTrans(Tween.TransitionType.Sine);
+			t.TweenProperty(fireLight, "energy", 0.55f, 0.25f)
+				.SetTrans(Tween.TransitionType.Sine);
 		}
 	}
 

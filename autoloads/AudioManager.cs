@@ -11,6 +11,9 @@ public partial class AudioManager : Node
 	private AudioStreamPlayer _bgmPlayerB = null!;
 	private bool _usingPlayerA = true;
 
+	private AudioStreamPlayer _ambPlayer  = null!;
+	private const float       AmbVolumeDb = -12f;
+
 	private const int SfxPoolSize = 8;
 	private AudioStreamPlayer[] _sfxPool = null!;
 	private int _sfxPoolIndex = 0;
@@ -24,6 +27,9 @@ public partial class AudioManager : Node
 		_bgmPlayerB = new AudioStreamPlayer();
 		AddChild(_bgmPlayer);
 		AddChild(_bgmPlayerB);
+
+		_ambPlayer = new AudioStreamPlayer { VolumeDb = -80f };
+		AddChild(_ambPlayer);
 
 		_sfxPool = new AudioStreamPlayer[SfxPoolSize];
 		for (int i = 0; i < SfxPoolSize; i++)
@@ -67,6 +73,31 @@ public partial class AudioManager : Node
 		var tween  = CreateTween();
 		tween.TweenProperty(active, "volume_db", -80f, fadeTime);
 		tween.TweenCallback(Callable.From(active.Stop));
+	}
+
+	/// <summary>
+	/// Start a looping ambient track, fading in over <paramref name="fadeTime"/> seconds.
+	/// Silently does nothing if the file does not exist, so maps work without an ambience asset.
+	/// </summary>
+	public void PlayAmbience(string path, float fadeTime = 2.0f)
+	{
+		if (!ResourceLoader.Exists(path)) return;
+		_ambPlayer.Stream   = GD.Load<AudioStream>(path);
+		_ambPlayer.VolumeDb = -80f;
+		_ambPlayer.Play();
+		var tween = CreateTween();
+		tween.TweenProperty(_ambPlayer, "volume_db", AmbVolumeDb, fadeTime)
+			.SetTrans(Tween.TransitionType.Sine);
+	}
+
+	/// <summary>Fade out and stop the ambient track.</summary>
+	public void StopAmbience(float fadeTime = 1.5f)
+	{
+		if (!_ambPlayer.Playing) return;
+		var tween = CreateTween();
+		tween.TweenProperty(_ambPlayer, "volume_db", -80f, fadeTime)
+			.SetTrans(Tween.TransitionType.Sine);
+		tween.TweenCallback(Callable.From(_ambPlayer.Stop));
 	}
 
 	/// <summary>Play a one-shot sound effect from the pool.</summary>
