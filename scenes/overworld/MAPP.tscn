@@ -10,6 +10,18 @@
 [ext_resource type="PackedScene" uid="uid://df13wf3777wpt" path="res://scenes/overworld/objects/npcs/NpcBhata.tscn" id="8_bhata"]
 [ext_resource type="PackedScene" uid="uid://bo2ok2ivtbl18" path="res://scenes/overworld/objects/npcs/NpcRain.tscn" id="9_rain"]
 [ext_resource type="PackedScene" uid="uid://petwcat_sp01" path="res://scenes/overworld/objects/npcs/NpcPetWitchCat.tscn" id="10_petwcat"]
+[ext_resource type="PackedScene" uid="uid://tablefurnit01" path="res://scenes/overworld/objects/furniture/TableFurniture.tscn" id="11_table"]
+[ext_resource type="PackedScene" uid="uid://chairfurnit01" path="res://scenes/overworld/objects/furniture/ChairFurniture.tscn" id="12_chair"]
+[ext_resource type="PackedScene" uid="uid://barstoolfurn1" path="res://scenes/overworld/objects/furniture/BarStoolFurniture.tscn" id="13_stool"]
+[ext_resource type="PackedScene" uid="uid://cvendornpc001" path="res://scenes/overworld/objects/VendorNpc.tscn" id="14_vendor"]
+[ext_resource type="PackedScene" uid="uid://b_interactsign" path="res://scenes/overworld/objects/InteractSign.tscn" id="15_sign"]
+[ext_resource type="PackedScene" uid="uid://bm5n2kpvryawd" path="res://scenes/overworld/objects/SavePoint.tscn" id="16_save"]
+[ext_resource type="PackedScene" uid="uid://b_chesttscn1" path="res://scenes/overworld/objects/Chest.tscn" id="17_chest"]
+[ext_resource type="PackedScene" uid="uid://evwjjqormcym" path="res://scenes/overworld/objects/MapExit.tscn" id="18_exit"]
+[ext_resource type="PackedScene" uid="uid://journalprop01" path="res://scenes/overworld/objects/JournalProp.tscn" id="19_journal"]
+[ext_resource type="PackedScene" uid="uid://dartboardtscn" path="res://scenes/overworld/objects/DartboardProp.tscn" id="20_dartboard"]
+[ext_resource type="PackedScene" uid="uid://bardrinkptscn" path="res://scenes/overworld/objects/BarDrinkProp.tscn" id="21_drinkprop"]
+[ext_resource type="Script" uid="uid://drkqrxhkmk75h" path="res://core/data/ShopItemEntry.cs" id="22_shopentry"]
 
 [sub_resource type="Gradient" id="Gradient_fire_lgt"]
 offsets = PackedFloat32Array(0, 1)
@@ -31,9 +43,13 @@ width = 64
 height = 64
 fill = 1
 
+[sub_resource type="Resource" id="ShopEntry_ale"]
+script = ExtResource("22_shopentry")
+ItemDataPath = "res://resources/items/item_004.tres"
+Price = 5
+
 [node name="MAPP" instance=ExtResource("1_mapp01")]
 script = ExtResource("2_mapp02")
-
 
 [node name="Firebox" type="ColorRect" parent="."]
 color = Color(0.15, 0.10, 0.08, 1)
@@ -50,8 +66,6 @@ offset_top = -36.0
 offset_right = -126.0
 offset_bottom = -14.0
 z_index = -7
-
-
 
 [node name="Door" type="ColorRect" parent="."]
 color = Color(0.30, 0.20, 0.10, 1)
@@ -92,6 +106,93 @@ energy = 0.4
 texture_scale = 1.6
 position = Vector2(0, -18)
 z_index = 50
+
+[node name="Table1" parent="." instance=ExtResource("11_table")]
+position = Vector2(-60, 40)
+
+[node name="Table2" parent="." instance=ExtResource("11_table")]
+position = Vector2(60, 40)
+
+[node name="Table3" parent="." instance=ExtResource("11_table")]
+position = Vector2(0, -10)
+
+[node name="T1ChairN" parent="." instance=ExtResource("12_chair")]
+position = Vector2(-60, 20)
+NorthFacing = true
+
+[node name="T1ChairS1" parent="." instance=ExtResource("12_chair")]
+position = Vector2(-69, 58)
+
+[node name="T1ChairS2" parent="." instance=ExtResource("12_chair")]
+position = Vector2(-51, 58)
+
+[node name="T2ChairN" parent="." instance=ExtResource("12_chair")]
+position = Vector2(60, 20)
+NorthFacing = true
+
+[node name="T2ChairS1" parent="." instance=ExtResource("12_chair")]
+position = Vector2(51, 58)
+
+[node name="T2ChairS2" parent="." instance=ExtResource("12_chair")]
+position = Vector2(69, 58)
+
+[node name="T3ChairS1" parent="." instance=ExtResource("12_chair")]
+position = Vector2(-9, 8)
+
+[node name="T3ChairS2" parent="." instance=ExtResource("12_chair")]
+position = Vector2(9, 8)
+
+[node name="BarStool1" parent="." instance=ExtResource("13_stool")]
+position = Vector2(-90, -40)
+
+[node name="BarStool2" parent="." instance=ExtResource("13_stool")]
+position = Vector2(-54, -40)
+
+[node name="BarStool3" parent="." instance=ExtResource("13_stool")]
+position = Vector2(-18, -40)
+
+[node name="BarStool4" parent="." instance=ExtResource("13_stool")]
+position = Vector2(18, -40)
+
+[node name="BarStool5" parent="." instance=ExtResource("13_stool")]
+position = Vector2(54, -40)
+
+[node name="BarStool6" parent="." instance=ExtResource("13_stool")]
+position = Vector2(90, -40)
+
+[node name="Journal" parent="." instance=ExtResource("19_journal")]
+position = Vector2(-60, 35)
+
+[node name="Dartboard" parent="." instance=ExtResource("20_dartboard")]
+position = Vector2(132, 80)
+
+[node name="DrinkProp" parent="." instance=ExtResource("21_drinkprop")]
+position = Vector2(80, -62)
+
+[node name="SavePoint" parent="." instance=ExtResource("16_save")]
+position = Vector2(-100, 20)
+SavePointId = "mapp_hearth"
+
+[node name="Chest" parent="." instance=ExtResource("17_chest")]
+position = Vector2(122, 110)
+ItemPath = "res://resources/items/item_002.tres"
+FlagId = "chest_mapp_corner"
+
+[node name="NoticeBoard" parent="." instance=ExtResource("15_sign")]
+position = Vector2(130, 50)
+SignTitle = "Notice Board"
+Lines = PackedStringArray("The MAPP — serving the finest ales since 1057.", "", "REWARD: 50 gold for information regarding the", "  recent incident in Seade. Contact K.B.", "", "LOST: One horse. Brown. Answers to 'Horse'.", "  Contact Brix (he is right here).", "", "Rooms available upstairs. Ask the barkeep.", "No dragons. No familiars. No exceptions.", "  (Exceptions may be negotiated.)")
+
+[node name="StaircaseSign" parent="." instance=ExtResource("15_sign")]
+position = Vector2(124, -43)
+SignTitle = "Upper Floor"
+Lines = PackedStringArray("The rooms upstairs are currently occupied.", "", "(Coming soon.)")
+
+[node name="Exit" parent="." instance=ExtResource("18_exit")]
+position = Vector2(0, 168)
+TargetMapPath = "res://scenes/overworld/TestRoom.tscn"
+TargetSpawnId = "from_mapp"
+AutoTrigger = true
 
 [node name="Kriora" parent="YSort" instance=ExtResource("3_kriora")]
 position = Vector2(0, -40)
@@ -181,3 +282,15 @@ DisplayName = "WitchCat"
 DefaultFacing = 2
 CharacterPath = "res://dialog/characters/PetWitchCat.dch"
 TimelinePath = "res://dialog/timelines/npc_pet_witch_cat.dtl"
+
+[node name="Barkeep" parent="YSort" instance=ExtResource("14_vendor")]
+position = Vector2(0, -85)
+NpcId = "barkeep_mapp"
+DisplayName = "Barkeep"
+PlaceholderColor = Color(0.55, 0.38, 0.18, 1)
+DefaultFacing = 0
+TimelinePath = "res://dialog/timelines/npc_barkeep.dtl"
+CharacterPath = "res://dialog/characters/Barkeep.dch"
+AltRequiredFlags = PackedStringArray("all_alt_dialogs_done", "gus_transformed_to_frog", "brix_horse_appeared")
+AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_barkeep_alldone.dtl", "res://dialog/timelines/npc_barkeep_frog.dtl", "res://dialog/timelines/npc_barkeep_horse.dtl")
+ShopStock = [SubResource("ShopEntry_ale")]

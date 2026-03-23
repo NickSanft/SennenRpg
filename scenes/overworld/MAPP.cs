@@ -12,7 +12,6 @@ namespace SennenRpg.Scenes.Overworld;
 /// </summary>
 public partial class MAPP : OverworldBase
 {
-	private const string MapExitScene       = "res://scenes/overworld/objects/MapExit.tscn";
 	private const string HorseScene         = "res://scenes/overworld/objects/npcs/NpcHorse.tscn";
 	private const string HorseTimeline      = "res://dialog/timelines/npc_horse.dtl";
 	private const string FerretScene        = "res://scenes/overworld/objects/npcs/NpcFerret.tscn";
@@ -29,10 +28,6 @@ public partial class MAPP : OverworldBase
 	private const string FrogTexturePath      = "res://assets/sprites/npcs/GusGiantFrog.png";
 	private const string TilesetPath          = "res://assets/tilesets/mapp_tiles.png";
 	private const string AmbiencePath        = "res://assets/audio/sfx/tavern_ambience.ogg";
-	private const string BarkeepScene         = "res://scenes/overworld/objects/VendorNpc.tscn";
-	private const string BarkeepTimeline      = "res://dialog/timelines/npc_barkeep.dtl";
-	private const string AleItemPath          = "res://resources/items/item_004.tres";
-	private const string SignScene            = "res://scenes/overworld/objects/InteractSign.tscn";
 
 	public override void _Ready()
 	{
@@ -52,25 +47,20 @@ public partial class MAPP : OverworldBase
 		BuildTileMap();
 		SpawnCeilingBeams();
 		SpawnRugs();
-		SpawnFurniture();
-		SpawnBarStools();
 		SpawnMantelpiece();
 		SpawnWallDecorations();
-		SpawnLayeredFlame(GetNode<ColorRect>("Flame"));
-		FlickerCandleLights();
-		SpawnDrinkProp();
-		SpawnBarkeep();
-		SpawnNoticeboard();
 		SpawnBottleRack();
 		SpawnWindows();
 		SpawnFireSmoke();
-		SpawnDartboard();
-		SpawnSavePoint();
-		SpawnChest();
+		SpawnLayeredFlame(GetNode<ColorRect>("Flame"));
+		FlickerCandleLights();
+
+		// Animate candle flames placed by scene-instanced TableFurniture nodes
+		foreach (Polygon2D flame in GetTree().GetNodesInGroup("candle_flame"))
+			AnimateCandleFlame(flame);
+
 		SpawnStaircase();
 		AudioManager.Instance.PlayAmbience(AmbiencePath);
-		SpawnExit();
-		SpawnJournal();
 
 		// Restore the horse on re-entry if it has already appeared
 		if (GameManager.Instance.GetFlag(Flags.BrixHorseAppeared))
@@ -720,126 +710,6 @@ public partial class MAPP : OverworldBase
 		}
 	}
 
-	// ── Journal ────────────────────────────────────────────────────────────────
-
-	private void SpawnJournal()
-	{
-		var journal = new JournalProp();
-		AddChild(journal);
-		journal.GlobalPosition = new Vector2(-60f, 35f); // resting on Table1
-	}
-
-	// ── Furniture ──────────────────────────────────────────────────────────────
-
-	private static readonly Color TableSurface   = new Color(0.36f, 0.22f, 0.11f);
-	private static readonly Color TableHighlight = new Color(0.46f, 0.30f, 0.15f);
-	private static readonly Color TableEdge      = new Color(0.20f, 0.12f, 0.06f);
-	private static readonly Color ChairSeat      = new Color(0.30f, 0.18f, 0.09f);
-	private static readonly Color ChairBack      = new Color(0.20f, 0.12f, 0.05f);
-	private static readonly Color CandleWax      = new Color(0.92f, 0.88f, 0.72f);
-	private static readonly Color CandleFlame    = new Color(1.00f, 0.68f, 0.12f);
-
-	private void SpawnFurniture()
-	{
-		// Table1 and Table2 get three chairs each (north + two south)
-		SpawnTableSet(new Vector2(-60f, 40f), northChair: true);
-		SpawnTableSet(new Vector2( 60f, 40f), northChair: true);
-		// Table3 sits just below the bar — only south chairs fit
-		SpawnTableSet(new Vector2(  0f, -10f), northChair: false);
-	}
-
-	private void SpawnTableSet(Vector2 center, bool northChair)
-	{
-		// Chairs drawn first so the table surface renders on top of them
-		if (northChair)
-			SpawnChair(center + new Vector2(0f, -20f), backrestAtTop: true);
-
-		SpawnChair(center + new Vector2(-9f, 18f), backrestAtTop: false);
-		SpawnChair(center + new Vector2( 9f, 18f), backrestAtTop: false);
-
-		SpawnTable(center);
-	}
-
-	private void SpawnTable(Vector2 pos)
-	{
-		// Collision — covers the full surface + front edge footprint
-		AddStaticRect(pos + new Vector2(0f, 2.5f), new Vector2(28f, 17f));
-
-		// Drop shadow (slightly offset, dark semi-transparent)
-		AddPoly(pos + new Vector2(2f, 3f), new Vector2[]
-		{
-			new Vector2(-14f, -6f), new Vector2(14f, -6f),
-			new Vector2(12f,  11f), new Vector2(-12f, 11f),
-		}, new Color(0f, 0f, 0f, 0.35f), zIndex: -7);
-
-		// Front edge — trapezoid giving a 3-D raised look
-		AddPoly(pos, new Vector2[]
-		{
-			new Vector2(-14f,  6f), new Vector2(14f,  6f),
-			new Vector2( 11f, 11f), new Vector2(-11f, 11f),
-		}, TableEdge, zIndex: -5);
-
-		// Table surface
-		AddPoly(pos, new Vector2[]
-		{
-			new Vector2(-14f, -6f), new Vector2(14f, -6f),
-			new Vector2( 14f,  6f), new Vector2(-14f,  6f),
-		}, TableSurface, zIndex: -5);
-
-		// Highlight strip near the north edge of the surface
-		AddPoly(pos, new Vector2[]
-		{
-			new Vector2(-13f, -5f), new Vector2(13f, -5f),
-			new Vector2( 13f, -2f), new Vector2(-13f, -2f),
-		}, TableHighlight, zIndex: -4);
-
-		// Candle: wax pillar
-		AddPoly(pos + new Vector2(0f, 1f), new Vector2[]
-		{
-			new Vector2(-1.5f, -4f), new Vector2(1.5f, -4f),
-			new Vector2( 1.5f,  2f), new Vector2(-1.5f,  2f),
-		}, CandleWax, zIndex: -4);
-
-		// Candle: small flame (captured so we can animate it)
-		var flame = AddPoly(pos + new Vector2(0f, 1f), new Vector2[]
-		{
-			new Vector2( 0f, -7f),
-			new Vector2( 2f, -5f),
-			new Vector2( 0f, -4f),
-			new Vector2(-2f, -5f),
-		}, CandleFlame, zIndex: -3);
-		AnimateCandleFlame(flame, pos + new Vector2(0f, 1f));
-	}
-
-	private void SpawnChair(Vector2 pos, bool backrestAtTop)
-	{
-		// Collision — seat footprint only (backrest is vertical, not a floor obstacle)
-		AddStaticRect(pos, new Vector2(10f, 8f));
-
-		// Seat
-		AddPoly(pos, new Vector2[]
-		{
-			new Vector2(-5f, -4f), new Vector2(5f, -4f),
-			new Vector2( 5f,  4f), new Vector2(-5f,  4f),
-		}, ChairSeat, zIndex: -6);
-
-		// Backrest — thin bar on the far side from the table
-		float by = backrestAtTop ? -4f : 4f;
-		float bh = backrestAtTop ? -3f :  3f;
-		AddPoly(pos, new Vector2[]
-		{
-			new Vector2(-5f, by), new Vector2(5f, by),
-			new Vector2( 5f, by + bh), new Vector2(-5f, by + bh),
-		}, ChairBack, zIndex: -6);
-
-		// Seat highlight (top-left corner strip)
-		AddPoly(pos, new Vector2[]
-		{
-			new Vector2(-4f, -3f), new Vector2(1f, -3f),
-			new Vector2( 1f, -1f), new Vector2(-4f, -1f),
-		}, new Color(ChairSeat.R + 0.08f, ChairSeat.G + 0.05f, ChairSeat.B + 0.02f), zIndex: -5);
-	}
-
 	/// <summary>Adds a Polygon2D as a direct child of the MAPP node and returns it.</summary>
 	private Polygon2D AddPoly(Vector2 worldPos, Vector2[] polygon, Color color, int zIndex)
 	{
@@ -847,16 +717,6 @@ public partial class MAPP : OverworldBase
 		AddChild(poly);
 		poly.GlobalPosition = worldPos;
 		return poly;
-	}
-
-	/// <summary>Adds a StaticBody2D with a rectangular collision shape.</summary>
-	private void AddStaticRect(Vector2 worldPos, Vector2 size)
-	{
-		var body  = new StaticBody2D();
-		var shape = new CollisionShape2D { Shape = new RectangleShape2D { Size = size } };
-		body.AddChild(shape);
-		AddChild(body);
-		body.GlobalPosition = worldPos;
 	}
 
 	// ── Bottle rack ────────────────────────────────────────────────────────────
@@ -1013,38 +873,6 @@ public partial class MAPP : OverworldBase
 	private static Vector2[] MakeSmokeWisp()
 		=> new Vector2[] { new Vector2(-2f, -3f), new Vector2(2f, -3f), new Vector2(3f, 0f), new Vector2(1f, 3f), new Vector2(-1f, 3f), new Vector2(-3f, 0f) };
 
-	// ── Dartboard ──────────────────────────────────────────────────────────────
-
-	private void SpawnDartboard()
-	{
-		var dartboard = new DartboardProp();
-		AddChild(dartboard);
-		dartboard.GlobalPosition = new Vector2(132f, 80f); // east wall, below notice board
-	}
-
-	// ── Save point ─────────────────────────────────────────────────────────────
-
-	private void SpawnSavePoint()
-	{
-		var scene = GD.Load<PackedScene>("res://scenes/overworld/objects/SavePoint.tscn");
-		var save  = scene.Instantiate<SavePoint>();
-		save.SavePointId = "mapp_hearth";
-		AddChild(save);
-		save.GlobalPosition = new Vector2(-100f, 20f); // hearthstone beside the fireplace
-	}
-
-	// ── Chest ──────────────────────────────────────────────────────────────────
-
-	private void SpawnChest()
-	{
-		var scene = GD.Load<PackedScene>("res://scenes/overworld/objects/Chest.tscn");
-		var chest = scene.Instantiate<Chest>();
-		chest.ItemPath = "res://resources/items/item_002.tres"; // Potion
-		chest.FlagId   = "chest_mapp_corner";
-		AddChild(chest);
-		chest.GlobalPosition = new Vector2(122f, 110f); // south-east corner
-	}
-
 	// ── Staircase ──────────────────────────────────────────────────────────────
 
 	private void SpawnStaircase()
@@ -1072,13 +900,6 @@ public partial class MAPP : OverworldBase
 			}, new Color(stepColor.R - i * 0.03f, stepColor.G - i * 0.02f, stepColor.B - i * 0.01f), zIndex: -5);
 		}
 
-		// "Rooms Occupied" sign placeholder using InteractSign
-		var scene = GD.Load<PackedScene>(SignScene);
-		var sign  = scene.Instantiate<InteractSign>();
-		sign.SignTitle = "Upper Floor";
-		sign.Lines     = ["The rooms upstairs are currently occupied.", "", "(Coming soon.)"];
-		AddChild(sign);
-		sign.GlobalPosition = stairPos + new Vector2(4f, -18f);
 	}
 
 	// ── Tile map ───────────────────────────────────────────────────────────────
@@ -1210,40 +1031,10 @@ public partial class MAPP : OverworldBase
 		}
 	}
 
-	// ── Bar stools ─────────────────────────────────────────────────────────────
-
-	private void SpawnBarStools()
-	{
-		// A row of 6 round stools along the south face of the bar (y ≈ -40)
-		float[] stoolXs = [-90f, -54f, -18f, 18f, 54f, 90f];
-		float   stoolY  = -40f;
-
-		foreach (float x in stoolXs)
-		{
-			var pos = new Vector2(x, stoolY);
-
-			// Collision
-			AddStaticRect(pos, new Vector2(8f, 6f));
-
-			// Seat (octagon approximation)
-			AddPoly(pos, new Vector2[]
-			{
-				new Vector2(-3f, -4f), new Vector2(3f, -4f),
-				new Vector2(4f,  -2f), new Vector2(4f,  2f),
-				new Vector2(3f,   4f), new Vector2(-3f,  4f),
-				new Vector2(-4f,  2f), new Vector2(-4f, -2f),
-			}, new Color(0.25f, 0.14f, 0.06f), zIndex: -6);
-
-			// Seat highlight
-			AddPoly(pos + new Vector2(-1f, -1f), new Vector2[]
-			{
-				new Vector2(-2f, -2f), new Vector2(2f, -2f),
-				new Vector2(2f,   0f), new Vector2(-2f,  0f),
-			}, new Color(0.35f, 0.20f, 0.10f), zIndex: -5);
-		}
-	}
-
 	// ── Fireplace mantelpiece ──────────────────────────────────────────────────
+
+	private static readonly Color CandleWax   = new Color(0.92f, 0.88f, 0.72f);
+	private static readonly Color CandleFlame = new Color(1.00f, 0.68f, 0.12f);
 
 	private void SpawnMantelpiece()
 	{
@@ -1459,13 +1250,12 @@ public partial class MAPP : OverworldBase
 
 	// ── Candle flame animation ─────────────────────────────────────────────────
 
-	private void AnimateCandleFlame(Polygon2D flame, Vector2 basePos)
+	private void AnimateCandleFlame(Polygon2D flame)
 	{
-		// Randomise period and start delay so the three table candles don't sync up
 		float period = 0.26f + GD.Randf() * 0.14f;
 		float delay  = GD.Randf() * 0.4f;
+		float baseY  = flame.Position.Y;
 
-		// Scale flicker (squash/stretch vertically)
 		var tScale = CreateTween().SetLoops();
 		tScale.TweenProperty(flame, "scale:y", 1.25f, period)
 			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut)
@@ -1473,11 +1263,10 @@ public partial class MAPP : OverworldBase
 		tScale.TweenProperty(flame, "scale:y", 0.78f, period)
 			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
 
-		// Vertical bob in local space
 		var tBob = CreateTween().SetLoops();
-		tBob.TweenProperty(flame, "position:y", basePos.Y - 1.5f, period * 1.2f)
+		tBob.TweenProperty(flame, "position:y", baseY - 1.5f, period * 1.2f)
 			.SetTrans(Tween.TransitionType.Sine).SetDelay(delay + period * 0.5f);
-		tBob.TweenProperty(flame, "position:y", basePos.Y + 0.5f, period * 1.2f)
+		tBob.TweenProperty(flame, "position:y", baseY + 0.5f, period * 1.2f)
 			.SetTrans(Tween.TransitionType.Sine);
 	}
 
@@ -1525,84 +1314,4 @@ public partial class MAPP : OverworldBase
 		}
 	}
 
-	// ── Drink prop ─────────────────────────────────────────────────────────────
-
-	private void SpawnDrinkProp()
-	{
-		var mug = new BarDrinkProp();
-		AddChild(mug);
-		mug.GlobalPosition = new Vector2(80f, -62f); // on the bar counter, east side
-	}
-
-	// ── Barkeep ────────────────────────────────────────────────────────────────
-
-	private void SpawnBarkeep()
-	{
-		var scene    = GD.Load<PackedScene>(BarkeepScene);
-		var barkeep  = scene.Instantiate<VendorNpc>();
-
-		barkeep.NpcId            = "barkeep_mapp";
-		barkeep.DisplayName      = "Barkeep";
-		barkeep.PlaceholderColor = new Color(0.55f, 0.38f, 0.18f);
-		barkeep.TimelinePath     = BarkeepTimeline;
-		barkeep.CharacterPath    = "res://dialog/characters/Barkeep.dch";
-		barkeep.DefaultFacing    = FacingDirection.Down;
-		// Greet differently once story events have unfolded — first match wins
-		barkeep.AltRequiredFlags = [Flags.AllAltDialogsDone, Flags.GusTransformedToFrog, Flags.BrixHorseAppeared];
-		barkeep.AltTimelinePaths =
-		[
-			"res://dialog/timelines/npc_barkeep_alldone.dtl",
-			"res://dialog/timelines/npc_barkeep_frog.dtl",
-			"res://dialog/timelines/npc_barkeep_horse.dtl",
-		];
-
-		var aleEntry = new SennenRpg.Core.Data.ShopItemEntry
-		{
-			ItemDataPath = AleItemPath,
-			Price        = 5,
-		};
-		barkeep.ShopStock = [aleEntry];
-
-		YSort.AddChild(barkeep);
-		barkeep.GlobalPosition = new Vector2(0f, -85f);
-	}
-
-	// ── Notice board ───────────────────────────────────────────────────────────
-
-	private void SpawnNoticeboard()
-	{
-		var scene = GD.Load<PackedScene>(SignScene);
-		var board = scene.Instantiate<InteractSign>();
-
-		board.SignTitle = "Notice Board";
-		board.Lines     =
-		[
-			"The MAPP — serving the finest ales since 1057.",
-			"",
-			"REWARD: 50 gold for information regarding the",
-			"  recent incident in Seade. Contact K.B.",
-			"",
-			"LOST: One horse. Brown. Answers to 'Horse'.",
-			"  Contact Brix (he is right here).",
-			"",
-			"Rooms available upstairs. Ask the barkeep.",
-			"No dragons. No familiars. No exceptions.",
-			"  (Exceptions may be negotiated.)",
-		];
-
-		AddChild(board);
-		board.GlobalPosition = new Vector2(130f, 50f);
-	}
-
-	// ── Exit ──────────────────────────────────────────────────────────────────
-
-	private void SpawnExit()
-	{
-		var exit = GD.Load<PackedScene>(MapExitScene).Instantiate<MapExit>();
-		exit.TargetMapPath = "res://scenes/overworld/TestRoom.tscn";
-		exit.TargetSpawnId = "from_mapp";
-		exit.AutoTrigger   = true;
-		AddChild(exit);
-		exit.GlobalPosition = new Vector2(0, 168);
-	}
 }

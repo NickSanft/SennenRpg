@@ -1,0 +1,6 @@
+[gd_scene format=4 uid="uid://bx11g5q7nayii"]
+
+[ext_resource type="Script" uid="uid://cg556cb4jn2nq" path="res://scenes/overworld/objects/JournalProp.cs" id="1_jp"]
+
+[node name="JournalProp" type="Area2D"]
+script = ExtResource("1_jp")

@@ -1,0 +1,6 @@
+[gd_scene format=4 uid="uid://chairfurnit01"]
+
+[ext_resource type="Script" uid="uid://chairfurncs01" path="res://scenes/overworld/objects/furniture/ChairFurniture.cs" id="1_cf"]
+
+[node name="ChairFurniture" type="Node2D"]
+script = ExtResource("1_cf")
