@@ -51,6 +51,8 @@ public partial class MAPP : OverworldBase
 
 		// Player returns to TestRoom through the south door
 		SpawnPoints["from_mapp_exit"] = new Vector2(0, 120);
+		// Player returns from the garden through the east-wall back door
+		SpawnPoints["from_garden"]    = new Vector2(134f, 70f);
 		DefaultSpawnPosition = new Vector2(0, 80);
 
 		base._Ready();
@@ -101,6 +103,7 @@ public partial class MAPP : OverworldBase
 
 		SpawnBarkeepRag();
 		SpawnAllIdleWanders();
+		SpawnBackDoor();
 
 		// Listen for the custom signal fired at the end of npc_brix_again.dtl
 		DialogicBridge.Instance.DialogicSignalReceived += OnDialogicSignal;
@@ -129,6 +132,7 @@ public partial class MAPP : OverworldBase
 		SpawnBottleRack();
 		SpawnWindows();
 		SpawnStaircase();
+		SpawnBackDoor();
 	}
 
 	public override void _ExitTree()
@@ -1989,9 +1993,11 @@ public partial class MAPP : OverworldBase
 		// pixel: x=-160..-144, y=-128..176  →  size 16×304, centre (-152, 24)
 		SpawnWallBox(new Vector2(-152f,  24f), new Vector2( 16f, 304f));
 
-		// East wall — full height (tile col x=9)
-		// pixel: x=144..160, y=-128..176  →  size 16×304, centre (152, 24)
-		SpawnWallBox(new Vector2( 152f,  24f), new Vector2( 16f, 304f));
+		// East wall — split for garden back-door gap at y=56..88
+		// North section: x=144..160, y=-128..56  →  size 16×184, centre (152, -36)
+		SpawnWallBox(new Vector2( 152f, -36f), new Vector2( 16f, 184f));
+		// South section: x=144..160, y=88..176  →  size 16×88, centre (152, 132)
+		SpawnWallBox(new Vector2( 152f, 132f), new Vector2( 16f,  88f));
 
 		// Fireplace protrusion (hearth tiles x=-9..-8, y=-3..0)
 		// pixel: x=-144..-112, y=-48..16  →  size 32×64, centre (-128, -16)
@@ -2008,6 +2014,86 @@ public partial class MAPP : OverworldBase
 		};
 		body.AddChild(shape);
 		AddChild(body);
+	}
+
+	// ── Back door (garden exit) ─────────────────────────────────────────────────
+
+	/// <summary>
+	/// Spawns the back-door visual on the east wall (the doorway gap in the
+	/// wall collider is handled in <see cref="SpawnWallColliders"/>).
+	/// In gameplay mode also places a <see cref="MapExit"/> Area2D so the
+	/// player can press Z to enter the garden.
+	/// </summary>
+	private void SpawnBackDoor()
+	{
+		// Door is centred at the east wall gap: world (144, 72)
+		var doorPos    = new Vector2(144f, 72f);
+		var frameColor = new Color(0.28f, 0.16f, 0.07f); // dark wood frame
+		var panelColor = new Color(0.35f, 0.22f, 0.10f); // lighter door panel
+		var brassColor = new Color(0.55f, 0.42f, 0.12f); // aged brass handle
+
+		// Dark opening interior — "hole" in the east wall
+		AddPoly(doorPos, new Vector2[]
+		{
+			new Vector2(-8f, -16f), new Vector2(8f, -16f),
+			new Vector2(8f,  16f),  new Vector2(-8f, 16f),
+		}, new Color(0.07f, 0.04f, 0.03f), zIndex: -8);
+
+		// Door panel (slightly recessed)
+		AddPoly(doorPos + new Vector2(-1f, 0f), new Vector2[]
+		{
+			new Vector2(-6f, -14f), new Vector2(6f, -14f),
+			new Vector2(6f,  14f),  new Vector2(-6f, 14f),
+		}, panelColor, zIndex: -7);
+
+		// Frame border strips (left, right, top, bottom)
+		foreach (var (off, size) in new (Vector2 off, Vector2 size)[]
+		{
+			(new Vector2(-8f,   0f), new Vector2(2f, 32f)),  // left
+			(new Vector2( 8f,   0f), new Vector2(2f, 32f)),  // right
+			(new Vector2( 0f, -16f), new Vector2(18f, 2f)),  // top
+			(new Vector2( 0f,  16f), new Vector2(18f, 2f)),  // bottom
+		})
+		{
+			AddPoly(doorPos + off, new Vector2[]
+			{
+				new Vector2(-size.X * 0.5f, -size.Y * 0.5f),
+				new Vector2( size.X * 0.5f, -size.Y * 0.5f),
+				new Vector2( size.X * 0.5f,  size.Y * 0.5f),
+				new Vector2(-size.X * 0.5f,  size.Y * 0.5f),
+			}, frameColor, zIndex: -6);
+		}
+
+		// Brass handle knob
+		AddPoly(doorPos + new Vector2(-3f, 3f), new Vector2[]
+		{
+			new Vector2(-1.5f, -1.5f), new Vector2(1.5f, -1.5f),
+			new Vector2(1.5f,   1.5f), new Vector2(-1.5f, 1.5f),
+		}, brassColor, zIndex: -5);
+
+		// Small "GARDEN" sign above the door
+		// (two lines: a label is too heavy at this scale — just a tiny plaque)
+		AddPoly(doorPos + new Vector2(-1f, -20f), new Vector2[]
+		{
+			new Vector2(-6f, -3f), new Vector2(6f, -3f),
+			new Vector2(6f,   3f), new Vector2(-6f, 3f),
+		}, new Color(0.40f, 0.28f, 0.10f), zIndex: -5); // plaque
+
+		// Exit Area2D — only in play mode
+		if (Engine.IsEditorHint()) return;
+
+		var exit = new MapExit();
+		exit.TargetMapPath = "res://scenes/overworld/maps/MappGarden.tscn";
+		exit.TargetSpawnId = "from_mapp_backyard";
+		exit.AutoTrigger   = false;
+
+		var exitShape = new CollisionShape2D
+		{
+			Shape = new RectangleShape2D { Size = new Vector2(24f, 36f) },
+		};
+		exit.AddChild(exitShape);
+		AddChild(exit);
+		exit.GlobalPosition = doorPos;
 	}
 
 }
