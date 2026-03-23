@@ -75,6 +75,8 @@ public partial class MAPP : OverworldBase
 
 		SpawnStaircase();
 		AudioManager.Instance.PlayAmbience(AmbiencePath);
+		ApplyFirelightTints();
+		StartClinkCycle();
 
 		// Restore the horse on re-entry if it has already appeared
 		if (GameManager.Instance.GetFlag(Flags.BrixHorseAppeared))
@@ -904,6 +906,103 @@ public partial class MAPP : OverworldBase
 		}
 	}
 
+	// ── Window light shafts ─────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Spawns a static trapezoidal light shaft below a window, simulating sunlight
+	/// cutting through glass. Narrow at the window base, fanning wider into the room.
+	/// <paramref name="direction"/> is +1 for west wall (shaft angles right) and -1 for east.
+	/// </summary>
+	private void SpawnWindowShaft(Vector2 windowPos, float direction)
+	{
+		const float narrowHalf = 4f;   // half-width at the window
+		const float wideHalf   = 12f;  // half-width at the far edge
+		const float depth      = 40f;  // how far into the room the shaft reaches
+		const float shift      = 14f;  // lateral shift across depth
+
+		float s = shift * direction;
+
+		var shaft = new Polygon2D
+		{
+			Color   = new Color(0.95f, 0.90f, 0.70f, 0.07f),
+			ZIndex  = -2,
+			Polygon = new Vector2[]
+			{
+				new Vector2(-narrowHalf, 0f),
+				new Vector2(+narrowHalf, 0f),
+				new Vector2(s + wideHalf, depth),
+				new Vector2(s - wideHalf, depth),
+			},
+		};
+		AddChild(shaft);
+		shaft.GlobalPosition = windowPos;
+	}
+
+	// ── Firelight tint ──────────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Applies a warm amber modulate to any NPC within range of the hearth
+	/// (x &lt; −80), making them look lit by the fire.
+	/// </summary>
+	private void ApplyFirelightTints()
+	{
+		foreach (var child in YSort.GetChildren())
+		{
+			if (child is Node2D node && node.GlobalPosition.X < -80f)
+				node.Modulate = new Color(1.05f, 0.95f, 0.88f);
+		}
+	}
+
+	// ── Glass clinks ────────────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Starts an infinitely recurring timer that plays a quiet glass-clink SFX
+	/// at a random table position every 18–35 seconds.
+	/// Silently skips if the audio asset does not yet exist.
+	/// </summary>
+	private void StartClinkCycle()
+	{
+		const string clinkPath = "res://assets/audio/sfx/glass_clink.ogg";
+		if (!ResourceLoader.Exists(clinkPath)) return;
+
+		var rng = new RandomNumberGenerator();
+		rng.Randomize();
+
+		var tablePositions = new Vector2[]
+		{
+			new Vector2(-60f,  40f),
+			new Vector2( 60f,  40f),
+			new Vector2(  0f, -10f),
+		};
+
+		System.Action scheduleNext = null!;
+		scheduleNext = () =>
+		{
+			if (!IsInsideTree()) return;
+
+			GetTree().CreateTimer(rng.RandfRange(18f, 35f))
+				.Connect("timeout", Callable.From(() =>
+			{
+				if (!IsInsideTree()) return;
+
+				var player = new AudioStreamPlayer2D
+				{
+					Stream      = GD.Load<AudioStream>(clinkPath),
+					VolumeDb    = rng.RandfRange(-8f, -2f),
+					MaxDistance = 200f,
+				};
+				AddChild(player);
+				player.GlobalPosition = tablePositions[rng.RandiRange(0, tablePositions.Length - 1)];
+				player.Play();
+				player.Connect("finished", Callable.From(player.QueueFree));
+
+				scheduleNext();
+			}));
+		};
+
+		scheduleNext();
+	}
+
 	// ── Ambient life ────────────────────────────────────────────────────────────
 
 	/// <summary>
@@ -1202,8 +1301,10 @@ public partial class MAPP : OverworldBase
 	private void SpawnWindows()
 	{
 		// One window each on the east and west walls
-		SpawnWindow(new Vector2(-150f, 40f)); // west wall
-		SpawnWindow(new Vector2( 138f, 40f)); // east wall
+		SpawnWindow(new Vector2(-150f, 40f));
+		SpawnWindowShaft(new Vector2(-150f, 40f), direction: +1f); // west wall — shaft angles right
+		SpawnWindow(new Vector2( 138f, 40f));
+		SpawnWindowShaft(new Vector2( 138f, 40f), direction: -1f); // east wall — shaft angles left
 	}
 
 	private void SpawnWindow(Vector2 pos)
