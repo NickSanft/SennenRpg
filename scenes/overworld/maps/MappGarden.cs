@@ -1,5 +1,7 @@
 using Godot;
 using SennenRpg.Autoloads;
+using SennenRpg.Core.Data;
+using SennenRpg.Core.Interfaces;
 
 namespace SennenRpg.Scenes.Overworld;
 
@@ -52,6 +54,11 @@ public partial class MappGarden : OverworldBase
 		SpawnBirdbath();
 		SpawnLanterns();
 		SpawnFireflies();
+		SpawnWell();
+		SpawnBench();
+		SpawnHive();
+		SpawnHerbGarden();
+		SpawnCompostHeap();
 		SpawnEntryFade();
 
 		if (ResourceLoader.Exists(GardenAmbiencePath))
@@ -848,6 +855,142 @@ public partial class MappGarden : OverworldBase
 			.SetTrans(Tween.TransitionType.Sine);
 	}
 
+	// ── Interactables ─────────────────────────────────────────────────────────
+
+	/// <summary>Wishing well in the central clearing.</summary>
+	private void SpawnWell()
+	{
+		if (Engine.IsEditorHint()) return;
+		var well = new GardenWell();
+		AddChild(well);
+		well.GlobalPosition = new Vector2(0f, -30f);
+	}
+
+	/// <summary>Stone bench along the south-west edge.</summary>
+	private void SpawnBench()
+	{
+		if (Engine.IsEditorHint()) return;
+		var bench = new GardenBench();
+		AddChild(bench);
+		bench.GlobalPosition = new Vector2(-50f, 68f);
+	}
+
+	/// <summary>Beehive in the north-east corner.</summary>
+	private void SpawnHive()
+	{
+		if (Engine.IsEditorHint()) return;
+		var hive = new GardenBeehive();
+		AddChild(hive);
+		hive.GlobalPosition = new Vector2(97f, -62f);
+	}
+
+	/// <summary>
+	/// Five small terracotta pots along the east wall, with a readable sign
+	/// label above the cluster.
+	/// </summary>
+	private void SpawnHerbGarden()
+	{
+		var potColor  = new Color(0.60f, 0.30f, 0.12f);
+		var soilColor = new Color(0.28f, 0.18f, 0.09f);
+		var plantColor = new Color(0.22f, 0.52f, 0.18f);
+
+		float baseX = 87f;
+		float baseY = 5f;
+
+		for (int i = 0; i < 5; i++)
+		{
+			float px = baseX;
+			float py = baseY + (i - 2) * 14f;
+			var center = new Vector2(px, py);
+
+			// Pot body
+			AddPoly(center, new Vector2[]
+			{
+				new Vector2(-3f,  0f), new Vector2(3f,  0f),
+				new Vector2(4f,   6f), new Vector2(-4f, 6f),
+			}, potColor, zIndex: 1);
+			// Pot rim
+			AddPoly(center + new Vector2(0f, -0.5f), new Vector2[]
+			{
+				new Vector2(-3.5f, -0.5f), new Vector2(3.5f, -0.5f),
+				new Vector2( 3.5f,  0.5f), new Vector2(-3.5f, 0.5f),
+			}, new Color(0.70f, 0.40f, 0.18f), zIndex: 2);
+			// Soil
+			AddPoly(center + new Vector2(0f, 1f), new Vector2[]
+			{
+				new Vector2(-2.8f, -1f), new Vector2(2.8f, -1f),
+				new Vector2( 2.8f,  1f), new Vector2(-2.8f, 1f),
+			}, soilColor, zIndex: 2);
+			// Plant wisps
+			AddPoly(center + new Vector2(-1.5f, -2f), new Vector2[]
+			{
+				new Vector2(0f, -4f), new Vector2(1f, 0f),
+				new Vector2(0f,  1f), new Vector2(-1f, 0f),
+			}, plantColor, zIndex: 3);
+			AddPoly(center + new Vector2(1.5f, -3f), new Vector2[]
+			{
+				new Vector2(0f, -5f), new Vector2(1f, 0f),
+				new Vector2(0f,  1f), new Vector2(-1f, 0f),
+			}, plantColor, zIndex: 3);
+		}
+
+		if (Engine.IsEditorHint()) return;
+
+		var sign = new GardenSign(
+			"Herb Garden",
+			new[] { "Lavender, chamomile, and things", "without names." });
+		AddChild(sign);
+		sign.GlobalPosition = new Vector2(baseX, baseY - 32f);
+	}
+
+	/// <summary>
+	/// A low earthy compost mound in the south-east corner with a readable sign.
+	/// </summary>
+	private void SpawnCompostHeap()
+	{
+		var moundColor = new Color(0.28f, 0.18f, 0.09f);
+		var darkColor  = new Color(0.20f, 0.12f, 0.06f);
+		var heapCenter = new Vector2(85f, 55f);
+
+		// Main mound (irregular blob)
+		AddPoly(heapCenter, new Vector2[]
+		{
+			new Vector2(-15f,  2f), new Vector2(-8f,  -5f),
+			new Vector2(  0f, -7f), new Vector2( 8f,  -5f),
+			new Vector2( 14f,  1f), new Vector2( 10f,  7f),
+			new Vector2( -10f, 7f),
+		}, moundColor, zIndex: 1);
+
+		// Dark shadow on mound
+		AddPoly(heapCenter + new Vector2(3f, 2f), new Vector2[]
+		{
+			new Vector2(-8f, -3f), new Vector2(8f, -3f),
+			new Vector2( 8f,  4f), new Vector2(-8f, 4f),
+		}, darkColor, zIndex: 2);
+
+		// Tiny decomposing bits on top
+		var rng = new RandomNumberGenerator();
+		rng.Seed = 42;
+		for (int i = 0; i < 5; i++)
+		{
+			float bx = rng.RandfRange(-10f, 10f);
+			float by = rng.RandfRange(-5f, 2f);
+			AddPoly(heapCenter + new Vector2(bx, by), new Vector2[]
+			{
+				new Vector2(-1.5f, -1f), new Vector2(1.5f, -1f),
+				new Vector2( 1.5f,  1f), new Vector2(-1.5f, 1f),
+			}, new Color(0.35f, 0.55f, 0.20f, 0.70f), zIndex: 3);
+		}
+
+		if (Engine.IsEditorHint()) return;
+
+		var sign = new GardenSign(
+			"Compost",
+			new[] { "Everything returns to the earth.", "Even things that shouldn't." });
+		AddChild(sign);
+		sign.GlobalPosition = heapCenter + new Vector2(0f, -20f);
+	}
+
 	// ── Polygon helper ─────────────────────────────────────────────────────────
 
 	private Polygon2D AddPoly(Vector2 worldPos, Vector2[] polygon, Color color, int zIndex)
@@ -856,5 +999,89 @@ public partial class MappGarden : OverworldBase
 		AddChild(poly);
 		poly.GlobalPosition = worldPos;
 		return poly;
+	}
+}
+
+// ── Inline helper: garden sign ────────────────────────────────────────────────
+
+/// <summary>
+/// A small readable sign for decorative props in the garden (herb pots, compost).
+/// Implements <see cref="IInteractable"/> so the player's interact system picks it up.
+/// </summary>
+public partial class GardenSign : Area2D, IInteractable
+{
+	private readonly string   _title;
+	private readonly string[] _lines;
+	private InteractPromptBubble _prompt = null!;
+
+	public GardenSign(string title, string[] lines)
+	{
+		_title = title;
+		_lines = lines;
+	}
+
+	public override void _Ready()
+	{
+		AddChild(new CollisionShape2D
+		{
+			Shape = new RectangleShape2D { Size = new Vector2(24f, 20f) },
+		});
+
+		// Small sign visual
+		var signColor  = new Color(0.32f, 0.20f, 0.08f);
+		var textColor  = new Color(0.70f, 0.60f, 0.40f);
+
+		// Sign board
+		var board = new Polygon2D
+		{
+			Color   = signColor,
+			ZIndex  = 5,
+			Polygon = new Vector2[]
+			{
+				new Vector2(-10f, -5f), new Vector2(10f, -5f),
+				new Vector2( 10f,  5f), new Vector2(-10f, 5f),
+			},
+		};
+		AddChild(board);
+
+		// Post
+		var post = new Polygon2D
+		{
+			Color   = signColor,
+			ZIndex  = 4,
+			Polygon = new Vector2[]
+			{
+				new Vector2(-1f, 4f), new Vector2(1f, 4f),
+				new Vector2(1f, 10f), new Vector2(-1f, 10f),
+			},
+		};
+		AddChild(post);
+
+		// Title text on sign (two-pixel stripe to suggest letters)
+		var stripe = new Polygon2D
+		{
+			Color   = textColor,
+			ZIndex  = 6,
+			Polygon = new Vector2[]
+			{
+				new Vector2(-7f, -2f), new Vector2(7f, -2f),
+				new Vector2( 7f,  2f), new Vector2(-7f, 2f),
+			},
+		};
+		AddChild(stripe);
+
+		_prompt = new InteractPromptBubble($"[Z] Read");
+		_prompt.Position = new Vector2(0f, -18f);
+		AddChild(_prompt);
+	}
+
+	public string GetInteractPrompt() => "[Z] Read";
+	public void   ShowPrompt()        => _prompt.ShowBubble();
+	public void   HidePrompt()        => _prompt.HideBubble();
+
+	public void Interact(Node player)
+	{
+		var popup = new SignReaderPopup(_title, _lines);
+		GetTree().CurrentScene.AddChild(popup);
 	}
 }
