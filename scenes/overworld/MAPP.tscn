@@ -9,9 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://djjgkkxqyp83y" path="res://scenes/overworld/objects/npcs/NpcBrix.tscn" id="7_brix"]
 [ext_resource type="PackedScene" uid="uid://df13wf3777wpt" path="res://scenes/overworld/objects/npcs/NpcBhata.tscn" id="8_bhata"]
 [ext_resource type="PackedScene" uid="uid://bo2ok2ivtbl18" path="res://scenes/overworld/objects/npcs/NpcRain.tscn" id="9_rain"]
-[ext_resource type="PackedScene" uid="uid://petdragon_sp01" path="res://scenes/overworld/objects/npcs/NpcPetDragon.tscn" id="10_petdragon"]
-[ext_resource type="PackedScene" uid="uid://petfairy_sp01" path="res://scenes/overworld/objects/npcs/NpcPetFairy.tscn" id="11_petfairy"]
-[ext_resource type="PackedScene" uid="uid://petwcat_sp01" path="res://scenes/overworld/objects/npcs/NpcPetWitchCat.tscn" id="12_petwcat"]
+[ext_resource type="PackedScene" uid="uid://petwcat_sp01" path="res://scenes/overworld/objects/npcs/NpcPetWitchCat.tscn" id="10_petwcat"]
 
 [sub_resource type="Gradient" id="Gradient_fire_lgt"]
 offsets = PackedFloat32Array(0, 1)
@@ -176,27 +174,7 @@ AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_rain_again.dtl"
 PatrolPoints = PackedVector2Array(60, 90, 40, 100, 50, 100)
 PatrolSpeed = 18.0
 
-[node name="PetDragon" parent="YSort" instance=ExtResource("10_petdragon")]
-position = Vector2(-135, -18)
-NpcId = "pet_dragon"
-DisplayName = "Dragon"
-DefaultFacing = 2
-CharacterPath = "res://dialog/characters/PetDragon.dch"
-TimelinePath = "res://dialog/timelines/npc_pet_dragon.dtl"
-PatrolPoints = PackedVector2Array(-125, -18, -135, -8)
-PatrolSpeed = 18.0
-
-[node name="PetFairy" parent="YSort" instance=ExtResource("11_petfairy")]
-position = Vector2(90, -38)
-NpcId = "pet_fairy"
-DisplayName = "Fairy"
-DefaultFacing = 0
-CharacterPath = "res://dialog/characters/PetFairy.dch"
-TimelinePath = "res://dialog/timelines/npc_pet_fairy.dtl"
-PatrolPoints = PackedVector2Array(85, -42, 95, -30, 90, -38)
-PatrolSpeed = 22.0
-
-[node name="PetWitchCat" parent="YSort" instance=ExtResource("12_petwcat")]
+[node name="PetWitchCat" parent="YSort" instance=ExtResource("10_petwcat")]
 position = Vector2(58, 44)
 NpcId = "pet_witch_cat"
 DisplayName = "WitchCat"

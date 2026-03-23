@@ -61,6 +61,13 @@ public partial class MAPP : OverworldBase
 		SpawnDrinkProp();
 		SpawnBarkeep();
 		SpawnNoticeboard();
+		SpawnBottleRack();
+		SpawnWindows();
+		SpawnFireSmoke();
+		SpawnDartboard();
+		SpawnSavePoint();
+		SpawnChest();
+		SpawnStaircase();
 		AudioManager.Instance.PlayAmbience(AmbiencePath);
 		SpawnExit();
 		SpawnJournal();
@@ -852,6 +859,228 @@ public partial class MAPP : OverworldBase
 		body.GlobalPosition = worldPos;
 	}
 
+	// ── Bottle rack ────────────────────────────────────────────────────────────
+
+	private void SpawnBottleRack()
+	{
+		// A shelf of bottles behind the bar, north side (y ≈ -88)
+		var shelfPos = new Vector2(-20f, -88f);
+
+		// Shelf plank
+		AddPoly(shelfPos, new Vector2[]
+		{
+			new Vector2(-50f, -1f), new Vector2(50f, -1f),
+			new Vector2(50f,   3f), new Vector2(-50f,  3f),
+		}, new Color(0.30f, 0.18f, 0.08f), zIndex: -4);
+
+		// Bottles: varied heights and colours
+		var bottles = new (float x, float height, Color body, Color label)[]
+		{
+			(-42f, 10f, new Color(0.15f, 0.35f, 0.15f), new Color(0.85f, 0.80f, 0.55f)), // dark green
+			(-30f, 12f, new Color(0.50f, 0.22f, 0.08f), new Color(0.90f, 0.85f, 0.60f)), // amber
+			(-18f,  9f, new Color(0.20f, 0.20f, 0.40f), new Color(0.80f, 0.80f, 0.90f)), // dark blue
+			( -6f, 11f, new Color(0.12f, 0.30f, 0.12f), new Color(0.85f, 0.78f, 0.50f)), // green
+			(  6f, 10f, new Color(0.45f, 0.18f, 0.06f), new Color(0.90f, 0.82f, 0.55f)), // brown
+			( 18f, 13f, new Color(0.55f, 0.12f, 0.08f), new Color(0.88f, 0.80f, 0.55f)), // dark red
+			( 30f,  8f, new Color(0.18f, 0.28f, 0.18f), new Color(0.82f, 0.80f, 0.52f)), // olive
+			( 42f, 11f, new Color(0.38f, 0.14f, 0.05f), new Color(0.88f, 0.82f, 0.52f)), // rust
+		};
+
+		foreach (var (x, h, body, label) in bottles)
+		{
+			var base_ = shelfPos + new Vector2(x, 0f);
+			// Bottle body
+			AddPoly(base_, new Vector2[]
+			{
+				new Vector2(-2.5f, -h),   new Vector2(2.5f, -h),
+				new Vector2( 3.5f,  0f),  new Vector2(-3.5f, 0f),
+			}, body, zIndex: -3);
+			// Neck
+			AddPoly(base_ + new Vector2(0f, -h), new Vector2[]
+			{
+				new Vector2(-1f, -4f), new Vector2(1f, -4f),
+				new Vector2(1f,  0f),  new Vector2(-1f, 0f),
+			}, body, zIndex: -3);
+			// Label strip
+			AddPoly(base_ + new Vector2(0f, -h * 0.55f), new Vector2[]
+			{
+				new Vector2(-2.5f, -2f), new Vector2(2.5f, -2f),
+				new Vector2(2.5f,  2f),  new Vector2(-2.5f, 2f),
+			}, label, zIndex: -2);
+		}
+	}
+
+	// ── Windows ────────────────────────────────────────────────────────────────
+
+	private void SpawnWindows()
+	{
+		// One window each on the east and west walls
+		SpawnWindow(new Vector2(-150f, 40f)); // west wall
+		SpawnWindow(new Vector2( 138f, 40f)); // east wall
+	}
+
+	private void SpawnWindow(Vector2 pos)
+	{
+		var frameColor = new Color(0.30f, 0.18f, 0.08f);
+		var glassColor = new Color(0.72f, 0.82f, 0.68f, 0.55f); // pale green-tinted glass
+		var lightColor = new Color(0.92f, 0.90f, 0.72f, 0.30f); // warm light bleed
+
+		// Light bleed behind window (larger, behind frame)
+		AddPoly(pos, new Vector2[]
+		{
+			new Vector2(-10f, -14f), new Vector2(10f, -14f),
+			new Vector2(10f,   14f), new Vector2(-10f,  14f),
+		}, lightColor, zIndex: -7);
+
+		// Glass pane
+		AddPoly(pos, new Vector2[]
+		{
+			new Vector2(-8f, -12f), new Vector2(8f, -12f),
+			new Vector2(8f,   12f), new Vector2(-8f,  12f),
+		}, glassColor, zIndex: -6);
+
+		// Outer frame (four strips)
+		foreach (var (rect, size) in new (Vector2 offset, Vector2 size)[]
+		{
+			(new Vector2( 0f, -12f), new Vector2(16f, 2f)),  // top
+			(new Vector2( 0f,  12f), new Vector2(16f, 2f)),  // bottom
+			(new Vector2(-8f,   0f), new Vector2(2f, 26f)),  // left
+			(new Vector2( 8f,   0f), new Vector2(2f, 26f)),  // right
+		})
+		{
+			AddPoly(pos + rect, new Vector2[]
+			{
+				new Vector2(-size.X * 0.5f, -size.Y * 0.5f),
+				new Vector2( size.X * 0.5f, -size.Y * 0.5f),
+				new Vector2( size.X * 0.5f,  size.Y * 0.5f),
+				new Vector2(-size.X * 0.5f,  size.Y * 0.5f),
+			}, frameColor, zIndex: -5);
+		}
+
+		// Cross-bar dividers
+		AddPoly(pos, new Vector2[]
+		{
+			new Vector2(-8f, -1f), new Vector2(8f, -1f),
+			new Vector2(8f,   1f), new Vector2(-8f, 1f),
+		}, frameColor, zIndex: -5);
+		AddPoly(pos, new Vector2[]
+		{
+			new Vector2(-1f, -12f), new Vector2(1f, -12f),
+			new Vector2(1f,   12f), new Vector2(-1f, 12f),
+		}, frameColor, zIndex: -5);
+	}
+
+	// ── Fireplace smoke ────────────────────────────────────────────────────────
+
+	private void SpawnFireSmoke()
+	{
+		// Three smoke wisps rising from the top of the firebox (world y ≈ -40)
+		var smokeBase = new Vector2(-136f, -40f);
+		var offsets   = new Vector2[] { new Vector2(-3f, 0f), new Vector2(0f, 0f), new Vector2(4f, 0f) };
+
+		for (int i = 0; i < offsets.Length; i++)
+		{
+			var wisp = new Polygon2D
+			{
+				Color   = new Color(0.55f, 0.50f, 0.48f, 0.0f),
+				ZIndex  = -3,
+				Polygon = MakeSmokeWisp(),
+			};
+			AddChild(wisp);
+			Vector2 basePos = smokeBase + offsets[i];
+			wisp.GlobalPosition = basePos;
+
+			float period = 1.8f + i * 0.35f;
+			float delay  = i * 0.55f;
+			float rise   = 22f + i * 4f;
+
+			// Rise and fade loop
+			var t = CreateTween().SetLoops();
+			t.TweenProperty(wisp, "modulate:a", 0.55f, period * 0.4f)
+				.SetTrans(Tween.TransitionType.Sine).SetDelay(delay);
+			t.Parallel().TweenProperty(wisp, "global_position:y", basePos.Y - rise, period)
+				.SetTrans(Tween.TransitionType.Sine).SetDelay(delay);
+			t.TweenProperty(wisp, "modulate:a", 0f, period * 0.3f)
+				.SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
+			t.TweenCallback(Callable.From(() =>
+			{
+				wisp.GlobalPosition = basePos;
+				wisp.Modulate       = wisp.Modulate with { A = 0f };
+			}));
+		}
+	}
+
+	private static Vector2[] MakeSmokeWisp()
+		=> new Vector2[] { new Vector2(-2f, -3f), new Vector2(2f, -3f), new Vector2(3f, 0f), new Vector2(1f, 3f), new Vector2(-1f, 3f), new Vector2(-3f, 0f) };
+
+	// ── Dartboard ──────────────────────────────────────────────────────────────
+
+	private void SpawnDartboard()
+	{
+		var dartboard = new DartboardProp();
+		AddChild(dartboard);
+		dartboard.GlobalPosition = new Vector2(132f, 80f); // east wall, below notice board
+	}
+
+	// ── Save point ─────────────────────────────────────────────────────────────
+
+	private void SpawnSavePoint()
+	{
+		var scene = GD.Load<PackedScene>("res://scenes/overworld/objects/SavePoint.tscn");
+		var save  = scene.Instantiate<SavePoint>();
+		save.SavePointId = "mapp_hearth";
+		AddChild(save);
+		save.GlobalPosition = new Vector2(-100f, 20f); // hearthstone beside the fireplace
+	}
+
+	// ── Chest ──────────────────────────────────────────────────────────────────
+
+	private void SpawnChest()
+	{
+		var scene = GD.Load<PackedScene>("res://scenes/overworld/objects/Chest.tscn");
+		var chest = scene.Instantiate<Chest>();
+		chest.ItemPath = "res://resources/items/item_002.tres"; // Potion
+		chest.FlagId   = "chest_mapp_corner";
+		AddChild(chest);
+		chest.GlobalPosition = new Vector2(122f, 110f); // south-east corner
+	}
+
+	// ── Staircase ──────────────────────────────────────────────────────────────
+
+	private void SpawnStaircase()
+	{
+		// Visual staircase steps on the east wall suggesting an upper floor
+		var stairPos = new Vector2(120f, -25f);
+		var stepColor = new Color(0.42f, 0.28f, 0.12f);
+		var shadowColor = new Color(0f, 0f, 0f, 0.25f);
+
+		for (int i = 0; i < 4; i++)
+		{
+			float y = i * 7f;
+			float inset = i * 3f;
+			// Shadow under each step
+			AddPoly(stairPos + new Vector2(inset + 1f, y + 1f), new Vector2[]
+			{
+				new Vector2(0f, 0f), new Vector2(22f - inset, 0f),
+				new Vector2(22f - inset, 5f), new Vector2(0f, 5f),
+			}, shadowColor, zIndex: -6);
+			// Step face
+			AddPoly(stairPos + new Vector2(inset, y), new Vector2[]
+			{
+				new Vector2(0f, 0f), new Vector2(22f - inset, 0f),
+				new Vector2(22f - inset, 5f), new Vector2(0f, 5f),
+			}, new Color(stepColor.R - i * 0.03f, stepColor.G - i * 0.02f, stepColor.B - i * 0.01f), zIndex: -5);
+		}
+
+		// "Rooms Occupied" sign placeholder using InteractSign
+		var scene = GD.Load<PackedScene>(SignScene);
+		var sign  = scene.Instantiate<InteractSign>();
+		sign.SignTitle = "Upper Floor";
+		sign.Lines     = ["The rooms upstairs are currently occupied.", "", "(Coming soon.)"];
+		AddChild(sign);
+		sign.GlobalPosition = stairPos + new Vector2(4f, -18f);
+	}
+
 	// ── Tile map ───────────────────────────────────────────────────────────────
 
 	private static readonly Vector2I TileFloorA  = new Vector2I(0, 0); // dark wood
@@ -1312,12 +1541,20 @@ public partial class MAPP : OverworldBase
 		var scene    = GD.Load<PackedScene>(BarkeepScene);
 		var barkeep  = scene.Instantiate<VendorNpc>();
 
-		barkeep.NpcId          = "barkeep_mapp";
-		barkeep.DisplayName    = "Barkeep";
+		barkeep.NpcId            = "barkeep_mapp";
+		barkeep.DisplayName      = "Barkeep";
 		barkeep.PlaceholderColor = new Color(0.55f, 0.38f, 0.18f);
-		barkeep.TimelinePath   = BarkeepTimeline;
-		barkeep.CharacterPath  = "res://dialog/characters/Barkeep.dch";
-		barkeep.DefaultFacing  = FacingDirection.Down;
+		barkeep.TimelinePath     = BarkeepTimeline;
+		barkeep.CharacterPath    = "res://dialog/characters/Barkeep.dch";
+		barkeep.DefaultFacing    = FacingDirection.Down;
+		// Greet differently once story events have unfolded — first match wins
+		barkeep.AltRequiredFlags = [Flags.AllAltDialogsDone, Flags.GusTransformedToFrog, Flags.BrixHorseAppeared];
+		barkeep.AltTimelinePaths =
+		[
+			"res://dialog/timelines/npc_barkeep_alldone.dtl",
+			"res://dialog/timelines/npc_barkeep_frog.dtl",
+			"res://dialog/timelines/npc_barkeep_horse.dtl",
+		];
 
 		var aleEntry = new SennenRpg.Core.Data.ShopItemEntry
 		{

@@ -31,12 +31,15 @@ public partial class VendorNpc : Npc
 		// Use Dialog state to block player movement during the shop interaction
 		GameManager.Instance.SetState(GameState.Dialog);
 
-		if (!string.IsNullOrEmpty(TimelinePath))
+		string timeline = Npc.SelectTimeline(TimelinePath, AltRequiredFlags, AltTimelinePaths,
+			GameManager.Instance.GetFlag);
+
+		if (!string.IsNullOrEmpty(timeline))
 		{
-			// Play greeting timeline, then open shop when it ends
+			// Play greeting timeline (flag-selected), then open shop when it ends
 			DialogicBridge.Instance.ConnectTimelineEnded(
 				Callable.From(OpenShop));
-			DialogicBridge.Instance.StartTimelineWithFlags(TimelinePath);
+			DialogicBridge.Instance.StartTimelineWithFlags(timeline);
 		}
 		else
 		{
