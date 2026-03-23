@@ -26,6 +26,9 @@ public partial class MAPP : OverworldBase
 	private const string RainAltSignal        = "rain_alt_ended";
 	private const string LilyCutscenePath     = "res://dialog/timelines/cutscene_lily_effect.dtl";
 	private const string ShizuBgmPath         = "res://assets/music/Divora - Origins Of The Gyre - DND 6 - 01 Origins Of The Gyre - Full.wav";
+	private const int    RainStolenGold       = 10;
+
+	private CanvasLayer? _nauseaLayer;
 	private const string FrogTexturePath      = "res://assets/sprites/npcs/GusGiantFrog.png";
 	private const string TilesetPath          = "res://assets/tilesets/mapp_tiles.png";
 	private const string AmbiencePath        = "res://assets/audio/sfx/tavern_ambience.ogg";
@@ -174,6 +177,7 @@ public partial class MAPP : OverworldBase
 
 	private void OnLilyAltEnded()
 	{
+		ShowNauseaTint();
 		GameManager.Instance.SetState(GameState.Dialog);
 		DialogicBridge.Instance.ConnectTimelineEnded(
 			new Callable(this, MethodName.OnLilyCutsceneEnded));
@@ -182,8 +186,41 @@ public partial class MAPP : OverworldBase
 
 	private void OnLilyCutsceneEnded()
 	{
+		if (_nauseaLayer != null)
+		{
+			var layer = _nauseaLayer;
+			_nauseaLayer = null;
+			var overlay = layer.GetChild<ColorRect>(0);
+			var tween = CreateTween();
+			tween.TweenProperty(overlay, "color:a", 0f, 1.2f)
+				.SetTrans(Tween.TransitionType.Sine);
+			tween.TweenCallback(Callable.From(layer.QueueFree));
+		}
 		GameManager.Instance.SetState(GameState.Overworld);
 		CheckAllAltDialogsDone();
+	}
+
+	/// <summary>
+	/// Overlays the screen with a sickly green tint — fades in over 0.8 s.
+	/// Call <see cref="OnLilyCutsceneEnded"/> to fade it back out.
+	/// Uses CanvasLayer 50 so it sits below the dialog UI.
+	/// </summary>
+	private void ShowNauseaTint()
+	{
+		_nauseaLayer = new CanvasLayer { Layer = 50 };
+		AddChild(_nauseaLayer);
+
+		var overlay = new ColorRect
+		{
+			Color        = new Color(0.10f, 0.55f, 0.10f, 0f),
+			AnchorRight  = 1f,
+			AnchorBottom = 1f,
+		};
+		_nauseaLayer.AddChild(overlay);
+
+		var tween = CreateTween();
+		tween.TweenProperty(overlay, "color:a", 0.35f, 0.8f)
+			.SetTrans(Tween.TransitionType.Sine);
 	}
 
 	// ── Ferret event ───────────────────────────────────────────────────────────
@@ -591,7 +628,62 @@ public partial class MAPP : OverworldBase
 
 	private void OnRainAltEnded()
 	{
+		GameManager.Instance.RemoveGold(RainStolenGold);
+		SpawnGoldStealAnim();
 		CheckAllAltDialogsDone();
+	}
+
+	/// <summary>
+	/// Spawns a short burst of gold coin polygons that fly from the player to
+	/// Rain's position, suggesting a pickpocket. Coins fade and free themselves.
+	/// </summary>
+	private void SpawnGoldStealAnim()
+	{
+		var player = GetTree().GetFirstNodeInGroup("player") as Node2D;
+		var rain   = YSort.GetNodeOrNull<Node2D>("Rain");
+		if (player == null || rain == null) return;
+
+		var from = player.GlobalPosition + new Vector2(0f, -8f);
+		var to   = rain.GlobalPosition   + new Vector2(0f, -14f);
+
+		int   coinCount = 8;
+		float spread    = 7f;
+		var   goldColor = new Color(1.00f, 0.82f, 0.14f);
+
+		for (int i = 0; i < coinCount; i++)
+		{
+			// Small diamond coin shape
+			var coin = new Polygon2D
+			{
+				Color   = goldColor,
+				ZIndex  = 15,
+				Polygon = new Vector2[]
+				{
+					new Vector2( 0f, -3f),
+					new Vector2( 3f,  0f),
+					new Vector2( 0f,  3f),
+					new Vector2(-3f,  0f),
+				},
+			};
+			AddChild(coin);
+
+			float angle = (Mathf.Tau / coinCount) * i;
+			coin.GlobalPosition = from + new Vector2(
+				Mathf.Cos(angle) * spread,
+				Mathf.Sin(angle) * spread * 0.5f);
+
+			float delay = i * 0.055f;
+
+			var tween = CreateTween();
+			tween.TweenProperty(coin, "global_position", to, 0.45f)
+				.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.In)
+				.SetDelay(delay);
+			tween.Parallel()
+				.TweenProperty(coin, "modulate:a", 0f, 0.12f)
+				.SetDelay(delay + 0.33f)
+				.SetTrans(Tween.TransitionType.Linear);
+			tween.TweenCallback(Callable.From(coin.QueueFree));
+		}
 	}
 
 	// ── "SHE HAS ARISEN" trigger ───────────────────────────────────────────────
