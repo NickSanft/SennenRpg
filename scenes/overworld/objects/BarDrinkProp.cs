@@ -8,6 +8,7 @@ namespace SennenRpg.Scenes.Overworld;
 /// An unattended mug of ale sitting on the bar counter.
 /// Costs 3 gold to drink; restores 5 HP.
 /// </summary>
+[Tool]
 public partial class BarDrinkProp : Area2D, IInteractable
 {
 	private const int DrinkCost  = 3;
@@ -18,7 +19,10 @@ public partial class BarDrinkProp : Area2D, IInteractable
 
 	public override void _Ready()
 	{
-		AddToGroup("interactable");
+		if (GetChildCount() > 0) return;
+
+		if (!Engine.IsEditorHint())
+			AddToGroup("interactable");
 
 		var col = new CollisionShape2D();
 		col.Shape = new RectangleShape2D { Size = new Vector2(10f, 10f) };

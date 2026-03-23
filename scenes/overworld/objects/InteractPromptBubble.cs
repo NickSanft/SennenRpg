@@ -13,6 +13,7 @@ public partial class InteractPromptBubble : Node2D
 	private Node2D _bobNode = null!;
 	private Tween?  _tween;
 
+	public InteractPromptBubble() : this("") { }
 	public InteractPromptBubble(string text) { _text = text; }
 
 	public override void _Ready()

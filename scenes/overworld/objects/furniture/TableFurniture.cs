@@ -7,6 +7,7 @@ namespace SennenRpg.Scenes.Overworld;
 /// The candle flame Polygon2D is added to the "candle_flame" group so
 /// MAPP.cs can apply the flicker tween after the scene tree is ready.
 /// </summary>
+[Tool]
 public partial class TableFurniture : Node2D
 {
 	private static readonly Color TableSurface   = new Color(0.36f, 0.22f, 0.11f);
@@ -17,6 +18,8 @@ public partial class TableFurniture : Node2D
 
 	public override void _Ready()
 	{
+		if (GetChildCount() > 0) return;
+
 		var body  = new StaticBody2D();
 		var shape = new CollisionShape2D { Shape = new RectangleShape2D { Size = new Vector2(28f, 17f) } };
 		body.AddChild(shape);

@@ -7,6 +7,7 @@ namespace SennenRpg.Scenes.Overworld;
 /// <summary>
 /// A dartboard on the wall. Interact to throw a dart and get a random result.
 /// </summary>
+[Tool]
 public partial class DartboardProp : Area2D, IInteractable
 {
 	private static readonly string[] Results =
@@ -26,7 +27,10 @@ public partial class DartboardProp : Area2D, IInteractable
 
 	public override void _Ready()
 	{
-		AddToGroup("interactable");
+		if (GetChildCount() > 0) return;
+
+		if (!Engine.IsEditorHint())
+			AddToGroup("interactable");
 
 		var col = new CollisionShape2D();
 		col.Shape = new RectangleShape2D { Size = new Vector2(18f, 18f) };

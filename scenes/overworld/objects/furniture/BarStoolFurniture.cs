@@ -3,10 +3,13 @@ using Godot;
 namespace SennenRpg.Scenes.Overworld;
 
 /// <summary>A round bar stool.</summary>
+[Tool]
 public partial class BarStoolFurniture : Node2D
 {
 	public override void _Ready()
 	{
+		if (GetChildCount() > 0) return;
+
 		var body  = new StaticBody2D();
 		var shape = new CollisionShape2D { Shape = new RectangleShape2D { Size = new Vector2(8f, 6f) } };
 		body.AddChild(shape);

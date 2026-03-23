@@ -9,6 +9,7 @@ namespace SennenRpg.Scenes.Overworld;
 /// An interactable journal sitting on a table.
 /// Opens a browsable list of Aoife Sylzair's expedition entries.
 /// </summary>
+[Tool]
 public partial class JournalProp : Area2D, IInteractable
 {
 
@@ -17,7 +18,10 @@ public partial class JournalProp : Area2D, IInteractable
 
 	public override void _Ready()
 	{
-		AddToGroup("interactable");
+		if (GetChildCount() > 0) return;
+
+		if (!Engine.IsEditorHint())
+			AddToGroup("interactable");
 
 		// Collision shape
 		var shape = new CollisionShape2D();
