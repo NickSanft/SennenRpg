@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://bwn5qxp8fj4r3"]
 
-[ext_resource type="Script" path="res://scenes/battle/BattleHUD.cs" uid="uid://cqf7mnt6kov2d" id="1_script"]
+[ext_resource type="Script" path="res://scenes/battle/BattleHUD.cs" uid="uid://cniud7q7c1361" id="1_script"]
 
 [node name="BattleHUD" type="CanvasLayer"]
 layer = 10

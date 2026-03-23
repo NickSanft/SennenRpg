@@ -27,7 +27,9 @@ public partial class BattleHUD : CanvasLayer
 		_hpBar     = GetNode<ColorRect>("HudPanel/HBoxContainer/HpBarBg/HpBar");
 
 		GameManager.Instance.PlayerStatsChanged += UpdateHud;
-		UpdateHud();
+		// Defer so the layout pass runs first — _hpBarBg.Size is valid and
+		// setting _hpBar.Size no longer conflicts with the anchor system.
+		Callable.From(UpdateHud).CallDeferred();
 	}
 
 	public override void _ExitTree()

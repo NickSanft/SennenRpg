@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://djpw6hct3n2qk"]
 
-[ext_resource type="Script" path="res://scenes/battle/SubMenu.cs" uid="uid://cxm8frbk4j7e1" id="1_script"]
+[ext_resource type="Script" path="res://scenes/battle/SubMenu.cs" uid="uid://bwcssfy3an1h8" id="1_script"]
 
 [node name="SubMenu" type="Control"]
 layout_mode = 3

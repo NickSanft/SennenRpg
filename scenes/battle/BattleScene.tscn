@@ -1,6 +1,6 @@
 [gd_scene load_steps=9 format=3 uid="uid://cwp9xtb3hm6qe"]
 
-[ext_resource type="Script" path="res://scenes/battle/BattleScene.cs" uid="uid://dno4vke1cj7p2" id="1_script"]
+[ext_resource type="Script" path="res://scenes/battle/BattleScene.cs" uid="uid://cht04ieerben2" id="1_script"]
 [ext_resource type="PackedScene" uid="uid://dxc3n8mp1oqv5" path="res://scenes/battle/ActionMenu.tscn" id="2_actionmenu"]
 [ext_resource type="PackedScene" uid="uid://djpw6hct3n2qk" path="res://scenes/battle/SubMenu.tscn" id="3_submenu"]
 [ext_resource type="PackedScene" uid="uid://bwn5qxp8fj4r3" path="res://scenes/battle/BattleHUD.tscn" id="4_battlehud"]
