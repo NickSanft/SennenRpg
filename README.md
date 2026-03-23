@@ -45,7 +45,11 @@ An Undertale-inspired 2D RPG built in **Godot 4.6** with **C# (.NET 10)**. The g
 ### Overworld
 - **Player movement** — 8-directional movement at 80 px/s. Blocked during dialog, battle, and pause states.
 - **Camera** — PhantomCamera2D follows the player with smooth interpolation. Bounds are automatically calculated from the `Ground` TileMapLayer's used rect.
-- **NPCs** — interactable characters with configurable Dialogic timelines. Alternate timelines trigger based on game flags (e.g., after first conversation). The NPC faces the player during dialog, then resets to its default direction after.
+- **NPCs** — interactable characters with configurable Dialogic timelines. Alternate timelines trigger based on game flags (e.g., after first conversation). The NPC faces the player during dialog, then resets to its default direction after. An optional examine description shows a Talk/Examine/Cancel menu. NPCs can patrol between waypoints when idle.
+- **Vendor NPCs** — a VendorNpc subclass that optionally plays a greeting timeline first, then opens a shop UI with configurable `ShopItemEntry` stock.
+- **Signs** — `InteractSign` objects display multi-line text in a bottom panel popup. Press Z or X to dismiss.
+- **Treasure chests** — `Chest` objects give the player an item on first open (flag-tracked; stays open on revisit).
+- **Journal prop** — `JournalProp` opens a scrollable list of journal entries from `GameManager`. Each entry opens in a full-screen popup.
 - **Save points** — interactable stars that open a native YES/NO confirmation dialog, then write to disk.
 - **Encounter triggers** — invisible Area2D triggers that start a battle when walked into. Supports `OneShot` (fires once then removes itself) and `PersistenceFlag` (remembers across save/load cycles).
 - **Enemy pawns** — visible enemy sprites that idle until the player walks within detection range, then chase the player and start a battle on contact.
@@ -54,6 +58,16 @@ An Undertale-inspired 2D RPG built in **Godot 4.6** with **C# (.NET 10)**. The g
 - **Random encounters** — each map has a configurable `RandomEncounterTable`. Every 32 pixels of player movement, the game rolls each encounter's `EncounterChancePerStep` (0–100%). Multiple encounters can coexist on one map with independent probabilities.
 - **Pause menu** — ESC overlay with Resume, Save, and Main Menu options.
 - **HUD** — bottom-left HP bar and player name, always visible during overworld.
+
+### MAPP (The Mapp Tavern)
+A fully hand-crafted map scene (`scenes/overworld/MAPP.tscn`) demonstrating all overworld objects. Built entirely in code — no external tile sheets required. Features:
+- Procedural TileMapLayer floor (wood planks + stone border)
+- Ceiling beams, rugs, a fireplace mantelpiece, bottle rack, windows, and a staircase
+- 7 named NPCs (Shizu, Foran, the Barkeep, and others) with dialog timelines
+- Vendor NPC (Barkeep) selling items
+- Furniture objects: tables, chairs, bar stools
+- Interactive sign, dartboard, bar drinks, and journal prop
+- All scene objects render in the Godot editor via `[Tool]` attributes
 
 ### Battle System
 
@@ -91,6 +105,7 @@ accuracyMultiplier = 1.0 + accuracy × 0.5   // range: 1.0× – 1.5×
 | `StraightBullet` | Falls straight down at constant speed. |
 | `DirectedBullet` | Travels in any direction set by the spawning pattern. |
 | `BouncingBullet` | Reflects off arena walls for up to 12 seconds. |
+| `ZigZagBullet` | Travels in a zigzag path. |
 
 #### Attack patterns
 
@@ -101,6 +116,10 @@ accuracyMultiplier = 1.0 + accuracy × 0.5   // range: 1.0× – 1.5×
 | `Pattern003` | Gloomfish | Radial burst — 6 bullets spread outward in a ring every 1.5 s. The ring rotates each burst. |
 | `Pattern004` | Dustmote | Chaos — 1–3 bouncing bullets spawn from random edges every 0.5 s at random angles. |
 | `PatternRandom` | Wisplet | Meta-pattern. Picks one of its `Patterns[]` array at random each battle. |
+
+#### Rhythm minigames
+
+Several Act and skill options open rhythm-based minigames (Charm, WarCry, BardicInspiration, Serenade, Dissonance, Lullaby). Notes scroll down lanes; the player presses confirm on the beat. `RhythmClock` drives the master beat and `PerformanceScore` accumulates hit/miss/perfect counts. The final `PerformanceScore` is written to a Dialogic variable before the timeline continues.
 
 #### Victory / Defeat
 
@@ -125,8 +144,7 @@ All dialog runs through **Dialogic 2**, accessed exclusively via `DialogicBridge
 
 - **Flag signals** — a Dialogic `Signal Event` with text `flag:my_flag` automatically sets `GameManager.SetFlag("my_flag", true)` with no C# handler needed.
 - **Pre-timeline sync** — `StartTimelineWithFlags()` pushes all `GameManager.Flags` and common variables (`playerName`, `gold`, `love`) into Dialogic before starting, so timelines can branch on game state.
-- **Post-timeline sync** — after every timeline ends, all Dialogic boolean variables are written back to `GameManager.Flags`.
-- **Safety net** — if `GameState` is stuck on `Dialog` but Dialogic is not running, the state resets to `Overworld` after 5 seconds.
+- **Safety net** — if `GameState` is stuck on `Dialog` but Dialogic is not running *and* Dialogic was the one that set the state, the state resets to `Overworld` after 5 seconds. Non-Dialogic UI (signs, journal, shop) that also uses `GameState.Dialog` for player-blocking is excluded.
 - **Timeline preloading** — `OverworldBase` calls `ResourceLoader.LoadThreadedRequest()` on all NPC timelines when a map loads, so the first conversation has no stutter.
 - **DialogRegistry** — an optional short-name registry (`DialogRegistry.Instance.StartTimeline("intro")`) to avoid scattering full `res://` paths across game code.
 
@@ -152,14 +170,21 @@ SennenRpg/
 │   ├── SceneTransition.cs  # Async scene changes with fade/flash
 │   ├── DialogicBridge.cs   # Dialogic 2 C# wrapper
 │   ├── BattleRegistry.cs   # Passes encounter data across scene transitions
-│   └── DialogRegistry.cs   # Optional short-name → full-path timeline map
+│   ├── DialogRegistry.cs   # Optional short-name → full-path timeline map
+│   └── RhythmClock.cs      # Master beat clock for rhythm minigames
 │
 ├── core/
-│   ├── data/               # Resource subclasses ([GlobalClass] for inspector)
-│   │   ├── CharacterStats.cs
-│   │   ├── EnemyData.cs
-│   │   ├── EncounterData.cs
-│   │   └── ItemData.cs
+│   ├── data/               # Pure-logic + Resource subclasses
+│   │   ├── CharacterStats.cs, EnemyData.cs, EncounterData.cs, ItemData.cs
+│   │   ├── ShopItemEntry.cs        # Line item for vendor shop stock
+│   │   ├── RhythmConstants.cs      # Beat timing, lane counts
+│   │   ├── PerformanceScore.cs     # Hit/miss/perfect accumulator
+│   │   ├── Flags.cs                # Flag name constants + helpers
+│   │   ├── ItemLogic.cs            # CanUse / Apply logic (pure)
+│   │   ├── ShopLogic.cs            # CanAfford / Buy logic (pure)
+│   │   ├── NpcLogic.cs             # SelectTimeline (pure, testable)
+│   │   ├── DialogicSignalParser.cs # Parses "flag:x", "give_item:y" strings
+│   │   └── JournalData.cs          # Journal entry list helpers
 │   ├── interfaces/
 │   │   ├── IInteractable.cs
 │   │   └── IDamageable.cs
@@ -168,22 +193,44 @@ SennenRpg/
 │
 ├── scenes/
 │   ├── boot/               # First scene (Bootstrap)
-│   ├── menus/              # MainMenu, PauseMenu
-│   ├── hud/                # GameHud (overworld HP bar, CanvasLayer 2)
+│   ├── menus/              # MainMenu, PauseMenu, GameOver, InventoryMenu, ShopMenu
+│   ├── hud/                # GameHud, MinimapHud, AreaNameLabel, DialogHistoryOverlay
 │   ├── player/             # Player.tscn + Player.cs
 │   ├── overworld/
 │   │   ├── OverworldBase.tscn / .cs   # Base class for all maps
-│   │   ├── maps/                      # Individual map scenes (inherit OverworldBase)
-│   │   └── objects/                   # Npc, SavePoint, EncounterTrigger,
-│   │                                  # MapExit, SpawnPoint, CutsceneTrigger,
-│   │                                  # EnemyPawn, SaveConfirmDialog
+│   │   ├── MAPP.tscn / .cs            # The Mapp Tavern (fully procedural)
+│   │   ├── maps/                      # Other map scenes
+│   │   └── objects/
+│   │       ├── Npc.cs                 # NPC base (patrol, dialog, emote)
+│   │       ├── VendorNpc.cs           # Extends Npc — opens ShopMenu
+│   │       ├── SavePoint.cs
+│   │       ├── EncounterTrigger.cs
+│   │       ├── MapExit.cs
+│   │       ├── SpawnPoint.cs
+│   │       ├── CutsceneTrigger.cs
+│   │       ├── EnemyPawn.cs
+│   │       ├── InteractSign.cs        # Readable sign/notice board
+│   │       ├── Chest.cs               # One-time treasure chest
+│   │       ├── JournalProp.cs         # Opens journal entry list
+│   │       ├── DartboardProp.cs       # Decorative dartboard
+│   │       ├── BarDrinkProp.cs        # Decorative bar drink
+│   │       ├── InteractPromptBubble.cs
+│   │       ├── SignReaderPopup.cs
+│   │       ├── JournalMenuPopup.cs
+│   │       ├── JournalEntryPopup.cs
+│   │       ├── NpcInteractMenu.cs
+│   │       └── furniture/
+│   │           ├── TableFurniture.cs
+│   │           ├── ChairFurniture.cs  # NorthFacing export live-updates in editor
+│   │           └── BarStoolFurniture.cs
 │   └── battle/
 │       ├── BattleScene.tscn / .cs     # Root state machine
 │       ├── BattleHUD.cs               # CanvasLayer 10
 │       ├── ActionMenu, SubMenu, FightBar
 │       ├── ui/                        # DamageNumber, EnemyNameplate
 │       ├── dodge/                     # DodgeBox, Soul, BulletBase variants
-│       └── patterns/                  # Pattern001–004, PatternRandom
+│       ├── patterns/                  # Pattern001–006, PatternRandom
+│       └── rhythm/                    # CharmMinigame, BardMinigameBase + skills + patterns
 │
 ├── resources/
 │   ├── characters/         # player_stats.tres
@@ -195,12 +242,44 @@ SennenRpg/
 │   ├── characters/         # .dch Dialogic character definitions
 │   └── timelines/          # .dtl timeline files
 │
-└── assets/
-    ├── sprites/
-    ├── fonts/
-    ├── audio/
-    └── shaders/
+├── assets/
+│   ├── sprites/
+│   ├── fonts/
+│   ├── audio/
+│   └── shaders/
+│
+├── SennenRpg.Tests/        # NUnit tests — pure C# logic, no Godot runtime
+│   └── Logic/              # DialogicSignalParser, Flags, ItemLogic, ShopLogic,
+│                           # NpcLogic, JournalData, PerformanceScore, RhythmConstants
+│
+└── tests/gdunit/           # GdUnit4 tests — Godot runtime required
+    # DialogicBridge, GameManager, NpcDialog, RhythmClock
 ```
+
+---
+
+## Tests
+
+Two complementary test suites:
+
+### NUnit (pure logic — no Godot required)
+
+```bash
+dotnet test SennenRpg.Tests/SennenRpg.Tests.csproj
+```
+
+Covers all stateless business logic in `core/data/`. Source files are included selectively (not via project reference) to keep the test assembly free of Godot scene dependencies.
+
+### GdUnit4 (Godot runtime required)
+
+Run from the Godot editor: open the GdUnit4 panel → right-click `tests/gdunit/` → **Run Tests**.
+
+Or headless:
+```bash
+godot --headless -s addons/gdUnit4/bin/GdUnitCmdTool.gd -d res://tests/gdunit/
+```
+
+Covers autoload integration: `GameManager`, `DialogicBridge`, `NpcDialog`, `RhythmClock`.
 
 ---
 
@@ -274,6 +353,17 @@ DialogRegistry.Instance.Register("intro_cutscene", "res://dialog/timelines/intro
 DialogRegistry.Instance.StartTimeline("intro_cutscene");
 ```
 
+### `RhythmClock`
+
+Drives the master beat for all rhythm minigames. BPM and offset are set per-enemy before the minigame starts.
+
+```csharp
+RhythmClock.Instance.Bpm = 120f;
+RhythmClock.Instance.Start();
+RhythmClock.Instance.Stop();
+double beat = RhythmClock.Instance.CurrentBeat;
+```
+
 ---
 
 ## Core Data Types
@@ -297,6 +387,15 @@ Create as `.tres` files in `resources/enemies/`. All fields are inspector-editab
 | `CanBeSpared` | bool | Whether Spare works when mercy ≥ 100% |
 | `GoldDrop` / `ExpDrop` | int | Rewards on kill |
 | `AttackPatternScene` | PackedScene | Pattern node to spawn in DodgeBox |
+
+### `ShopItemEntry` (Resource)
+
+Configure on a `VendorNpc` via the `ShopStock` inspector array.
+
+```
+ItemPath    string   res:// path to an ItemData .tres
+Price       int      Gold cost
+```
 
 ### `EncounterData` (Resource)
 
@@ -375,7 +474,7 @@ public partial class MyPattern : Node
 
 1. Add an `Npc.tscn` instance to `YSort` in your map.
 2. Set `NpcId` (unique string), `DisplayName`, and `TimelinePath` (a `.dtl` file).
-3. Optionally fill `AltTimelinePaths` / `AltTimelineFlags` for alternate dialog after events.
+3. Optionally fill `AltTimelinePaths` / `AltRequiredFlags` for alternate dialog after events.
 4. Create the timeline in the Dialogic editor. The `talked_to_{NpcId}` flag is set automatically after the first conversation ends.
 
 ### New Item
@@ -396,6 +495,9 @@ To set a flag from inside a timeline, add a **Signal Event** node with text `fla
 
 ### No GDScript in gameplay code
 All logic is C#. GDScript exists only in the `addons/` plugin files. Dialogic (a GDScript plugin) is wrapped entirely by `DialogicBridge.cs`.
+
+### `[Tool]` attribute for procedurally-built scenes
+Objects that build their visuals in `_Ready()` (NPCs, furniture, signs, chests, props) use the `[Tool]` attribute so they are visible in the Godot editor scene preview. **`[Tool]` is not inherited in Godot 4 C#** — every class in an inheritance chain needs its own attribute. All autoload access and group registration inside `[Tool]` scripts must be guarded with `if (!Engine.IsEditorHint())`.
 
 ### Async scene transitions
 `SceneTransition.GoToAsync()` and `ToBattleAsync()` are `async Task` methods. Always `await` them; fire-and-forget is used only for non-blocking background tasks.
@@ -419,6 +521,8 @@ Godot destroys the current scene tree on every scene change. Cross-scene data li
 | 2 | GameHud (overworld HP) |
 | 10 | BattleHUD |
 | 50 | PauseMenu |
+| 55 | SignReaderPopup |
+| 56 | JournalEntryPopup |
 | 60 | SaveConfirmDialog |
 | 100 | SceneTransition (fade overlay — always on top) |
 
@@ -458,4 +562,7 @@ Godot destroys the current scene tree on every scene change. Cross-scene data li
 - **`CharacterStats` sharing** — it is a `Resource`; call `.Duplicate()` before mutating if you need a local copy.
 - **Pattern intermediate nodes** — any `Node` that sits between `BulletContainer` and actual bullet nodes must extend `Node2D`, not `Node`, or bullets will render at global (0, 0).
 - **`SceneTransition.GoToAsync` is async** — always `await` it or the code after it runs before the transition finishes.
-- **`.tres` C# resource types** — the `[gd_resource]` header must use `type="Resource" script_class="ClassName"` (not `type="ClassName"`), because Godot's C++ parser cannot instantiate C# types by name.
+- **`.tres` C# resource types** — use `type="Resource"` with a `script=` reference in the `.tscn`, not `type="ClassName"`. Godot's C++ parser cannot instantiate C# types by name. Export the property as `Resource[]` and cast with `OfType<T>()` at runtime.
+- **`[Tool]` not inherited** — Godot 4 C# does not propagate `[Tool]` to subclasses. Add it explicitly on every class that needs editor `_Ready()` execution.
+- **`GetChildCount()` guard with pre-baked children** — if a `.tscn` pre-bakes a `CollisionShape2D`, `GetChildCount()` is already 1 when `_Ready()` first runs. Use `> 1` instead of `> 0` for the duplicate-build guard.
+- **`GrabFocus()` before `AddChild()`** — calling `GrabFocus()` before the node is in the scene tree throws an error. Call it after `AddChild()`, wrapped in `CallDeferred` for safety.

@@ -52,6 +52,7 @@ public partial class MAPP : OverworldBase
 		base._Ready();
 
 		BuildTileMap();
+		SpawnWallColliders();
 		SpawnCeilingBeams();
 		SpawnRugs();
 		SpawnMantelpiece();
@@ -1343,6 +1344,53 @@ public partial class MAPP : OverworldBase
 			t.TweenProperty(fireLight, "energy", 0.55f, 0.25f)
 				.SetTrans(Tween.TransitionType.Sine);
 		}
+	}
+
+	// ── Wall collision ─────────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Adds StaticBody2D collision boxes matching the tile-based wall geometry.
+	/// All measurements are in pixels; tile size = 16.
+	///
+	/// Room tile extents:  x = -10 .. 9  →  pixel x = -160 .. 160
+	///                     y = -8  .. 10 →  pixel y = -128 .. 176
+	///
+	/// The north wall (y=-8..-6) and bar counter (y=-5..-4) are merged into a
+	/// single box so the player cannot reach the staff side of the bar.
+	/// The south wall has a 32 px doorway gap centred at x=0 for the map exit.
+	/// </summary>
+	private void SpawnWallColliders()
+	{
+		// North wall (y=-8..-6) + bar counter (y=-5..-4) — full width
+		// pixel: x=-160..160, y=-128..-48  →  size 320×80, centre (0, -88)
+		SpawnWallBox(new Vector2(  0f, -88f), new Vector2(320f,  80f));
+
+		// South wall — west portion (x=-160..-16)
+		// pixel: x=-160..-16, y=160..176  →  size 144×16, centre (-88, 168)
+		SpawnWallBox(new Vector2(-88f, 168f), new Vector2(144f,  16f));
+
+		// South wall — east portion (x=16..160)
+		// pixel: x=16..160, y=160..176  →  size 144×16, centre (88, 168)
+		SpawnWallBox(new Vector2( 88f, 168f), new Vector2(144f,  16f));
+
+		// West wall — full height (tile col x=-10)
+		// pixel: x=-160..-144, y=-128..176  →  size 16×304, centre (-152, 24)
+		SpawnWallBox(new Vector2(-152f,  24f), new Vector2( 16f, 304f));
+
+		// East wall — full height (tile col x=9)
+		// pixel: x=144..160, y=-128..176  →  size 16×304, centre (152, 24)
+		SpawnWallBox(new Vector2( 152f,  24f), new Vector2( 16f, 304f));
+	}
+
+	private void SpawnWallBox(Vector2 centre, Vector2 size)
+	{
+		var body  = new StaticBody2D { Position = centre };
+		var shape = new CollisionShape2D
+		{
+			Shape = new RectangleShape2D { Size = size },
+		};
+		body.AddChild(shape);
+		AddChild(body);
 	}
 
 }
