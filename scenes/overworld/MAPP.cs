@@ -96,6 +96,8 @@ public partial class MAPP : OverworldBase
 
 		// Listen for the custom signal fired at the end of npc_brix_again.dtl
 		DialogicBridge.Instance.DialogicSignalReceived += OnDialogicSignal;
+
+		SpawnEntryFade();
 	}
 
 	// ── Editor preview ─────────────────────────────────────────────────────────
@@ -898,6 +900,30 @@ public partial class MAPP : OverworldBase
 	}
 
 	// ── Visual helpers ──────────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Covers the screen with a dark overlay that immediately fades out.
+	/// Hides the single-frame pop-in of all code-generated geometry on map load
+	/// and reads as stepping through a doorway from a darker corridor.
+	/// </summary>
+	private void SpawnEntryFade()
+	{
+		var layer = new CanvasLayer { Layer = 80 };
+		AddChild(layer);
+
+		var cover = new ColorRect
+		{
+			Color        = new Color(0f, 0f, 0f, 0.55f),
+			AnchorRight  = 1f,
+			AnchorBottom = 1f,
+		};
+		layer.AddChild(cover);
+
+		var t = CreateTween();
+		t.TweenProperty(cover, "color:a", 0f, 0.6f)
+			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
+		t.TweenCallback(Callable.From(layer.QueueFree));
+	}
 
 	/// <summary>
 	/// Shakes the active camera by tweening its Offset over <paramref name="duration"/> seconds.
