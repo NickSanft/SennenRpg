@@ -8,6 +8,7 @@ namespace SennenRpg.Scenes.Overworld;
 /// A readable sign or notice board.
 /// Press interact to open a text popup; press interact/cancel again to close.
 /// </summary>
+[Tool]
 public partial class InteractSign : Area2D, IInteractable
 {
 	[Export] public string   SignTitle { get; set; } = "";
@@ -18,7 +19,10 @@ public partial class InteractSign : Area2D, IInteractable
 
 	public override void _Ready()
 	{
-		AddToGroup("interactable");
+		if (GetChildCount() > 1) return; // >1 because CollisionShape2D is pre-baked in the .tscn
+
+		if (!Engine.IsEditorHint())
+			AddToGroup("interactable");
 
 		// Placeholder sign post visual
 		var post = new Polygon2D { Color = new Color(0.5f, 0.32f, 0.1f) };

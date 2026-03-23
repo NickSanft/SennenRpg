@@ -6,6 +6,7 @@ using SennenRpg.Core.Interfaces;
 
 namespace SennenRpg.Scenes.Overworld;
 
+[Tool]
 public partial class Npc : CharacterBody2D, IInteractable
 {
 	/// <summary>
@@ -67,8 +68,10 @@ public partial class Npc : CharacterBody2D, IInteractable
 
 	public override void _Ready()
 	{
-		AddToGroup("interactable");
 		_sprite = GetNodeOrNull<AnimatedSprite2D>("Sprite");
+
+		if (!Engine.IsEditorHint())
+			AddToGroup("interactable");
 
 		// Load character description from .dch if a path is provided
 		if (!string.IsNullOrEmpty(CharacterPath) && ResourceLoader.Exists(CharacterPath))
@@ -115,18 +118,20 @@ public partial class Npc : CharacterBody2D, IInteractable
 		// Apply the default facing direction
 		PlayFacingIdle(DefaultFacing);
 
-		if (PatrolPoints.Length >= 1)
+		if (!Engine.IsEditorHint() && PatrolPoints.Length >= 1)
 			Callable.From(StartPatrol).CallDeferred();
 	}
 
 	public override void _Process(double delta)
 	{
+		if (Engine.IsEditorHint()) return;
 		if (_talkCooldown > 0f)
 			_talkCooldown -= (float)delta;
 	}
 
 	public override void _PhysicsProcess(double delta)
 	{
+		if (Engine.IsEditorHint()) return;
 		TickPatrol((float)delta);
 	}
 

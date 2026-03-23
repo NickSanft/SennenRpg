@@ -11,6 +11,7 @@ namespace SennenRpg.Scenes.Overworld;
 /// stays visually open and blocks re-interaction on subsequent visits.
 /// FlagId is auto-derived from ItemPath if left empty.
 /// </summary>
+[Tool]
 public partial class Chest : Area2D, IInteractable
 {
 	[Export] public string ItemPath { get; set; } = "";
@@ -30,9 +31,14 @@ public partial class Chest : Area2D, IInteractable
 
 	public override void _Ready()
 	{
-		AddToGroup("interactable");
+		if (GetChildCount() > 1) return; // >1 because CollisionShape2D is pre-baked in the .tscn
 
-		_opened = !string.IsNullOrEmpty(ItemPath) && GameManager.Instance.GetFlag(Flag);
+		if (!Engine.IsEditorHint())
+			AddToGroup("interactable");
+
+		_opened = !Engine.IsEditorHint()
+			   && !string.IsNullOrEmpty(ItemPath)
+			   && GameManager.Instance.GetFlag(Flag);
 
 		BuildVisual();
 

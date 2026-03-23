@@ -10,6 +10,7 @@ namespace SennenRpg.Scenes.Overworld;
 /// This script handles the map config, flame animation, the exit trigger,
 /// and the magical horse event triggered by Brix's alt dialog.
 /// </summary>
+[Tool]
 public partial class MAPP : OverworldBase
 {
 	private const string HorseScene         = "res://scenes/overworld/objects/npcs/NpcHorse.tscn";
@@ -31,6 +32,12 @@ public partial class MAPP : OverworldBase
 
 	public override void _Ready()
 	{
+		if (Engine.IsEditorHint())
+		{
+			BuildEditorVisuals();
+			return;
+		}
+
 		MapId   = "mapp_tavern";
 		BgmPath = "res://assets/music/Divora - New Beginnings - DND 4 - 02 Carillion Forest.wav";
 
@@ -84,6 +91,29 @@ public partial class MAPP : OverworldBase
 
 		// Listen for the custom signal fired at the end of npc_brix_again.dtl
 		DialogicBridge.Instance.DialogicSignalReceived += OnDialogicSignal;
+	}
+
+	// ── Editor preview ─────────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Builds only the static visual elements so the scene looks correct in the
+	/// Godot editor. Skips all autoload access and runtime animations.
+	/// </summary>
+	private void BuildEditorVisuals()
+	{
+		// Guard: the .tscn already contains many children (furniture, lights, NPCs).
+		// We track whether we've added our procedural visuals via the TileMapLayer child.
+		foreach (var child in GetChildren())
+			if (child is TileMapLayer) return; // already built
+
+		BuildTileMap();
+		SpawnCeilingBeams();
+		SpawnRugs();
+		SpawnMantelpiece();
+		SpawnWallDecorations();
+		SpawnBottleRack();
+		SpawnWindows();
+		SpawnStaircase();
 	}
 
 	public override void _ExitTree()
@@ -913,6 +943,7 @@ public partial class MAPP : OverworldBase
 	private void BuildTileMap()
 	{
 		var tex = GD.Load<Texture2D>(TilesetPath);
+		if (tex == null) return; // tileset texture not yet available
 
 		var source = new TileSetAtlasSource();
 		source.Texture            = tex;

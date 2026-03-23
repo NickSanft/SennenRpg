@@ -1,3 +1,4 @@
+using System.Linq;
 using Godot;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
@@ -10,10 +11,15 @@ namespace SennenRpg.Scenes.Overworld;
 /// When interacted with, optionally plays a greeting timeline first, then opens the shop.
 /// Configure ShopStock in the Godot inspector — each entry is a ShopItemEntry sub-resource.
 /// </summary>
+[Tool]
 public partial class VendorNpc : Npc
 {
-	/// <summary>Items this vendor sells. Each entry links an ItemData path and a gold price.</summary>
-	[Export] public ShopItemEntry[] ShopStock { get; set; } = [];
+	/// <summary>
+	/// Items this vendor sells. Typed as Resource[] so Godot's deserializer doesn't
+	/// try to cast script-attached sub-resources in editor tool mode; elements are
+	/// cast to ShopItemEntry at runtime when the shop is opened.
+	/// </summary>
+	[Export] public Resource[] ShopStock { get; set; } = [];
 
 	private ShopMenu? _shopMenu;
 
@@ -53,7 +59,8 @@ public partial class VendorNpc : Npc
 		_shopMenu = scene.Instantiate<ShopMenu>();
 		GetTree().Root.AddChild(_shopMenu);
 		_shopMenu.Closed += OnShopClosed;
-		_shopMenu.Open(ShopStock);
+		var entries = ShopStock.OfType<ShopItemEntry>().ToArray();
+		_shopMenu.Open(entries);
 		GD.Print($"[VendorNpc] Shop opened for '{DisplayName}'.");
 	}
 
