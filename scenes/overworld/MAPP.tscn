@@ -23,11 +23,6 @@
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/BarDrinkProp.tscn" id="21_drinkprop"]
 [ext_resource type="Script" uid="uid://drkqrxhkmk75h" path="res://core/data/ShopItemEntry.cs" id="22_shopentry"]
 
-[sub_resource type="Resource" id="ShopEntry_ale"]
-script = ExtResource("22_shopentry")
-ItemDataPath = "res://resources/items/item_004.tres"
-Price = 5
-
 [sub_resource type="Gradient" id="Gradient_fire_lgt"]
 colors = PackedColorArray(1, 0.62, 0.12, 1, 1, 0.62, 0.12, 0)
 
@@ -44,11 +39,44 @@ colors = PackedColorArray(1, 0.88, 0.42, 1, 1, 0.88, 0.42, 0)
 gradient = SubResource("Gradient_candle_lgt")
 fill = 1
 
+[sub_resource type="Resource" id="ShopEntry_ale"]
+script = ExtResource("22_shopentry")
+ItemDataPath = "res://resources/items/item_004.tres"
+Price = 5
+
 [node name="MAPP" unique_id=1793046433 instance=ExtResource("1_mapp01")]
 script = ExtResource("2_mapp02")
 
-[node name="Kriora" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="0" unique_id=937356301 instance=ExtResource("3_kriora")]
-position = Vector2(0, -40)
+[node name="FireLight" type="PointLight2D" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="0" unique_id=788773218]
+position = Vector2(-136, -24)
+color = Color(1, 0.62, 0.12, 1)
+energy = 0.85
+texture = SubResource("GradTex_fire_lgt")
+texture_scale = 3.2
+
+[node name="Table1Light" type="PointLight2D" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="1" unique_id=1488813524]
+position = Vector2(-60, 32)
+color = Color(1, 0.88, 0.42, 1)
+energy = 0.45
+texture = SubResource("GradTex_candle_lgt")
+texture_scale = 1.6
+
+[node name="Table2Light" type="PointLight2D" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="2" unique_id=424062576]
+position = Vector2(60, 32)
+color = Color(1, 0.88, 0.42, 1)
+energy = 0.45
+texture = SubResource("GradTex_candle_lgt")
+texture_scale = 1.6
+
+[node name="Table3Light" type="PointLight2D" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="3" unique_id=1940712445]
+position = Vector2(0, -18)
+color = Color(1, 0.88, 0.42, 1)
+energy = 0.4
+texture = SubResource("GradTex_candle_lgt")
+texture_scale = 1.6
+
+[node name="Kriora" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="4" unique_id=937356301 instance=ExtResource("3_kriora")]
+position = Vector2(-90, 103)
 NpcId = "kriora_mapp"
 TimelinePath = "res://dialog/timelines/npc_kriora.dtl"
 DisplayName = "Kriora"
@@ -57,7 +85,7 @@ AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_kriora_again.dt
 CharacterPath = "res://dialog/characters/Kriora.dch"
 PlaceholderColor = Color(0.75, 0.25, 0.18, 1)
 
-[node name="Shizu" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="1" unique_id=1156379984 instance=ExtResource("4_shizu")]
+[node name="Shizu" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="5" unique_id=1156379984 instance=ExtResource("4_shizu")]
 position = Vector2(-120, 60)
 NpcId = "shizu_mapp"
 TimelinePath = "res://dialog/timelines/npc_shizu.dtl"
@@ -67,7 +95,7 @@ AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_shizu_again.dtl
 CharacterPath = "res://dialog/characters/Shizu.dch"
 PlaceholderColor = Color(0.55, 0.1, 0.75, 1)
 
-[node name="Lily" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="2" unique_id=1552380209 instance=ExtResource("5_lily")]
+[node name="Lily" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="6" unique_id=1552380209 instance=ExtResource("5_lily")]
 position = Vector2(-40, 30)
 NpcId = "lily_mapp"
 TimelinePath = "res://dialog/timelines/npc_lily.dtl"
@@ -79,7 +107,7 @@ PlaceholderColor = Color(0.95, 0.6, 0.7, 1)
 PatrolPoints = PackedVector2Array(-50, 20, 50, 20, 0, 65)
 PatrolSpeed = 25.0
 
-[node name="Gus" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="3" unique_id=363661240 instance=ExtResource("6_gus")]
+[node name="Gus" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="7" unique_id=363661240 instance=ExtResource("6_gus")]
 position = Vector2(-110, 20)
 NpcId = "gus_mapp"
 TimelinePath = "res://dialog/timelines/npc_gus.dtl"
@@ -90,8 +118,8 @@ AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_gus_again.dtl")
 CharacterPath = "res://dialog/characters/Gus.dch"
 PlaceholderColor = Color(0.6, 0.42, 0.22, 1)
 
-[node name="Brix" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="4" unique_id=1263387292 instance=ExtResource("7_brix")]
-position = Vector2(100, 20)
+[node name="Brix" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="8" unique_id=1263387292 instance=ExtResource("7_brix")]
+position = Vector2(107, 23)
 NpcId = "brix_mapp"
 TimelinePath = "res://dialog/timelines/npc_brix.dtl"
 DisplayName = "Brix"
@@ -101,8 +129,8 @@ AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_brix_again.dtl"
 CharacterPath = "res://dialog/characters/Brix.dch"
 PlaceholderColor = Color(0.4, 0.42, 0.46, 1)
 
-[node name="Bhata" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="5" unique_id=567434243 instance=ExtResource("8_bhata")]
-position = Vector2(30, -10)
+[node name="Bhata" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="9" unique_id=567434243 instance=ExtResource("8_bhata")]
+position = Vector2(49, -10)
 NpcId = "bhata_mapp"
 TimelinePath = "res://dialog/timelines/npc_bhata.dtl"
 DisplayName = "Bhata"
@@ -111,7 +139,7 @@ AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_bhata_again.dtl
 CharacterPath = "res://dialog/characters/Bhata.dch"
 PlaceholderColor = Color(0.25, 0.75, 0.7, 1)
 
-[node name="Rain" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="6" unique_id=1755162515 instance=ExtResource("9_rain")]
+[node name="Rain" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="10" unique_id=1755162515 instance=ExtResource("9_rain")]
 position = Vector2(50, 100)
 NpcId = "rain_mapp"
 TimelinePath = "res://dialog/timelines/npc_rain.dtl"
@@ -124,7 +152,7 @@ PlaceholderColor = Color(0.35, 0.55, 0.95, 1)
 PatrolPoints = PackedVector2Array(60, 90, 40, 100, 50, 100)
 PatrolSpeed = 18.0
 
-[node name="PetWitchCat" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="7" unique_id=911490980 instance=ExtResource("10_petwcat")]
+[node name="PetWitchCat" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="11" unique_id=911490980 instance=ExtResource("10_petwcat")]
 position = Vector2(58, 44)
 NpcId = "pet_witch_cat"
 TimelinePath = "res://dialog/timelines/npc_pet_witch_cat.dtl"
@@ -132,7 +160,7 @@ DisplayName = "WitchCat"
 DefaultFacing = 2
 CharacterPath = "res://dialog/characters/PetWitchCat.dch"
 
-[node name="Barkeep" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="8" unique_id=914373453 instance=ExtResource("14_vendor")]
+[node name="Barkeep" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="12" unique_id=914373453 instance=ExtResource("14_vendor")]
 position = Vector2(0, -85)
 ShopStock = [SubResource("ShopEntry_ale")]
 NpcId = "barkeep_mapp"
@@ -142,6 +170,59 @@ AltRequiredFlags = PackedStringArray("all_alt_dialogs_done", "gus_transformed_to
 AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_barkeep_alldone.dtl", "res://dialog/timelines/npc_barkeep_frog.dtl", "res://dialog/timelines/npc_barkeep_horse.dtl")
 CharacterPath = "res://dialog/characters/Barkeep.dch"
 PlaceholderColor = Color(0.55, 0.38, 0.18, 1)
+
+[node name="Table1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="13" unique_id=1835706404 instance=ExtResource("11_table")]
+position = Vector2(-60, 40)
+
+[node name="Table2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="14" unique_id=1545523261 instance=ExtResource("11_table")]
+position = Vector2(60, 40)
+
+[node name="Table3" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="15" unique_id=891817547 instance=ExtResource("11_table")]
+position = Vector2(0, -10)
+
+[node name="T1ChairN" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="16" unique_id=1993783938 instance=ExtResource("12_chair")]
+position = Vector2(-60, 20)
+NorthFacing = true
+
+[node name="T1ChairS1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="17" unique_id=830595368 instance=ExtResource("12_chair")]
+position = Vector2(-69, 58)
+
+[node name="T1ChairS2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="18" unique_id=41374247 instance=ExtResource("12_chair")]
+position = Vector2(-51, 58)
+
+[node name="T2ChairN" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="19" unique_id=2066140469 instance=ExtResource("12_chair")]
+position = Vector2(60, 20)
+NorthFacing = true
+
+[node name="T2ChairS1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="20" unique_id=456285440 instance=ExtResource("12_chair")]
+position = Vector2(51, 58)
+
+[node name="T2ChairS2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="21" unique_id=930369284 instance=ExtResource("12_chair")]
+position = Vector2(69, 58)
+
+[node name="T3ChairS1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="22" unique_id=428870808 instance=ExtResource("12_chair")]
+position = Vector2(-9, 8)
+
+[node name="T3ChairS2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="23" unique_id=150816486 instance=ExtResource("12_chair")]
+position = Vector2(9, 8)
+
+[node name="BarStool1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="24" unique_id=1705835936 instance=ExtResource("13_stool")]
+position = Vector2(-90, -40)
+
+[node name="BarStool2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="25" unique_id=303586501 instance=ExtResource("13_stool")]
+position = Vector2(-54, -40)
+
+[node name="BarStool3" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="26" unique_id=2056342556 instance=ExtResource("13_stool")]
+position = Vector2(-18, -40)
+
+[node name="BarStool4" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="27" unique_id=88113853 instance=ExtResource("13_stool")]
+position = Vector2(18, -40)
+
+[node name="BarStool5" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="28" unique_id=1938507140 instance=ExtResource("13_stool")]
+position = Vector2(54, -40)
+
+[node name="BarStool6" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="29" unique_id=1527521584 instance=ExtResource("13_stool")]
+position = Vector2(90, -40)
 
 [node name="Firebox" type="ColorRect" parent="." index="7" unique_id=1617611257]
 z_index = -8
@@ -167,120 +248,35 @@ offset_right = 14.0
 offset_bottom = 167.0
 color = Color(0.3, 0.2, 0.1, 1)
 
-[node name="FireLight" type="PointLight2D" parent="." index="10" unique_id=788773218]
-z_index = 50
-position = Vector2(-136, -24)
-color = Color(1, 0.62, 0.12, 1)
-energy = 0.85
-texture = SubResource("GradTex_fire_lgt")
-texture_scale = 3.2
-
-[node name="Table1Light" type="PointLight2D" parent="." index="11" unique_id=1488813524]
-z_index = 50
-position = Vector2(-60, 32)
-color = Color(1, 0.88, 0.42, 1)
-energy = 0.45
-texture = SubResource("GradTex_candle_lgt")
-texture_scale = 1.6
-
-[node name="Table2Light" type="PointLight2D" parent="." index="12" unique_id=424062576]
-z_index = 50
-position = Vector2(60, 32)
-color = Color(1, 0.88, 0.42, 1)
-energy = 0.45
-texture = SubResource("GradTex_candle_lgt")
-texture_scale = 1.6
-
-[node name="Table3Light" type="PointLight2D" parent="." index="13" unique_id=1940712445]
-z_index = 50
-position = Vector2(0, -18)
-color = Color(1, 0.88, 0.42, 1)
-energy = 0.4
-texture = SubResource("GradTex_candle_lgt")
-texture_scale = 1.6
-
-[node name="Table1" parent="." index="14" unique_id=1835706404 instance=ExtResource("11_table")]
-position = Vector2(-60, 40)
-
-[node name="Table2" parent="." index="15" unique_id=1545523261 instance=ExtResource("11_table")]
-position = Vector2(60, 40)
-
-[node name="Table3" parent="." index="16" unique_id=891817547 instance=ExtResource("11_table")]
-position = Vector2(0, -10)
-
-[node name="T1ChairN" parent="." index="17" unique_id=1993783938 instance=ExtResource("12_chair")]
-position = Vector2(-60, 20)
-NorthFacing = true
-
-[node name="T1ChairS1" parent="." index="18" unique_id=830595368 instance=ExtResource("12_chair")]
-position = Vector2(-69, 58)
-
-[node name="T1ChairS2" parent="." index="19" unique_id=41374247 instance=ExtResource("12_chair")]
-position = Vector2(-51, 58)
-
-[node name="T2ChairN" parent="." index="20" unique_id=2066140469 instance=ExtResource("12_chair")]
-position = Vector2(60, 20)
-NorthFacing = true
-
-[node name="T2ChairS1" parent="." index="21" unique_id=456285440 instance=ExtResource("12_chair")]
-position = Vector2(51, 58)
-
-[node name="T2ChairS2" parent="." index="22" unique_id=930369284 instance=ExtResource("12_chair")]
-position = Vector2(69, 58)
-
-[node name="T3ChairS1" parent="." index="23" unique_id=428870808 instance=ExtResource("12_chair")]
-position = Vector2(-9, 8)
-
-[node name="T3ChairS2" parent="." index="24" unique_id=150816486 instance=ExtResource("12_chair")]
-position = Vector2(9, 8)
-
-[node name="BarStool1" parent="." index="25" unique_id=1705835936 instance=ExtResource("13_stool")]
-position = Vector2(-90, -40)
-
-[node name="BarStool2" parent="." index="26" unique_id=303586501 instance=ExtResource("13_stool")]
-position = Vector2(-54, -40)
-
-[node name="BarStool3" parent="." index="27" unique_id=2056342556 instance=ExtResource("13_stool")]
-position = Vector2(-18, -40)
-
-[node name="BarStool4" parent="." index="28" unique_id=88113853 instance=ExtResource("13_stool")]
-position = Vector2(18, -40)
-
-[node name="BarStool5" parent="." index="29" unique_id=1938507140 instance=ExtResource("13_stool")]
-position = Vector2(54, -40)
-
-[node name="BarStool6" parent="." index="30" unique_id=1527521584 instance=ExtResource("13_stool")]
-position = Vector2(90, -40)
-
-[node name="Journal" parent="." index="31" unique_id=2050191186 instance=ExtResource("19_journal")]
+[node name="Journal" parent="." index="10" unique_id=2050191186 instance=ExtResource("19_journal")]
 position = Vector2(-60, 35)
 
-[node name="Dartboard" parent="." index="32" unique_id=1217286306 instance=ExtResource("20_dartboard")]
+[node name="Dartboard" parent="." index="11" unique_id=1217286306 instance=ExtResource("20_dartboard")]
 position = Vector2(132, 80)
 
-[node name="DrinkProp" parent="." index="33" unique_id=1610892016 instance=ExtResource("21_drinkprop")]
+[node name="DrinkProp" parent="." index="12" unique_id=1610892016 instance=ExtResource("21_drinkprop")]
 position = Vector2(80, -62)
 
-[node name="SavePoint" parent="." index="34" unique_id=747126169 instance=ExtResource("16_save")]
-position = Vector2(-57, 94)
+[node name="SavePoint" parent="." index="13" unique_id=747126169 instance=ExtResource("16_save")]
+position = Vector2(-130, 105)
 SavePointId = "mapp_hearth"
 
-[node name="Chest" parent="." index="35" unique_id=2121869652 instance=ExtResource("17_chest")]
+[node name="Chest" parent="." index="14" unique_id=2121869652 instance=ExtResource("17_chest")]
 position = Vector2(122, 110)
 ItemPath = "res://resources/items/item_002.tres"
 FlagId = "chest_mapp_corner"
 
-[node name="NoticeBoard" parent="." index="36" unique_id=14098406 instance=ExtResource("15_sign")]
-position = Vector2(130, 50)
+[node name="NoticeBoard" parent="." index="15" unique_id=14098406 instance=ExtResource("15_sign")]
+position = Vector2(150, 16)
 SignTitle = "Notice Board"
 Lines = PackedStringArray("The MAPP — serving the finest ales since 1057.", "", "REWARD: 50 gold for information regarding the", "  recent incident in Seade. Contact K.B.", "", "LOST: One horse. Brown. Answers to \'Horse\'.", "  Contact Brix (he is right here).", "", "Rooms available upstairs. Ask the barkeep.", "No dragons. No familiars. No exceptions.", "  (Exceptions may be negotiated.)")
 
-[node name="StaircaseSign" parent="." index="37" unique_id=1272600358 instance=ExtResource("15_sign")]
+[node name="StaircaseSign" parent="." index="16" unique_id=1272600358 instance=ExtResource("15_sign")]
 position = Vector2(124, -43)
 SignTitle = "Upper Floor"
 Lines = PackedStringArray("The rooms upstairs are currently occupied.", "", "(Coming soon.)")
 
-[node name="Exit" parent="." index="38" unique_id=1845096565 instance=ExtResource("18_exit")]
+[node name="Exit" parent="." index="17" unique_id=1845096565 instance=ExtResource("18_exit")]
 position = Vector2(0, 168)
 TargetMapPath = "res://scenes/overworld/TestRoom.tscn"
 TargetSpawnId = "from_mapp"

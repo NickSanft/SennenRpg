@@ -1380,6 +1380,11 @@ public partial class MAPP : OverworldBase
 		// East wall — full height (tile col x=9)
 		// pixel: x=144..160, y=-128..176  →  size 16×304, centre (152, 24)
 		SpawnWallBox(new Vector2( 152f,  24f), new Vector2( 16f, 304f));
+
+		// Fireplace protrusion (hearth tiles x=-9..-8, y=-3..0)
+		// pixel: x=-144..-112, y=-48..16  →  size 32×64, centre (-128, -16)
+		// (left edge meets west wall collider; top edge meets north/bar collider)
+		SpawnWallBox(new Vector2(-128f, -16f), new Vector2( 32f,  64f));
 	}
 
 	private void SpawnWallBox(Vector2 centre, Vector2 size)
