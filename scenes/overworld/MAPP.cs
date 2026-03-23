@@ -1,6 +1,7 @@
 using Godot;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
+using SennenRpg.Scenes.Hud;
 
 namespace SennenRpg.Scenes.Overworld;
 
@@ -157,11 +158,7 @@ public partial class MAPP : OverworldBase
 
 	private void OnBrixAltEnded()
 	{
-		var pos = HorseWorldPosition();
-		SpawnPoof(pos);
-		// Short delay so the poof flash leads the horse pop-in
-		GetTree().CreateTimer(0.2f).Connect("timeout",
-			Callable.From(() => InstantiateHorse(pos, withPoof: true)));
+		InstantiateHorse(HorseWorldPosition(), withPoof: true);
 		CheckAllAltDialogsDone();
 	}
 
@@ -221,6 +218,9 @@ public partial class MAPP : OverworldBase
 		var tween = CreateTween();
 		tween.TweenProperty(overlay, "color:a", 0.35f, 0.8f)
 			.SetTrans(Tween.TransitionType.Sine);
+
+		ShakeCamera(0.7f, 3.5f);
+		GetNodeOrNull<GameHud>("GameHud")?.FlashHpBar(new Color(0.15f, 0.80f, 0.15f));
 	}
 
 	// ── Falafel event ──────────────────────────────────────────────────────────
@@ -236,10 +236,7 @@ public partial class MAPP : OverworldBase
 
 	private void OnBhataAltEnded()
 	{
-		var pos = FalafelWorldPosition();
-		SpawnPurplePoof(pos);
-		GetTree().CreateTimer(0.2f).Connect("timeout",
-			Callable.From(() => InstantiateFalafel(pos, withPoof: true)));
+		InstantiateFalafel(FalafelWorldPosition(), withPoof: false, dropIn: true);
 		CheckAllAltDialogsDone();
 	}
 
@@ -249,7 +246,7 @@ public partial class MAPP : OverworldBase
 		return (bhata?.GlobalPosition ?? new Vector2(-60f, 20f)) + new Vector2(-28f, -12f);
 	}
 
-	private void InstantiateFalafel(Vector2 globalPos, bool withPoof)
+	private void InstantiateFalafel(Vector2 globalPos, bool withPoof, bool dropIn = false)
 	{
 		var npcScene = GD.Load<PackedScene>(FalafelScene);
 		var falafel  = npcScene.Instantiate<Npc>();
@@ -263,25 +260,45 @@ public partial class MAPP : OverworldBase
 		YSort.AddChild(falafel);
 		falafel.GlobalPosition = globalPos;
 
-		// Floating bob: oscillate y endlessly
-		float baseY = falafel.Position.Y;
-		var bobTween = CreateTween().SetLoops();
-		bobTween.TweenProperty(falafel, "position:y", baseY - 6f, 0.9f)
-			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
-		bobTween.TweenProperty(falafel, "position:y", baseY, 0.9f)
-			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
-
 		// Purple energy orbs orbiting Falafel
 		SpawnEnergyAura(falafel);
 
-		if (withPoof)
+		if (dropIn)
+		{
+			// Drop from above with a physics bounce, then start the idle bob
+			falafel.Position = falafel.Position + new Vector2(0f, -80f);
+			var drop = CreateTween();
+			drop.TweenProperty(falafel, "position:y", falafel.Position.Y + 80f, 0.55f)
+				.SetTrans(Tween.TransitionType.Bounce).SetEase(Tween.EaseType.Out);
+			drop.TweenCallback(Callable.From(() =>
+			{
+				SpawnExpandingRing(globalPos, new Color(0.70f, 0.10f, 1.00f, 0.75f));
+				StartFalafelBob(falafel);
+			}));
+		}
+		else if (withPoof)
 		{
 			falafel.Scale = Vector2.Zero;
 			var tween = CreateTween();
 			tween.TweenProperty(falafel, "scale", Vector2.One, 0.35f)
 				 .SetTrans(Tween.TransitionType.Back)
 				 .SetEase(Tween.EaseType.Out);
+			tween.TweenCallback(Callable.From(() => StartFalafelBob(falafel)));
 		}
+		else
+		{
+			StartFalafelBob(falafel);
+		}
+	}
+
+	private void StartFalafelBob(Node2D falafel)
+	{
+		float baseY = falafel.Position.Y;
+		var bob = CreateTween().SetLoops();
+		bob.TweenProperty(falafel, "position:y", baseY - 6f, 0.9f)
+			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+		bob.TweenProperty(falafel, "position:y", baseY, 0.9f)
+			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
 	}
 
 	private void SpawnEnergyAura(Node2D parent)
@@ -410,6 +427,25 @@ public partial class MAPP : OverworldBase
 				var popTween = CreateTween();
 				popTween.TweenProperty(crystal, "scale", Vector2.One, 0.3f)
 					.SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
+				// Scale pulse loop begins after pop-in
+				float popDelay = 0.3f + GD.Randf() * 0.2f;
+				var pulse = CreateTween().SetLoops();
+				pulse.TweenProperty(crystal, "scale", new Vector2(1.12f, 1.12f), 0.55f)
+					.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut)
+					.SetDelay(popDelay);
+				pulse.TweenProperty(crystal, "scale", Vector2.One, 0.55f)
+					.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+			}
+			else
+			{
+				// Scale pulse even on restore
+				float pDelay = GD.Randf() * 0.8f;
+				var pulse = CreateTween().SetLoops();
+				pulse.TweenProperty(crystal, "scale", new Vector2(1.12f, 1.12f), 0.55f)
+					.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut)
+					.SetDelay(pDelay);
+				pulse.TweenProperty(crystal, "scale", Vector2.One, 0.55f)
+					.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
 			}
 
 			// Slow shimmer: alpha pulse
@@ -451,11 +487,24 @@ public partial class MAPP : OverworldBase
 
 	private void OnGusAltEnded()
 	{
-		var gus = YSort.GetNodeOrNull<Npc>("Gus");
-		if (gus == null) return;
-		SpawnPoof(gus.GlobalPosition);
-		GetTree().CreateTimer(0.2f).Connect("timeout",
-			Callable.From(() => TransformGusToFrog(withPoof: true)));
+		// White screen flash — transform Gus at the peak so it looks instantaneous
+		var flashLayer = new CanvasLayer { Layer = 60 };
+		AddChild(flashLayer);
+		var flash = new ColorRect
+		{
+			Color        = new Color(1f, 1f, 1f, 0f),
+			AnchorRight  = 1f,
+			AnchorBottom = 1f,
+		};
+		flashLayer.AddChild(flash);
+
+		var t = CreateTween();
+		t.TweenProperty(flash, "color:a", 0.90f, 0.06f).SetTrans(Tween.TransitionType.Linear);
+		t.TweenCallback(Callable.From(() => TransformGusToFrog(withPoof: false)));
+		t.TweenProperty(flash, "color:a", 0f, 0.28f)
+			.SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+		t.TweenCallback(Callable.From(flashLayer.QueueFree));
+
 		CheckAllAltDialogsDone();
 	}
 
@@ -510,7 +559,9 @@ public partial class MAPP : OverworldBase
 	private void OnShizuAltEnded()
 	{
 		AudioManager.Instance.PlayBgm(ShizuBgmPath);
-		SpawnMusicNoteAura(ShizuWorldPosition());
+		var shizuPos = ShizuWorldPosition();
+		SpawnExpandingRing(shizuPos, new Color(0.85f, 0.70f, 1.00f, 0.85f));
+		SpawnMusicNoteAura(shizuPos);
 		CheckAllAltDialogsDone();
 	}
 
@@ -650,6 +701,8 @@ public partial class MAPP : OverworldBase
 		float spread    = 7f;
 		var   goldColor = new Color(1.00f, 0.82f, 0.14f);
 
+		SpawnFloatingLabel($"-{RainStolenGold}G", goldColor, from);
+
 		for (int i = 0; i < coinCount; i++)
 		{
 			// Small diamond coin shape
@@ -727,7 +780,7 @@ public partial class MAPP : OverworldBase
 		return (brix?.GlobalPosition ?? new Vector2(100f, 20f)) + new Vector2(26f, 0f);
 	}
 
-	private void InstantiateHorse(Vector2 globalPos, bool withPoof)
+	private void InstantiateHorse(Vector2 finalPos, bool withPoof)
 	{
 		var npcScene = GD.Load<PackedScene>(HorseScene);
 		var horse    = npcScene.Instantiate<Npc>();
@@ -739,15 +792,26 @@ public partial class MAPP : OverworldBase
 		horse.DefaultFacing = FacingDirection.Side;
 
 		YSort.AddChild(horse);
-		horse.GlobalPosition = globalPos;
 
 		if (withPoof)
 		{
-			horse.Scale = Vector2.Zero;
-			var tween = CreateTween();
-			tween.TweenProperty(horse, "scale", Vector2.One, 0.35f)
-				 .SetTrans(Tween.TransitionType.Back)
-				 .SetEase(Tween.EaseType.Out);
+			// Trot in from just off the west edge of the room
+			horse.GlobalPosition = new Vector2(-190f, finalPos.Y);
+			var trot = CreateTween();
+			trot.TweenProperty(horse, "global_position:x", finalPos.X, 1.2f)
+				.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
+			trot.TweenCallback(Callable.From(() =>
+			{
+				horse.GlobalPosition = finalPos;
+				SpawnPoof(finalPos);
+				var brix = YSort.GetNodeOrNull<Node2D>("Brix");
+				if (brix != null)
+					SpawnNpcEmote(brix, "!", new Color(1f, 0.95f, 0.2f));
+			}));
+		}
+		else
+		{
+			horse.GlobalPosition = finalPos;
 		}
 	}
 
@@ -831,6 +895,118 @@ public partial class MAPP : OverworldBase
 				.SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
 			tween.TweenCallback(Callable.From(spark.QueueFree));
 		}
+	}
+
+	// ── Visual helpers ──────────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Shakes the active camera by tweening its Offset over <paramref name="duration"/> seconds.
+	/// Amplitude decays to zero over the duration.
+	/// </summary>
+	private void ShakeCamera(float amplitude, float duration)
+	{
+		var cam = GetViewport().GetCamera2D();
+		if (cam == null) return;
+
+		int   steps = Mathf.Max(1, (int)(duration / 0.06f));
+		float step  = duration / steps;
+		var   t     = CreateTween();
+		for (int i = 0; i < steps; i++)
+		{
+			float decay = 1f - (float)i / steps;
+			float dx    = amplitude * decay * (i % 2 == 0 ? 1f : -1f);
+			float dy    = amplitude * decay * (i % 3 == 0 ? 0.5f : -0.5f);
+			t.TweenProperty(cam, "offset", new Vector2(dx, dy), step)
+				.SetTrans(Tween.TransitionType.Sine);
+		}
+		t.TweenProperty(cam, "offset", Vector2.Zero, step)
+			.SetTrans(Tween.TransitionType.Sine);
+	}
+
+	/// <summary>
+	/// Spawns a short-lived text label (e.g. "!") floating above <paramref name="npc"/>
+	/// in world space.
+	/// </summary>
+	private void SpawnNpcEmote(Node2D npc, string text, Color color)
+	{
+		var label = new Label
+		{
+			Text        = text,
+			Modulate    = color,
+			ZIndex      = 30,
+			MouseFilter = Control.MouseFilterEnum.Ignore,
+		};
+		label.AddThemeFontSizeOverride("font_size", 16);
+		AddChild(label);
+		label.GlobalPosition = npc.GlobalPosition + new Vector2(-4f, -30f);
+
+		var t = CreateTween();
+		t.TweenProperty(label, "global_position:y", label.GlobalPosition.Y - 10f, 0.4f)
+			.SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
+		t.TweenProperty(label, "modulate:a", 0f, 0.3f)
+			.SetDelay(0.5f).SetTrans(Tween.TransitionType.Linear);
+		t.TweenCallback(Callable.From(label.QueueFree));
+	}
+
+	/// <summary>
+	/// Spawns an expanding translucent ring at <paramref name="worldPos"/> that
+	/// rapidly scales out and fades — good for magical impact moments.
+	/// </summary>
+	private void SpawnExpandingRing(Vector2 worldPos, Color color)
+	{
+		int   pts       = 16;
+		float maxRadius = 32f;
+
+		var pts2 = new Vector2[pts];
+		for (int i = 0; i < pts; i++)
+		{
+			float a = (Mathf.Tau / pts) * i;
+			pts2[i] = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+		}
+
+		var ring = new Polygon2D
+		{
+			Color    = color,
+			ZIndex   = 15,
+			Polygon  = pts2,
+			Scale    = Vector2.Zero,
+		};
+		AddChild(ring);
+		ring.GlobalPosition = worldPos;
+
+		var t = CreateTween();
+		t.TweenProperty(ring, "scale", new Vector2(maxRadius, maxRadius * 0.5f), 0.5f)
+			.SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+		t.Parallel()
+		 .TweenProperty(ring, "modulate:a", 0f, 0.5f)
+		 .SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
+		t.TweenCallback(Callable.From(ring.QueueFree));
+	}
+
+	/// <summary>
+	/// Spawns a floating text label (e.g. "-10G") near <paramref name="worldPos"/>
+	/// that drifts upward and fades out.
+	/// </summary>
+	private void SpawnFloatingLabel(string text, Color color, Vector2 worldPos)
+	{
+		var label = new Label
+		{
+			Text        = text,
+			Modulate    = color,
+			ZIndex      = 30,
+			MouseFilter = Control.MouseFilterEnum.Ignore,
+		};
+		label.AddThemeFontSizeOverride("font_size", 14);
+		AddChild(label);
+		label.GlobalPosition = worldPos + new Vector2(-8f, -10f);
+
+		var t = CreateTween();
+		t.TweenProperty(label, "global_position:y", label.GlobalPosition.Y - 24f, 0.8f)
+			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
+		t.Parallel()
+		 .TweenProperty(label, "modulate:a", 0f, 0.25f)
+		 .SetDelay(0.55f).SetTrans(Tween.TransitionType.Linear);
+		t.TweenCallback(Callable.From(label.QueueFree));
 	}
 
 	/// <summary>Adds a Polygon2D as a direct child of the MAPP node and returns it.</summary>

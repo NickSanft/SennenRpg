@@ -38,6 +38,15 @@ public partial class GameHud : CanvasLayer
 			GameManager.Instance.PlayerStatsChanged -= UpdateDisplay;
 	}
 
+	/// <summary>Briefly flashes the HP bar to <paramref name="flashColor"/> then fades back.</summary>
+	public void FlashHpBar(Color flashColor, float holdDuration = 0.4f)
+	{
+		var origColor = _hpBar.Color;
+		var t = CreateTween();
+		t.TweenProperty(_hpBar, "color", flashColor,  0.08f);
+		t.TweenProperty(_hpBar, "color", origColor,   0.35f).SetDelay(holdDuration);
+	}
+
 	private void UpdateDisplay()
 	{
 		var stats = GameManager.Instance.PlayerStats;

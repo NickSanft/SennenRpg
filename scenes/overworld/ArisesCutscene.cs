@@ -11,9 +11,10 @@ public partial class ArisesCutscene : CanvasLayer
 {
 	[Signal] public delegate void FinishedEventHandler();
 
-	private Polygon2D        _overlay        = null!;
-	private CenterContainer  _textContainer  = null!;
-	private Label            _label          = null!;
+	private Polygon2D        _overlay       = null!;
+	private CenterContainer  _textContainer = null!;
+	private Label            _label         = null!;
+	private Label            _subLabel      = null!;
 	private Tween?           _flickerTween;
 
 	public override void _Ready()
@@ -49,17 +50,59 @@ public partial class ArisesCutscene : CanvasLayer
 		};
 		AddChild(_textContainer);
 
+		var vbox = new VBoxContainer
+		{
+			Alignment   = BoxContainer.AlignmentMode.Center,
+			MouseFilter = Control.MouseFilterEnum.Ignore,
+		};
+		_textContainer.AddChild(vbox);
+
 		_label = new Label
 		{
-			Text         = "SHE HAS ARISEN",
-			VisibleRatio = 0f,
-			Modulate     = new Color(0.70f, 0.00f, 0.90f, 1f),
-			MouseFilter  = Control.MouseFilterEnum.Ignore,
+			Text                = "SHE HAS ARISEN",
+			VisibleRatio        = 0f,
+			Modulate            = new Color(0.70f, 0.00f, 0.90f, 1f),
+			MouseFilter         = Control.MouseFilterEnum.Ignore,
+			HorizontalAlignment = HorizontalAlignment.Center,
 		};
-		_label.AddThemeFontSizeOverride("font_size", 20);
-		_textContainer.AddChild(_label);
+		_label.AddThemeFontSizeOverride("font_size", 28);
+		vbox.AddChild(_label);
 
-		PhaseOverlayFadeIn();
+		_subLabel = new Label
+		{
+			Text                = "the tavern falls silent.",
+			VisibleRatio        = 0f,
+			Modulate            = new Color(0.78f, 0.70f, 0.85f, 0.80f),
+			MouseFilter         = Control.MouseFilterEnum.Ignore,
+			HorizontalAlignment = HorizontalAlignment.Center,
+		};
+		_subLabel.AddThemeFontSizeOverride("font_size", 14);
+		vbox.AddChild(_subLabel);
+
+		PhaseWhiteFlash();
+	}
+
+	// ── Phase 0: brief white flash before dark overlay ──────────────────────────
+
+	private void PhaseWhiteFlash()
+	{
+		var flash = new ColorRect
+		{
+			Color        = new Color(1f, 1f, 1f, 0f),
+			AnchorRight  = 1f,
+			AnchorBottom = 1f,
+			ZIndex       = 10,
+		};
+		AddChild(flash);
+
+		var t = CreateTween();
+		t.TweenProperty(flash, "color:a", 0.90f, 0.08f)
+			.SetTrans(Tween.TransitionType.Linear);
+		// Kick off overlay fade-in at the peak of the white flash
+		t.TweenCallback(Callable.From(PhaseOverlayFadeIn));
+		t.TweenProperty(flash, "color:a", 0f, 0.35f)
+			.SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+		t.TweenCallback(Callable.From(flash.QueueFree));
 	}
 
 	// ── Phase 1: fade in dark overlay ───────────────────────────────────────────
@@ -131,7 +174,7 @@ public partial class ArisesCutscene : CanvasLayer
 		t.TweenCallback(Callable.From(PhaseFlicker));
 	}
 
-	// ── Phase 4: creepy flicker for ~3 seconds ──────────────────────────────────
+	// ── Phase 4: creepy flicker + shake + sub-label types in ────────────────────
 
 	private void PhaseFlicker()
 	{
@@ -141,6 +184,26 @@ public partial class ArisesCutscene : CanvasLayer
 		_flickerTween.TweenProperty(_label, "modulate", new Color(1.0f, 0.9f, 1.0f, 0.4f), 0.05f);
 		_flickerTween.TweenProperty(_label, "modulate", new Color(0.4f, 0.0f, 0.7f, 1.0f), 0.09f);
 		_flickerTween.TweenProperty(_label, "modulate", new Color(0.9f, 0.0f, 0.5f, 0.8f), 0.07f);
+
+		// Sub-label types in gradually during the flicker phase
+		var subTween = CreateTween();
+		subTween.TweenProperty(_subLabel, "visible_ratio", 1f, 1.8f)
+			.SetTrans(Tween.TransitionType.Linear).SetDelay(0.4f);
+
+		// Screen shake via CanvasLayer.Offset — decaying oscillation
+		float amp  = 3.5f;
+		float step = 0.07f;
+		var shake  = CreateTween();
+		for (int i = 0; i < 8; i++)
+		{
+			float decay = 1f - (i / 8f);
+			float dx    = (i % 2 == 0 ? amp : -amp) * decay;
+			float dy    = (i % 3 == 0 ? amp : -amp) * decay * 0.5f;
+			shake.TweenProperty(this, "offset", new Vector2(dx, dy), step)
+				.SetTrans(Tween.TransitionType.Sine);
+		}
+		shake.TweenProperty(this, "offset", Vector2.Zero, step)
+			.SetTrans(Tween.TransitionType.Sine);
 
 		GetTree().CreateTimer(3.2f)
 			.Connect("timeout", Callable.From(PhaseFadeOut));
