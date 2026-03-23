@@ -28,6 +28,7 @@ public partial class DialogicBridge : Node
 
 	private Node _dialogic = null!;
 	private float _safetyTimer;
+	private bool _dialogicOwnsDialog = false;
 
 	/// <summary>
 	/// Battle-specific variables that must always exist so {variable} interpolation works
@@ -133,7 +134,7 @@ public partial class DialogicBridge : Node
 	public override void _Process(double delta)
 	{
 		if (GameManager.Instance == null) return;
-		if (GameManager.Instance.CurrentState != GameState.Dialog || IsRunning())
+		if (GameManager.Instance.CurrentState != GameState.Dialog || IsRunning() || !_dialogicOwnsDialog)
 		{
 			_safetyTimer = 0f;
 			return;
@@ -144,6 +145,7 @@ public partial class DialogicBridge : Node
 		{
 			GD.PushWarning("[DialogicBridge] Safety net: GameState stuck in Dialog but Dialogic is idle — resetting to Overworld.");
 			_safetyTimer = 0f;
+			_dialogicOwnsDialog = false;
 			GameManager.Instance.SetState(GameState.Overworld);
 		}
 	}
@@ -173,6 +175,7 @@ public partial class DialogicBridge : Node
 	public void StartTimeline(string timelinePath)
 	{
 		if (_dialogic == null) return;
+		_dialogicOwnsDialog = true;
 		GD.Print($"[DialogicBridge] Calling Dialogic.start('{timelinePath}')");
 		_dialogic.Call("start", timelinePath);
 		GD.Print("[DialogicBridge] Dialogic.start() returned.");
@@ -280,6 +283,7 @@ public partial class DialogicBridge : Node
 	/// </summary>
 	private void OnTimelineEndedInternal()
 	{
+		_dialogicOwnsDialog = false;
 		GD.Print("[DialogicBridge] Timeline ended.");
 	}
 }

@@ -72,8 +72,8 @@ public partial class JournalEntryPopup : CanvasLayer
 			SizeFlagsHorizontal = Control.SizeFlags.Fill,
 		};
 		bodyLabel.AddThemeFontSizeOverride("normal_font_size", 13);
-		bodyLabel.GrabFocus();
 		vbox.AddChild(bodyLabel);
+		Callable.From(bodyLabel.GrabFocus).CallDeferred();
 
 		// ── Footer ────────────────────────────────────────────────────────────
 		var hint = new Label
