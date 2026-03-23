@@ -104,11 +104,20 @@ public partial class Npc : CharacterBody2D, IInteractable
 		}
 
 		// Name label always above NPC
-		var nameLabel = new Label();
-		nameLabel.Text = DisplayName;
-		nameLabel.Position = new Vector2(-20, -38);
-		nameLabel.AddThemeColorOverride("font_color", Colors.White);
-		nameLabel.AddThemeFontSizeOverride("font_size", 8);
+		var nameLabel = new Label
+		{
+			Text               = DisplayName,
+			HorizontalAlignment = HorizontalAlignment.Center,
+			CustomMinimumSize  = new Vector2(60, 0),
+			Position           = new Vector2(-30, -38),
+			LabelSettings      = new LabelSettings
+			{
+				FontSize     = 12,
+				FontColor    = Colors.White,
+				OutlineSize  = 2,
+				OutlineColor = new Color(0f, 0f, 0f, 0.9f),
+			},
+		};
 		AddChild(nameLabel);
 
 		_prompt = new InteractPromptBubble(PromptText);
@@ -268,10 +277,18 @@ public partial class Npc : CharacterBody2D, IInteractable
 					   && GameManager.Instance.GetFlag(Flags.TalkedTo(NpcId));
 		string glyph = alreadyMet ? "?" : "!";
 
-		var label = new Label { Text = glyph };
-		label.AddThemeColorOverride("font_color", Colors.White);
-		label.AddThemeFontSizeOverride("font_size", 14);
-		label.Position = new Vector2(-4f, -68f);
+		var label = new Label
+		{
+			Text          = glyph,
+			Position      = new Vector2(-5f, -68f),
+			LabelSettings = new LabelSettings
+			{
+				FontSize     = 14,
+				FontColor    = Colors.White,
+				OutlineSize  = 2,
+				OutlineColor = new Color(0f, 0f, 0f, 0.9f),
+			},
+		};
 		AddChild(label);
 
 		var tween = CreateTween();

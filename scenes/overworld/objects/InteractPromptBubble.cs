@@ -20,13 +20,20 @@ public partial class InteractPromptBubble : Node2D
 	{
 		_bobNode = new Node2D();
 
-		var label = new Label();
-		label.Text = _text;
-		label.AddThemeColorOverride("font_color", Colors.Yellow);
-		label.AddThemeFontSizeOverride("font_size", 8);
-		label.HorizontalAlignment = HorizontalAlignment.Center;
-		label.CustomMinimumSize   = new Vector2(50, 0);
-		label.Position            = new Vector2(-25, 0);
+		var label = new Label
+		{
+			Text               = _text,
+			HorizontalAlignment = HorizontalAlignment.Center,
+			CustomMinimumSize  = new Vector2(60, 0),
+			Position           = new Vector2(-30, 0),
+			LabelSettings      = new LabelSettings
+			{
+				FontSize     = 11,
+				FontColor    = Colors.Yellow,
+				OutlineSize  = 2,
+				OutlineColor = new Color(0f, 0f, 0f, 0.85f),
+			},
+		};
 
 		_bobNode.AddChild(label);
 		AddChild(_bobNode);
