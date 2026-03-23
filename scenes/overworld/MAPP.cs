@@ -60,10 +60,12 @@ public partial class MAPP : OverworldBase
 		SpawnCeilingBeams();
 		SpawnRugs();
 		SpawnMantelpiece();
+		SpawnFirelightPool();
 		SpawnWallDecorations();
 		SpawnBottleRack();
 		SpawnWindows();
 		SpawnFireSmoke();
+		SpawnDustMotes();
 		SpawnLayeredFlame(GetNode<ColorRect>("Flame"));
 		FlickerCandleLights();
 
@@ -1153,6 +1155,117 @@ public partial class MAPP : OverworldBase
 			new Vector2(-1f, -12f), new Vector2(1f, -12f),
 			new Vector2(1f,   12f), new Vector2(-1f, 12f),
 		}, frameColor, zIndex: -5);
+	}
+
+	// ── Firelight pool ──────────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Spawns an elliptical amber glow on the floor directly in front of the firebox
+	/// that pulses in alpha to match the rhythm of the candle flicker.
+	/// </summary>
+	private void SpawnFirelightPool()
+	{
+		const int   pts = 10;
+		const float hw  = 14f; // half-width
+		const float hh  =  6f; // half-height (flattened ellipse)
+
+		var polygon = new Vector2[pts];
+		for (int i = 0; i < pts; i++)
+		{
+			float a = (Mathf.Tau / pts) * i;
+			polygon[i] = new Vector2(Mathf.Cos(a) * hw, Mathf.Sin(a) * hh);
+		}
+
+		var pool = new Polygon2D
+		{
+			Color   = new Color(1.0f, 0.55f, 0.10f, 0.10f),
+			ZIndex  = -7,
+			Polygon = polygon,
+		};
+		AddChild(pool);
+		pool.GlobalPosition = new Vector2(-136f, -8f);
+
+		// Pulse matches the rough 2.2 s candle flicker period
+		var tween = CreateTween().SetLoops();
+		tween.TweenProperty(pool, "color:a", 0.22f, 1.1f)
+			.SetTrans(Tween.TransitionType.Sine);
+		tween.TweenProperty(pool, "color:a", 0.10f, 1.1f)
+			.SetTrans(Tween.TransitionType.Sine);
+	}
+
+	// ── Dust motes ──────────────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Spawns a loose column of warm translucent motes drifting upward above the
+	/// hearth opening, each on a looping rise-and-reset tween with a randomised
+	/// stagger so they never all move at the same time.
+	/// </summary>
+	private void SpawnDustMotes()
+	{
+		var rng = new RandomNumberGenerator();
+		rng.Randomize();
+
+		var basePos = new Vector2(-136f, -55f); // top of the firebox opening
+
+		for (int i = 0; i < 7; i++)
+		{
+			float offsetX   = rng.RandfRange(-10f,  10f);
+			float offsetY   = rng.RandfRange(  0f,  12f);
+			float driftX    = rng.RandfRange( -4f,   4f);
+			float riseDist  = rng.RandfRange( 18f,  30f);
+			float duration  = rng.RandfRange(3.0f, 6.0f);
+			float peakAlpha = rng.RandfRange(0.08f, 0.18f);
+			float startDelay = rng.RandfRange(0f, duration);
+
+			var startPos = basePos + new Vector2(offsetX, offsetY);
+
+			var mote = new ColorRect
+			{
+				Color  = new Color(1.0f, 0.92f, 0.80f, 0f),
+				Size   = new Vector2(2f, 2f),
+				ZIndex = -1,
+			};
+			AddChild(mote);
+			mote.GlobalPosition = startPos;
+
+			// Capture loop variables for the timer callback
+			var   capturedMote  = mote;
+			var   capturedStart = startPos;
+			float capturedDrift = driftX;
+			float capturedRise  = riseDist;
+			float capturedDur   = duration;
+			float capturedPeak  = peakAlpha;
+
+			// Stagger each mote once via a one-shot timer, then loop freely
+			GetTree().CreateTimer(startDelay).Connect("timeout", Callable.From(() =>
+			{
+				var t = CreateTween().SetLoops();
+
+				// Rise first half + fade in
+				t.TweenProperty(capturedMote, "global_position",
+						capturedStart + new Vector2(capturedDrift * 0.5f, -capturedRise * 0.45f),
+						capturedDur * 0.45f)
+					.SetTrans(Tween.TransitionType.Sine);
+				t.Parallel()
+				 .TweenProperty(capturedMote, "color:a", capturedPeak, capturedDur * 0.30f)
+					.SetTrans(Tween.TransitionType.Sine);
+
+				// Rise second half + fade out
+				t.TweenProperty(capturedMote, "global_position",
+						capturedStart + new Vector2(capturedDrift, -capturedRise),
+						capturedDur * 0.55f)
+					.SetTrans(Tween.TransitionType.Sine);
+				t.Parallel()
+				 .TweenProperty(capturedMote, "color:a", 0f, capturedDur * 0.40f)
+					.SetTrans(Tween.TransitionType.Sine);
+
+				// Snap back to base for next loop iteration
+				t.TweenCallback(Callable.From(() =>
+				{
+					capturedMote.GlobalPosition = capturedStart;
+				}));
+			}));
+		}
 	}
 
 	// ── Fireplace smoke ────────────────────────────────────────────────────────
