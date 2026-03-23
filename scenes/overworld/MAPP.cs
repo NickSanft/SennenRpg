@@ -102,10 +102,10 @@ public partial class MAPP : OverworldBase
 	/// </summary>
 	private void BuildEditorVisuals()
 	{
-		// Guard: the .tscn already contains many children (furniture, lights, NPCs).
-		// We track whether we've added our procedural visuals via the TileMapLayer child.
-		foreach (var child in GetChildren())
-			if (child is TileMapLayer) return; // already built
+		// Guard: OverworldBase already contains a "Ground" TileMapLayer, so we cannot
+		// use `child is TileMapLayer` — that always matches. Instead we track the
+		// MAPP-specific layer by name.
+		if (GetNodeOrNull("MappTiles") != null) return;
 
 		BuildTileMap();
 		SpawnCeilingBeams();
@@ -959,7 +959,7 @@ public partial class MAPP : OverworldBase
 		tileSet.TileSize = new Vector2I(16, 16);
 		tileSet.AddSource(source, 0);
 
-		var layer = new TileMapLayer { TileSet = tileSet, ZIndex = -10 };
+		var layer = new TileMapLayer { Name = "MappTiles", TileSet = tileSet, ZIndex = -10 };
 		AddChild(layer);
 
 		PlaceTiles(layer);

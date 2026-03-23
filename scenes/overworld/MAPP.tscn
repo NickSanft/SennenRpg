@@ -18,9 +18,9 @@
 [ext_resource type="PackedScene" uid="uid://bm5n2kpvryawd" path="res://scenes/overworld/objects/SavePoint.tscn" id="16_save"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/Chest.tscn" id="17_chest"]
 [ext_resource type="PackedScene" uid="uid://evwjjqormcym" path="res://scenes/overworld/objects/MapExit.tscn" id="18_exit"]
-[ext_resource type="PackedScene" path="res://scenes/overworld/objects/JournalProp.tscn" id="19_journal"]
-[ext_resource type="PackedScene" path="res://scenes/overworld/objects/DartboardProp.tscn" id="20_dartboard"]
-[ext_resource type="PackedScene" path="res://scenes/overworld/objects/BarDrinkProp.tscn" id="21_drinkprop"]
+[ext_resource type="PackedScene" uid="uid://bx11g5q7nayii" path="res://scenes/overworld/objects/JournalProp.tscn" id="19_journal"]
+[ext_resource type="PackedScene" uid="uid://dartboardtscn" path="res://scenes/overworld/objects/DartboardProp.tscn" id="20_dartboard"]
+[ext_resource type="PackedScene" uid="uid://bardrinkptscn" path="res://scenes/overworld/objects/BarDrinkProp.tscn" id="21_drinkprop"]
 [ext_resource type="Script" uid="uid://drkqrxhkmk75h" path="res://core/data/ShopItemEntry.cs" id="22_shopentry"]
 
 [sub_resource type="Gradient" id="Gradient_fire_lgt"]
@@ -76,7 +76,7 @@ texture = SubResource("GradTex_candle_lgt")
 texture_scale = 1.6
 
 [node name="Kriora" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="4" unique_id=937356301 instance=ExtResource("3_kriora")]
-position = Vector2(-90, 103)
+position = Vector2(-80, 109)
 NpcId = "kriora_mapp"
 TimelinePath = "res://dialog/timelines/npc_kriora.dtl"
 DisplayName = "Kriora"
@@ -161,7 +161,7 @@ DefaultFacing = 2
 CharacterPath = "res://dialog/characters/PetWitchCat.dch"
 
 [node name="Barkeep" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="12" unique_id=914373453 instance=ExtResource("14_vendor")]
-position = Vector2(0, -85)
+position = Vector2(-1, -56)
 ShopStock = [SubResource("ShopEntry_ale")]
 NpcId = "barkeep_mapp"
 TimelinePath = "res://dialog/timelines/npc_barkeep.dtl"
@@ -255,7 +255,7 @@ position = Vector2(-60, 35)
 position = Vector2(132, 80)
 
 [node name="DrinkProp" parent="." index="12" unique_id=1610892016 instance=ExtResource("21_drinkprop")]
-position = Vector2(80, -62)
+position = Vector2(75, -42)
 
 [node name="SavePoint" parent="." index="13" unique_id=747126169 instance=ExtResource("16_save")]
 position = Vector2(-130, 105)
