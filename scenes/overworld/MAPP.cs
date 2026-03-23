@@ -96,6 +96,9 @@ public partial class MAPP : OverworldBase
 		if (GameManager.Instance.GetFlag(Flags.ShizuMusicAuraActive))
 			SpawnMusicNoteAura(ShizuWorldPosition());
 
+		SpawnBarkeepRag();
+		SpawnAllIdleWanders();
+
 		// Listen for the custom signal fired at the end of npc_brix_again.dtl
 		DialogicBridge.Instance.DialogicSignalReceived += OnDialogicSignal;
 
@@ -899,6 +902,103 @@ public partial class MAPP : OverworldBase
 				.SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
 			tween.TweenCallback(Callable.From(spark.QueueFree));
 		}
+	}
+
+	// ── Ambient life ────────────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Spawns a small cloth rag that slides back and forth across the bar top,
+	/// giving the barkeep something to do in the background.
+	/// </summary>
+	private void SpawnBarkeepRag()
+	{
+		var barkeep = YSort.GetNodeOrNull<Node2D>("Barkeep");
+		float centerX = barkeep?.GlobalPosition.X ?? 0f;
+		float leftX   = centerX - 18f;
+		float rightX  = centerX + 12f;
+		float barTopY = -64f;
+
+		var rag = new ColorRect
+		{
+			Color  = new Color(0.65f, 0.55f, 0.40f),
+			Size   = new Vector2(14f, 5f),
+			ZIndex = 2,
+		};
+		AddChild(rag);
+		rag.GlobalPosition = new Vector2(leftX, barTopY);
+
+		var tween = CreateTween().SetLoops();
+		tween.TweenProperty(rag, "global_position:x", rightX, 1.2f)
+			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+		tween.TweenInterval(0.6f);
+		tween.TweenProperty(rag, "global_position:x", leftX, 1.2f)
+			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+		tween.TweenInterval(0.8f);
+	}
+
+	/// <summary>
+	/// Kicks off idle-wander behaviour for every named NPC in the tavern.
+	/// Each NPC occasionally glances in a new direction, then returns to its default.
+	/// </summary>
+	private void SpawnAllIdleWanders()
+	{
+		// Barkeep turns to face the bottle rack (idle_up) then back
+		if (YSort.GetNodeOrNull<Npc>("Barkeep") is { } barkeep)
+			SpawnIdleWander(barkeep, new[] { "idle_down", "idle_up" });
+
+		// Everyone else glances side-to-side
+		foreach (var name in new[] { "Kriora", "Lily", "Rain", "Bhata", "Shizu", "Brix", "Gus" })
+		{
+			if (YSort.GetNodeOrNull<Npc>(name) is { } npc)
+				SpawnIdleWander(npc, new[] { "idle_down", "idle_side" });
+		}
+	}
+
+	/// <summary>
+	/// Schedules recurring idle animation turns for <paramref name="npc"/>.
+	/// Waits a random 8–14 s, plays the next anim in <paramref name="animCycle"/>,
+	/// holds it 3–5 s, then returns to the first anim and repeats.
+	/// Each interval is re-randomised so the timing never becomes predictable.
+	/// </summary>
+	private void SpawnIdleWander(Npc npc, string[] animCycle)
+	{
+		var sprite = npc.GetNodeOrNull<AnimatedSprite2D>("Sprite");
+		if (sprite == null) return;
+
+		var rng = new RandomNumberGenerator();
+		rng.Randomize();
+
+		int cycleIdx = 0;
+
+		// Self-referential lambda — assign before capture
+		System.Action scheduleNext = null!;
+		scheduleNext = () =>
+		{
+			if (!IsInstanceValid(npc)) return;
+
+			GetTree().CreateTimer(rng.RandfRange(8f, 14f))
+				.Connect("timeout", Callable.From(() =>
+			{
+				if (!IsInstanceValid(npc)) return;
+
+				cycleIdx = (cycleIdx + 1) % animCycle.Length;
+				sprite.Play(animCycle[cycleIdx]);
+
+				GetTree().CreateTimer(rng.RandfRange(3f, 5f))
+					.Connect("timeout", Callable.From(() =>
+				{
+					if (!IsInstanceValid(npc)) return;
+
+					cycleIdx = 0;
+					sprite.Play(animCycle[0]);
+					scheduleNext();
+				}));
+			}));
+		};
+
+		// Stagger each NPC's first turn so they don't all move simultaneously
+		GetTree().CreateTimer(rng.RandfRange(0f, 12f))
+			.Connect("timeout", Callable.From(scheduleNext));
 	}
 
 	// ── Visual helpers ──────────────────────────────────────────────────────────
