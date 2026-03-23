@@ -24,13 +24,13 @@ public partial class SignReaderPopup : CanvasLayer
 	{
 		Layer = 55;
 
-		// Bottom panel — spans full width, ~90px tall
+		// Bottom panel — spans full width, ~120px tall
 		var panel = new PanelContainer
 		{
 			AnchorLeft     = 0f,     AnchorRight  = 1f,
 			AnchorTop      = 1f,     AnchorBottom = 1f,
 			OffsetLeft     = 8f,     OffsetRight  = -8f,
-			OffsetTop      = -92f,   OffsetBottom = -8f,
+			OffsetTop      = -120f,  OffsetBottom = -8f,
 			GrowHorizontal = Control.GrowDirection.Both,
 			GrowVertical   = Control.GrowDirection.Begin,
 		};
@@ -45,27 +45,43 @@ public partial class SignReaderPopup : CanvasLayer
 			{
 				Text                = _title,
 				HorizontalAlignment = HorizontalAlignment.Center,
+				LabelSettings       = new LabelSettings
+				{
+					FontSize     = 12,
+					FontColor    = Colors.Yellow,
+					OutlineSize  = 2,
+					OutlineColor = new Color(0f, 0f, 0f, 0.9f),
+				},
 			};
-			titleLabel.AddThemeColorOverride("font_color", Colors.Yellow);
-			titleLabel.AddThemeFontSizeOverride("font_size", 9);
 			vbox.AddChild(titleLabel);
 		}
 
 		var textLabel = new Label
 		{
-			Text         = string.Join("\n", _lines),
-			AutowrapMode = TextServer.AutowrapMode.Word,
+			Text          = string.Join("\n", _lines),
+			AutowrapMode  = TextServer.AutowrapMode.Word,
+			LabelSettings = new LabelSettings
+			{
+				FontSize     = 12,
+				FontColor    = Colors.White,
+				OutlineSize  = 2,
+				OutlineColor = new Color(0f, 0f, 0f, 0.9f),
+			},
 		};
-		textLabel.AddThemeFontSizeOverride("font_size", 8);
 		vbox.AddChild(textLabel);
 
 		var hint = new Label
 		{
 			Text                = "[Z] Close",
 			HorizontalAlignment = HorizontalAlignment.Right,
+			LabelSettings       = new LabelSettings
+			{
+				FontSize     = 11,
+				FontColor    = Colors.Yellow,
+				OutlineSize  = 2,
+				OutlineColor = new Color(0f, 0f, 0f, 0.9f),
+			},
 		};
-		hint.AddThemeColorOverride("font_color", Colors.Yellow);
-		hint.AddThemeFontSizeOverride("font_size", 7);
 		vbox.AddChild(hint);
 	}
 

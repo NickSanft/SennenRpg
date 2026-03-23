@@ -248,26 +248,13 @@ public partial class Npc : CharacterBody2D, IInteractable
 	private string ChooseTimeline()
 		=> SelectTimeline(TimelinePath, AltRequiredFlags, AltTimelinePaths, GameManager.Instance.GetFlag);
 
-	/// <summary>
-	/// Pure selection logic: iterates the parallel flag/path arrays and returns the path
-	/// for the first flag that <paramref name="flagChecker"/> returns true for.
-	/// Falls back to <paramref name="defaultPath"/> if nothing matches.
-	/// Exposed as public static so it can be unit-tested without a Godot scene.
-	/// </summary>
+	/// <summary>Delegates to <see cref="NpcLogic.SelectTimeline"/>.</summary>
 	public static string SelectTimeline(
 		string defaultPath,
 		string[] altRequiredFlags,
 		string[] altTimelinePaths,
 		Func<string, bool> flagChecker)
-	{
-		int count = Math.Min(altRequiredFlags.Length, altTimelinePaths.Length);
-		for (int i = 0; i < count; i++)
-		{
-			if (!string.IsNullOrEmpty(altRequiredFlags[i]) && flagChecker(altRequiredFlags[i]))
-				return altTimelinePaths[i];
-		}
-		return defaultPath;
-	}
+		=> NpcLogic.SelectTimeline(defaultPath, altRequiredFlags, altTimelinePaths, flagChecker);
 
 	// ── Emote ─────────────────────────────────────────────────────────────────
 
