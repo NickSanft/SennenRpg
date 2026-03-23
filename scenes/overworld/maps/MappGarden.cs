@@ -48,6 +48,9 @@ public partial class MappGarden : OverworldBase
 		SpawnGrassPatches();
 		SpawnFlagstonePathway();
 		SpawnSouthDoor();
+		SpawnMoonflowerTrellis();
+		SpawnBirdbath();
+		SpawnLanterns();
 		SpawnFireflies();
 		SpawnEntryFade();
 
@@ -65,6 +68,9 @@ public partial class MappGarden : OverworldBase
 		SpawnPerimeterWalls();
 		SpawnGrassPatches();
 		SpawnFlagstonePathway();
+		SpawnMoonflowerTrellis();
+		SpawnBirdbath();
+		SpawnLanterns();
 	}
 
 	// ── Ground ─────────────────────────────────────────────────────────────────
@@ -471,6 +477,375 @@ public partial class MappGarden : OverworldBase
 		t.TweenProperty(cover, "color:a", 0f, 0.8f)
 			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
 		t.TweenCallback(Callable.From(layer.QueueFree));
+	}
+
+	// ── Moonflower trellis ─────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Spawns a wooden lattice trellis in the north-west corner with pale-blue
+	/// moonflowers at each intersection. Each flower pulses its alpha independently
+	/// so the north wall shimmers with soft blue-white light.
+	/// </summary>
+	private void SpawnMoonflowerTrellis()
+	{
+		var trellisCenter = new Vector2(-72f, -55f);
+		const float tw = 36f;
+		const float th = 38f;
+		var woodColor  = new Color(0.32f, 0.20f, 0.08f);
+		var frameColor = new Color(0.24f, 0.14f, 0.05f);
+
+		// Dark foliage backing (makes the trellis read against the stone wall)
+		AddPoly(trellisCenter, new Vector2[]
+		{
+			new Vector2(-tw * 0.5f - 3f, -th * 0.5f - 3f),
+			new Vector2( tw * 0.5f + 3f, -th * 0.5f - 3f),
+			new Vector2( tw * 0.5f + 3f,  th * 0.5f + 3f),
+			new Vector2(-tw * 0.5f - 3f,  th * 0.5f + 3f),
+		}, new Color(0.08f, 0.15f, 0.06f), zIndex: -6);
+
+		// Outer frame (four border strips)
+		foreach (var (off, size) in new (Vector2 off, Vector2 size)[]
+		{
+			(new Vector2(0f,        -th * 0.5f), new Vector2(tw + 6f, 3f)),
+			(new Vector2(0f,         th * 0.5f), new Vector2(tw + 6f, 3f)),
+			(new Vector2(-tw * 0.5f, 0f),        new Vector2(3f, th + 6f)),
+			(new Vector2( tw * 0.5f, 0f),        new Vector2(3f, th + 6f)),
+		})
+		{
+			AddPoly(trellisCenter + off, new Vector2[]
+			{
+				new Vector2(-size.X * 0.5f, -size.Y * 0.5f),
+				new Vector2( size.X * 0.5f, -size.Y * 0.5f),
+				new Vector2( size.X * 0.5f,  size.Y * 0.5f),
+				new Vector2(-size.X * 0.5f,  size.Y * 0.5f),
+			}, frameColor, zIndex: -4);
+		}
+
+		// Lattice: 3 columns × 3 rows = 9 intersections
+		int   cols    = 3, rows = 3;
+		float colStep = tw / (cols + 1);
+		float rowStep = th / (rows + 1);
+
+		for (int c = 1; c <= cols; c++)
+		{
+			float x = -tw * 0.5f + colStep * c;
+			AddPoly(trellisCenter + new Vector2(x, 0f), new Vector2[]
+			{
+				new Vector2(-1f, -th * 0.5f), new Vector2(1f, -th * 0.5f),
+				new Vector2(1f,  th * 0.5f),  new Vector2(-1f, th * 0.5f),
+			}, woodColor, zIndex: -4);
+		}
+		for (int r = 1; r <= rows; r++)
+		{
+			float y = -th * 0.5f + rowStep * r;
+			AddPoly(trellisCenter + new Vector2(0f, y), new Vector2[]
+			{
+				new Vector2(-tw * 0.5f, -1f), new Vector2(tw * 0.5f, -1f),
+				new Vector2(tw * 0.5f,   1f), new Vector2(-tw * 0.5f, 1f),
+			}, woodColor, zIndex: -3);
+		}
+
+		// Moonflowers at each grid intersection + a few extras on the frame
+		var rng = new RandomNumberGenerator();
+		rng.Randomize();
+
+		var flowerPositions = new System.Collections.Generic.List<Vector2>();
+		for (int c = 1; c <= cols; c++)
+			for (int r = 1; r <= rows; r++)
+				flowerPositions.Add(trellisCenter + new Vector2(
+					-tw * 0.5f + colStep * c,
+					-th * 0.5f + rowStep * r));
+
+		// Extras scattered on the frame edges
+		flowerPositions.Add(trellisCenter + new Vector2(-tw * 0.5f + 1f, -th * 0.25f));
+		flowerPositions.Add(trellisCenter + new Vector2( tw * 0.5f - 1f,  th * 0.15f));
+		flowerPositions.Add(trellisCenter + new Vector2(-tw * 0.20f,     -th * 0.5f + 1f));
+		flowerPositions.Add(trellisCenter + new Vector2( tw * 0.15f,      th * 0.42f));
+
+		foreach (var fPos in flowerPositions)
+		{
+			float size   = rng.RandfRange(2.5f, 4.0f);
+			float initA  = 0.25f; // plan: 0.25 → 0.65 → 0.25
+			var flower = new Polygon2D
+			{
+				Color   = new Color(0.78f, 0.88f, 1.00f, initA),
+				ZIndex  = -2,
+				Polygon = new Vector2[]
+				{
+					new Vector2( 0f,    -size),
+					new Vector2( size,   0f),
+					new Vector2( 0f,     size * 0.65f),
+					new Vector2(-size,   0f),
+				},
+			};
+			AddChild(flower);
+			flower.GlobalPosition = fPos;
+
+			float delay  = rng.RandfRange(0f, 2.5f);
+			float period = rng.RandfRange(2.5f, 4.0f);
+			var pulse = CreateTween().SetLoops();
+			pulse.TweenProperty(flower, "color:a", 0.65f, period * 0.5f)
+				.SetTrans(Tween.TransitionType.Sine).SetDelay(delay);
+			pulse.TweenProperty(flower, "color:a", 0.25f, period * 0.5f)
+				.SetTrans(Tween.TransitionType.Sine);
+		}
+	}
+
+	// ── Birdbath ───────────────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Spawns a stone birdbath with two perched sparrows. When the player walks
+	/// within 60px the birds startle and fly off; they return after 12 seconds.
+	/// </summary>
+	private void SpawnBirdbath()
+	{
+		var bathPos    = new Vector2(30f, -15f);
+		var stoneColor = new Color(0.52f, 0.48f, 0.43f);
+		var capColor   = new Color(0.60f, 0.55f, 0.50f);
+		var waterColor = new Color(0.30f, 0.42f, 0.55f, 0.75f);
+
+		// Base foot
+		AddPoly(bathPos + new Vector2(0f, 12f), new Vector2[]
+		{
+			new Vector2(-6f, -1f), new Vector2(6f, -1f),
+			new Vector2(7f,  2f),  new Vector2(-7f, 2f),
+		}, stoneColor, zIndex: 2);
+
+		// Pedestal column
+		AddPoly(bathPos + new Vector2(0f, 4f), new Vector2[]
+		{
+			new Vector2(-2.5f, -10f), new Vector2(2.5f, -10f),
+			new Vector2( 4.0f,  0f),  new Vector2(-4.0f, 0f),
+		}, stoneColor, zIndex: 2);
+
+		// Basin (8-sided)
+		const int bpts = 8;
+		var basinPoly = new Vector2[bpts];
+		var waterPoly = new Vector2[bpts];
+		for (int i = 0; i < bpts; i++)
+		{
+			float a = (Mathf.Tau / bpts) * i - Mathf.Pi / bpts;
+			basinPoly[i] = new Vector2(Mathf.Cos(a) * 11f, Mathf.Sin(a) * 5.5f);
+			waterPoly[i] = new Vector2(Mathf.Cos(a) *  8f, Mathf.Sin(a) * 3.5f);
+		}
+		AddPoly(bathPos, basinPoly, stoneColor, zIndex: 3);
+		AddPoly(bathPos, basinPoly, capColor,   zIndex: 3); // rim highlight via separate draw? reuse stoneColor
+		// Rim highlight strip
+		AddPoly(bathPos + new Vector2(0f, -4f), new Vector2[]
+		{
+			new Vector2(-11f, -1f), new Vector2(11f, -1f),
+			new Vector2( 11f,  1f), new Vector2(-11f, 1f),
+		}, capColor, zIndex: 4);
+		// Water surface
+		AddPoly(bathPos, waterPoly, waterColor, zIndex: 4);
+
+		// Birds and interaction — play mode only
+		if (Engine.IsEditorHint()) return;
+
+		SpawnBirdbathBirds(bathPos);
+	}
+
+	private void SpawnBirdbathBirds(Vector2 bathPos)
+	{
+		const float rimOff = 9f;
+		var birdColor = new Color(0.18f, 0.14f, 0.12f);
+		var rimY      = bathPos.Y - 4f;
+
+		Polygon2D? birdW = MakeBird(bathPos + new Vector2(-rimOff, -4f), birdColor);
+		Polygon2D? birdE = MakeBird(bathPos + new Vector2( rimOff, -4f), birdColor);
+		StartBirdBob(birdW, rimY);
+		StartBirdBob(birdE, rimY);
+
+		// Player proximity detector
+		var detector = new Area2D();
+		detector.AddChild(new CollisionShape2D
+		{
+			Shape = new CircleShape2D { Radius = 60f },
+		});
+		AddChild(detector);
+		detector.GlobalPosition = bathPos;
+
+		bool flownOff = false;
+		detector.BodyEntered += body =>
+		{
+			if (flownOff || !body.IsInGroup("player")) return;
+			flownOff = true;
+
+			FlyBirdOff(birdW, -1f);
+			FlyBirdOff(birdE, +1f);
+			birdW = null;
+			birdE = null;
+
+			// Respawn after 12 s
+			GetTree().CreateTimer(12f).Connect("timeout", Callable.From(() =>
+			{
+				if (!IsInsideTree()) return;
+				flownOff = false;
+				birdW = MakeBird(bathPos + new Vector2(-rimOff, -4f), birdColor, fadeIn: true);
+				birdE = MakeBird(bathPos + new Vector2( rimOff, -4f), birdColor, fadeIn: true);
+				StartBirdBob(birdW, rimY);
+				StartBirdBob(birdE, rimY);
+			}));
+		};
+	}
+
+	private Polygon2D MakeBird(Vector2 pos, Color color, bool fadeIn = false)
+	{
+		var bird = new Polygon2D
+		{
+			Color    = color,
+			ZIndex   = 10,
+			Modulate = new Color(1f, 1f, 1f, fadeIn ? 0f : 1f),
+			Polygon  = new Vector2[]
+			{
+				new Vector2( 0f, -3f),
+				new Vector2( 3f,  0f),
+				new Vector2( 0f,  1.5f),
+				new Vector2(-3f,  0f),
+			},
+		};
+		AddChild(bird);
+		bird.GlobalPosition = pos;
+
+		if (fadeIn)
+		{
+			var t = CreateTween();
+			t.TweenProperty(bird, "modulate:a", 1f, 0.5f)
+				.SetTrans(Tween.TransitionType.Sine);
+		}
+		return bird;
+	}
+
+	private void StartBirdBob(Polygon2D? bird, float baseY)
+	{
+		if (bird == null) return;
+		var bob = CreateTween().SetLoops();
+		bob.TweenProperty(bird, "global_position:y", baseY - 1.5f, 0.7f)
+			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+		bob.TweenProperty(bird, "global_position:y", baseY, 0.7f)
+			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
+	}
+
+	private void FlyBirdOff(Polygon2D? bird, float dirX)
+	{
+		if (bird == null || !IsInstanceValid(bird)) return;
+		var fly = CreateTween();
+		fly.TweenProperty(bird, "global_position",
+			bird.GlobalPosition + new Vector2(dirX * 65f, -75f), 0.30f)
+			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
+		fly.Parallel()
+		   .TweenProperty(bird, "modulate:a", 0f, 0.18f)
+		   .SetDelay(0.12f).SetTrans(Tween.TransitionType.Linear);
+		fly.TweenCallback(Callable.From(bird.QueueFree));
+	}
+
+	// ── Hanging lanterns ────────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Spawns 2 wall-mounted lanterns with PointLight2D glows that flicker
+	/// independently, warming the garden corners.
+	/// </summary>
+	private void SpawnLanterns()
+	{
+		// (position, dirX) — dirX says which wall face the hook is on (+1 right side, -1 left)
+		var lanternDefs = new (Vector2 pos, float wallFace)[]
+		{
+			(new Vector2(-98f, -52f), +1f), // west wall, upper half
+			(new Vector2( 98f, -36f), -1f), // east wall, mid height
+		};
+
+		foreach (var (pos, wallFace) in lanternDefs)
+		{
+			SpawnLantern(pos, wallFace);
+		}
+	}
+
+	private void SpawnLantern(Vector2 pos, float wallFace)
+	{
+		var ironColor  = new Color(0.18f, 0.14f, 0.10f);
+		var glassColor = new Color(0.95f, 0.78f, 0.30f, 0.60f);
+		var warmColor  = new Color(1.00f, 0.72f, 0.24f);
+
+		// Wall hook (small right-angle iron bracket)
+		float hx = wallFace * 5f;
+		AddPoly(pos + new Vector2(hx, -10f), new Vector2[]
+		{
+			new Vector2(-1f,  0f), new Vector2(1f,  0f),
+			new Vector2(1f,  6f),  new Vector2(-1f, 6f),
+		}, ironColor, zIndex: 2);
+		AddPoly(pos + new Vector2(hx * 0.5f, -10f), new Vector2[]
+		{
+			new Vector2(-2f, -1f), new Vector2(2f, -1f),
+			new Vector2(2f,   1f), new Vector2(-2f, 1f),
+		}, ironColor, zIndex: 2);
+
+		// Chain (two thin segments)
+		for (int i = 0; i < 2; i++)
+		{
+			AddPoly(pos + new Vector2(0f, -9f + i * 3f), new Vector2[]
+			{
+				new Vector2(-0.8f, 0f), new Vector2(0.8f,  0f),
+				new Vector2(0.8f,  2f), new Vector2(-0.8f, 2f),
+			}, ironColor, zIndex: 2);
+		}
+
+		// Lantern body — outer frame
+		AddPoly(pos, new Vector2[]
+		{
+			new Vector2(-5f, -7f), new Vector2(5f, -7f),
+			new Vector2(5f,   7f), new Vector2(-5f, 7f),
+		}, ironColor, zIndex: 3);
+
+		// Glass panels (two visible faces)
+		AddPoly(pos, new Vector2[]
+		{
+			new Vector2(-4f, -6f), new Vector2(4f, -6f),
+			new Vector2(4f,   6f), new Vector2(-4f, 6f),
+		}, glassColor, zIndex: 4);
+
+		// Inner flame glow dot
+		AddPoly(pos + new Vector2(0f, -1f), new Vector2[]
+		{
+			new Vector2( 0f, -2f),
+			new Vector2( 2f,  0f),
+			new Vector2( 0f,  2f),
+			new Vector2(-2f,  0f),
+		}, warmColor, zIndex: 5);
+
+		// PointLight2D (with a radial gradient texture)
+		var gradient = new Gradient();
+		gradient.SetColor(0, new Color(warmColor.R, warmColor.G, warmColor.B, 1f));
+		gradient.SetColor(1, new Color(warmColor.R, warmColor.G, warmColor.B, 0f));
+		var lightTex = new GradientTexture2D
+		{
+			Gradient = gradient,
+			Fill     = GradientTexture2D.FillEnum.Radial,
+			Width    = 64,
+			Height   = 64,
+		};
+		var light = new PointLight2D
+		{
+			Color        = warmColor,
+			Energy       = 0.55f,
+			Texture      = lightTex,
+			TextureScale = 2.2f,
+			ZIndex       = 6,
+		};
+		AddChild(light);
+		light.GlobalPosition = pos;
+
+		// Gentle flicker tween — offset slightly per lantern so they don't pulse together
+		float baseEnergy = 0.55f;
+		float period     = 0.50f + GD.Randf() * 0.25f;
+		var   flicker    = CreateTween().SetLoops();
+		flicker.TweenProperty(light, "energy", baseEnergy + 0.18f, period)
+			.SetTrans(Tween.TransitionType.Sine);
+		flicker.TweenProperty(light, "energy", baseEnergy - 0.15f, period * 0.7f)
+			.SetTrans(Tween.TransitionType.Sine);
+		flicker.TweenProperty(light, "energy", baseEnergy + 0.10f, period * 0.5f)
+			.SetTrans(Tween.TransitionType.Sine);
+		flicker.TweenProperty(light, "energy", baseEnergy - 0.08f, period)
+			.SetTrans(Tween.TransitionType.Sine);
 	}
 
 	// ── Polygon helper ─────────────────────────────────────────────────────────
