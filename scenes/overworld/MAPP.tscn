@@ -252,7 +252,7 @@ color = Color(0.3, 0.2, 0.1, 1)
 position = Vector2(-60, 35)
 
 [node name="Dartboard" parent="." index="11" unique_id=1217286306 instance=ExtResource("20_dartboard")]
-position = Vector2(132, 80)
+position = Vector2(134, 151)
 
 [node name="DrinkProp" parent="." index="12" unique_id=1610892016 instance=ExtResource("21_drinkprop")]
 position = Vector2(75, -42)
@@ -262,17 +262,17 @@ position = Vector2(-130, 105)
 SavePointId = "mapp_hearth"
 
 [node name="Chest" parent="." index="14" unique_id=2121869652 instance=ExtResource("17_chest")]
-position = Vector2(122, 110)
+position = Vector2(100, 152)
 ItemPath = "res://resources/items/item_002.tres"
 FlagId = "chest_mapp_corner"
 
 [node name="NoticeBoard" parent="." index="15" unique_id=14098406 instance=ExtResource("15_sign")]
-position = Vector2(150, 16)
+position = Vector2(134, 121)
 SignTitle = "Notice Board"
-Lines = PackedStringArray("The MAPP — serving the finest ales since 1057.", "", "REWARD: 50 gold for information regarding the", "  recent incident in Seade. Contact K.B.", "", "LOST: One horse. Brown. Answers to \'Horse\'.", "  Contact Brix (he is right here).", "", "Rooms available upstairs. Ask the barkeep.", "No dragons. No familiars. No exceptions.", "  (Exceptions may be negotiated.)")
+Lines = PackedStringArray("The Shiver Me Timber Inn — serving the finest ales since 1150.", "", "REWARD: 50 gold for information regarding the", "  recent explosion of the Laurentius Mansion in Seade. Contact the Sovereign Royal Guard.", "", "LOST: One horse. Brown. Answers to \'Horse\'.", "  Contact Brix (he is right here).", "", "Rooms available upstairs. Ask the barkeep.")
 
 [node name="StaircaseSign" parent="." index="16" unique_id=1272600358 instance=ExtResource("15_sign")]
-position = Vector2(124, -43)
+position = Vector2(133, -28)
 SignTitle = "Upper Floor"
 Lines = PackedStringArray("The rooms upstairs are currently occupied.", "", "(Coming soon.)")
 
