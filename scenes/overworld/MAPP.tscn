@@ -327,7 +327,7 @@ SignTitle = "Upper Floor"
 Lines = PackedStringArray("The rooms upstairs are currently occupied.", "", "(Coming soon.)")
 
 [node name="Exit" parent="." index="17" unique_id=1845096565 instance=ExtResource("18_exit")]
-position = Vector2(0, 230)
+position = Vector2(0, 244)
 TargetMapPath = "res://scenes/overworld/TestRoom.tscn"
 TargetSpawnId = "from_mapp"
 AutoTrigger = true
