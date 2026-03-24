@@ -61,11 +61,7 @@ public partial class MAPP : OverworldBase
 		SpawnWallColliders();
 		SpawnCeilingBeams();
 		SpawnRugs();
-		SpawnFirelightPool();
 		SpawnWallDecorations();
-		SpawnFireSmoke();
-		SpawnDustMotes();
-		SpawnLayeredFlame(GetNode<ColorRect>("Fireplace/Flame"));
 		FlickerCandleLights();
 
 		// Animate candle flames placed by scene-instanced TableFurniture nodes
@@ -1182,161 +1178,6 @@ public partial class MAPP : OverworldBase
 		return poly;
 	}
 
-	// ── Firelight pool ──────────────────────────────────────────────────────────
-
-	/// <summary>
-	/// Spawns an elliptical amber glow on the floor directly in front of the firebox
-	/// that pulses in alpha to match the rhythm of the candle flicker.
-	/// </summary>
-	private void SpawnFirelightPool()
-	{
-		const int   pts = 10;
-		const float hw  = 14f; // half-width
-		const float hh  =  6f; // half-height (flattened ellipse)
-
-		var polygon = new Vector2[pts];
-		for (int i = 0; i < pts; i++)
-		{
-			float a = (Mathf.Tau / pts) * i;
-			polygon[i] = new Vector2(Mathf.Cos(a) * hw, Mathf.Sin(a) * hh);
-		}
-
-		var pool = new Polygon2D
-		{
-			Color   = new Color(1.0f, 0.55f, 0.10f, 0.10f),
-			ZIndex  = -7,
-			Polygon = polygon,
-		};
-		AddChild(pool);
-		pool.GlobalPosition = new Vector2(-136f, -8f);
-
-		// Pulse matches the rough 2.2 s candle flicker period
-		var tween = CreateTween().SetLoops();
-		tween.TweenProperty(pool, "color:a", 0.22f, 1.1f)
-			.SetTrans(Tween.TransitionType.Sine);
-		tween.TweenProperty(pool, "color:a", 0.10f, 1.1f)
-			.SetTrans(Tween.TransitionType.Sine);
-	}
-
-	// ── Dust motes ──────────────────────────────────────────────────────────────
-
-	/// <summary>
-	/// Spawns a loose column of warm translucent motes drifting upward above the
-	/// hearth opening, each on a looping rise-and-reset tween with a randomised
-	/// stagger so they never all move at the same time.
-	/// </summary>
-	private void SpawnDustMotes()
-	{
-		var rng = new RandomNumberGenerator();
-		rng.Randomize();
-
-		var basePos = new Vector2(-136f, -55f); // top of the firebox opening
-
-		for (int i = 0; i < 7; i++)
-		{
-			float offsetX   = rng.RandfRange(-10f,  10f);
-			float offsetY   = rng.RandfRange(  0f,  12f);
-			float driftX    = rng.RandfRange( -4f,   4f);
-			float riseDist  = rng.RandfRange( 18f,  30f);
-			float duration  = rng.RandfRange(3.0f, 6.0f);
-			float peakAlpha = rng.RandfRange(0.08f, 0.18f);
-			float startDelay = rng.RandfRange(0f, duration);
-
-			var startPos = basePos + new Vector2(offsetX, offsetY);
-
-			var mote = new ColorRect
-			{
-				Color  = new Color(1.0f, 0.92f, 0.80f, 0f),
-				Size   = new Vector2(2f, 2f),
-				ZIndex = -1,
-			};
-			AddChild(mote);
-			mote.GlobalPosition = startPos;
-
-			// Capture loop variables for the timer callback
-			var   capturedMote  = mote;
-			var   capturedStart = startPos;
-			float capturedDrift = driftX;
-			float capturedRise  = riseDist;
-			float capturedDur   = duration;
-			float capturedPeak  = peakAlpha;
-
-			// Stagger each mote once via a one-shot timer, then loop freely
-			GetTree().CreateTimer(startDelay).Connect("timeout", Callable.From(() =>
-			{
-				if (!IsInstanceValid(this) || IsQueuedForDeletion()) return;
-				var t = CreateTween().SetLoops();
-
-				// Rise first half + fade in
-				t.TweenProperty(capturedMote, "global_position",
-						capturedStart + new Vector2(capturedDrift * 0.5f, -capturedRise * 0.45f),
-						capturedDur * 0.45f)
-					.SetTrans(Tween.TransitionType.Sine);
-				t.Parallel()
-				 .TweenProperty(capturedMote, "color:a", capturedPeak, capturedDur * 0.30f)
-					.SetTrans(Tween.TransitionType.Sine);
-
-				// Rise second half + fade out
-				t.TweenProperty(capturedMote, "global_position",
-						capturedStart + new Vector2(capturedDrift, -capturedRise),
-						capturedDur * 0.55f)
-					.SetTrans(Tween.TransitionType.Sine);
-				t.Parallel()
-				 .TweenProperty(capturedMote, "color:a", 0f, capturedDur * 0.40f)
-					.SetTrans(Tween.TransitionType.Sine);
-
-				// Snap back to base for next loop iteration
-				t.TweenCallback(Callable.From(() =>
-				{
-					capturedMote.GlobalPosition = capturedStart;
-				}));
-			}));
-		}
-	}
-
-	// ── Fireplace smoke ────────────────────────────────────────────────────────
-
-	private void SpawnFireSmoke()
-	{
-		// Three smoke wisps rising from the top of the firebox (world y ≈ -40)
-		var smokeBase = new Vector2(-136f, -40f);
-		var offsets   = new Vector2[] { new Vector2(-3f, 0f), new Vector2(0f, 0f), new Vector2(4f, 0f) };
-
-		for (int i = 0; i < offsets.Length; i++)
-		{
-			var wisp = new Polygon2D
-			{
-				Color   = new Color(0.55f, 0.50f, 0.48f, 0.0f),
-				ZIndex  = -3,
-				Polygon = MakeSmokeWisp(),
-			};
-			AddChild(wisp);
-			Vector2 basePos = smokeBase + offsets[i];
-			wisp.GlobalPosition = basePos;
-
-			float period = 1.8f + i * 0.35f;
-			float delay  = i * 0.55f;
-			float rise   = 22f + i * 4f;
-
-			// Rise and fade loop
-			var t = CreateTween().SetLoops();
-			t.TweenProperty(wisp, "modulate:a", 0.55f, period * 0.4f)
-				.SetTrans(Tween.TransitionType.Sine).SetDelay(delay);
-			t.Parallel().TweenProperty(wisp, "global_position:y", basePos.Y - rise, period)
-				.SetTrans(Tween.TransitionType.Sine).SetDelay(delay);
-			t.TweenProperty(wisp, "modulate:a", 0f, period * 0.3f)
-				.SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.In);
-			t.TweenCallback(Callable.From(() =>
-			{
-				wisp.GlobalPosition = basePos;
-				wisp.Modulate       = wisp.Modulate with { A = 0f };
-			}));
-		}
-	}
-
-	private static Vector2[] MakeSmokeWisp()
-		=> new Vector2[] { new Vector2(-2f, -3f), new Vector2(2f, -3f), new Vector2(3f, 0f), new Vector2(1f, 3f), new Vector2(-1f, 3f), new Vector2(-3f, 0f) };
-
 	// ── Staircase ──────────────────────────────────────────────────────────────
 
 	private void SpawnStaircase()
@@ -1372,7 +1213,6 @@ public partial class MAPP : OverworldBase
 	private static readonly Vector2I TileFloorB  = new Vector2I(1, 0); // light wood
 	private static readonly Vector2I TileWall    = new Vector2I(2, 0); // stone brick
 	private static readonly Vector2I TileBar     = new Vector2I(3, 0); // bar counter
-	private static readonly Vector2I TileHearth  = new Vector2I(4, 0); // flagstone
 
 	private void BuildTileMap()
 	{
@@ -1386,7 +1226,6 @@ public partial class MAPP : OverworldBase
 		source.CreateTile(TileFloorB);
 		source.CreateTile(TileWall);
 		source.CreateTile(TileBar);
-		source.CreateTile(TileHearth);
 
 		var tileSet = new TileSet();
 		tileSet.TileSize = new Vector2I(16, 16);
@@ -1410,11 +1249,6 @@ public partial class MAPP : OverworldBase
 				layer.SetCell(new Vector2I(x, y), 0, tile);
 			}
 		}
-
-		// ── Fireplace hearth (flagstone, west wall) ───────────────────────────
-		for (int x = -10; x <= -8; x++)
-			for (int y = -3; y <= 0; y++)
-				layer.SetCell(new Vector2I(x, y), 0, TileHearth);
 
 		// ── Bar counter strip ─────────────────────────────────────────────────
 		// y = -4 → world y -64 to -48: replaces Bar + BarTop ColorRects
@@ -1544,62 +1378,6 @@ public partial class MAPP : OverworldBase
 		}, antlerColor, zIndex: -4);
 	}
 
-	// ── Layered flame ──────────────────────────────────────────────────────────
-
-	private void SpawnLayeredFlame(ColorRect oldFlame)
-	{
-		oldFlame.Visible = false; // replace with layered Polygon2D flames
-
-		// Flame centre: matches the Flame ColorRect centre (–136, –25)
-		var centre = new Vector2(-136f, -25f);
-
-		var layers = new (Vector2[] poly, Color color, float zIndex, float period, float scaleMin, float scaleMax)[]
-		{
-			// Base layer — wide amber
-			(new Vector2[] {
-				new Vector2(-8f, 8f), new Vector2(8f, 8f),
-				new Vector2(5f,  0f), new Vector2(0f, -14f), new Vector2(-5f, 0f),
-			}, new Color(1.0f, 0.45f, 0.05f, 0.95f), -7f, 0.42f, 0.90f, 1.08f),
-
-			// Middle layer — orange
-			(new Vector2[] {
-				new Vector2(-5f, 6f), new Vector2(5f, 6f),
-				new Vector2(3f,  0f), new Vector2(0f, -12f), new Vector2(-3f, 0f),
-			}, new Color(1.0f, 0.62f, 0.10f, 0.90f), -6f, 0.35f, 0.88f, 1.10f),
-
-			// Tip layer — yellow-white
-			(new Vector2[] {
-				new Vector2(-2.5f, 3f), new Vector2(2.5f, 3f),
-				new Vector2(0f, -10f),
-			}, new Color(1.0f, 0.90f, 0.45f, 0.85f), -5f, 0.26f, 0.82f, 1.16f),
-		};
-
-		float yShift = 2.5f; // how many pixels each layer bobs up/down
-		foreach (var (poly, color, zIdx, period, scaleMin, scaleMax) in layers)
-		{
-			var flame = new Polygon2D { Color = color, ZIndex = (int)zIdx, Polygon = poly };
-			AddChild(flame);
-			flame.GlobalPosition = centre;
-
-			// Scale pulse
-			var t = CreateTween().SetLoops();
-			t.TweenProperty(flame, "scale:y", scaleMax, period)
-				.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
-			t.TweenProperty(flame, "scale:y", scaleMin, period)
-				.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
-
-			// Vertical bob (offset per layer so they don't move in sync)
-			float offset = period * 0.33f;
-			var t2 = CreateTween().SetLoops();
-			t2.TweenProperty(flame, "position:y", centre.Y - yShift, period * 1.1f)
-				.SetTrans(Tween.TransitionType.Sine).SetDelay(offset);
-			t2.TweenProperty(flame, "position:y", centre.Y + 0.5f, period * 1.1f)
-				.SetTrans(Tween.TransitionType.Sine);
-
-			yShift += 1.0f; // each higher layer bobs a bit more
-		}
-	}
-
 	// ── Candle flame animation ─────────────────────────────────────────────────
 
 	private void AnimateCandleFlame(Polygon2D flame)
@@ -1703,10 +1481,6 @@ public partial class MAPP : OverworldBase
 		// South section: x=144..160, y=88..176  →  size 16×88, centre (152, 132)
 		SpawnWallBox(new Vector2( 152f, 132f), new Vector2( 16f,  88f));
 
-		// Fireplace protrusion (hearth tiles x=-9..-8, y=-3..0)
-		// pixel: x=-144..-112, y=-48..16  →  size 32×64, centre (-128, -16)
-		// (left edge meets west wall collider; top edge meets north/bar collider)
-		SpawnWallBox(new Vector2(-128f, -16f), new Vector2( 32f,  64f));
 	}
 
 	private void SpawnWallBox(Vector2 centre, Vector2 size)
