@@ -1,0 +1,12 @@
+join Pip center
+if {gus_transformed_to_frog}:
+	Pip: The large green one came out here earlier.
+	Pip: We sat together for a while.
+	Pip: He said he felt very wide.
+	Pip: I told him that was valid.
+else:
+	Pip: Hello again!
+	Pip: The soil is in good spirits today.
+	Pip: I can feel it through my, well.
+	Pip: You know.
+leave Pip
