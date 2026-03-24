@@ -18,7 +18,7 @@ public partial class GameManager : Node
 	public GameState CurrentState { get; private set; } = GameState.Boot;
 	public RouteType CurrentRoute { get; private set; } = RouteType.Neutral;
 
-	public string PlayerName { get; private set; } = "Foran";
+	public string PlayerName { get; private set; } = "Sen";
 	public int TotalKills { get; private set; }
 	public int Gold { get; private set; }
 	public int Exp  { get; private set; }
