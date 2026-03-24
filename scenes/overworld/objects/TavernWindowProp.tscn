@@ -1,0 +1,53 @@
+[gd_scene format=4]
+
+[node name="TavernWindowProp" type="Node2D"]
+z_index = 7
+
+[node name="LightBleed" type="Polygon2D" parent="."]
+z_index = -7
+color = Color(0.92, 0.9, 0.72, 0.3)
+polygon = PackedVector2Array(-10, -14, 10, -14, 10, 14, -10, 14)
+
+[node name="Glass" type="Polygon2D" parent="."]
+z_index = -6
+color = Color(0.72, 0.82, 0.68, 0.55)
+polygon = PackedVector2Array(-8, -12, 8, -12, 8, 12, -8, 12)
+
+[node name="FrameTop" type="Polygon2D" parent="."]
+z_index = -5
+position = Vector2(0, -12)
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-8, -1, 8, -1, 8, 1, -8, 1)
+
+[node name="FrameBottom" type="Polygon2D" parent="."]
+z_index = -5
+position = Vector2(0, 12)
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-8, -1, 8, -1, 8, 1, -8, 1)
+
+[node name="FrameLeft" type="Polygon2D" parent="."]
+z_index = -5
+position = Vector2(-8, 0)
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-1, -13, 1, -13, 1, 13, -1, 13)
+
+[node name="FrameRight" type="Polygon2D" parent="."]
+z_index = -5
+position = Vector2(8, 0)
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-1, -13, 1, -13, 1, 13, -1, 13)
+
+[node name="CrossH" type="Polygon2D" parent="."]
+z_index = -5
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-8, -1, 8, -1, 8, 1, -8, 1)
+
+[node name="CrossV" type="Polygon2D" parent="."]
+z_index = -5
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-1, -12, 1, -12, 1, 12, -1, 12)
+
+[node name="LightShaft" type="Polygon2D" parent="."]
+z_index = -2
+color = Color(0.95, 0.9, 0.7, 0.07)
+polygon = PackedVector2Array(-4, 0, 4, 0, 26, 40, 2, 40)

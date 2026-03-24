@@ -76,7 +76,7 @@ public partial class DartboardProp : Area2D, IInteractable
 			(1.5f, new Color(0.92f, 0.80f, 0.10f)), // bullseye
 		};
 
-		int z = -4;
+		int z = 1;
 		foreach (var (radius, color) in rings)
 		{
 			var poly = new Polygon2D { Color = color, ZIndex = z++ };
@@ -88,7 +88,7 @@ public partial class DartboardProp : Area2D, IInteractable
 		var board = new Polygon2D
 		{
 			Color   = new Color(0.40f, 0.24f, 0.10f),
-			ZIndex  = -5,
+			ZIndex  = 0,
 			Polygon = new Vector2[]
 			{
 				new Vector2(-10f, -10f), new Vector2(10f, -10f),
