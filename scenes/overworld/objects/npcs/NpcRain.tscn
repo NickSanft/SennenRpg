@@ -64,10 +64,10 @@ animations = [{
 }]
 
 [node name="NpcRain" unique_id=2108417018 instance=ExtResource("1_rain")]
+DisplayName = "Rain"
 
 [node name="Sprite" parent="." index="0" unique_id=1912760606]
 sprite_frames = SubResource("SpriteFrames_i6fir")
-animation = &"idle_up"
-frame_progress = 0.57637835
+frame_progress = 0.7609851
 
 [node name="Sprite2" type="AnimatedSprite2D" parent="." index="2" unique_id=1295025495]
