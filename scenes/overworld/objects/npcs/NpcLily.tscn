@@ -64,9 +64,10 @@ animations = [{
 }]
 
 [node name="NpcLily" unique_id=25986387 instance=ExtResource("1_lily")]
+DisplayName = "Lily"
 
 [node name="Sprite" parent="." index="0" unique_id=1912760606]
 sprite_frames = SubResource("SpriteFrames_887hi")
-animation = &"idle_up"
+frame_progress = 0.80357486
 
 [node name="Sprite2" type="AnimatedSprite2D" parent="." index="2" unique_id=560477111]

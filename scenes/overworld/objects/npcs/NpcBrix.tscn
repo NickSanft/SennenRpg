@@ -64,9 +64,10 @@ animations = [{
 }]
 
 [node name="NpcBrix" unique_id=1151915070 instance=ExtResource("1_brix")]
+DisplayName = "Brix"
 
 [node name="Sprite" parent="." index="0" unique_id=1912760606]
 sprite_frames = SubResource("SpriteFrames_nbx2s")
-animation = &"idle_up"
+frame_progress = 0.34625903
 
 [node name="Sprite2" type="AnimatedSprite2D" parent="." index="2" unique_id=1877837077]

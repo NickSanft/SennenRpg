@@ -64,9 +64,10 @@ animations = [{
 }]
 
 [node name="NpcKriora" unique_id=878890192 instance=ExtResource("1_kriora")]
+DisplayName = "Kriora"
 
 [node name="Sprite" parent="." index="0" unique_id=1912760606]
 sprite_frames = SubResource("SpriteFrames_fjuys")
-animation = &"idle_up"
+frame_progress = 0.41438523
 
 [node name="Sprite2" type="AnimatedSprite2D" parent="." index="2" unique_id=654394369]

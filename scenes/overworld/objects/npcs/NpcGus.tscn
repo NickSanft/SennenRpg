@@ -64,8 +64,10 @@ animations = [{
 }]
 
 [node name="NpcGus" unique_id=2033406307 instance=ExtResource("1_gus")]
+DisplayName = "Gus"
 
 [node name="Sprite" parent="." index="0" unique_id=1912760606]
 sprite_frames = SubResource("SpriteFrames_gk555")
+frame_progress = 0.59044
 
 [node name="Sprite2" type="AnimatedSprite2D" parent="." index="2" unique_id=1242631991]

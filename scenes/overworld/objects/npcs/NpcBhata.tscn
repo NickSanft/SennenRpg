@@ -64,9 +64,10 @@ animations = [{
 }]
 
 [node name="NpcBhata" unique_id=1686585218 instance=ExtResource("1_bhata")]
+DisplayName = "Bhata"
 
 [node name="Sprite" parent="." index="0" unique_id=1912760606]
 sprite_frames = SubResource("SpriteFrames_282bm")
-animation = &"idle_side"
+frame_progress = 0.43115488
 
 [node name="Sprite2" type="AnimatedSprite2D" parent="." index="2" unique_id=1406257065]
