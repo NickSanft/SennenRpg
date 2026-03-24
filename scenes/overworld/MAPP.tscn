@@ -24,7 +24,6 @@
 [ext_resource type="Script" uid="uid://drkqrxhkmk75h" path="res://core/data/ShopItemEntry.cs" id="22_shopentry"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcPetDragon.tscn" id="23_dragon"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcPetFairy.tscn" id="24_fairy"]
-[ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcForan.tscn" id="25_foran"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/TavernWindowProp.tscn" id="27_window"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/DoorProp.tscn" id="28_door"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcRork.tscn" id="29_rork"]
@@ -273,16 +272,6 @@ DefaultFacing = 2
 CharacterPath = "res://dialog/characters/PetFairy.dch"
 PatrolPoints = PackedVector2Array(50, -15, 30, 10, -15, -35, 10, 30)
 PatrolSpeed = 50.0
-
-[node name="Foran" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="31" unique_id=-1794967295 instance=ExtResource("25_foran")]
-position = Vector2(15, 80)
-NpcId = "foran_mapp"
-TimelinePath = "res://dialog/timelines/npc_foran.dtl"
-DisplayName = "Foran"
-CharacterPath = "res://dialog/characters/Foran.dch"
-PlaceholderColor = Color(0.337, 0.42, 0.969, 1)
-PatrolPoints = PackedVector2Array(15, 68, 15, 95)
-PatrolSpeed = 18.0
 
 [node name="Door" parent="." index="7" unique_id=1495472531 instance=ExtResource("28_door")]
 
