@@ -22,6 +22,8 @@
 [ext_resource type="PackedScene" uid="uid://dartboardtscn" path="res://scenes/overworld/objects/DartboardProp.tscn" id="20_dartboard"]
 [ext_resource type="PackedScene" uid="uid://bardrinkptscn" path="res://scenes/overworld/objects/BarDrinkProp.tscn" id="21_drinkprop"]
 [ext_resource type="Script" uid="uid://drkqrxhkmk75h" path="res://core/data/ShopItemEntry.cs" id="22_shopentry"]
+[ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcPetDragon.tscn" id="23_dragon"]
+[ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcPetFairy.tscn" id="24_fairy"]
 
 [sub_resource type="Gradient" id="Gradient_fire_lgt"]
 colors = PackedColorArray(1, 0.62, 0.12, 1, 1, 0.62, 0.12, 0)
@@ -223,6 +225,24 @@ position = Vector2(54, -40)
 
 [node name="BarStool6" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="29" unique_id=1527521584 instance=ExtResource("13_stool")]
 position = Vector2(90, -40)
+
+[node name="PetDragon" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="30" unique_id=-1994967295 instance=ExtResource("23_dragon")]
+position = Vector2(190, -22)
+NpcId = "pet_dragon"
+TimelinePath = "res://dialog/timelines/npc_pet_dragon.dtl"
+DisplayName = "Dragon"
+DefaultFacing = 2
+CharacterPath = "res://dialog/characters/PetDragon.dch"
+
+[node name="PetFairy" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="31" unique_id=-1994967294 instance=ExtResource("24_fairy")]
+position = Vector2(215, -22)
+NpcId = "pet_fairy"
+TimelinePath = "res://dialog/timelines/npc_pet_fairy.dtl"
+DisplayName = "Fairy"
+DefaultFacing = 2
+CharacterPath = "res://dialog/characters/PetFairy.dch"
+PatrolPoints = PackedVector2Array(50, -15, 30, 10, -15, -35, 10, 30)
+PatrolSpeed = 50.0
 
 [node name="Firebox" type="ColorRect" parent="." index="7" unique_id=1617611257]
 z_index = -8
