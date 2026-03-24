@@ -61,11 +61,8 @@ public partial class MAPP : OverworldBase
 		SpawnWallColliders();
 		SpawnCeilingBeams();
 		SpawnRugs();
-		SpawnMantelpiece();
 		SpawnFirelightPool();
 		SpawnWallDecorations();
-		SpawnBottleRack();
-		SpawnWindows();
 		SpawnFireSmoke();
 		SpawnDustMotes();
 		SpawnLayeredFlame(GetNode<ColorRect>("Flame"));
@@ -103,7 +100,6 @@ public partial class MAPP : OverworldBase
 
 		SpawnBarkeepRag();
 		SpawnAllIdleWanders();
-		SpawnBackDoor();
 
 		// Listen for the custom signal fired at the end of npc_brix_again.dtl
 		DialogicBridge.Instance.DialogicSignalReceived += OnDialogicSignal;
@@ -127,12 +123,8 @@ public partial class MAPP : OverworldBase
 		BuildTileMap();
 		SpawnCeilingBeams();
 		SpawnRugs();
-		SpawnMantelpiece();
 		SpawnWallDecorations();
-		SpawnBottleRack();
-		SpawnWindows();
 		SpawnStaircase();
-		SpawnBackDoor();
 	}
 
 	public override void _ExitTree()
@@ -914,38 +906,6 @@ public partial class MAPP : OverworldBase
 		}
 	}
 
-	// ── Window light shafts ─────────────────────────────────────────────────────
-
-	/// <summary>
-	/// Spawns a static trapezoidal light shaft below a window, simulating sunlight
-	/// cutting through glass. Narrow at the window base, fanning wider into the room.
-	/// <paramref name="direction"/> is +1 for west wall (shaft angles right) and -1 for east.
-	/// </summary>
-	private void SpawnWindowShaft(Vector2 windowPos, float direction)
-	{
-		const float narrowHalf = 4f;   // half-width at the window
-		const float wideHalf   = 12f;  // half-width at the far edge
-		const float depth      = 40f;  // how far into the room the shaft reaches
-		const float shift      = 14f;  // lateral shift across depth
-
-		float s = shift * direction;
-
-		var shaft = new Polygon2D
-		{
-			Color   = new Color(0.95f, 0.90f, 0.70f, 0.07f),
-			ZIndex  = -2,
-			Polygon = new Vector2[]
-			{
-				new Vector2(-narrowHalf, 0f),
-				new Vector2(+narrowHalf, 0f),
-				new Vector2(s + wideHalf, depth),
-				new Vector2(s - wideHalf, depth),
-			},
-		};
-		AddChild(shaft);
-		shaft.GlobalPosition = windowPos;
-	}
-
 	// ── Firelight tint ──────────────────────────────────────────────────────────
 
 	/// <summary>
@@ -1251,119 +1211,6 @@ public partial class MAPP : OverworldBase
 		AddChild(poly);
 		poly.GlobalPosition = worldPos;
 		return poly;
-	}
-
-	// ── Bottle rack ────────────────────────────────────────────────────────────
-
-	private void SpawnBottleRack()
-	{
-		// A shelf of bottles behind the bar, north side (y ≈ -88)
-		var shelfPos = new Vector2(-20f, -88f);
-
-		// Shelf plank
-		AddPoly(shelfPos, new Vector2[]
-		{
-			new Vector2(-50f, -1f), new Vector2(50f, -1f),
-			new Vector2(50f,   3f), new Vector2(-50f,  3f),
-		}, new Color(0.30f, 0.18f, 0.08f), zIndex: -4);
-
-		// Bottles: varied heights and colours
-		var bottles = new (float x, float height, Color body, Color label)[]
-		{
-			(-42f, 10f, new Color(0.15f, 0.35f, 0.15f), new Color(0.85f, 0.80f, 0.55f)), // dark green
-			(-30f, 12f, new Color(0.50f, 0.22f, 0.08f), new Color(0.90f, 0.85f, 0.60f)), // amber
-			(-18f,  9f, new Color(0.20f, 0.20f, 0.40f), new Color(0.80f, 0.80f, 0.90f)), // dark blue
-			( -6f, 11f, new Color(0.12f, 0.30f, 0.12f), new Color(0.85f, 0.78f, 0.50f)), // green
-			(  6f, 10f, new Color(0.45f, 0.18f, 0.06f), new Color(0.90f, 0.82f, 0.55f)), // brown
-			( 18f, 13f, new Color(0.55f, 0.12f, 0.08f), new Color(0.88f, 0.80f, 0.55f)), // dark red
-			( 30f,  8f, new Color(0.18f, 0.28f, 0.18f), new Color(0.82f, 0.80f, 0.52f)), // olive
-			( 42f, 11f, new Color(0.38f, 0.14f, 0.05f), new Color(0.88f, 0.82f, 0.52f)), // rust
-		};
-
-		foreach (var (x, h, body, label) in bottles)
-		{
-			var base_ = shelfPos + new Vector2(x, 0f);
-			// Bottle body
-			AddPoly(base_, new Vector2[]
-			{
-				new Vector2(-2.5f, -h),   new Vector2(2.5f, -h),
-				new Vector2( 3.5f,  0f),  new Vector2(-3.5f, 0f),
-			}, body, zIndex: -3);
-			// Neck
-			AddPoly(base_ + new Vector2(0f, -h), new Vector2[]
-			{
-				new Vector2(-1f, -4f), new Vector2(1f, -4f),
-				new Vector2(1f,  0f),  new Vector2(-1f, 0f),
-			}, body, zIndex: -3);
-			// Label strip
-			AddPoly(base_ + new Vector2(0f, -h * 0.55f), new Vector2[]
-			{
-				new Vector2(-2.5f, -2f), new Vector2(2.5f, -2f),
-				new Vector2(2.5f,  2f),  new Vector2(-2.5f, 2f),
-			}, label, zIndex: -2);
-		}
-	}
-
-	// ── Windows ────────────────────────────────────────────────────────────────
-
-	private void SpawnWindows()
-	{
-		// One window each on the east and west walls
-		SpawnWindow(new Vector2(-150f, 40f));
-		SpawnWindowShaft(new Vector2(-150f, 40f), direction: +1f); // west wall — shaft angles right
-		SpawnWindow(new Vector2( 138f, 40f));
-		SpawnWindowShaft(new Vector2( 138f, 40f), direction: -1f); // east wall — shaft angles left
-	}
-
-	private void SpawnWindow(Vector2 pos)
-	{
-		var frameColor = new Color(0.30f, 0.18f, 0.08f);
-		var glassColor = new Color(0.72f, 0.82f, 0.68f, 0.55f); // pale green-tinted glass
-		var lightColor = new Color(0.92f, 0.90f, 0.72f, 0.30f); // warm light bleed
-
-		// Light bleed behind window (larger, behind frame)
-		AddPoly(pos, new Vector2[]
-		{
-			new Vector2(-10f, -14f), new Vector2(10f, -14f),
-			new Vector2(10f,   14f), new Vector2(-10f,  14f),
-		}, lightColor, zIndex: -7);
-
-		// Glass pane
-		AddPoly(pos, new Vector2[]
-		{
-			new Vector2(-8f, -12f), new Vector2(8f, -12f),
-			new Vector2(8f,   12f), new Vector2(-8f,  12f),
-		}, glassColor, zIndex: -6);
-
-		// Outer frame (four strips)
-		foreach (var (rect, size) in new (Vector2 offset, Vector2 size)[]
-		{
-			(new Vector2( 0f, -12f), new Vector2(16f, 2f)),  // top
-			(new Vector2( 0f,  12f), new Vector2(16f, 2f)),  // bottom
-			(new Vector2(-8f,   0f), new Vector2(2f, 26f)),  // left
-			(new Vector2( 8f,   0f), new Vector2(2f, 26f)),  // right
-		})
-		{
-			AddPoly(pos + rect, new Vector2[]
-			{
-				new Vector2(-size.X * 0.5f, -size.Y * 0.5f),
-				new Vector2( size.X * 0.5f, -size.Y * 0.5f),
-				new Vector2( size.X * 0.5f,  size.Y * 0.5f),
-				new Vector2(-size.X * 0.5f,  size.Y * 0.5f),
-			}, frameColor, zIndex: -5);
-		}
-
-		// Cross-bar dividers
-		AddPoly(pos, new Vector2[]
-		{
-			new Vector2(-8f, -1f), new Vector2(8f, -1f),
-			new Vector2(8f,   1f), new Vector2(-8f, 1f),
-		}, frameColor, zIndex: -5);
-		AddPoly(pos, new Vector2[]
-		{
-			new Vector2(-1f, -12f), new Vector2(1f, -12f),
-			new Vector2(1f,   12f), new Vector2(-1f, 12f),
-		}, frameColor, zIndex: -5);
 	}
 
 	// ── Firelight pool ──────────────────────────────────────────────────────────
@@ -1679,90 +1526,12 @@ public partial class MAPP : OverworldBase
 		}
 	}
 
-	// ── Fireplace mantelpiece ──────────────────────────────────────────────────
-
-	private static readonly Color CandleWax   = new Color(0.92f, 0.88f, 0.72f);
-	private static readonly Color CandleFlame = new Color(1.00f, 0.68f, 0.12f);
-
-	private void SpawnMantelpiece()
-	{
-		// The Firebox ColorRect sits at world x=-150 to -122, y=-40 to -8 (center: -136, -24)
-		var center = new Vector2(-136f, -40f);
-
-		// Stone shelf — slightly wider than the firebox
-		AddPoly(center, new Vector2[]
-		{
-			new Vector2(-16f, 0f), new Vector2(16f, 0f),
-			new Vector2(16f,  5f), new Vector2(-16f, 5f),
-		}, new Color(0.55f, 0.50f, 0.44f), zIndex: -4); // stone face
-
-		AddPoly(center, new Vector2[]
-		{
-			new Vector2(-16f, -3f), new Vector2(16f, -3f),
-			new Vector2(16f,   0f), new Vector2(-16f,  0f),
-		}, new Color(0.42f, 0.38f, 0.33f), zIndex: -4); // shelf top (darker)
-
-		// Left candle holder
-		SpawnMantleCandle(center + new Vector2(-10f, -2f));
-
-		// Skull trophy (centre)
-		SpawnMantleSkull(center + new Vector2(0f, -2f));
-
-		// Right candle holder
-		SpawnMantleCandle(center + new Vector2(10f, -2f));
-	}
-
-	private void SpawnMantleCandle(Vector2 pos)
-	{
-		// Holder base
-		AddPoly(pos, new Vector2[] {
-			new Vector2(-2f, 0f), new Vector2(2f, 0f),
-			new Vector2(2f, 2f),  new Vector2(-2f, 2f),
-		}, new Color(0.5f, 0.38f, 0.12f), zIndex: -3);
-		// Wax
-		AddPoly(pos + new Vector2(0f, -5f), new Vector2[] {
-			new Vector2(-1f, 0f), new Vector2(1f, 0f),
-			new Vector2(1f, 4f),  new Vector2(-1f, 4f),
-		}, CandleWax, zIndex: -3);
-		// Flame
-		AddPoly(pos + new Vector2(0f, -6f), new Vector2[] {
-			new Vector2(0f, -3f), new Vector2(1f, -1f),
-			new Vector2(0f,  0f), new Vector2(-1f, -1f),
-		}, CandleFlame, zIndex: -2);
-	}
-
-	private void SpawnMantleSkull(Vector2 pos)
-	{
-		// Cranium
-		AddPoly(pos + new Vector2(0f, -4f), new Vector2[] {
-			new Vector2(-2f, -2f), new Vector2(2f, -2f),
-			new Vector2(3f,   0f), new Vector2(-3f,  0f),
-		}, new Color(0.88f, 0.85f, 0.76f), zIndex: -3);
-		// Jaw
-		AddPoly(pos + new Vector2(0f, -2f), new Vector2[] {
-			new Vector2(-2f, 0f), new Vector2(2f, 0f),
-			new Vector2(1f,  2f), new Vector2(-1f, 2f),
-		}, new Color(0.80f, 0.77f, 0.68f), zIndex: -3);
-		// Eye sockets (dark dots)
-		AddPoly(pos + new Vector2(-1f, -5f), new Vector2[] {
-			new Vector2(-0.8f, -0.8f), new Vector2(0.8f, -0.8f),
-			new Vector2(0.8f,  0.8f),  new Vector2(-0.8f,  0.8f),
-		}, new Color(0.1f, 0.08f, 0.06f), zIndex: -2);
-		AddPoly(pos + new Vector2(1f, -5f), new Vector2[] {
-			new Vector2(-0.8f, -0.8f), new Vector2(0.8f, -0.8f),
-			new Vector2(0.8f,  0.8f),  new Vector2(-0.8f,  0.8f),
-		}, new Color(0.1f, 0.08f, 0.06f), zIndex: -2);
-	}
-
 	// ── Wall decorations ───────────────────────────────────────────────────────
 
 	private void SpawnWallDecorations()
 	{
 		// Mounted antlers on east side of north wall
 		SpawnMountedAntlers(new Vector2(65f, -90f));
-
-		// Painted banner on west side of north wall
-		SpawnBanner(new Vector2(-65f, -90f));
 	}
 
 	private void SpawnMountedAntlers(Vector2 pos)
@@ -1803,41 +1572,6 @@ public partial class MAPP : OverworldBase
 			new Vector2(-1f, 0f), new Vector2(1f, 0f),
 			new Vector2(-2f, -4f),
 		}, antlerColor, zIndex: -4);
-	}
-
-	private void SpawnBanner(Vector2 pos)
-	{
-		// Banner cloth (deep purple with gold trim)
-		AddPoly(pos + new Vector2(0f, -3f), new Vector2[] {
-			new Vector2(-7f, -9f), new Vector2(7f, -9f),
-			new Vector2(7f,   7f), new Vector2(-7f,  7f),
-		}, new Color(0.28f, 0.10f, 0.42f), zIndex: -4); // purple field
-
-		// Gold border strip
-		AddPoly(pos + new Vector2(0f, -3f), new Vector2[] {
-			new Vector2(-7f, -9f), new Vector2(-5f, -9f),
-			new Vector2(-5f,  7f), new Vector2(-7f,  7f),
-		}, new Color(0.75f, 0.55f, 0.12f), zIndex: -3);
-		AddPoly(pos + new Vector2(0f, -3f), new Vector2[] {
-			new Vector2( 5f, -9f), new Vector2(7f, -9f),
-			new Vector2( 7f,  7f), new Vector2(5f,  7f),
-		}, new Color(0.75f, 0.55f, 0.12f), zIndex: -3);
-
-		// Decorative rune glyph (simple cross)
-		AddPoly(pos + new Vector2(0f, -3f), new Vector2[] {
-			new Vector2(-1f, -5f), new Vector2(1f, -5f),
-			new Vector2(1f,  3f),  new Vector2(-1f, 3f),
-		}, new Color(0.85f, 0.65f, 0.18f), zIndex: -3);
-		AddPoly(pos + new Vector2(0f, -3f), new Vector2[] {
-			new Vector2(-4f, -1f), new Vector2(4f, -1f),
-			new Vector2(4f,  1f),  new Vector2(-4f, 1f),
-		}, new Color(0.85f, 0.65f, 0.18f), zIndex: -3);
-
-		// Bottom point of banner (pennant cut)
-		AddPoly(pos + new Vector2(0f, 4f), new Vector2[] {
-			new Vector2(-7f, 0f), new Vector2(7f, 0f),
-			new Vector2(0f, 6f),
-		}, new Color(0.28f, 0.10f, 0.42f), zIndex: -4);
 	}
 
 	// ── Layered flame ──────────────────────────────────────────────────────────
@@ -2014,86 +1748,6 @@ public partial class MAPP : OverworldBase
 		};
 		body.AddChild(shape);
 		AddChild(body);
-	}
-
-	// ── Back door (garden exit) ─────────────────────────────────────────────────
-
-	/// <summary>
-	/// Spawns the back-door visual on the east wall (the doorway gap in the
-	/// wall collider is handled in <see cref="SpawnWallColliders"/>).
-	/// In gameplay mode also places a <see cref="MapExit"/> Area2D so the
-	/// player can press Z to enter the garden.
-	/// </summary>
-	private void SpawnBackDoor()
-	{
-		// Door is centred at the east wall gap: world (144, 72)
-		var doorPos    = new Vector2(144f, 72f);
-		var frameColor = new Color(0.28f, 0.16f, 0.07f); // dark wood frame
-		var panelColor = new Color(0.35f, 0.22f, 0.10f); // lighter door panel
-		var brassColor = new Color(0.55f, 0.42f, 0.12f); // aged brass handle
-
-		// Dark opening interior — "hole" in the east wall
-		AddPoly(doorPos, new Vector2[]
-		{
-			new Vector2(-8f, -16f), new Vector2(8f, -16f),
-			new Vector2(8f,  16f),  new Vector2(-8f, 16f),
-		}, new Color(0.07f, 0.04f, 0.03f), zIndex: -8);
-
-		// Door panel (slightly recessed)
-		AddPoly(doorPos + new Vector2(-1f, 0f), new Vector2[]
-		{
-			new Vector2(-6f, -14f), new Vector2(6f, -14f),
-			new Vector2(6f,  14f),  new Vector2(-6f, 14f),
-		}, panelColor, zIndex: -7);
-
-		// Frame border strips (left, right, top, bottom)
-		foreach (var (off, size) in new (Vector2 off, Vector2 size)[]
-		{
-			(new Vector2(-8f,   0f), new Vector2(2f, 32f)),  // left
-			(new Vector2( 8f,   0f), new Vector2(2f, 32f)),  // right
-			(new Vector2( 0f, -16f), new Vector2(18f, 2f)),  // top
-			(new Vector2( 0f,  16f), new Vector2(18f, 2f)),  // bottom
-		})
-		{
-			AddPoly(doorPos + off, new Vector2[]
-			{
-				new Vector2(-size.X * 0.5f, -size.Y * 0.5f),
-				new Vector2( size.X * 0.5f, -size.Y * 0.5f),
-				new Vector2( size.X * 0.5f,  size.Y * 0.5f),
-				new Vector2(-size.X * 0.5f,  size.Y * 0.5f),
-			}, frameColor, zIndex: -6);
-		}
-
-		// Brass handle knob
-		AddPoly(doorPos + new Vector2(-3f, 3f), new Vector2[]
-		{
-			new Vector2(-1.5f, -1.5f), new Vector2(1.5f, -1.5f),
-			new Vector2(1.5f,   1.5f), new Vector2(-1.5f, 1.5f),
-		}, brassColor, zIndex: -5);
-
-		// Small "GARDEN" sign above the door
-		// (two lines: a label is too heavy at this scale — just a tiny plaque)
-		AddPoly(doorPos + new Vector2(-1f, -20f), new Vector2[]
-		{
-			new Vector2(-6f, -3f), new Vector2(6f, -3f),
-			new Vector2(6f,   3f), new Vector2(-6f, 3f),
-		}, new Color(0.40f, 0.28f, 0.10f), zIndex: -5); // plaque
-
-		// Exit Area2D — only in play mode
-		if (Engine.IsEditorHint()) return;
-
-		var exit = new MapExit();
-		exit.TargetMapPath = "res://scenes/overworld/maps/MappGarden.tscn";
-		exit.TargetSpawnId = "from_mapp_backyard";
-		exit.AutoTrigger   = false;
-
-		var exitShape = new CollisionShape2D
-		{
-			Shape = new RectangleShape2D { Size = new Vector2(24f, 36f) },
-		};
-		exit.AddChild(exitShape);
-		AddChild(exit);
-		exit.GlobalPosition = doorPos;
 	}
 
 }

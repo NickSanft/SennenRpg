@@ -44,6 +44,9 @@ script = ExtResource("22_shopentry")
 ItemDataPath = "res://resources/items/item_004.tres"
 Price = 5
 
+[sub_resource type="RectangleShape2D" id="RShape_backdoor"]
+size = Vector2(24, 36)
+
 [node name="MAPP" unique_id=1793046433 instance=ExtResource("1_mapp01")]
 script = ExtResource("2_mapp02")
 
@@ -281,3 +284,438 @@ position = Vector2(0, 168)
 TargetMapPath = "res://scenes/overworld/TestRoom.tscn"
 TargetSpawnId = "from_mapp"
 AutoTrigger = true
+
+[node name="Mantelpiece" type="Node2D" parent="." index="18" unique_id=2200000001]
+
+[node name="ShelfFace" type="Polygon2D" parent="Mantelpiece" unique_id=2200000002]
+position = Vector2(-136, -40)
+z_index = -4
+color = Color(0.55, 0.5, 0.44, 1)
+polygon = PackedVector2Array(-16, 0, 16, 0, 16, 5, -16, 5)
+
+[node name="ShelfTop" type="Polygon2D" parent="Mantelpiece" unique_id=2200000003]
+position = Vector2(-136, -40)
+z_index = -4
+color = Color(0.42, 0.38, 0.33, 1)
+polygon = PackedVector2Array(-16, -3, 16, -3, 16, 0, -16, 0)
+
+[node name="CandleLeftHolder" type="Polygon2D" parent="Mantelpiece" unique_id=2200000004]
+position = Vector2(-146, -42)
+z_index = -3
+color = Color(0.5, 0.38, 0.12, 1)
+polygon = PackedVector2Array(-2, 0, 2, 0, 2, 2, -2, 2)
+
+[node name="CandleLeftWax" type="Polygon2D" parent="Mantelpiece" unique_id=2200000005]
+position = Vector2(-146, -47)
+z_index = -3
+color = Color(0.92, 0.88, 0.72, 1)
+polygon = PackedVector2Array(-1, 0, 1, 0, 1, 4, -1, 4)
+
+[node name="CandleLeftFlame" type="Polygon2D" parent="Mantelpiece" unique_id=2200000006]
+position = Vector2(-146, -48)
+z_index = -2
+color = Color(1, 0.68, 0.12, 1)
+polygon = PackedVector2Array(0, -3, 1, -1, 0, 0, -1, -1)
+
+[node name="SkullCranium" type="Polygon2D" parent="Mantelpiece" unique_id=2200000007]
+position = Vector2(-136, -46)
+z_index = -3
+color = Color(0.88, 0.85, 0.76, 1)
+polygon = PackedVector2Array(-2, -2, 2, -2, 3, 0, -3, 0)
+
+[node name="SkullJaw" type="Polygon2D" parent="Mantelpiece" unique_id=2200000008]
+position = Vector2(-136, -44)
+z_index = -3
+color = Color(0.8, 0.77, 0.68, 1)
+polygon = PackedVector2Array(-2, 0, 2, 0, 1, 2, -1, 2)
+
+[node name="SkullEyeLeft" type="Polygon2D" parent="Mantelpiece" unique_id=2200000009]
+position = Vector2(-137, -47)
+z_index = -2
+color = Color(0.1, 0.08, 0.06, 1)
+polygon = PackedVector2Array(-0.8, -0.8, 0.8, -0.8, 0.8, 0.8, -0.8, 0.8)
+
+[node name="SkullEyeRight" type="Polygon2D" parent="Mantelpiece" unique_id=2200000010]
+position = Vector2(-135, -47)
+z_index = -2
+color = Color(0.1, 0.08, 0.06, 1)
+polygon = PackedVector2Array(-0.8, -0.8, 0.8, -0.8, 0.8, 0.8, -0.8, 0.8)
+
+[node name="CandleRightHolder" type="Polygon2D" parent="Mantelpiece" unique_id=2200000011]
+position = Vector2(-126, -42)
+z_index = -3
+color = Color(0.5, 0.38, 0.12, 1)
+polygon = PackedVector2Array(-2, 0, 2, 0, 2, 2, -2, 2)
+
+[node name="CandleRightWax" type="Polygon2D" parent="Mantelpiece" unique_id=2200000012]
+position = Vector2(-126, -47)
+z_index = -3
+color = Color(0.92, 0.88, 0.72, 1)
+polygon = PackedVector2Array(-1, 0, 1, 0, 1, 4, -1, 4)
+
+[node name="CandleRightFlame" type="Polygon2D" parent="Mantelpiece" unique_id=2200000013]
+position = Vector2(-126, -48)
+z_index = -2
+color = Color(1, 0.68, 0.12, 1)
+polygon = PackedVector2Array(0, -3, 1, -1, 0, 0, -1, -1)
+
+[node name="Banner" type="Node2D" parent="." index="19" unique_id=2200000020]
+
+[node name="BannerField" type="Polygon2D" parent="Banner" unique_id=2200000021]
+position = Vector2(-65, -93)
+z_index = -4
+color = Color(0.28, 0.1, 0.42, 1)
+polygon = PackedVector2Array(-7, -9, 7, -9, 7, 7, -7, 7)
+
+[node name="GoldLeft" type="Polygon2D" parent="Banner" unique_id=2200000022]
+position = Vector2(-65, -93)
+z_index = -3
+color = Color(0.75, 0.55, 0.12, 1)
+polygon = PackedVector2Array(-7, -9, -5, -9, -5, 7, -7, 7)
+
+[node name="GoldRight" type="Polygon2D" parent="Banner" unique_id=2200000023]
+position = Vector2(-65, -93)
+z_index = -3
+color = Color(0.75, 0.55, 0.12, 1)
+polygon = PackedVector2Array(5, -9, 7, -9, 7, 7, 5, 7)
+
+[node name="RuneVertical" type="Polygon2D" parent="Banner" unique_id=2200000024]
+position = Vector2(-65, -93)
+z_index = -3
+color = Color(0.85, 0.65, 0.18, 1)
+polygon = PackedVector2Array(-1, -5, 1, -5, 1, 3, -1, 3)
+
+[node name="RuneHorizontal" type="Polygon2D" parent="Banner" unique_id=2200000025]
+position = Vector2(-65, -93)
+z_index = -3
+color = Color(0.85, 0.65, 0.18, 1)
+polygon = PackedVector2Array(-4, -1, 4, -1, 4, 1, -4, 1)
+
+[node name="BannerPoint" type="Polygon2D" parent="Banner" unique_id=2200000026]
+position = Vector2(-65, -86)
+z_index = -4
+color = Color(0.28, 0.1, 0.42, 1)
+polygon = PackedVector2Array(-7, 0, 7, 0, 0, 6)
+
+[node name="Bottles" type="Node2D" parent="." index="20" unique_id=2200000030]
+
+[node name="ShelfPlank" type="Polygon2D" parent="Bottles" unique_id=2200000031]
+position = Vector2(-20, -88)
+z_index = -4
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-50, -1, 50, -1, 50, 3, -50, 3)
+
+[node name="Bottle0Body" type="Polygon2D" parent="Bottles" unique_id=2200000032]
+position = Vector2(-62, -88)
+z_index = -3
+color = Color(0.15, 0.35, 0.15, 1)
+polygon = PackedVector2Array(-2.5, -10, 2.5, -10, 3.5, 0, -3.5, 0)
+
+[node name="Bottle0Neck" type="Polygon2D" parent="Bottles" unique_id=2200000033]
+position = Vector2(-62, -98)
+z_index = -3
+color = Color(0.15, 0.35, 0.15, 1)
+polygon = PackedVector2Array(-1, -4, 1, -4, 1, 0, -1, 0)
+
+[node name="Bottle0Label" type="Polygon2D" parent="Bottles" unique_id=2200000034]
+position = Vector2(-62, -93.5)
+z_index = -2
+color = Color(0.85, 0.8, 0.55, 1)
+polygon = PackedVector2Array(-2.5, -2, 2.5, -2, 2.5, 2, -2.5, 2)
+
+[node name="Bottle1Body" type="Polygon2D" parent="Bottles" unique_id=2200000035]
+position = Vector2(-50, -88)
+z_index = -3
+color = Color(0.5, 0.22, 0.08, 1)
+polygon = PackedVector2Array(-2.5, -12, 2.5, -12, 3.5, 0, -3.5, 0)
+
+[node name="Bottle1Neck" type="Polygon2D" parent="Bottles" unique_id=2200000036]
+position = Vector2(-50, -100)
+z_index = -3
+color = Color(0.5, 0.22, 0.08, 1)
+polygon = PackedVector2Array(-1, -4, 1, -4, 1, 0, -1, 0)
+
+[node name="Bottle1Label" type="Polygon2D" parent="Bottles" unique_id=2200000037]
+position = Vector2(-50, -94.6)
+z_index = -2
+color = Color(0.9, 0.85, 0.6, 1)
+polygon = PackedVector2Array(-2.5, -2, 2.5, -2, 2.5, 2, -2.5, 2)
+
+[node name="Bottle2Body" type="Polygon2D" parent="Bottles" unique_id=2200000038]
+position = Vector2(-38, -88)
+z_index = -3
+color = Color(0.2, 0.2, 0.4, 1)
+polygon = PackedVector2Array(-2.5, -9, 2.5, -9, 3.5, 0, -3.5, 0)
+
+[node name="Bottle2Neck" type="Polygon2D" parent="Bottles" unique_id=2200000039]
+position = Vector2(-38, -97)
+z_index = -3
+color = Color(0.2, 0.2, 0.4, 1)
+polygon = PackedVector2Array(-1, -4, 1, -4, 1, 0, -1, 0)
+
+[node name="Bottle2Label" type="Polygon2D" parent="Bottles" unique_id=2200000040]
+position = Vector2(-38, -92.95)
+z_index = -2
+color = Color(0.8, 0.8, 0.9, 1)
+polygon = PackedVector2Array(-2.5, -2, 2.5, -2, 2.5, 2, -2.5, 2)
+
+[node name="Bottle3Body" type="Polygon2D" parent="Bottles" unique_id=2200000041]
+position = Vector2(-26, -88)
+z_index = -3
+color = Color(0.12, 0.3, 0.12, 1)
+polygon = PackedVector2Array(-2.5, -11, 2.5, -11, 3.5, 0, -3.5, 0)
+
+[node name="Bottle3Neck" type="Polygon2D" parent="Bottles" unique_id=2200000042]
+position = Vector2(-26, -99)
+z_index = -3
+color = Color(0.12, 0.3, 0.12, 1)
+polygon = PackedVector2Array(-1, -4, 1, -4, 1, 0, -1, 0)
+
+[node name="Bottle3Label" type="Polygon2D" parent="Bottles" unique_id=2200000043]
+position = Vector2(-26, -94.05)
+z_index = -2
+color = Color(0.85, 0.78, 0.5, 1)
+polygon = PackedVector2Array(-2.5, -2, 2.5, -2, 2.5, 2, -2.5, 2)
+
+[node name="Bottle4Body" type="Polygon2D" parent="Bottles" unique_id=2200000044]
+position = Vector2(-14, -88)
+z_index = -3
+color = Color(0.45, 0.18, 0.06, 1)
+polygon = PackedVector2Array(-2.5, -10, 2.5, -10, 3.5, 0, -3.5, 0)
+
+[node name="Bottle4Neck" type="Polygon2D" parent="Bottles" unique_id=2200000045]
+position = Vector2(-14, -98)
+z_index = -3
+color = Color(0.45, 0.18, 0.06, 1)
+polygon = PackedVector2Array(-1, -4, 1, -4, 1, 0, -1, 0)
+
+[node name="Bottle4Label" type="Polygon2D" parent="Bottles" unique_id=2200000046]
+position = Vector2(-14, -93.5)
+z_index = -2
+color = Color(0.9, 0.82, 0.55, 1)
+polygon = PackedVector2Array(-2.5, -2, 2.5, -2, 2.5, 2, -2.5, 2)
+
+[node name="Bottle5Body" type="Polygon2D" parent="Bottles" unique_id=2200000047]
+position = Vector2(-2, -88)
+z_index = -3
+color = Color(0.55, 0.12, 0.08, 1)
+polygon = PackedVector2Array(-2.5, -13, 2.5, -13, 3.5, 0, -3.5, 0)
+
+[node name="Bottle5Neck" type="Polygon2D" parent="Bottles" unique_id=2200000048]
+position = Vector2(-2, -101)
+z_index = -3
+color = Color(0.55, 0.12, 0.08, 1)
+polygon = PackedVector2Array(-1, -4, 1, -4, 1, 0, -1, 0)
+
+[node name="Bottle5Label" type="Polygon2D" parent="Bottles" unique_id=2200000049]
+position = Vector2(-2, -95.15)
+z_index = -2
+color = Color(0.88, 0.8, 0.55, 1)
+polygon = PackedVector2Array(-2.5, -2, 2.5, -2, 2.5, 2, -2.5, 2)
+
+[node name="Bottle6Body" type="Polygon2D" parent="Bottles" unique_id=2200000050]
+position = Vector2(10, -88)
+z_index = -3
+color = Color(0.18, 0.28, 0.18, 1)
+polygon = PackedVector2Array(-2.5, -8, 2.5, -8, 3.5, 0, -3.5, 0)
+
+[node name="Bottle6Neck" type="Polygon2D" parent="Bottles" unique_id=2200000051]
+position = Vector2(10, -96)
+z_index = -3
+color = Color(0.18, 0.28, 0.18, 1)
+polygon = PackedVector2Array(-1, -4, 1, -4, 1, 0, -1, 0)
+
+[node name="Bottle6Label" type="Polygon2D" parent="Bottles" unique_id=2200000052]
+position = Vector2(10, -92.4)
+z_index = -2
+color = Color(0.82, 0.8, 0.52, 1)
+polygon = PackedVector2Array(-2.5, -2, 2.5, -2, 2.5, 2, -2.5, 2)
+
+[node name="Bottle7Body" type="Polygon2D" parent="Bottles" unique_id=2200000053]
+position = Vector2(22, -88)
+z_index = -3
+color = Color(0.38, 0.14, 0.05, 1)
+polygon = PackedVector2Array(-2.5, -11, 2.5, -11, 3.5, 0, -3.5, 0)
+
+[node name="Bottle7Neck" type="Polygon2D" parent="Bottles" unique_id=2200000054]
+position = Vector2(22, -99)
+z_index = -3
+color = Color(0.38, 0.14, 0.05, 1)
+polygon = PackedVector2Array(-1, -4, 1, -4, 1, 0, -1, 0)
+
+[node name="Bottle7Label" type="Polygon2D" parent="Bottles" unique_id=2200000055]
+position = Vector2(22, -94.05)
+z_index = -2
+color = Color(0.88, 0.82, 0.52, 1)
+polygon = PackedVector2Array(-2.5, -2, 2.5, -2, 2.5, 2, -2.5, 2)
+
+[node name="WindowWest" type="Node2D" parent="." index="21" unique_id=2200000060]
+
+[node name="LightBleed" type="Polygon2D" parent="WindowWest" unique_id=2200000061]
+position = Vector2(-150, 40)
+z_index = -7
+color = Color(0.92, 0.9, 0.72, 0.3)
+polygon = PackedVector2Array(-10, -14, 10, -14, 10, 14, -10, 14)
+
+[node name="Glass" type="Polygon2D" parent="WindowWest" unique_id=2200000062]
+position = Vector2(-150, 40)
+z_index = -6
+color = Color(0.72, 0.82, 0.68, 0.55)
+polygon = PackedVector2Array(-8, -12, 8, -12, 8, 12, -8, 12)
+
+[node name="FrameTop" type="Polygon2D" parent="WindowWest" unique_id=2200000063]
+position = Vector2(-150, 28)
+z_index = -5
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-8, -1, 8, -1, 8, 1, -8, 1)
+
+[node name="FrameBottom" type="Polygon2D" parent="WindowWest" unique_id=2200000064]
+position = Vector2(-150, 52)
+z_index = -5
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-8, -1, 8, -1, 8, 1, -8, 1)
+
+[node name="FrameLeft" type="Polygon2D" parent="WindowWest" unique_id=2200000065]
+position = Vector2(-158, 40)
+z_index = -5
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-1, -13, 1, -13, 1, 13, -1, 13)
+
+[node name="FrameRight" type="Polygon2D" parent="WindowWest" unique_id=2200000066]
+position = Vector2(-142, 40)
+z_index = -5
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-1, -13, 1, -13, 1, 13, -1, 13)
+
+[node name="CrossH" type="Polygon2D" parent="WindowWest" unique_id=2200000067]
+position = Vector2(-150, 40)
+z_index = -5
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-8, -1, 8, -1, 8, 1, -8, 1)
+
+[node name="CrossV" type="Polygon2D" parent="WindowWest" unique_id=2200000068]
+position = Vector2(-150, 40)
+z_index = -5
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-1, -12, 1, -12, 1, 12, -1, 12)
+
+[node name="LightShaft" type="Polygon2D" parent="WindowWest" unique_id=2200000069]
+position = Vector2(-150, 40)
+z_index = -2
+color = Color(0.95, 0.9, 0.7, 0.07)
+polygon = PackedVector2Array(-4, 0, 4, 0, 26, 40, 2, 40)
+
+[node name="WindowEast" type="Node2D" parent="." index="22" unique_id=2200000070]
+
+[node name="LightBleed" type="Polygon2D" parent="WindowEast" unique_id=2200000071]
+position = Vector2(138, 40)
+z_index = -7
+color = Color(0.92, 0.9, 0.72, 0.3)
+polygon = PackedVector2Array(-10, -14, 10, -14, 10, 14, -10, 14)
+
+[node name="Glass" type="Polygon2D" parent="WindowEast" unique_id=2200000072]
+position = Vector2(138, 40)
+z_index = -6
+color = Color(0.72, 0.82, 0.68, 0.55)
+polygon = PackedVector2Array(-8, -12, 8, -12, 8, 12, -8, 12)
+
+[node name="FrameTop" type="Polygon2D" parent="WindowEast" unique_id=2200000073]
+position = Vector2(138, 28)
+z_index = -5
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-8, -1, 8, -1, 8, 1, -8, 1)
+
+[node name="FrameBottom" type="Polygon2D" parent="WindowEast" unique_id=2200000074]
+position = Vector2(138, 52)
+z_index = -5
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-8, -1, 8, -1, 8, 1, -8, 1)
+
+[node name="FrameLeft" type="Polygon2D" parent="WindowEast" unique_id=2200000075]
+position = Vector2(130, 40)
+z_index = -5
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-1, -13, 1, -13, 1, 13, -1, 13)
+
+[node name="FrameRight" type="Polygon2D" parent="WindowEast" unique_id=2200000076]
+position = Vector2(146, 40)
+z_index = -5
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-1, -13, 1, -13, 1, 13, -1, 13)
+
+[node name="CrossH" type="Polygon2D" parent="WindowEast" unique_id=2200000077]
+position = Vector2(138, 40)
+z_index = -5
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-8, -1, 8, -1, 8, 1, -8, 1)
+
+[node name="CrossV" type="Polygon2D" parent="WindowEast" unique_id=2200000078]
+position = Vector2(138, 40)
+z_index = -5
+color = Color(0.3, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-1, -12, 1, -12, 1, 12, -1, 12)
+
+[node name="LightShaft" type="Polygon2D" parent="WindowEast" unique_id=2200000079]
+position = Vector2(138, 40)
+z_index = -2
+color = Color(0.95, 0.9, 0.7, 0.07)
+polygon = PackedVector2Array(-4, 0, 4, 0, -2, 40, -26, 40)
+
+[node name="BackDoor" type="Node2D" parent="." index="23" unique_id=2200000080]
+
+[node name="Opening" type="Polygon2D" parent="BackDoor" unique_id=2200000081]
+position = Vector2(144, 72)
+z_index = -8
+color = Color(0.07, 0.04, 0.03, 1)
+polygon = PackedVector2Array(-8, -16, 8, -16, 8, 16, -8, 16)
+
+[node name="Panel" type="Polygon2D" parent="BackDoor" unique_id=2200000082]
+position = Vector2(143, 72)
+z_index = -7
+color = Color(0.35, 0.22, 0.1, 1)
+polygon = PackedVector2Array(-6, -14, 6, -14, 6, 14, -6, 14)
+
+[node name="FrameLeft" type="Polygon2D" parent="BackDoor" unique_id=2200000083]
+position = Vector2(136, 72)
+z_index = -6
+color = Color(0.28, 0.16, 0.07, 1)
+polygon = PackedVector2Array(-1, -16, 1, -16, 1, 16, -1, 16)
+
+[node name="FrameRight" type="Polygon2D" parent="BackDoor" unique_id=2200000084]
+position = Vector2(152, 72)
+z_index = -6
+color = Color(0.28, 0.16, 0.07, 1)
+polygon = PackedVector2Array(-1, -16, 1, -16, 1, 16, -1, 16)
+
+[node name="FrameTop" type="Polygon2D" parent="BackDoor" unique_id=2200000085]
+position = Vector2(144, 56)
+z_index = -6
+color = Color(0.28, 0.16, 0.07, 1)
+polygon = PackedVector2Array(-9, -1, 9, -1, 9, 1, -9, 1)
+
+[node name="FrameBottom" type="Polygon2D" parent="BackDoor" unique_id=2200000086]
+position = Vector2(144, 88)
+z_index = -6
+color = Color(0.28, 0.16, 0.07, 1)
+polygon = PackedVector2Array(-9, -1, 9, -1, 9, 1, -9, 1)
+
+[node name="Handle" type="Polygon2D" parent="BackDoor" unique_id=2200000087]
+position = Vector2(141, 75)
+z_index = -5
+color = Color(0.55, 0.42, 0.12, 1)
+polygon = PackedVector2Array(-1.5, -1.5, 1.5, -1.5, 1.5, 1.5, -1.5, 1.5)
+
+[node name="Plaque" type="Polygon2D" parent="BackDoor" unique_id=2200000088]
+position = Vector2(143, 52)
+z_index = -5
+color = Color(0.4, 0.28, 0.1, 1)
+polygon = PackedVector2Array(-6, -3, 6, -3, 6, 3, -6, 3)
+
+[node name="BackDoorExit" parent="." index="24" unique_id=2200000090 instance=ExtResource("18_exit")]
+position = Vector2(144, 72)
+TargetMapPath = "res://scenes/overworld/maps/MappGarden.tscn"
+TargetSpawnId = "from_mapp_backyard"
+AutoTrigger = false
+
+[node name="CollisionShape2D" parent="BackDoorExit"]
+shape = SubResource("RShape_backdoor")
