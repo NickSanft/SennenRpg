@@ -803,7 +803,7 @@ public partial class MAPP : OverworldBase
 		var horse    = npcScene.Instantiate<Npc>();
 
 		horse.NpcId         = "mapp_horse";
-		horse.DisplayName   = "Horse";
+		horse.DisplayName   = "WindBreaker";
 		horse.TimelinePath  = HorseTimeline;
 		horse.CharacterPath = "res://dialog/characters/Horse.dch";
 		horse.DefaultFacing = FacingDirection.Side;

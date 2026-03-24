@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://npc_horse_sp01"]
 
 [ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="1_nhorse"]
-[ext_resource type="Texture2D" path="res://assets/sprites/npcs/horse.png" id="2_nhorse"]
+[ext_resource type="Texture2D" path="res://assets/sprites/npcs/WindBreaker.png" id="2_nhorse"]
 
 [sub_resource type="AtlasTexture" id="AtlasTex_horse1"]
 atlas = ExtResource("2_nhorse")

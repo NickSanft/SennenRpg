@@ -10,13 +10,22 @@
 "style": "",
 "suffix": ""
 },
-&"default_portrait": "",
+&"default_portrait": "default",
 &"description": "A falafel. It appears to be levitating. Its eyes are wide with smug satisfaction. It is surrounded by crackling purple energy.",
 &"display_name": "Falafel",
 &"mirror": false,
 &"nicknames": [""],
 &"offset": Vector2(0, 0),
 &"portraits": {
+"default": {
+"export_overrides": {
+"image": "\"res://assets/sprites/npcs/Falafel_Portrait.png\""
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1,
+"scene": "res://scenes/dialog/NpcPortrait.tscn"
+}
 },
 &"scale": 1.0
 }
