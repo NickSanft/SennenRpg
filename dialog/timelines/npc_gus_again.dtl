@@ -1,6 +1,7 @@
 join Gus center
+Gus: Oh, I have something on my cheek?
+Gus: Might be frog shit - long story.
 Gus: To explain a bit, I was the frog.
-Gus: That may make even less sense though.
-Gus: Maybe this'll help?
+Gus: ...maybe this'll help explain more.
 leave Gus
 [signal arg="gus_frog_transform"]

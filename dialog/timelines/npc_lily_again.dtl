@@ -1,5 +1,5 @@
 join Lily center
-Lily: There is no poison in it, I swear! That's in the other bag.
-Lily: ...or was it this bag?
+Lily: There is no poison in it, I swear! That's in the other vial.
+Lily: ...or was it this vial?
 leave Lily
 [signal arg="lily_alt_ended"]

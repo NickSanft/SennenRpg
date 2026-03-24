@@ -1,4 +1,5 @@
 join TestNpc center
 TestNpc: Have you come to listen to my Erhu?
-TestNpc: It's not for everyone.
+TestNpc: It's not for everyone, but feel free to listen.
+TestNpc: ...also, the mask stays on.
 leave TestNpc

@@ -1,5 +1,5 @@
 join Brix center
-Brix: Hi again.
-Brix: ...I miss my horse.
+Brix: Hello again.
+Brix: ...I miss my horse. Oh wait, I can just summon him.
 leave Brix
 [signal arg="brix_horse_spawn"]

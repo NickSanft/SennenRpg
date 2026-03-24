@@ -1,5 +1,6 @@
 join Bhata center
-Bhata: ...I am not "super into" dwarves.
+Bhata: What? No, I am not "super into" dwarves.
 Bhata: Whoever is telling you that is uncouth.
+Bhata: Oh, you didn't ask? In that case, have you seen my pet ferret?
 leave Bhata
 [signal arg="bhata_falafel_spawn"]
