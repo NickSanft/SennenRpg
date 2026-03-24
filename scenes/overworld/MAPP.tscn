@@ -25,7 +25,6 @@
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcPetDragon.tscn" id="23_dragon"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcPetFairy.tscn" id="24_fairy"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcForan.tscn" id="25_foran"]
-[ext_resource type="PackedScene" path="res://scenes/overworld/objects/FireplaceProp.tscn" id="26_fireplace"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/TavernWindowProp.tscn" id="27_window"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/DoorProp.tscn" id="28_door"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcRork.tscn" id="29_rork"]
@@ -155,7 +154,7 @@ CharacterPath = "res://dialog/characters/Gus.dch"
 PlaceholderColor = Color(0.6, 0.42, 0.22, 1)
 
 [node name="Brix" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="7" unique_id=1263387292 instance=ExtResource("7_brix")]
-position = Vector2(107, 23)
+position = Vector2(108, 13)
 NpcId = "brix_mapp"
 TimelinePath = "res://dialog/timelines/npc_brix.dtl"
 DefaultFacing = 2
@@ -194,7 +193,7 @@ DefaultFacing = 2
 CharacterPath = "res://dialog/characters/PetWitchCat.dch"
 
 [node name="Rork" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="11" unique_id=914373453 instance=ExtResource("29_rork")]
-position = Vector2(-1, -56)
+position = Vector2(110, -65)
 ShopStock = [SubResource("ShopEntry_ale")]
 NpcId = "barkeep_mapp"
 TimelinePath = "res://dialog/timelines/npc_barkeep.dtl"
@@ -285,45 +284,43 @@ PlaceholderColor = Color(0.337, 0.42, 0.969, 1)
 PatrolPoints = PackedVector2Array(15, 68, 15, 95)
 PatrolSpeed = 18.0
 
-[node name="Fireplace" parent="." index="7" unique_id=1617611257 instance=ExtResource("26_fireplace")]
+[node name="Door" parent="." index="7" unique_id=1495472531 instance=ExtResource("28_door")]
 
-[node name="Door" parent="." index="8" unique_id=1495472531 instance=ExtResource("28_door")]
-
-[node name="Journal" parent="." index="9" unique_id=2050191186 instance=ExtResource("19_journal")]
+[node name="Journal" parent="." index="8" unique_id=2050191186 instance=ExtResource("19_journal")]
 position = Vector2(-60, 35)
 
-[node name="Dartboard" parent="." index="10" unique_id=1217286306 instance=ExtResource("20_dartboard")]
+[node name="Dartboard" parent="." index="9" unique_id=1217286306 instance=ExtResource("20_dartboard")]
 position = Vector2(134, 151)
 
-[node name="DrinkProp" parent="." index="11" unique_id=1610892016 instance=ExtResource("21_drinkprop")]
+[node name="DrinkProp" parent="." index="10" unique_id=1610892016 instance=ExtResource("21_drinkprop")]
 position = Vector2(75, -42)
 
-[node name="SavePoint" parent="." index="12" unique_id=747126169 instance=ExtResource("16_save")]
+[node name="SavePoint" parent="." index="11" unique_id=747126169 instance=ExtResource("16_save")]
 position = Vector2(-130, 105)
 SavePointId = "mapp_hearth"
 
-[node name="Chest" parent="." index="13" unique_id=2121869652 instance=ExtResource("17_chest")]
+[node name="Chest" parent="." index="12" unique_id=2121869652 instance=ExtResource("17_chest")]
 position = Vector2(100, 152)
 ItemPath = "res://resources/items/item_002.tres"
 FlagId = "chest_mapp_corner"
 
-[node name="NoticeBoard" parent="." index="14" unique_id=14098406 instance=ExtResource("15_sign")]
+[node name="NoticeBoard" parent="." index="13" unique_id=14098406 instance=ExtResource("15_sign")]
 position = Vector2(134, 121)
 SignTitle = "Notice Board"
 Lines = PackedStringArray("The Shiver Me Timber Inn — serving the finest ales since 1150.", "", "REWARD: 50 gold for information regarding the", "  recent explosion of the Laurentius Mansion in Seade. Contact the Sovereign Royal Guard.", "", "LOST: One horse. Brown. Answers to \'Horse\'.", "  Contact Brix (he is right here).", "", "Rooms available upstairs. Ask the barkeep.")
 
-[node name="StaircaseSign" parent="." index="15" unique_id=1272600358 instance=ExtResource("15_sign")]
+[node name="StaircaseSign" parent="." index="14" unique_id=1272600358 instance=ExtResource("15_sign")]
 position = Vector2(426, -47)
 SignTitle = "Upper Floor"
 Lines = PackedStringArray("The rooms upstairs are currently occupied.", "", "(Coming soon.)")
 
-[node name="Exit" parent="." index="16" unique_id=1845096565 instance=ExtResource("18_exit")]
+[node name="Exit" parent="." index="15" unique_id=1845096565 instance=ExtResource("18_exit")]
 position = Vector2(0, 348)
 TargetMapPath = "res://scenes/overworld/TestRoom.tscn"
 TargetSpawnId = "from_mapp"
 AutoTrigger = true
 
-[node name="Mantelpiece" type="Node2D" parent="." index="17" unique_id=-2094967295]
+[node name="Mantelpiece" type="Node2D" parent="." index="16" unique_id=-2094967295]
 z_index = 4
 
 [node name="ShelfFace" type="Polygon2D" parent="Mantelpiece" index="0" unique_id=-2094967294]
@@ -398,7 +395,7 @@ position = Vector2(-126, -48)
 color = Color(1, 0.68, 0.12, 1)
 polygon = PackedVector2Array(0, -3, 1, -1, 0, 0, -1, -1)
 
-[node name="Banner" type="Node2D" parent="." index="18" unique_id=-2094967276]
+[node name="Banner" type="Node2D" parent="." index="17" unique_id=-2094967276]
 z_index = 4
 
 [node name="BannerField" type="Polygon2D" parent="Banner" index="0" unique_id=-2094967275]
@@ -437,7 +434,7 @@ position = Vector2(-65, -86)
 color = Color(0.28, 0.1, 0.42, 1)
 polygon = PackedVector2Array(-7, 0, 7, 0, 0, 6)
 
-[node name="Bottles" type="Node2D" parent="." index="19" unique_id=-2094967266]
+[node name="Bottles" type="Node2D" parent="." index="18" unique_id=-2094967266]
 z_index = 4
 
 [node name="ShelfPlank" type="Polygon2D" parent="Bottles" index="0" unique_id=-2094967265]
@@ -590,13 +587,13 @@ position = Vector2(22, -94.05)
 color = Color(0.88, 0.82, 0.52, 1)
 polygon = PackedVector2Array(-2.5, -2, 2.5, -2, 2.5, 2, -2.5, 2)
 
-[node name="WindowWest" parent="." index="20" unique_id=-2094967236 instance=ExtResource("27_window")]
-position = Vector2(-150, 40)
+[node name="WindowWest" parent="." index="19" unique_id=-2094967236 instance=ExtResource("27_window")]
+position = Vector2(-155, -22)
 
-[node name="WindowEast" parent="." index="21" unique_id=-2094967226 instance=ExtResource("27_window")]
-position = Vector2(138, 40)
+[node name="WindowEast" parent="." index="20" unique_id=-2094967226 instance=ExtResource("27_window")]
+position = Vector2(154, -22)
 
-[node name="BackDoor" type="Node2D" parent="." index="22" unique_id=-2094967216]
+[node name="BackDoor" type="Node2D" parent="." index="21" unique_id=-2094967216]
 z_index = 8
 
 [node name="Opening" type="Polygon2D" parent="BackDoor" index="0" unique_id=-2094967215]
@@ -647,7 +644,7 @@ position = Vector2(143, 52)
 color = Color(0.4, 0.28, 0.1, 1)
 polygon = PackedVector2Array(-6, -3, 6, -3, 6, 3, -6, 3)
 
-[node name="BackDoorExit" parent="." index="23" unique_id=-2094967206 instance=ExtResource("18_exit")]
+[node name="BackDoorExit" parent="." index="22" unique_id=-2094967206 instance=ExtResource("18_exit")]
 position = Vector2(272, -39)
 TargetMapPath = "res://scenes/overworld/maps/MappGarden.tscn"
 TargetSpawnId = "from_mapp_backyard"
