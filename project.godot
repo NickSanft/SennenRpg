@@ -33,6 +33,7 @@ RhythmClock="*res://autoloads/RhythmClock.cs"
 directories/dch_directory={
 "Barkeep": "res://dialog/characters/Barkeep.dch",
 "Bhata": "res://dialog/characters/Bhata.dch",
+"Biscuit": "res://dialog/characters/Biscuit.dch",
 "Brix": "res://dialog/characters/Brix.dch",
 "Falafel": "res://dialog/characters/Falafel.dch",
 "Foran": "res://dialog/characters/Foran.dch",
@@ -43,8 +44,10 @@ directories/dch_directory={
 "PetDragon": "res://dialog/characters/PetDragon.dch",
 "PetFairy": "res://dialog/characters/PetFairy.dch",
 "PetWitchCat": "res://dialog/characters/PetWitchCat.dch",
+"Pip": "res://dialog/characters/Pip.dch",
 "Rain": "res://dialog/characters/Rain.dch",
 "TestNpc": "res://dialog/characters/Shizu.dch",
+"Wendell": "res://dialog/characters/Wendell.dch",
 "unit_test_character": "res://addons/dialogic/Tests/Resources/unit_test_character.dch"
 }
 directories/dtl_directory={
@@ -73,6 +76,9 @@ directories/dtl_directory={
 "npc_barkeep_horse": "res://dialog/timelines/npc_barkeep_horse.dtl",
 "npc_bhata": "res://dialog/timelines/npc_bhata.dtl",
 "npc_bhata_again": "res://dialog/timelines/npc_bhata_again.dtl",
+"npc_biscuit": "res://dialog/timelines/npc_biscuit.dtl",
+"npc_biscuit_again": "res://dialog/timelines/npc_biscuit_again.dtl",
+"npc_biscuit_post_arisen": "res://dialog/timelines/npc_biscuit_post_arisen.dtl",
 "npc_brix": "res://dialog/timelines/npc_brix.dtl",
 "npc_brix_again": "res://dialog/timelines/npc_brix_again.dtl",
 "npc_falafel": "res://dialog/timelines/npc_falafel.dtl",
@@ -87,11 +93,15 @@ directories/dtl_directory={
 "npc_pet_dragon": "res://dialog/timelines/npc_pet_dragon.dtl",
 "npc_pet_fairy": "res://dialog/timelines/npc_pet_fairy.dtl",
 "npc_pet_witch_cat": "res://dialog/timelines/npc_pet_witch_cat.dtl",
+"npc_pip": "res://dialog/timelines/npc_pip.dtl",
+"npc_pip_again": "res://dialog/timelines/npc_pip_again.dtl",
 "npc_rain": "res://dialog/timelines/npc_rain.dtl",
 "npc_rain_again": "res://dialog/timelines/npc_rain_again.dtl",
 "npc_shizu": "res://dialog/timelines/npc_shizu.dtl",
 "npc_shizu_again": "res://dialog/timelines/npc_shizu_again.dtl",
 "npc_test_after": "res://dialog/timelines/npc_test_after.dtl",
+"npc_wendell": "res://dialog/timelines/npc_wendell.dtl",
+"npc_wendell_again": "res://dialog/timelines/npc_wendell_again.dtl",
 "save_point_prompt": "res://dialog/timelines/save_point_prompt.dtl",
 "timelines/npc_test_hello": "res://dialog/timelines/shizu.dtl",
 "walkin_north_exit": "res://dialog/timelines/walkin_north_exit.dtl"

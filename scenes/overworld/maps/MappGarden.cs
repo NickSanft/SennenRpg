@@ -11,8 +11,6 @@ namespace SennenRpg.Scenes.Overworld;
 /// lovingly tended, with fireflies, wildflowers, and a few unusual residents.
 ///
 /// All static visuals are built procedurally. NPCs are placed in MappGarden.tscn.
-/// Future interactables (well, bench, hive, herb garden, compost, statue) are
-/// added as later implementation phases.
 /// </summary>
 [Tool]
 public partial class MappGarden : OverworldBase
@@ -57,6 +55,7 @@ public partial class MappGarden : OverworldBase
 		SpawnWell();
 		SpawnBench();
 		SpawnHive();
+		SpawnStatue();
 		SpawnHerbGarden();
 		SpawnCompostHeap();
 		SpawnEntryFade();
@@ -884,6 +883,16 @@ public partial class MappGarden : OverworldBase
 		hive.GlobalPosition = new Vector2(97f, -62f);
 	}
 
+	/// <summary>Robed stone figure at the north end of the flagstone path. Turns on first interact.</summary>
+	private void SpawnStatue()
+	{
+		if (Engine.IsEditorHint()) return;
+
+		var statue = new GardenStatue();
+		AddChild(statue);
+		statue.GlobalPosition = new Vector2(0f, -62f);
+	}
+
 	/// <summary>
 	/// Five small terracotta pots along the east wall, with a readable sign
 	/// label above the cluster.
@@ -938,7 +947,14 @@ public partial class MappGarden : OverworldBase
 
 		var sign = new GardenSign(
 			"Herb Garden",
-			new[] { "Lavender, chamomile, and things", "without names." });
+			new[]
+			{
+				"Rosemary. Good for memory, allegedly.",
+				"Thyme. It's just thyme.",
+				"Something blue. Wendell says not to touch it.",
+				"Mint. Aggressively mint.",
+				"????? (the label has fallen off)",
+			});
 		AddChild(sign);
 		sign.GlobalPosition = new Vector2(baseX, baseY - 32f);
 	}
@@ -986,7 +1002,13 @@ public partial class MappGarden : OverworldBase
 
 		var sign = new GardenSign(
 			"Compost",
-			new[] { "Everything returns to the earth.", "Even things that shouldn't." });
+			new[]
+			{
+				"Wendell maintains this with great ceremony.",
+				"It smells earthy.",
+				"Very earthy.",
+				"You decide not to think too hard about what's in there.",
+			});
 		AddChild(sign);
 		sign.GlobalPosition = heapCenter + new Vector2(0f, -20f);
 	}

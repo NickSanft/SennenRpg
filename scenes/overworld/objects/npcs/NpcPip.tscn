@@ -1,0 +1,69 @@
+[gd_scene format=3 uid="uid://npc_pip_sp01"]
+
+[ext_resource type="PackedScene" uid="uid://dw1vhhwmxb1x3" path="res://scenes/overworld/objects/npc.tscn" id="1_npip"]
+[ext_resource type="Texture2D" path="res://assets/sprites/npcs/Pip.png" id="2_pip_tex"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pp_d1"]
+atlas = ExtResource("2_pip_tex")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pp_d2"]
+atlas = ExtResource("2_pip_tex")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pp_s1"]
+atlas = ExtResource("2_pip_tex")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pp_s2"]
+atlas = ExtResource("2_pip_tex")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pp_u1"]
+atlas = ExtResource("2_pip_tex")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pp_u2"]
+atlas = ExtResource("2_pip_tex")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_pip"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pp_d1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pp_d2")
+}],
+"loop": true,
+"name": &"idle_down",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pp_s1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pp_s2")
+}],
+"loop": true,
+"name": &"idle_side",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pp_u1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pp_u2")
+}],
+"loop": true,
+"name": &"idle_up",
+"speed": 5.0
+}]
+
+[node name="NpcPip" instance=ExtResource("1_npip")]
+
+[node name="Sprite" parent="." index="0"]
+sprite_frames = SubResource("SpriteFrames_pip")

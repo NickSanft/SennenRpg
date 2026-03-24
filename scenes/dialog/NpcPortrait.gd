@@ -30,13 +30,13 @@ func _update_portrait(passed_character: DialogicCharacter, passed_portrait: Stri
 
 
 func _update_background(char_color: Color) -> void:
-	var portrait := $Portrait as Sprite2D
-	if portrait == null or portrait.texture == null:
+	var sprite := $Portrait as Sprite2D
+	if sprite == null or sprite.texture == null:
 		($Background as Polygon2D).polygon = PackedVector2Array()
 		return
 
-	var tex_size: Vector2 = portrait.texture.get_size()
-	var p: Vector2 = portrait.position  # set by apply_texture to (-w/2, -h)
+	var tex_size: Vector2 = sprite.texture.get_size()
+	var p: Vector2 = sprite.position  # set by apply_texture to (-w/2, -h)
 
 	var bg_color := char_color
 	bg_color.a = BACKGROUND_ALPHA
@@ -52,7 +52,7 @@ func _update_background(char_color: Color) -> void:
 
 
 func _get_covered_rect() -> Rect2:
-	var portrait := $Portrait as Sprite2D
-	if portrait == null or portrait.texture == null:
+	var sprite := $Portrait as Sprite2D
+	if sprite == null or sprite.texture == null:
 		return Rect2()
-	return Rect2(portrait.position, portrait.texture.get_size())
+	return Rect2(sprite.position, sprite.texture.get_size())

@@ -1295,6 +1295,7 @@ public partial class MAPP : OverworldBase
 			// Stagger each mote once via a one-shot timer, then loop freely
 			GetTree().CreateTimer(startDelay).Connect("timeout", Callable.From(() =>
 			{
+				if (!IsInstanceValid(this) || IsQueuedForDeletion()) return;
 				var t = CreateTween().SetLoops();
 
 				// Rise first half + fade in
