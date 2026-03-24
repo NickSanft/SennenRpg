@@ -1,7 +1,8 @@
-[gd_scene format=3 uid="uid://5ktefewr3stw"]
+[gd_scene format=4 uid="uid://5ktefewr3stw"]
 
 [ext_resource type="PackedScene" uid="uid://bs06dan353qo1" path="res://scenes/overworld/overworld_base.tscn" id="1_mapp01"]
 [ext_resource type="Script" uid="uid://dpa7vrdkawcqy" path="res://scenes/overworld/MAPP.cs" id="2_mapp02"]
+[ext_resource type="Texture2D" uid="uid://lhilsf0yodad" path="res://assets/tilesets/sennen_tiles.png" id="3_dlxv3"]
 [ext_resource type="PackedScene" uid="uid://i4fwbygs3mgq" path="res://scenes/overworld/objects/npcs/NpcKriora.tscn" id="3_kriora"]
 [ext_resource type="PackedScene" uid="uid://d1qdl5d5ojtr7" path="res://scenes/overworld/objects/npcs/NpcShizu.tscn" id="4_shizu"]
 [ext_resource type="PackedScene" uid="uid://h0l0emkjtq8k" path="res://scenes/overworld/objects/npcs/NpcLily.tscn" id="5_lily"]
@@ -24,6 +25,18 @@
 [ext_resource type="Script" uid="uid://drkqrxhkmk75h" path="res://core/data/ShopItemEntry.cs" id="22_shopentry"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcPetDragon.tscn" id="23_dragon"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcPetFairy.tscn" id="24_fairy"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dlxv3"]
+texture = ExtResource("3_dlxv3")
+0:0/0 = 0
+1:0/0 = 0
+0:1/0 = 0
+1:1/0 = 0
+0:2/0 = 0
+1:2/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_0idg8"]
+sources/0 = SubResource("TileSetAtlasSource_dlxv3")
 
 [sub_resource type="Gradient" id="Gradient_fire_lgt"]
 colors = PackedColorArray(1, 0.62, 0.12, 1, 1, 0.62, 0.12, 0)
@@ -48,6 +61,10 @@ Price = 5
 
 [node name="MAPP" unique_id=1793046433 instance=ExtResource("1_mapp01")]
 script = ExtResource("2_mapp02")
+
+[node name="Ground" parent="." index="1" unique_id=1739729204]
+tile_map_data = PackedByteArray("AAAHAAkAAAAAAAIAAAAGAAkAAAAAAAIAAAAFAAkAAAAAAAIAAAAIAAkAAAAAAAIAAAAEAAkAAAAAAAIAAAADAAkAAAAAAAIAAAACAAkAAAAAAAIAAAABAAkAAAAAAAIAAAAAAAkAAAAAAAIAAAD//wkAAAAAAAIAAAD+/wkAAAAAAAIAAAD9/wkAAAAAAAIAAAD8/wkAAAAAAAIAAAD7/wkAAAAAAAIAAAD6/wkAAAAAAAIAAAD5/wkAAAAAAAIAAAD4/wkAAAAAAAIAAAD3/wkAAAAAAAIAAAD3/wgAAAAAAAIAAAD4/wgAAAAAAAIAAAD5/wgAAAAAAAIAAAD6/wgAAAAAAAIAAAD7/wgAAAAAAAIAAAD8/wgAAAAAAAIAAAD9/wgAAAAAAAIAAAD+/wgAAAAAAAIAAAD//wgAAAAAAAIAAAAAAAgAAAAAAAIAAAABAAgAAAAAAAIAAAACAAgAAAAAAAIAAAADAAgAAAAAAAIAAAAEAAgAAAAAAAIAAAAFAAgAAAAAAAIAAAAGAAgAAAAAAAIAAAAHAAgAAAAAAAIAAAAIAAgAAAAAAAIAAAAIAAcAAAAAAAIAAAABAAsAAAABAAAAAAABAAwAAAAAAAAAAAABAA0AAAABAAAAAAD+/wsAAAAAAAAAAAD+/wwAAAABAAAAAAD+/w0AAAAAAAAAAAD+/w4AAAABAAAAAAABAA4AAAAAAAAAAAAAAA0AAAABAAEAAAD//wwAAAABAAEAAAAAAAsAAAABAAEAAAD//wsAAAAAAAEAAAAAAAwAAAAAAAEAAAD//w0AAAAAAAEAAAD//w4AAAAAAAEAAAAAAA4AAAAAAAEAAAA=")
+tile_set = SubResource("TileSet_0idg8")
 
 [node name="FireLight" type="PointLight2D" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="0" unique_id=788773218]
 position = Vector2(-136, -24)
@@ -81,7 +98,6 @@ texture_scale = 1.6
 position = Vector2(-80, 109)
 NpcId = "kriora_mapp"
 TimelinePath = "res://dialog/timelines/npc_kriora.dtl"
-DisplayName = "Kriora"
 AltRequiredFlags = PackedStringArray("talked_to_kriora_mapp")
 AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_kriora_again.dtl")
 CharacterPath = "res://dialog/characters/Kriora.dch"
@@ -101,7 +117,6 @@ PlaceholderColor = Color(0.55, 0.1, 0.75, 1)
 position = Vector2(-40, 30)
 NpcId = "lily_mapp"
 TimelinePath = "res://dialog/timelines/npc_lily.dtl"
-DisplayName = "Lily"
 AltRequiredFlags = PackedStringArray("talked_to_lily_mapp")
 AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_lily_again.dtl")
 CharacterPath = "res://dialog/characters/Lily.dch"
@@ -113,7 +128,6 @@ PatrolSpeed = 25.0
 position = Vector2(-110, 20)
 NpcId = "gus_mapp"
 TimelinePath = "res://dialog/timelines/npc_gus.dtl"
-DisplayName = "Gus"
 DefaultFacing = 2
 AltRequiredFlags = PackedStringArray("talked_to_gus_mapp")
 AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_gus_again.dtl")
@@ -124,7 +138,6 @@ PlaceholderColor = Color(0.6, 0.42, 0.22, 1)
 position = Vector2(107, 23)
 NpcId = "brix_mapp"
 TimelinePath = "res://dialog/timelines/npc_brix.dtl"
-DisplayName = "Brix"
 DefaultFacing = 2
 AltRequiredFlags = PackedStringArray("talked_to_brix_mapp")
 AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_brix_again.dtl")
@@ -135,7 +148,6 @@ PlaceholderColor = Color(0.4, 0.42, 0.46, 1)
 position = Vector2(49, -10)
 NpcId = "bhata_mapp"
 TimelinePath = "res://dialog/timelines/npc_bhata.dtl"
-DisplayName = "Bhata"
 AltRequiredFlags = PackedStringArray("talked_to_bhata_mapp")
 AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_bhata_again.dtl")
 CharacterPath = "res://dialog/characters/Bhata.dch"
@@ -145,7 +157,6 @@ PlaceholderColor = Color(0.25, 0.75, 0.7, 1)
 position = Vector2(50, 100)
 NpcId = "rain_mapp"
 TimelinePath = "res://dialog/timelines/npc_rain.dtl"
-DisplayName = "Rain"
 DefaultFacing = 1
 AltRequiredFlags = PackedStringArray("talked_to_rain_mapp")
 AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_rain_again.dtl")
@@ -303,6 +314,7 @@ TargetSpawnId = "from_mapp"
 AutoTrigger = true
 
 [node name="Mantelpiece" type="Node2D" parent="." index="18" unique_id=-2094967295]
+z_index = 4
 
 [node name="ShelfFace" type="Polygon2D" parent="Mantelpiece" index="0" unique_id=-2094967294]
 z_index = -4
@@ -377,6 +389,7 @@ color = Color(1, 0.68, 0.12, 1)
 polygon = PackedVector2Array(0, -3, 1, -1, 0, 0, -1, -1)
 
 [node name="Banner" type="Node2D" parent="." index="19" unique_id=-2094967276]
+z_index = 4
 
 [node name="BannerField" type="Polygon2D" parent="Banner" index="0" unique_id=-2094967275]
 z_index = -4
@@ -415,6 +428,7 @@ color = Color(0.28, 0.1, 0.42, 1)
 polygon = PackedVector2Array(-7, 0, 7, 0, 0, 6)
 
 [node name="Bottles" type="Node2D" parent="." index="20" unique_id=-2094967266]
+z_index = 4
 
 [node name="ShelfPlank" type="Polygon2D" parent="Bottles" index="0" unique_id=-2094967265]
 z_index = -4
@@ -567,6 +581,7 @@ color = Color(0.88, 0.82, 0.52, 1)
 polygon = PackedVector2Array(-2.5, -2, 2.5, -2, 2.5, 2, -2.5, 2)
 
 [node name="WindowWest" type="Node2D" parent="." index="21" unique_id=-2094967236]
+z_index = 7
 
 [node name="LightBleed" type="Polygon2D" parent="WindowWest" index="0" unique_id=-2094967235]
 z_index = -7
@@ -623,6 +638,7 @@ color = Color(0.95, 0.9, 0.7, 0.07)
 polygon = PackedVector2Array(-4, 0, 4, 0, 26, 40, 2, 40)
 
 [node name="WindowEast" type="Node2D" parent="." index="22" unique_id=-2094967226]
+z_index = 7
 
 [node name="LightBleed" type="Polygon2D" parent="WindowEast" index="0" unique_id=-2094967225]
 z_index = -7
