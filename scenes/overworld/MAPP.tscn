@@ -190,7 +190,7 @@ DefaultFacing = 2
 CharacterPath = "res://dialog/characters/PetWitchCat.dch"
 
 [node name="Rork" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="11" unique_id=914373453 instance=ExtResource("29_rork")]
-position = Vector2(110, -65)
+position = Vector2(0, -64)
 ShopStock = [SubResource("ShopEntry_ale")]
 NpcId = "barkeep_mapp"
 TimelinePath = "res://dialog/timelines/npc_barkeep.dtl"
