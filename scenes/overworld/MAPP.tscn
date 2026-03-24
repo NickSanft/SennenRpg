@@ -285,7 +285,7 @@ position = Vector2(-130, 105)
 SavePointId = "mapp_hearth"
 
 [node name="Chest" parent="." index="11" unique_id=2121869652 instance=ExtResource("17_chest")]
-position = Vector2(100, 152)
+position = Vector2(152, 185)
 ItemPath = "res://resources/items/item_002.tres"
 FlagId = "chest_mapp_corner"
 
