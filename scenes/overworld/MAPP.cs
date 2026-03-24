@@ -65,7 +65,7 @@ public partial class MAPP : OverworldBase
 		SpawnWallDecorations();
 		SpawnFireSmoke();
 		SpawnDustMotes();
-		SpawnLayeredFlame(GetNode<ColorRect>("Flame"));
+		SpawnLayeredFlame(GetNode<ColorRect>("Fireplace/Flame"));
 		FlickerCandleLights();
 
 		// Animate candle flames placed by scene-instanced TableFurniture nodes
@@ -98,7 +98,6 @@ public partial class MAPP : OverworldBase
 		if (GameManager.Instance.GetFlag(Flags.ShizuMusicAuraActive))
 			SpawnMusicNoteAura(ShizuWorldPosition());
 
-		SpawnBarkeepRag();
 		SpawnAllIdleWanders();
 
 		// Listen for the custom signal fired at the end of npc_brix_again.dtl
@@ -974,44 +973,14 @@ public partial class MAPP : OverworldBase
 	// ── Ambient life ────────────────────────────────────────────────────────────
 
 	/// <summary>
-	/// Spawns a small cloth rag that slides back and forth across the bar top,
-	/// giving the barkeep something to do in the background.
-	/// </summary>
-	private void SpawnBarkeepRag()
-	{
-		var barkeep = YSort.GetNodeOrNull<Node2D>("Barkeep");
-		float centerX = barkeep?.GlobalPosition.X ?? 0f;
-		float leftX   = centerX - 18f;
-		float rightX  = centerX + 12f;
-		float barTopY = -64f;
-
-		var rag = new ColorRect
-		{
-			Color  = new Color(0.65f, 0.55f, 0.40f),
-			Size   = new Vector2(14f, 5f),
-			ZIndex = 2,
-		};
-		AddChild(rag);
-		rag.GlobalPosition = new Vector2(leftX, barTopY);
-
-		var tween = CreateTween().SetLoops();
-		tween.TweenProperty(rag, "global_position:x", rightX, 1.2f)
-			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
-		tween.TweenInterval(0.6f);
-		tween.TweenProperty(rag, "global_position:x", leftX, 1.2f)
-			.SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.InOut);
-		tween.TweenInterval(0.8f);
-	}
-
-	/// <summary>
 	/// Kicks off idle-wander behaviour for every named NPC in the tavern.
 	/// Each NPC occasionally glances in a new direction, then returns to its default.
 	/// </summary>
 	private void SpawnAllIdleWanders()
 	{
-		// Barkeep turns to face the bottle rack (idle_up) then back
-		if (YSort.GetNodeOrNull<Npc>("Barkeep") is { } barkeep)
-			SpawnIdleWander(barkeep, new[] { "idle_down", "idle_up" });
+		// Rork turns to face the bottle rack (idle_up) then back
+		if (YSort.GetNodeOrNull<Npc>("Rork") is { } rork)
+			SpawnIdleWander(rork, new[] { "idle_down", "idle_up" });
 
 		// Everyone else glances side-to-side
 		foreach (var name in new[] { "Kriora", "Lily", "Rain", "Bhata", "Shizu", "Brix", "Gus" })

@@ -30,31 +30,31 @@ public partial class TableFurniture : Node2D
 		{
 			new Vector2(-14f, -6f), new Vector2(14f, -6f),
 			new Vector2(12f,  11f), new Vector2(-12f, 11f),
-		}, new Color(0f, 0f, 0f, 0.35f), -7);
+		}, new Color(0f, 0f, 0f, 0.35f), 0);
 
 		MakePoly(Vector2.Zero, new Vector2[]
 		{
 			new Vector2(-14f,  6f), new Vector2(14f,  6f),
 			new Vector2( 11f, 11f), new Vector2(-11f, 11f),
-		}, TableEdge, -5);
+		}, TableEdge, 0);
 
 		MakePoly(Vector2.Zero, new Vector2[]
 		{
 			new Vector2(-14f, -6f), new Vector2(14f, -6f),
 			new Vector2( 14f,  6f), new Vector2(-14f,  6f),
-		}, TableSurface, -5);
+		}, TableSurface, 0);
 
 		MakePoly(Vector2.Zero, new Vector2[]
 		{
 			new Vector2(-13f, -5f), new Vector2(13f, -5f),
 			new Vector2( 13f, -2f), new Vector2(-13f, -2f),
-		}, TableHighlight, -4);
+		}, TableHighlight, 0);
 
 		MakePoly(new Vector2(0f, 1f), new Vector2[]
 		{
 			new Vector2(-1.5f, -4f), new Vector2(1.5f, -4f),
 			new Vector2( 1.5f,  2f), new Vector2(-1.5f,  2f),
-		}, CandleWax, -4);
+		}, CandleWax, 0);
 
 		var flame = MakePoly(new Vector2(0f, 1f), new Vector2[]
 		{
@@ -62,7 +62,7 @@ public partial class TableFurniture : Node2D
 			new Vector2( 2f, -5f),
 			new Vector2( 0f, -4f),
 			new Vector2(-2f, -5f),
-		}, CandleFlameCol, -3);
+		}, CandleFlameCol, 0);
 		flame.AddToGroup("candle_flame");
 	}
 

@@ -14,7 +14,6 @@
 [ext_resource type="PackedScene" uid="uid://dsn3066repcyy" path="res://scenes/overworld/objects/furniture/TableFurniture.tscn" id="11_table"]
 [ext_resource type="PackedScene" uid="uid://chairfurnit01" path="res://scenes/overworld/objects/furniture/ChairFurniture.tscn" id="12_chair"]
 [ext_resource type="PackedScene" uid="uid://barstoolfurn1" path="res://scenes/overworld/objects/furniture/BarStoolFurniture.tscn" id="13_stool"]
-[ext_resource type="PackedScene" path="res://scenes/overworld/objects/VendorNpc.tscn" id="14_vendor"]
 [ext_resource type="PackedScene" uid="uid://bicqox5152kty" path="res://scenes/overworld/objects/InteractSign.tscn" id="15_sign"]
 [ext_resource type="PackedScene" uid="uid://bm5n2kpvryawd" path="res://scenes/overworld/objects/SavePoint.tscn" id="16_save"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/Chest.tscn" id="17_chest"]
@@ -25,6 +24,11 @@
 [ext_resource type="Script" uid="uid://drkqrxhkmk75h" path="res://core/data/ShopItemEntry.cs" id="22_shopentry"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcPetDragon.tscn" id="23_dragon"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcPetFairy.tscn" id="24_fairy"]
+[ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcForan.tscn" id="25_foran"]
+[ext_resource type="PackedScene" path="res://scenes/overworld/objects/FireplaceProp.tscn" id="26_fireplace"]
+[ext_resource type="PackedScene" path="res://scenes/overworld/objects/TavernWindowProp.tscn" id="27_window"]
+[ext_resource type="PackedScene" path="res://scenes/overworld/objects/DoorProp.tscn" id="28_door"]
+[ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcRork.tscn" id="29_rork"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dlxv3"]
 texture = ExtResource("3_dlxv3")
@@ -67,15 +71,6 @@ texture = ExtResource("3_dlxv3")
 [sub_resource type="TileSet" id="TileSet_0idg8"]
 sources/0 = SubResource("TileSetAtlasSource_dlxv3")
 
-[sub_resource type="Gradient" id="Gradient_fire_lgt"]
-colors = PackedColorArray(1, 0.62, 0.12, 1, 1, 0.62, 0.12, 0)
-
-[sub_resource type="GradientTexture2D" id="GradTex_fire_lgt"]
-gradient = SubResource("Gradient_fire_lgt")
-width = 128
-height = 128
-fill = 1
-
 [sub_resource type="Gradient" id="Gradient_candle_lgt"]
 colors = PackedColorArray(1, 0.88, 0.42, 1, 1, 0.88, 0.42, 0)
 
@@ -98,35 +93,28 @@ top_level = true
 tile_map_data = PackedByteArray("AAAHAAkAAAAAAAIAAAAGAAkAAAAAAAIAAAAFAAkAAAAAAAIAAAAIAAkAAAAAAAIAAAAEAAkAAAAAAAIAAAADAAkAAAACAAIAAAACAAkAAAACAAIAAAABAAkAAAAAAAIAAAAAAAkAAAAAAAIAAAD//wkAAAAAAAIAAAD+/wkAAAAAAAIAAAD9/wkAAAAAAAIAAAD8/wkAAAAAAAIAAAD7/wkAAAAAAAIAAAD6/wkAAAABAAIAAAD5/wkAAAABAAIAAAD4/wkAAAAAAAIAAAD3/wkAAAAAAAIAAAD3/wgAAAACAAIAAAD4/wgAAAABAAIAAAD5/wgAAAAAAAIAAAD6/wgAAAAAAAIAAAD7/wgAAAADAAIAAAD8/wgAAAABAAIAAAD9/wgAAAAAAAIAAAD+/wgAAAACAAIAAAD//wgAAAAAAAIAAAAAAAgAAAAAAAIAAAABAAgAAAAAAAIAAAACAAgAAAAAAAIAAAADAAgAAAAAAAIAAAAEAAgAAAACAAIAAAAFAAgAAAACAAIAAAAGAAgAAAAAAAIAAAAHAAgAAAAAAAIAAAAIAAgAAAAAAAIAAAAIAAcAAAAAAAIAAAABAAsAAAABAAAAAAABAAwAAAAAAAAAAAABAA0AAAABAAAAAAD+/wsAAAAAAAAAAAD+/wwAAAABAAAAAAD+/w0AAAADAAAAAAD+/w4AAAABAAAAAAABAA4AAAAAAAAAAAAAAA0AAAABAAEAAAD//wwAAAABAAEAAAAAAAsAAAABAAEAAAD//wsAAAAAAAEAAAAAAAwAAAACAAEAAAD//w0AAAAEAAEAAAD//w4AAAAAAAEAAAAAAA4AAAACAAEAAAD2/wcAAAAAAAMAAAD2/wYAAAAAAAMAAAD2/wUAAAAAAAMAAAD2/wgAAAAAAAMAAAD2/wkAAAAAAAMAAAD2/woAAAAEAAMAAAD3/woAAAADAAMAAAD4/woAAAADAAMAAAD5/woAAAADAAMAAAD6/woAAAADAAMAAAD7/woAAAADAAMAAAD8/woAAAADAAMAAAD9/woAAAADAAMAAAD+/woAAAADAAMAAAABAAoAAAADAAMAAAACAAoAAAADAAMAAAADAAoAAAADAAMAAAAEAAoAAAADAAMAAAAFAAoAAAADAAMAAAAGAAoAAAADAAMAAAAHAAoAAAADAAMAAAAIAAoAAAADAAMAAAAJAAoAAAAFAAMAAAAJAAkAAAABAAMAAAAJAAgAAAABAAMAAAAJAAcAAAABAAMAAAAJAAYAAAABAAMAAAAJAAUAAAABAAMAAAAJAAQAAAABAAMAAAAJAAMAAAABAAMAAAAJAAIAAAABAAMAAAAJAAEAAAABAAMAAAAJAAAAAAABAAMAAAAJAP//AAABAAMAAAAJAP7/AAABAAMAAAAJAP3/AAABAAMAAAAJAPz/AAABAAMAAAAJAPv/AAABAAMAAAAJAPr/AAABAAMAAAAJAPn/AAABAAMAAAAJAPj/AAAGAAMAAAAIAPj/AAACAAMAAAAHAPj/AAACAAMAAAAGAPj/AAACAAMAAAAFAPj/AAACAAMAAAAEAPj/AAACAAMAAAADAPj/AAACAAMAAAACAPj/AAACAAMAAAABAPj/AAACAAMAAAAAAPj/AAACAAMAAAD///j/AAACAAMAAAD+//j/AAACAAMAAAD9//j/AAACAAMAAAD8//j/AAACAAMAAAD7//j/AAACAAMAAAD6//j/AAACAAMAAAD5//j/AAACAAMAAAD4//j/AAACAAMAAAD3//j/AAACAAMAAAD2//j/AAAHAAMAAAD2//n/AAAAAAMAAAD2//r/AAAAAAMAAAD2//v/AAAAAAMAAAD2//z/AAAAAAMAAAD2//3/AAAAAAMAAAD2//7/AAAAAAMAAAD2////AAAAAAMAAAD2/wAAAAAAAAMAAAD2/wEAAAAAAAMAAAD2/wIAAAAAAAMAAAD2/wMAAAAAAAMAAAD2/wQAAAAAAAMAAAD3/wcAAAAAAAIAAAD4/wcAAAAAAAIAAAD5/wcAAAAAAAIAAAD6/wcAAAAAAAIAAAD7/wcAAAAAAAIAAAD8/wcAAAAAAAIAAAD9/wcAAAADAAIAAAD+/wcAAAAAAAIAAAD//wcAAAAAAAIAAAAAAAcAAAAAAAIAAAABAAcAAAAAAAIAAAACAAcAAAAAAAIAAAADAAcAAAAAAAIAAAAEAAcAAAAAAAIAAAAFAAcAAAAAAAIAAAAGAAcAAAAAAAIAAAAHAAcAAAAAAAIAAAAIAAYAAAAAAAIAAAAHAAYAAAAAAAIAAAAGAAYAAAACAAIAAAAFAAYAAAAAAAIAAAAEAAYAAAAAAAIAAAADAAYAAAAAAAIAAAACAAYAAAAAAAIAAAABAAYAAAAAAAIAAAAAAAYAAAAAAAIAAAD//wYAAAAAAAIAAAD+/wYAAAAAAAIAAAD9/wYAAAAAAAIAAAD8/wYAAAAAAAIAAAD7/wYAAAAAAAIAAAD6/wYAAAAAAAIAAAD5/wYAAAAAAAIAAAD4/wYAAAAAAAIAAAD3/wYAAAAAAAIAAAACAAEAAAAEAAIAAAACAAMAAAAFAAIAAAAFAAEAAAAGAAIAAAAFAAMAAAAHAAIAAAACAAIAAAAJAAIAAAAFAAIAAAAIAAIAAAAEAAEAAAAKAAIAAAADAAEAAAAKAAIAAAAEAAMAAAALAAIAAAADAAMAAAALAAIAAAADAAIAAAAMAAIAAAAEAAIAAAAMAAIAAAAIAAUAAAAAAAIAAAAHAAUAAAAAAAIAAAAGAAUAAAAAAAIAAAAFAAUAAAAAAAIAAAAEAAUAAAAAAAIAAAADAAUAAAAAAAIAAAACAAUAAAAAAAIAAAABAAUAAAAAAAIAAAAAAAUAAAADAAIAAAD//wUAAAABAAIAAAD+/wUAAAAAAAIAAAD9/wUAAAAAAAIAAAD8/wUAAAAAAAIAAAD7/wUAAAAAAAIAAAD6/wUAAAAAAAIAAAD5/wUAAAAAAAIAAAD4/wUAAAADAAIAAAD3/wUAAAAAAAIAAAD+//7/AAAEAAIAAAD4/wEAAAAFAAIAAAD+/wAAAAAFAAIAAAABAP7/AAAGAAIAAAD6////AAAGAAIAAAD6/wEAAAAHAAIAAAABAAAAAAAHAAIAAAABAP//AAAIAAIAAAD6/wAAAAAIAAIAAAD5////AAAKAAIAAAD///7/AAAKAAIAAAAAAP7/AAAKAAIAAAD+////AAAJAAIAAAAAAAAAAAALAAIAAAD//wAAAAALAAIAAAD5/wEAAAALAAIAAAD9/wMAAAAHAAIAAAD8/wMAAAALAAIAAAD7/wMAAAALAAIAAAD6/wMAAAAFAAIAAAD6/wIAAAAJAAIAAAD7/wEAAAAKAAIAAAD8/wEAAAAKAAIAAAD9/wEAAAAGAAIAAAD9/wIAAAAIAAIAAAD7/wIAAAAMAAIAAAD8/wIAAAAMAAIAAAD5/wAAAAAMAAIAAAAAAP//AAAMAAIAAAD/////AAAMAAIAAAAIAAQAAAAAAAIAAAAHAAQAAAAAAAIAAAAGAAQAAAAAAAIAAAAFAAQAAAAAAAIAAAAEAAQAAAAAAAIAAAADAAQAAAAAAAIAAAACAAQAAAAAAAIAAAABAAQAAAAAAAIAAAAAAAQAAAAAAAIAAAD//wQAAAAAAAIAAAD+/wQAAAAAAAIAAAD9/wQAAAAAAAIAAAD8/wQAAAAAAAIAAAD7/wQAAAAAAAIAAAD6/wQAAAAAAAIAAAD5/wQAAAAAAAIAAAD4/wQAAAAAAAIAAAD5/wMAAAAAAAIAAAD4/wMAAAAAAAIAAAD3/wMAAAAAAAIAAAD3/wQAAAAAAAIAAAD3/wIAAAAAAAIAAAD4/wIAAAAAAAIAAAD5/wIAAAAAAAIAAAD3/wEAAAAAAAIAAAD+/wEAAAAAAAIAAAD+/wIAAAAAAAIAAAD+/wMAAAAAAAIAAAD//wMAAAACAAIAAAD//wIAAAAAAAIAAAD//wEAAAAAAAIAAAAAAAEAAAAAAAIAAAABAAEAAAABAAIAAAABAAIAAAAAAAIAAAABAAMAAAAAAAIAAAAAAAMAAAAAAAIAAAAAAAIAAAAAAAIAAAAGAAMAAAAAAAIAAAAGAAIAAAAAAAIAAAAGAAEAAAAAAAIAAAAHAAEAAAAAAAIAAAAHAAIAAAAAAAIAAAAHAAMAAAACAAIAAAAIAAMAAAAAAAIAAAAIAAIAAAAAAAIAAAAIAAEAAAAAAAIAAAAIAAAAAAAAAAIAAAAHAAAAAAAAAAIAAAAGAAAAAAAAAAIAAAAFAAAAAAAAAAIAAAAEAAAAAAAAAAIAAAADAAAAAAAAAAIAAAACAAAAAAAAAAIAAAD9/wAAAAAAAAIAAAD8/wAAAAAAAAIAAAD7/wAAAAAAAAIAAAD7////AAACAAIAAAD8////AAAAAAIAAAD9////AAAAAAIAAAD7//7/AAAAAAIAAAD8//7/AAAAAAIAAAD9//7/AAAAAAIAAAD6//7/AAAAAAIAAAD5//7/AAAAAAIAAAACAP7/AAAAAAIAAAADAP7/AAAAAAIAAAAEAP7/AAAAAAIAAAAFAP7/AAAAAAIAAAAGAP7/AAAAAAIAAAAHAP7/AAACAAIAAAAIAP7/AAAAAAIAAAAIAP//AAADAAIAAAAHAP//AAAAAAIAAAAGAP//AAAAAAIAAAAFAP//AAAAAAIAAAAEAP//AAADAAIAAAADAP//AAAAAAIAAAACAP//AAAAAAIAAAD4//v/AAAAAAIAAAD5//v/AAAAAAIAAAD6//v/AAAAAAIAAAD7//v/AAAAAAIAAAD8//v/AAAAAAIAAAD9//v/AAAAAAIAAAD+//v/AAAAAAIAAAD///v/AAAAAAIAAAAAAPv/AAAAAAIAAAABAPv/AAAAAAIAAAACAPv/AAAAAAIAAAADAPv/AAAAAAIAAAAEAPv/AAAAAAIAAAAFAPv/AAAAAAIAAAAGAPv/AAAAAAIAAAAHAPv/AAAAAAIAAAAIAPv/AAAAAAIAAAAIAPz/AAAAAAIAAAD3//v/AAAAAAIAAAD3//z/AAAAAAIAAAD4//z/AAAAAAIAAAD5//z/AAAAAAIAAAD6//z/AAAAAAIAAAD7//z/AAAAAAIAAAD8//z/AAAAAAIAAAD9//z/AAAAAAIAAAD+//z/AAAAAAIAAAD///z/AAAAAAIAAAAAAPz/AAAAAAIAAAABAPz/AAAAAAIAAAACAPz/AAAAAAIAAAADAPz/AAAAAAIAAAAEAPz/AAAAAAIAAAAFAPz/AAAAAAIAAAAGAPz/AAAAAAIAAAAHAPz/AAAAAAIAAAAIAPr/AAAAAAQAAAAIAPn/AAAAAAQAAAAHAPn/AAABAAQAAAAHAPr/AAAAAAQAAAAGAPr/AAABAAQAAAAGAPn/AAAAAAQAAAAFAPn/AAAAAAQAAAAFAPr/AAAAAAQAAAAEAPr/AAABAAQAAAADAPr/AAAAAAQAAAADAPn/AAAAAAQAAAAEAPn/AAAAAAQAAAACAPn/AAAAAAQAAAABAPn/AAABAAQAAAAAAPn/AAAAAAQAAAACAPr/AAAAAAQAAAABAPr/AAAAAAQAAAAAAPr/AAAAAAQAAAD///r/AAAAAAQAAAD+//r/AAAAAAQAAAD9//r/AAAAAAQAAAD///n/AAAAAAQAAAD+//n/AAAAAAQAAAD9//n/AAABAAQAAAD8//n/AAAAAAQAAAD7//n/AAAAAAQAAAD6//n/AAAAAAQAAAD5//n/AAAAAAQAAAD4//n/AAAAAAQAAAD3//n/AAABAAQAAAD3//r/AAAAAAQAAAD4//r/AAAAAAQAAAD5//r/AAABAAQAAAD6//r/AAAAAAQAAAD7//r/AAAAAAQAAAD8//r/AAAAAAQAAAD9/wwAAAADAAAAAAD8/wsAAAACAAAAAAD7/wwAAAAEAAAAAAD6/w0AAAACAAAAAAD6/w4AAAADAAAAAAD7/w4AAAAAAAAAAAD5/wsAAAACAAAAAAD4/wwAAAAAAAAAAAD3/w0AAAAEAAAAAAD2/w0AAAAAAAAAAAD3/wwAAAAEAAAAAAD2/wsAAAADAAAAAAD2/wwAAAADAAAAAAD2/w4AAAADAAAAAAD2/w8AAAADAAAAAAD3/w8AAAADAAAAAAD4/w4AAAAEAAAAAAACAAsAAAADAAAAAAADAAwAAAABAAAAAAADAA0AAAAEAAAAAAAEAA0AAAACAAAAAAAEAA4AAAABAAAAAAAFAA4AAAAAAAAAAAAGAAsAAAAAAAAAAAAHAAsAAAADAAAAAAAHAA0AAAACAAAAAAAEAA8AAAAAAAAAAAACAA8AAAAEAAAAAAAIAAsAAAABAAAAAAAJAAwAAAABAAAAAAAIAAwAAAAEAAAAAAAIAA0AAAAEAAAAAAAGAA0AAAADAAAAAAAGAA4AAAACAAAAAAAEAAwAAAAEAAAAAAAFAAwAAAABAAAAAAAFAAsAAAABAAAAAAAGAAwAAAAAAAAAAAAHAAwAAAACAAAAAAAHAA4AAAAEAAAAAAADAA4AAAACAAAAAAACAA4AAAABAAAAAAADAA8AAAACAAAAAAABAA8AAAABAAAAAAAFAA8AAAAEAAAAAAAGAA8AAAAAAAAAAAAHAA8AAAACAAAAAAAIAA8AAAADAAAAAAAIAA4AAAADAAAAAAAJAA4AAAABAAAAAAAJAA0AAAADAAAAAAAJAA8AAAAAAAAAAAAFAA0AAAADAAAAAAACAA0AAAABAAAAAAACAAwAAAADAAAAAAADAAsAAAAAAAAAAAAEAAsAAAAEAAAAAAAJAAsAAAACAAAAAAD+/w8AAAADAAAAAAD9/w8AAAABAAAAAAD9/w4AAAABAAAAAAD9/w0AAAABAAAAAAD8/w4AAAACAAAAAAD7/w8AAAAAAAAAAAD6/w8AAAAEAAAAAAD5/w8AAAAEAAAAAAD4/w8AAAAAAAAAAAD3/w4AAAADAAAAAAD5/w0AAAAEAAAAAAD7/w0AAAAAAAAAAAD8/w0AAAADAAAAAAD8/wwAAAAEAAAAAAD8/w8AAAADAAAAAAD5/w4AAAAAAAAAAAD5/wwAAAADAAAAAAD6/wwAAAAEAAAAAAD9/wsAAAAEAAAAAAD7/wsAAAAEAAAAAAD6/wsAAAAAAAAAAAD4/wsAAAAAAAAAAAD3/wsAAAAAAAAAAAD4/w0AAAABAAAAAAD3//3/AAACAAQAAAD4//3/AAACAAQAAAD5//3/AAACAAQAAAD6//3/AAACAAQAAAD7//3/AAACAAQAAAD8//3/AAACAAQAAAD9//3/AAACAAQAAAD+//3/AAACAAQAAAD///3/AAACAAQAAAAAAP3/AAACAAQAAAABAP3/AAACAAQAAAACAP3/AAACAAQAAAADAP3/AAACAAQAAAAEAP3/AAACAAQAAAAFAP3/AAACAAQAAAAGAP3/AAACAAQAAAAHAP3/AAACAAQAAAAIAP3/AAACAAQAAAD1/w8AAAAFAAEAAAD1/w4AAAAEAAEAAAD1/w0AAAADAAEAAAD1/wwAAAAEAAEAAAD1/wsAAAAFAAEAAAD1/woAAAACAAEAAAD1/wkAAAACAAEAAAD1/wgAAAAFAAEAAAD1/wcAAAACAAEAAAD1/wYAAAAFAAEAAAD1/wUAAAACAAEAAAD1/wQAAAAFAAEAAAD1/wMAAAAFAAEAAAD1/wIAAAAEAAEAAAD1/wEAAAADAAEAAAD1/wAAAAAFAAEAAAD1////AAAFAAEAAAD1//7/AAAFAAEAAAAKAPf/AAACAAEAAAAJAPf/AAAEAAEAAAAIAPf/AAAEAAEAAAAHAPf/AAACAAEAAAAGAPf/AAAEAAEAAAAFAPf/AAAFAAEAAAAEAPf/AAAFAAEAAAADAPf/AAADAAEAAAACAPf/AAAEAAEAAAABAPf/AAAEAAEAAAAAAPf/AAAFAAEAAAD///f/AAAEAAEAAAD+//f/AAAEAAEAAAD9//f/AAADAAEAAAD8//f/AAADAAEAAAD7//f/AAAEAAEAAAD6//f/AAADAAEAAAD5//f/AAADAAEAAAD4//f/AAACAAEAAAD3//f/AAAFAAEAAAD2//f/AAAFAAEAAAD1//f/AAADAAEAAAD1//j/AAAFAAEAAAD1//n/AAAEAAEAAAD1//r/AAACAAEAAAD1//v/AAACAAEAAAD1//z/AAADAAEAAAD1//3/AAAFAAEAAAAKAPj/AAAEAAEAAAAKAPn/AAAFAAEAAAAKAPr/AAACAAEAAAAKAPv/AAAEAAEAAAAKAPz/AAAFAAEAAAAKAP3/AAAFAAEAAAAKAP7/AAAEAAEAAAAKAP//AAAEAAEAAAAKAAAAAAACAAEAAAAKAAEAAAACAAEAAAAKAAIAAAADAAEAAAAKAAMAAAAEAAEAAAAKAAQAAAADAAEAAAAKAAUAAAADAAEAAAAKAAYAAAACAAEAAAAKAAcAAAAEAAEAAAAKAAgAAAADAAEAAAAKAAkAAAAFAAEAAAAKAAoAAAAEAAEAAAAKAAsAAAADAAEAAAAKAAwAAAACAAEAAAAKAA0AAAAEAAEAAAAKAA4AAAACAAEAAAAKAA8AAAAEAAEAAAAKABAAAAACAAEAAAAKABEAAAACAAEAAAAKABIAAAADAAEAAAAKABMAAAACAAEAAAD1/xAAAAADAAEAAAD1/xEAAAAFAAEAAAD1/xIAAAAFAAEAAAD//w8AAAADAAEAAAD//xAAAAACAAEAAAAAABAAAAADAAEAAAAAABEAAAAEAAEAAAAAABIAAAAEAAEAAAAAABMAAAAEAAEAAAD//xMAAAAEAAEAAAD//xQAAAACAAEAAAD//xUAAAAFAAEAAAAAABUAAAAEAAEAAAAAABQAAAACAAEAAAD//xIAAAAEAAEAAAD//xEAAAAEAAEAAAD1/xMAAAAFAAEAAAD1/xQAAAACAAEAAAD1/xUAAAACAAEAAAAKABQAAAACAAEAAAAKABUAAAACAAEAAAD2/xAAAAAAAAAAAAD3/xAAAAABAAAAAAD4/xAAAAAAAAAAAAD5/xAAAAAAAAAAAAD6/xAAAAADAAAAAAD7/xAAAAAAAAAAAAD8/xAAAAAAAAAAAAD9/xAAAAABAAAAAAD+/xAAAAABAAAAAAD+/xEAAAABAAAAAAD9/xEAAAAEAAAAAAD8/xEAAAADAAAAAAD7/xEAAAABAAAAAAD6/xEAAAADAAAAAAD5/xEAAAACAAAAAAD4/xEAAAAAAAAAAAD3/xEAAAAAAAAAAAD3/xIAAAABAAAAAAD2/xEAAAACAAAAAAD2/xIAAAABAAAAAAD2/xMAAAADAAAAAAD2/xQAAAAAAAAAAAD2/xUAAAADAAAAAAD3/xUAAAADAAAAAAD4/xUAAAAAAAAAAAD5/xUAAAACAAAAAAD6/xUAAAACAAAAAAD7/xUAAAAEAAAAAAD8/xUAAAAAAAAAAAD9/xUAAAAAAAAAAAD9/xQAAAAEAAAAAAD+/xQAAAACAAAAAAD+/xUAAAAEAAAAAAD8/xQAAAACAAAAAAD7/xQAAAABAAAAAAD6/xQAAAADAAAAAAD5/xQAAAACAAAAAAD4/xQAAAAEAAAAAAD3/xQAAAACAAAAAAD6/xMAAAABAAAAAAD7/xMAAAACAAAAAAD8/xMAAAACAAAAAAD9/xMAAAABAAAAAAD+/xMAAAABAAAAAAD5/xMAAAAAAAAAAAD4/xMAAAADAAAAAAD3/xMAAAACAAAAAAD4/xIAAAABAAAAAAD5/xIAAAADAAAAAAD6/xIAAAABAAAAAAD7/xIAAAAEAAAAAAD8/xIAAAABAAAAAAD9/xIAAAABAAAAAAD+/xIAAAAAAAAAAAABABAAAAADAAAAAAACABAAAAABAAAAAAADABAAAAAEAAAAAAAEABAAAAADAAAAAAAFABAAAAADAAAAAAAGABAAAAAAAAAAAAAHABAAAAAAAAAAAAAIABAAAAADAAAAAAAJABAAAAADAAAAAAAJABEAAAADAAAAAAAJABIAAAABAAAAAAAJABMAAAAEAAAAAAAJABQAAAABAAAAAAAJABUAAAACAAAAAAAIABUAAAAEAAAAAAAHABUAAAAEAAAAAAAGABUAAAAEAAAAAAAFABUAAAAEAAAAAAAEABUAAAAAAAAAAAADABUAAAACAAAAAAACABUAAAADAAAAAAABABUAAAACAAAAAAABABQAAAABAAAAAAABABMAAAAEAAAAAAABABIAAAACAAAAAAABABEAAAACAAAAAAACABEAAAACAAAAAAADABEAAAADAAAAAAAEABEAAAADAAAAAAAFABEAAAACAAAAAAAGABEAAAADAAAAAAAHABEAAAACAAAAAAAIABEAAAACAAAAAAAIABIAAAADAAAAAAAIABMAAAAEAAAAAAAHABMAAAADAAAAAAAHABQAAAACAAAAAAAGABQAAAADAAAAAAAFABQAAAACAAAAAAAEABMAAAAAAAAAAAADABMAAAAEAAAAAAACABMAAAAAAAAAAAACABIAAAAEAAAAAAADABIAAAAAAAAAAAAFABIAAAAEAAAAAAAGABIAAAABAAAAAAAHABIAAAABAAAAAAAEABIAAAADAAAAAAAFABMAAAADAAAAAAAGABMAAAADAAAAAAACABQAAAADAAAAAAADABQAAAAAAAAAAAAEABQAAAAEAAAAAAAIABQAAAAAAAAAAAAAAA8AAAAEAAEAAAD//woAAAAAAAMAAAAAAAoAAAABAAMAAAA=")
 tile_set = SubResource("TileSet_0idg8")
 
-[node name="FireLight" type="PointLight2D" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="0" unique_id=788773218]
-position = Vector2(-136, -24)
-color = Color(1, 0.62, 0.12, 1)
-energy = 0.85
-texture = SubResource("GradTex_fire_lgt")
-texture_scale = 3.2
-
-[node name="Table1Light" type="PointLight2D" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="1" unique_id=1488813524]
+[node name="Table1Light" type="PointLight2D" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="0" unique_id=1488813524]
 position = Vector2(-60, 32)
 color = Color(1, 0.88, 0.42, 1)
 energy = 0.45
 texture = SubResource("GradTex_candle_lgt")
 texture_scale = 1.6
 
-[node name="Table2Light" type="PointLight2D" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="2" unique_id=424062576]
+[node name="Table2Light" type="PointLight2D" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="1" unique_id=424062576]
 position = Vector2(60, 32)
 color = Color(1, 0.88, 0.42, 1)
 energy = 0.45
 texture = SubResource("GradTex_candle_lgt")
 texture_scale = 1.6
 
-[node name="Table3Light" type="PointLight2D" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="3" unique_id=1940712445]
+[node name="Table3Light" type="PointLight2D" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="2" unique_id=1940712445]
 position = Vector2(0, -18)
 color = Color(1, 0.88, 0.42, 1)
 energy = 0.4
 texture = SubResource("GradTex_candle_lgt")
 texture_scale = 1.6
 
-[node name="Kriora" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="4" unique_id=937356301 instance=ExtResource("3_kriora")]
+[node name="Kriora" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="3" unique_id=937356301 instance=ExtResource("3_kriora")]
 position = Vector2(-80, 109)
 NpcId = "kriora_mapp"
 TimelinePath = "res://dialog/timelines/npc_kriora.dtl"
@@ -135,7 +123,7 @@ AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_kriora_again.dt
 CharacterPath = "res://dialog/characters/Kriora.dch"
 PlaceholderColor = Color(0.75, 0.25, 0.18, 1)
 
-[node name="Shizu" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="5" unique_id=1156379984 instance=ExtResource("4_shizu")]
+[node name="Shizu" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="4" unique_id=1156379984 instance=ExtResource("4_shizu")]
 position = Vector2(-120, 60)
 NpcId = "shizu_mapp"
 TimelinePath = "res://dialog/timelines/npc_shizu.dtl"
@@ -145,7 +133,7 @@ AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_shizu_again.dtl
 CharacterPath = "res://dialog/characters/Shizu.dch"
 PlaceholderColor = Color(0.55, 0.1, 0.75, 1)
 
-[node name="Lily" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="6" unique_id=1552380209 instance=ExtResource("5_lily")]
+[node name="Lily" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="5" unique_id=1552380209 instance=ExtResource("5_lily")]
 position = Vector2(-40, 30)
 NpcId = "lily_mapp"
 TimelinePath = "res://dialog/timelines/npc_lily.dtl"
@@ -156,7 +144,7 @@ PlaceholderColor = Color(0.95, 0.6, 0.7, 1)
 PatrolPoints = PackedVector2Array(-50, 20, 50, 20, 0, 65)
 PatrolSpeed = 25.0
 
-[node name="Gus" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="7" unique_id=363661240 instance=ExtResource("6_gus")]
+[node name="Gus" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="6" unique_id=363661240 instance=ExtResource("6_gus")]
 position = Vector2(-110, 20)
 NpcId = "gus_mapp"
 TimelinePath = "res://dialog/timelines/npc_gus.dtl"
@@ -166,7 +154,7 @@ AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_gus_again.dtl")
 CharacterPath = "res://dialog/characters/Gus.dch"
 PlaceholderColor = Color(0.6, 0.42, 0.22, 1)
 
-[node name="Brix" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="8" unique_id=1263387292 instance=ExtResource("7_brix")]
+[node name="Brix" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="7" unique_id=1263387292 instance=ExtResource("7_brix")]
 position = Vector2(107, 23)
 NpcId = "brix_mapp"
 TimelinePath = "res://dialog/timelines/npc_brix.dtl"
@@ -176,7 +164,7 @@ AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_brix_again.dtl"
 CharacterPath = "res://dialog/characters/Brix.dch"
 PlaceholderColor = Color(0.4, 0.42, 0.46, 1)
 
-[node name="Bhata" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="9" unique_id=567434243 instance=ExtResource("8_bhata")]
+[node name="Bhata" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="8" unique_id=567434243 instance=ExtResource("8_bhata")]
 position = Vector2(49, -10)
 NpcId = "bhata_mapp"
 TimelinePath = "res://dialog/timelines/npc_bhata.dtl"
@@ -185,7 +173,7 @@ AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_bhata_again.dtl
 CharacterPath = "res://dialog/characters/Bhata.dch"
 PlaceholderColor = Color(0.25, 0.75, 0.7, 1)
 
-[node name="Rain" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="10" unique_id=1755162515 instance=ExtResource("9_rain")]
+[node name="Rain" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="9" unique_id=1755162515 instance=ExtResource("9_rain")]
 position = Vector2(50, 100)
 NpcId = "rain_mapp"
 TimelinePath = "res://dialog/timelines/npc_rain.dtl"
@@ -197,7 +185,7 @@ PlaceholderColor = Color(0.35, 0.55, 0.95, 1)
 PatrolPoints = PackedVector2Array(60, 90, 40, 100, 50, 100)
 PatrolSpeed = 18.0
 
-[node name="PetWitchCat" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="11" unique_id=911490980 instance=ExtResource("10_petwcat")]
+[node name="PetWitchCat" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="10" unique_id=911490980 instance=ExtResource("10_petwcat")]
 position = Vector2(396, -44)
 NpcId = "pet_witch_cat"
 TimelinePath = "res://dialog/timelines/npc_pet_witch_cat.dtl"
@@ -205,71 +193,71 @@ DisplayName = "WitchCat"
 DefaultFacing = 2
 CharacterPath = "res://dialog/characters/PetWitchCat.dch"
 
-[node name="Barkeep" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="12" unique_id=914373453 instance=ExtResource("14_vendor")]
+[node name="Rork" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="11" unique_id=914373453 instance=ExtResource("29_rork")]
 position = Vector2(-1, -56)
 ShopStock = [SubResource("ShopEntry_ale")]
 NpcId = "barkeep_mapp"
 TimelinePath = "res://dialog/timelines/npc_barkeep.dtl"
-DisplayName = "Barkeep"
+DisplayName = "Rork"
 AltRequiredFlags = PackedStringArray("all_alt_dialogs_done", "gus_transformed_to_frog", "brix_horse_appeared")
 AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_barkeep_alldone.dtl", "res://dialog/timelines/npc_barkeep_frog.dtl", "res://dialog/timelines/npc_barkeep_horse.dtl")
-CharacterPath = "res://dialog/characters/Barkeep.dch"
+CharacterPath = "res://dialog/characters/Rork.dch"
 PlaceholderColor = Color(0.55, 0.38, 0.18, 1)
 
-[node name="Table1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="13" unique_id=1835706404 instance=ExtResource("11_table")]
+[node name="Table1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="12" unique_id=1835706404 instance=ExtResource("11_table")]
 position = Vector2(-60, 40)
 
-[node name="Table2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="14" unique_id=1545523261 instance=ExtResource("11_table")]
+[node name="Table2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="13" unique_id=1545523261 instance=ExtResource("11_table")]
 position = Vector2(60, 40)
 
-[node name="Table3" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="15" unique_id=891817547 instance=ExtResource("11_table")]
+[node name="Table3" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="14" unique_id=891817547 instance=ExtResource("11_table")]
 position = Vector2(0, -10)
 
-[node name="T1ChairN" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="16" unique_id=1993783938 instance=ExtResource("12_chair")]
+[node name="T1ChairN" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="15" unique_id=1993783938 instance=ExtResource("12_chair")]
 position = Vector2(-60, 20)
 NorthFacing = true
 
-[node name="T1ChairS1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="17" unique_id=830595368 instance=ExtResource("12_chair")]
+[node name="T1ChairS1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="16" unique_id=830595368 instance=ExtResource("12_chair")]
 position = Vector2(-69, 58)
 
-[node name="T1ChairS2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="18" unique_id=41374247 instance=ExtResource("12_chair")]
+[node name="T1ChairS2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="17" unique_id=41374247 instance=ExtResource("12_chair")]
 position = Vector2(-51, 58)
 
-[node name="T2ChairN" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="19" unique_id=2066140469 instance=ExtResource("12_chair")]
+[node name="T2ChairN" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="18" unique_id=2066140469 instance=ExtResource("12_chair")]
 position = Vector2(60, 20)
 NorthFacing = true
 
-[node name="T2ChairS1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="20" unique_id=456285440 instance=ExtResource("12_chair")]
+[node name="T2ChairS1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="19" unique_id=456285440 instance=ExtResource("12_chair")]
 position = Vector2(51, 58)
 
-[node name="T2ChairS2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="21" unique_id=930369284 instance=ExtResource("12_chair")]
+[node name="T2ChairS2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="20" unique_id=930369284 instance=ExtResource("12_chair")]
 position = Vector2(69, 58)
 
-[node name="T3ChairS1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="22" unique_id=428870808 instance=ExtResource("12_chair")]
+[node name="T3ChairS1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="21" unique_id=428870808 instance=ExtResource("12_chair")]
 position = Vector2(-9, 8)
 
-[node name="T3ChairS2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="23" unique_id=150816486 instance=ExtResource("12_chair")]
+[node name="T3ChairS2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="22" unique_id=150816486 instance=ExtResource("12_chair")]
 position = Vector2(9, 8)
 
-[node name="BarStool1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="24" unique_id=1705835936 instance=ExtResource("13_stool")]
+[node name="BarStool1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="23" unique_id=1705835936 instance=ExtResource("13_stool")]
 position = Vector2(-90, -40)
 
-[node name="BarStool2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="25" unique_id=303586501 instance=ExtResource("13_stool")]
+[node name="BarStool2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="24" unique_id=303586501 instance=ExtResource("13_stool")]
 position = Vector2(-54, -40)
 
-[node name="BarStool3" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="26" unique_id=2056342556 instance=ExtResource("13_stool")]
+[node name="BarStool3" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="25" unique_id=2056342556 instance=ExtResource("13_stool")]
 position = Vector2(-18, -40)
 
-[node name="BarStool4" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="27" unique_id=88113853 instance=ExtResource("13_stool")]
+[node name="BarStool4" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="26" unique_id=88113853 instance=ExtResource("13_stool")]
 position = Vector2(18, -40)
 
-[node name="BarStool5" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="28" unique_id=1938507140 instance=ExtResource("13_stool")]
+[node name="BarStool5" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="27" unique_id=1938507140 instance=ExtResource("13_stool")]
 position = Vector2(54, -40)
 
-[node name="BarStool6" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="29" unique_id=1527521584 instance=ExtResource("13_stool")]
+[node name="BarStool6" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="28" unique_id=1527521584 instance=ExtResource("13_stool")]
 position = Vector2(90, -40)
 
-[node name="PetDragon" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="30" unique_id=-1994967295 instance=ExtResource("23_dragon")]
+[node name="PetDragon" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="29" unique_id=-1994967295 instance=ExtResource("23_dragon")]
 position = Vector2(345, -41)
 NpcId = "pet_dragon"
 TimelinePath = "res://dialog/timelines/npc_pet_dragon.dtl"
@@ -277,7 +265,7 @@ DisplayName = "Dragon"
 DefaultFacing = 2
 CharacterPath = "res://dialog/characters/PetDragon.dch"
 
-[node name="PetFairy" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="31" unique_id=-1994967294 instance=ExtResource("24_fairy")]
+[node name="PetFairy" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="30" unique_id=-1994967294 instance=ExtResource("24_fairy")]
 position = Vector2(369, -43)
 NpcId = "pet_fairy"
 TimelinePath = "res://dialog/timelines/npc_pet_fairy.dtl"
@@ -287,65 +275,55 @@ CharacterPath = "res://dialog/characters/PetFairy.dch"
 PatrolPoints = PackedVector2Array(50, -15, 30, 10, -15, -35, 10, 30)
 PatrolSpeed = 50.0
 
-[node name="Firebox" type="ColorRect" parent="." index="7" unique_id=1617611257]
-z_index = -8
-offset_left = -150.0
-offset_top = -40.0
-offset_right = -122.0
-offset_bottom = -8.0
-color = Color(0.15, 0.1, 0.08, 1)
+[node name="Foran" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="31" unique_id=-1794967295 instance=ExtResource("25_foran")]
+position = Vector2(15, 80)
+NpcId = "foran_mapp"
+TimelinePath = "res://dialog/timelines/npc_foran.dtl"
+DisplayName = "Foran"
+CharacterPath = "res://dialog/characters/Foran.dch"
+PlaceholderColor = Color(0.337, 0.42, 0.969, 1)
+PatrolPoints = PackedVector2Array(15, 68, 15, 95)
+PatrolSpeed = 18.0
 
-[node name="Flame" type="ColorRect" parent="." index="8" unique_id=792732088]
-z_index = -7
-offset_left = -146.0
-offset_top = -36.0
-offset_right = -126.0
-offset_bottom = -14.0
-color = Color(1, 0.55, 0.1, 0.9)
+[node name="Fireplace" parent="." index="7" unique_id=1617611257 instance=ExtResource("26_fireplace")]
 
-[node name="Door" type="ColorRect" parent="." index="9" unique_id=1495472531]
-z_index = -7
-offset_left = -14.0
-offset_top = 155.0
-offset_right = 14.0
-offset_bottom = 167.0
-color = Color(0.3, 0.2, 0.1, 1)
+[node name="Door" parent="." index="8" unique_id=1495472531 instance=ExtResource("28_door")]
 
-[node name="Journal" parent="." index="10" unique_id=2050191186 instance=ExtResource("19_journal")]
+[node name="Journal" parent="." index="9" unique_id=2050191186 instance=ExtResource("19_journal")]
 position = Vector2(-60, 35)
 
-[node name="Dartboard" parent="." index="11" unique_id=1217286306 instance=ExtResource("20_dartboard")]
+[node name="Dartboard" parent="." index="10" unique_id=1217286306 instance=ExtResource("20_dartboard")]
 position = Vector2(134, 151)
 
-[node name="DrinkProp" parent="." index="12" unique_id=1610892016 instance=ExtResource("21_drinkprop")]
+[node name="DrinkProp" parent="." index="11" unique_id=1610892016 instance=ExtResource("21_drinkprop")]
 position = Vector2(75, -42)
 
-[node name="SavePoint" parent="." index="13" unique_id=747126169 instance=ExtResource("16_save")]
+[node name="SavePoint" parent="." index="12" unique_id=747126169 instance=ExtResource("16_save")]
 position = Vector2(-130, 105)
 SavePointId = "mapp_hearth"
 
-[node name="Chest" parent="." index="14" unique_id=2121869652 instance=ExtResource("17_chest")]
+[node name="Chest" parent="." index="13" unique_id=2121869652 instance=ExtResource("17_chest")]
 position = Vector2(100, 152)
 ItemPath = "res://resources/items/item_002.tres"
 FlagId = "chest_mapp_corner"
 
-[node name="NoticeBoard" parent="." index="15" unique_id=14098406 instance=ExtResource("15_sign")]
+[node name="NoticeBoard" parent="." index="14" unique_id=14098406 instance=ExtResource("15_sign")]
 position = Vector2(134, 121)
 SignTitle = "Notice Board"
 Lines = PackedStringArray("The Shiver Me Timber Inn — serving the finest ales since 1150.", "", "REWARD: 50 gold for information regarding the", "  recent explosion of the Laurentius Mansion in Seade. Contact the Sovereign Royal Guard.", "", "LOST: One horse. Brown. Answers to \'Horse\'.", "  Contact Brix (he is right here).", "", "Rooms available upstairs. Ask the barkeep.")
 
-[node name="StaircaseSign" parent="." index="16" unique_id=1272600358 instance=ExtResource("15_sign")]
+[node name="StaircaseSign" parent="." index="15" unique_id=1272600358 instance=ExtResource("15_sign")]
 position = Vector2(426, -47)
 SignTitle = "Upper Floor"
 Lines = PackedStringArray("The rooms upstairs are currently occupied.", "", "(Coming soon.)")
 
-[node name="Exit" parent="." index="17" unique_id=1845096565 instance=ExtResource("18_exit")]
+[node name="Exit" parent="." index="16" unique_id=1845096565 instance=ExtResource("18_exit")]
 position = Vector2(0, 348)
 TargetMapPath = "res://scenes/overworld/TestRoom.tscn"
 TargetSpawnId = "from_mapp"
 AutoTrigger = true
 
-[node name="Mantelpiece" type="Node2D" parent="." index="18" unique_id=-2094967295]
+[node name="Mantelpiece" type="Node2D" parent="." index="17" unique_id=-2094967295]
 z_index = 4
 
 [node name="ShelfFace" type="Polygon2D" parent="Mantelpiece" index="0" unique_id=-2094967294]
@@ -420,7 +398,7 @@ position = Vector2(-126, -48)
 color = Color(1, 0.68, 0.12, 1)
 polygon = PackedVector2Array(0, -3, 1, -1, 0, 0, -1, -1)
 
-[node name="Banner" type="Node2D" parent="." index="19" unique_id=-2094967276]
+[node name="Banner" type="Node2D" parent="." index="18" unique_id=-2094967276]
 z_index = 4
 
 [node name="BannerField" type="Polygon2D" parent="Banner" index="0" unique_id=-2094967275]
@@ -459,7 +437,7 @@ position = Vector2(-65, -86)
 color = Color(0.28, 0.1, 0.42, 1)
 polygon = PackedVector2Array(-7, 0, 7, 0, 0, 6)
 
-[node name="Bottles" type="Node2D" parent="." index="20" unique_id=-2094967266]
+[node name="Bottles" type="Node2D" parent="." index="19" unique_id=-2094967266]
 z_index = 4
 
 [node name="ShelfPlank" type="Polygon2D" parent="Bottles" index="0" unique_id=-2094967265]
@@ -612,121 +590,14 @@ position = Vector2(22, -94.05)
 color = Color(0.88, 0.82, 0.52, 1)
 polygon = PackedVector2Array(-2.5, -2, 2.5, -2, 2.5, 2, -2.5, 2)
 
-[node name="WindowWest" type="Node2D" parent="." index="21" unique_id=-2094967236]
-z_index = 7
-
-[node name="LightBleed" type="Polygon2D" parent="WindowWest" index="0" unique_id=-2094967235]
-z_index = -7
+[node name="WindowWest" parent="." index="20" unique_id=-2094967236 instance=ExtResource("27_window")]
 position = Vector2(-150, 40)
-color = Color(0.92, 0.9, 0.72, 0.3)
-polygon = PackedVector2Array(-10, -14, 10, -14, 10, 14, -10, 14)
 
-[node name="Glass" type="Polygon2D" parent="WindowWest" index="1" unique_id=-2094967234]
-z_index = -6
-position = Vector2(-150, 40)
-color = Color(0.72, 0.82, 0.68, 0.55)
-polygon = PackedVector2Array(-8, -12, 8, -12, 8, 12, -8, 12)
-
-[node name="FrameTop" type="Polygon2D" parent="WindowWest" index="2" unique_id=-2094967233]
-z_index = -5
-position = Vector2(-150, 28)
-color = Color(0.3, 0.18, 0.08, 1)
-polygon = PackedVector2Array(-8, -1, 8, -1, 8, 1, -8, 1)
-
-[node name="FrameBottom" type="Polygon2D" parent="WindowWest" index="3" unique_id=-2094967232]
-z_index = -5
-position = Vector2(-150, 52)
-color = Color(0.3, 0.18, 0.08, 1)
-polygon = PackedVector2Array(-8, -1, 8, -1, 8, 1, -8, 1)
-
-[node name="FrameLeft" type="Polygon2D" parent="WindowWest" index="4" unique_id=-2094967231]
-z_index = -5
-position = Vector2(-158, 40)
-color = Color(0.3, 0.18, 0.08, 1)
-polygon = PackedVector2Array(-1, -13, 1, -13, 1, 13, -1, 13)
-
-[node name="FrameRight" type="Polygon2D" parent="WindowWest" index="5" unique_id=-2094967230]
-z_index = -5
-position = Vector2(-142, 40)
-color = Color(0.3, 0.18, 0.08, 1)
-polygon = PackedVector2Array(-1, -13, 1, -13, 1, 13, -1, 13)
-
-[node name="CrossH" type="Polygon2D" parent="WindowWest" index="6" unique_id=-2094967229]
-z_index = -5
-position = Vector2(-150, 40)
-color = Color(0.3, 0.18, 0.08, 1)
-polygon = PackedVector2Array(-8, -1, 8, -1, 8, 1, -8, 1)
-
-[node name="CrossV" type="Polygon2D" parent="WindowWest" index="7" unique_id=-2094967228]
-z_index = -5
-position = Vector2(-150, 40)
-color = Color(0.3, 0.18, 0.08, 1)
-polygon = PackedVector2Array(-1, -12, 1, -12, 1, 12, -1, 12)
-
-[node name="LightShaft" type="Polygon2D" parent="WindowWest" index="8" unique_id=-2094967227]
-z_index = -2
-position = Vector2(-150, 40)
-color = Color(0.95, 0.9, 0.7, 0.07)
-polygon = PackedVector2Array(-4, 0, 4, 0, 26, 40, 2, 40)
-
-[node name="WindowEast" type="Node2D" parent="." index="22" unique_id=-2094967226]
-z_index = 7
-
-[node name="LightBleed" type="Polygon2D" parent="WindowEast" index="0" unique_id=-2094967225]
-z_index = -7
+[node name="WindowEast" parent="." index="21" unique_id=-2094967226 instance=ExtResource("27_window")]
 position = Vector2(138, 40)
-color = Color(0.92, 0.9, 0.72, 0.3)
-polygon = PackedVector2Array(-10, -14, 10, -14, 10, 14, -10, 14)
 
-[node name="Glass" type="Polygon2D" parent="WindowEast" index="1" unique_id=-2094967224]
-z_index = -6
-position = Vector2(138, 40)
-color = Color(0.72, 0.82, 0.68, 0.55)
-polygon = PackedVector2Array(-8, -12, 8, -12, 8, 12, -8, 12)
-
-[node name="FrameTop" type="Polygon2D" parent="WindowEast" index="2" unique_id=-2094967223]
-z_index = -5
-position = Vector2(138, 28)
-color = Color(0.3, 0.18, 0.08, 1)
-polygon = PackedVector2Array(-8, -1, 8, -1, 8, 1, -8, 1)
-
-[node name="FrameBottom" type="Polygon2D" parent="WindowEast" index="3" unique_id=-2094967222]
-z_index = -5
-position = Vector2(138, 52)
-color = Color(0.3, 0.18, 0.08, 1)
-polygon = PackedVector2Array(-8, -1, 8, -1, 8, 1, -8, 1)
-
-[node name="FrameLeft" type="Polygon2D" parent="WindowEast" index="4" unique_id=-2094967221]
-z_index = -5
-position = Vector2(130, 40)
-color = Color(0.3, 0.18, 0.08, 1)
-polygon = PackedVector2Array(-1, -13, 1, -13, 1, 13, -1, 13)
-
-[node name="FrameRight" type="Polygon2D" parent="WindowEast" index="5" unique_id=-2094967220]
-z_index = -5
-position = Vector2(146, 40)
-color = Color(0.3, 0.18, 0.08, 1)
-polygon = PackedVector2Array(-1, -13, 1, -13, 1, 13, -1, 13)
-
-[node name="CrossH" type="Polygon2D" parent="WindowEast" index="6" unique_id=-2094967219]
-z_index = -5
-position = Vector2(138, 40)
-color = Color(0.3, 0.18, 0.08, 1)
-polygon = PackedVector2Array(-8, -1, 8, -1, 8, 1, -8, 1)
-
-[node name="CrossV" type="Polygon2D" parent="WindowEast" index="7" unique_id=-2094967218]
-z_index = -5
-position = Vector2(138, 40)
-color = Color(0.3, 0.18, 0.08, 1)
-polygon = PackedVector2Array(-1, -12, 1, -12, 1, 12, -1, 12)
-
-[node name="LightShaft" type="Polygon2D" parent="WindowEast" index="8" unique_id=-2094967217]
-z_index = -2
-position = Vector2(138, 40)
-color = Color(0.95, 0.9, 0.7, 0.07)
-polygon = PackedVector2Array(-4, 0, 4, 0, -2, 40, -26, 40)
-
-[node name="BackDoor" type="Node2D" parent="." index="23" unique_id=-2094967216]
+[node name="BackDoor" type="Node2D" parent="." index="22" unique_id=-2094967216]
+z_index = 8
 
 [node name="Opening" type="Polygon2D" parent="BackDoor" index="0" unique_id=-2094967215]
 z_index = -8
@@ -776,7 +647,7 @@ position = Vector2(143, 52)
 color = Color(0.4, 0.28, 0.1, 1)
 polygon = PackedVector2Array(-6, -3, 6, -3, 6, 3, -6, 3)
 
-[node name="BackDoorExit" parent="." index="24" unique_id=-2094967206 instance=ExtResource("18_exit")]
+[node name="BackDoorExit" parent="." index="23" unique_id=-2094967206 instance=ExtResource("18_exit")]
 position = Vector2(272, -39)
 TargetMapPath = "res://scenes/overworld/maps/MappGarden.tscn"
 TargetSpawnId = "from_mapp_backyard"

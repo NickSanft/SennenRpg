@@ -35,7 +35,7 @@ public partial class ChairFurniture : Node2D
 		AddChild(new Polygon2D
 		{
 			Color   = ChairSeat,
-			ZIndex  = -6,
+			ZIndex  = 0,
 			Polygon = new Vector2[]
 			{
 				new Vector2(-5f, -4f), new Vector2(5f, -4f),
@@ -48,7 +48,7 @@ public partial class ChairFurniture : Node2D
 		AddChild(new Polygon2D
 		{
 			Color   = ChairBack,
-			ZIndex  = -6,
+			ZIndex  = 0,
 			Polygon = new Vector2[]
 			{
 				new Vector2(-5f, by),      new Vector2(5f, by),
@@ -59,7 +59,7 @@ public partial class ChairFurniture : Node2D
 		AddChild(new Polygon2D
 		{
 			Color   = new Color(ChairSeat.R + 0.08f, ChairSeat.G + 0.05f, ChairSeat.B + 0.02f),
-			ZIndex  = -5,
+			ZIndex  = 0,
 			Polygon = new Vector2[]
 			{
 				new Vector2(-4f, -3f), new Vector2(1f, -3f),

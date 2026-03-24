@@ -1,0 +1,70 @@
+[gd_scene format=3 uid="uid://npc_rork_sp01"]
+
+[ext_resource type="PackedScene" path="res://scenes/overworld/objects/VendorNpc.tscn" id="1_nrork"]
+[ext_resource type="Texture2D" path="res://assets/sprites/npcs/Rork.png" id="2_rork_tex"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rk_d1"]
+atlas = ExtResource("2_rork_tex")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rk_d2"]
+atlas = ExtResource("2_rork_tex")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rk_s1"]
+atlas = ExtResource("2_rork_tex")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rk_s2"]
+atlas = ExtResource("2_rork_tex")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rk_u1"]
+atlas = ExtResource("2_rork_tex")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rk_u2"]
+atlas = ExtResource("2_rork_tex")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_rork"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rk_d1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rk_d2")
+}],
+"loop": true,
+"name": &"idle_down",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rk_s1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rk_s2")
+}],
+"loop": true,
+"name": &"idle_side",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rk_u1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rk_u2")
+}],
+"loop": true,
+"name": &"idle_up",
+"speed": 5.0
+}]
+
+[node name="NpcRork" instance=ExtResource("1_nrork")]
+
+[node name="Sprite" type="AnimatedSprite2D" parent="." index="1"]
+sprite_frames = SubResource("SpriteFrames_rork")
+animation = &"idle_down"

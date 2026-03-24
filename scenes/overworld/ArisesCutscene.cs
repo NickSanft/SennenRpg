@@ -1,4 +1,5 @@
 using Godot;
+using SennenRpg.Autoloads;
 
 namespace SennenRpg.Scenes.Overworld;
 
@@ -10,6 +11,9 @@ namespace SennenRpg.Scenes.Overworld;
 public partial class ArisesCutscene : CanvasLayer
 {
 	[Signal] public delegate void FinishedEventHandler();
+
+	private const string ArisesBgmPath =
+		"res://assets/music/Divora - The Gravity Of The Situation - DND 5 - 07 Sozitek.wav";
 
 	private Polygon2D        _overlay       = null!;
 	private CenterContainer  _textContainer = null!;
@@ -79,6 +83,7 @@ public partial class ArisesCutscene : CanvasLayer
 		_subLabel.AddThemeFontSizeOverride("font_size", 14);
 		vbox.AddChild(_subLabel);
 
+		AudioManager.Instance.PlayBgm(ArisesBgmPath, fadeTime: 1.5f);
 		PhaseWhiteFlash();
 	}
 

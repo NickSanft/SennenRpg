@@ -18,7 +18,7 @@ public partial class BarStoolFurniture : Node2D
 		AddChild(new Polygon2D
 		{
 			Color   = new Color(0.25f, 0.14f, 0.06f),
-			ZIndex  = -6,
+			ZIndex  = 0,
 			Polygon = new Vector2[]
 			{
 				new Vector2(-3f, -4f), new Vector2(3f, -4f),
@@ -31,7 +31,7 @@ public partial class BarStoolFurniture : Node2D
 		AddChild(new Polygon2D
 		{
 			Color   = new Color(0.35f, 0.20f, 0.10f),
-			ZIndex  = -5,
+			ZIndex  = 0,
 			Polygon = new Vector2[]
 			{
 				new Vector2(-2f, -2f), new Vector2(2f, -2f),

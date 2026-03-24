@@ -1,0 +1,31 @@
+{
+"@path": "res://addons/dialogic/Resources/character.gd",
+"@subpath": NodePath(""),
+&"_translation_id": "",
+&"color": Color(0.65, 0.42, 0.18, 1),
+&"custom_info": {
+"prefix": "",
+"sound_mood_default": "",
+"sound_moods": {},
+"style": "",
+"suffix": ""
+},
+&"default_portrait": "default",
+&"description": "An old, muscle bound softshell Tortle known to carry nails in his mouth. On his back shell, he has a tattoo of a sextant and spyglass, marking him as a member of the Clisians. On the side of his neck is a scale from an ice dragon that he has been told will kill him if removed.",
+&"display_name": "Rork",
+&"mirror": false,
+&"nicknames": [""],
+&"offset": Vector2(0, 0),
+&"portraits": {
+"default": {
+"export_overrides": {
+"image": "\"res://assets/sprites/npcs/Rork_Portrait.png\""
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1,
+"scene": "res://scenes/dialog/NpcPortrait.tscn"
+}
+},
+&"scale": 1.0
+}

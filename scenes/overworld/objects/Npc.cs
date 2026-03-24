@@ -180,6 +180,7 @@ public partial class Npc : CharacterBody2D, IInteractable
 	{
 		if (_talkCooldown > 0f) return;
 		if (DialogicBridge.Instance.IsRunning()) { GD.Print("[Npc] Dialog already running — aborting."); return; }
+		if (_pendingPlayer != null) return;
 
 		_patrolActive  = false;
 		Velocity       = Vector2.Zero;
@@ -348,8 +349,9 @@ public partial class Npc : CharacterBody2D, IInteractable
 
 	private void OnTimelineEnded()
 	{
-		_talkCooldown = TalkCooldownSec;
-		_patrolActive = PatrolPoints.Length >= 1;
+		_talkCooldown  = TalkCooldownSec;
+		_pendingPlayer = null;
+		_patrolActive  = PatrolPoints.Length >= 1;
 
 		if (!string.IsNullOrEmpty(NpcId))
 		{

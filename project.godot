@@ -46,6 +46,7 @@ directories/dch_directory={
 "PetWitchCat": "res://dialog/characters/PetWitchCat.dch",
 "Pip": "res://dialog/characters/Pip.dch",
 "Rain": "res://dialog/characters/Rain.dch",
+"Rork": "res://dialog/characters/Rork.dch",
 "TestNpc": "res://dialog/characters/Shizu.dch",
 "Wendell": "res://dialog/characters/Wendell.dch",
 "unit_test_character": "res://addons/dialogic/Tests/Resources/unit_test_character.dch"
