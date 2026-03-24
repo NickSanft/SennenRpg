@@ -15,7 +15,7 @@ public partial class DartboardProp : Area2D, IInteractable
 		"Bullseye!",
 		"Inner ring.",
 		"Outer ring.",
-		"Hits the wood surround.",
+		"You hit the wood around it.",
 		"Bounces off the wall.",
 		"Lands in someone's drink.",
 		"Impressive.",
