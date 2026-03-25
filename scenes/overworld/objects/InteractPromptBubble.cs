@@ -23,7 +23,7 @@ public partial class InteractPromptBubble : Node2D
 
 	public override void _Ready()
 	{
-		_canvas     = new CanvasLayer { Layer = 5 };
+		_canvas     = new CanvasLayer { Layer = 0 };
 		_screenNode = new Node2D { Visible = false };
 		_bobNode    = new Node2D();
 

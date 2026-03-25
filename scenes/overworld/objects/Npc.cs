@@ -133,7 +133,7 @@ public partial class Npc : CharacterBody2D, IInteractable
 			_nameLabelNode          = new Node2D();
 			nameLabel.Position      = new Vector2(-30, 0);
 			_nameLabelNode.AddChild(nameLabel);
-			_nameCanvas             = new CanvasLayer { Layer = 5 };
+			_nameCanvas             = new CanvasLayer { Layer = 0 };
 			_nameCanvas.AddChild(_nameLabelNode);
 			GetTree().Root.AddChild(_nameCanvas);
 		}
