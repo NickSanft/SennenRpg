@@ -65,6 +65,8 @@ public partial class Npc : CharacterBody2D, IInteractable
 	private bool                   _emoteShown;
 	private string                 _characterDescription = "";
 	private Node?                  _pendingPlayer;
+	private CanvasLayer?           _nameCanvas;
+	private Node2D?                _nameLabelNode;
 
 	public override void _Ready()
 	{
@@ -106,22 +108,38 @@ public partial class Npc : CharacterBody2D, IInteractable
 		// Name label always above NPC
 		var nameLabel = new Label
 		{
-			Text               = DisplayName,
+			Text                = DisplayName,
 			HorizontalAlignment = HorizontalAlignment.Center,
-			CustomMinimumSize  = new Vector2(60, 0),
-			Position           = new Vector2(-30, -38),
-			LabelSettings      = new LabelSettings
+			CustomMinimumSize   = new Vector2(60, 0),
+			Position            = new Vector2(-30, -28),
+			LabelSettings       = new LabelSettings
 			{
-				FontSize     = 12,
+				FontSize     = 15,
 				FontColor    = Colors.White,
 				OutlineSize  = 2,
 				OutlineColor = new Color(0f, 0f, 0f, 0.9f),
 			},
 		};
-		AddChild(nameLabel);
+
+		if (Engine.IsEditorHint())
+		{
+			// In the editor there is no camera zoom, so world-space is fine
+			AddChild(nameLabel);
+		}
+		else
+		{
+			// At runtime the camera zooms 3x — render in a CanvasLayer so the
+			// label is at screen resolution, matching the dialog text quality
+			_nameLabelNode          = new Node2D();
+			nameLabel.Position      = new Vector2(-30, 0);
+			_nameLabelNode.AddChild(nameLabel);
+			_nameCanvas             = new CanvasLayer { Layer = 5 };
+			_nameCanvas.AddChild(_nameLabelNode);
+			GetTree().Root.AddChild(_nameCanvas);
+		}
 
 		_prompt = new InteractPromptBubble(PromptText);
-		_prompt.Position = new Vector2(0, -50);
+		_prompt.Position = new Vector2(0, -40);
 		AddChild(_prompt);
 
 		// Apply the default facing direction
@@ -136,6 +154,19 @@ public partial class Npc : CharacterBody2D, IInteractable
 		if (Engine.IsEditorHint()) return;
 		if (_talkCooldown > 0f)
 			_talkCooldown -= (float)delta;
+
+		if (_nameLabelNode != null)
+		{
+			// Keep the name label locked above the NPC in screen space
+			var worldPos = GlobalPosition + new Vector2(0, -28);
+			var raw      = GetViewportTransform() * worldPos;
+			_nameLabelNode.Position = new Vector2(Mathf.Round(raw.X), Mathf.Round(raw.Y));
+		}
+	}
+
+	public override void _ExitTree()
+	{
+		_nameCanvas?.QueueFree();
 	}
 
 	public override void _PhysicsProcess(double delta)
