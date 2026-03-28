@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EquipmentData" format=4]
+
+[ext_resource type="Script" path="res://core/data/EquipmentData.cs" id="1_eqdata"]
+
+[resource]
+script = ExtResource("1_eqdata")
+EquipmentId = "wooden_shield"
+DisplayName = "Wooden Shield"
+Description = "A battered wooden shield. Better than nothing."
+Slot = 1
+BonusDefense = 3

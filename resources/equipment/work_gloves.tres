@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EquipmentData" format=4]
+
+[ext_resource type="Script" path="res://core/data/EquipmentData.cs" id="1_eqdata"]
+
+[resource]
+script = ExtResource("1_eqdata")
+EquipmentId = "work_gloves"
+DisplayName = "Work Gloves"
+Description = "Worn work gloves. Improve grip and protection."
+Slot = 5
+BonusAttack = 1
+BonusDefense = 1

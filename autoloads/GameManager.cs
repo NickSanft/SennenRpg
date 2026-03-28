@@ -49,6 +49,9 @@ public partial class GameManager : Node
 	public Array<string> OwnedEquipmentPaths { get; private set; } = new();
 	public EquipDict EquippedItemPaths { get; private set; } = new();
 
+	// Single cached CharacterStats for EffectiveStats — never recreated to avoid GodotObject GCHandle races
+	private CharacterStats _effectiveStatsCache = new CharacterStats();
+
 	public override void _Ready()
 	{
 		Instance = this;
@@ -220,8 +223,8 @@ public partial class GameManager : Node
 
 	/// <summary>
 	/// Effective combat stats: PlayerStats + all equipped item bonuses.
-	/// Computed fresh each call — no caching needed at this scale.
-	/// Use this for all battle damage calculations instead of PlayerStats directly.
+	/// Mutates and returns a single cached CharacterStats held by GameManager to avoid
+	/// creating throwaway GodotObject instances that race against the C# GC finalizer.
 	/// </summary>
 	public CharacterStats EffectiveStats
 	{
@@ -235,21 +238,19 @@ public partial class GameManager : Node
 			}
 			var bonus = EquipmentLogic.SumBonuses(bonusList);
 			var s = PlayerStats;
-			return new CharacterStats
-			{
-				MaxHp                = s.MaxHp      + bonus.MaxHp,
-				CurrentHp            = s.CurrentHp,
-				Attack               = s.Attack     + bonus.Attack,
-				Defense              = s.Defense    + bonus.Defense,
-				Speed                = s.Speed      + bonus.Speed,
-				Magic                = s.Magic      + bonus.Magic,
-				Resistance           = s.Resistance + bonus.Resistance,
-				Luck                 = s.Luck       + bonus.Luck,
-				MoveSpeed            = s.MoveSpeed,
-				MaxMp                = s.MaxMp,
-				CurrentMp            = s.CurrentMp,
-				InvincibilityDuration = s.InvincibilityDuration,
-			};
+			_effectiveStatsCache.MaxHp               = s.MaxHp      + bonus.MaxHp;
+			_effectiveStatsCache.CurrentHp           = s.CurrentHp;
+			_effectiveStatsCache.Attack              = s.Attack     + bonus.Attack;
+			_effectiveStatsCache.Defense             = s.Defense    + bonus.Defense;
+			_effectiveStatsCache.Speed               = s.Speed      + bonus.Speed;
+			_effectiveStatsCache.Magic               = s.Magic      + bonus.Magic;
+			_effectiveStatsCache.Resistance          = s.Resistance + bonus.Resistance;
+			_effectiveStatsCache.Luck                = s.Luck       + bonus.Luck;
+			_effectiveStatsCache.MoveSpeed           = s.MoveSpeed;
+			_effectiveStatsCache.MaxMp               = s.MaxMp;
+			_effectiveStatsCache.CurrentMp           = s.CurrentMp;
+			_effectiveStatsCache.InvincibilityDuration = s.InvincibilityDuration;
+			return _effectiveStatsCache;
 		}
 	}
 
@@ -275,6 +276,10 @@ public partial class GameManager : Node
 		OwnedEquipmentPaths.Add("res://resources/equipment/iron_sword.tres");
 		OwnedEquipmentPaths.Add("res://resources/equipment/leather_cap.tres");
 		OwnedEquipmentPaths.Add("res://resources/equipment/leather_body.tres");
+		OwnedEquipmentPaths.Add("res://resources/equipment/leather_legs.tres");
+		OwnedEquipmentPaths.Add("res://resources/equipment/leather_boots.tres");
+		OwnedEquipmentPaths.Add("res://resources/equipment/wooden_shield.tres");
+		OwnedEquipmentPaths.Add("res://resources/equipment/work_gloves.tres");
 		OwnedEquipmentPaths.Add("res://resources/equipment/lucky_charm.tres");
 		EquippedItemPaths.Clear();
 
