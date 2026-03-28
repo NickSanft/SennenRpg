@@ -14,11 +14,13 @@ public partial class PauseMenu : CanvasLayer
 	private Button _saveButton      = null!;
 	private Button _itemsButton     = null!;
 	private Button _equipmentButton = null!;
+	private Button _statsButton     = null!;
 	private Button _mainMenuButton  = null!;
 	private bool   _transitioning   = false;
 
 	private InventoryMenu?  _inventoryMenu;
 	private EquipmentMenu?  _equipmentMenu;
+	private StatsMenu?      _statsMenu;
 
 	public override void _Ready()
 	{
@@ -29,12 +31,14 @@ public partial class PauseMenu : CanvasLayer
 		_saveButton      = GetNode<Button>("Overlay/Panel/VBox/SaveButton");
 		_itemsButton     = GetNode<Button>("Overlay/Panel/VBox/ItemsButton");
 		_equipmentButton = GetNode<Button>("Overlay/Panel/VBox/EquipmentButton");
+		_statsButton     = GetNode<Button>("Overlay/Panel/VBox/StatsButton");
 		_mainMenuButton  = GetNode<Button>("Overlay/Panel/VBox/MainMenuButton");
 
 		_resumeButton.Pressed    += Resume;
 		_saveButton.Pressed      += OnSavePressed;
 		_itemsButton.Pressed     += OnItemsPressed;
 		_equipmentButton.Pressed += OnEquipmentPressed;
+		_statsButton.Pressed     += OnStatsPressed;
 		_mainMenuButton.Pressed  += OnMainMenuPressed;
 
 		// Instantiate InventoryMenu as a sibling so its visibility is independent of PauseMenu
@@ -62,6 +66,19 @@ public partial class PauseMenu : CanvasLayer
 		{
 			GD.PushWarning("[PauseMenu] EquipmentMenu.tscn not found — EQUIPMENT button will be disabled.");
 			_equipmentButton.Disabled = true;
+		}
+
+		const string statsPath = "res://scenes/menus/StatsMenu.tscn";
+		if (ResourceLoader.Exists(statsPath))
+		{
+			_statsMenu = GD.Load<PackedScene>(statsPath).Instantiate<StatsMenu>();
+			_statsMenu.Closed += OnStatsClosed;
+			AddSibling(_statsMenu);
+		}
+		else
+		{
+			GD.PushWarning("[PauseMenu] StatsMenu.tscn not found — STATS button will be disabled.");
+			_statsButton.Disabled = true;
 		}
 	}
 
@@ -138,6 +155,21 @@ public partial class PauseMenu : CanvasLayer
 		Visible = true;
 		_equipmentButton.GrabFocus();
 		GD.Print("[PauseMenu] Equipment menu closed, PauseMenu restored.");
+	}
+
+	private void OnStatsPressed()
+	{
+		if (_statsMenu == null) return;
+		Visible = false;
+		_statsMenu.Open();
+		GD.Print("[PauseMenu] Stats menu opened.");
+	}
+
+	private void OnStatsClosed()
+	{
+		Visible = true;
+		_statsButton.GrabFocus();
+		GD.Print("[PauseMenu] Stats menu closed, PauseMenu restored.");
 	}
 
 	private void OnMainMenuPressed()

@@ -48,5 +48,8 @@ text = "ITEMS"
 [node name="EquipmentButton" type="Button" parent="Overlay/Panel/VBox"]
 text = "EQUIPMENT"
 
+[node name="StatsButton" type="Button" parent="Overlay/Panel/VBox"]
+text = "STATS"
+
 [node name="MainMenuButton" type="Button" parent="Overlay/Panel/VBox"]
 text = "MAIN MENU"
