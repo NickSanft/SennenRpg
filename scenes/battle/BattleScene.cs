@@ -1,4 +1,6 @@
 using Godot;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
@@ -16,7 +18,7 @@ public enum BattleState { Intro, PlayerTurn, EnemyTurn, RhythmPhase, StrikePhase
 /// </summary>
 public partial class BattleScene : Node2D
 {
-	private enum SubMenuMode { Perform, Items }
+	private enum SubMenuMode { Perform, Items, Spells }
 
 	private BattleState _state;
 	private EnemyData?  _enemy;
@@ -34,10 +36,13 @@ public partial class BattleScene : Node2D
 	private EnemyNameplate  _enemyNameplate = null!;
 	private Node2D          _enemyVisual    = null!;
 
-	private CharmMinigame    _charmMinigame  = null!;
-	private BardMinigameBase[] _bardSkills   = null!;
-	private int              _currentSkillIndex;
-	private PerformanceScore _performance    = new();
+	private CharmMinigame      _charmMinigame      = null!;
+	private BardMinigameBase[] _bardSkills         = null!;
+	private ShadowBoltMinigame _shadowBoltMinigame = null!;
+	private int                _currentSkillIndex;
+	private SpellData?         _currentSpell;
+	private List<SpellData>    _knownSpells        = new();
+	private PerformanceScore   _performance        = new();
 
 	private static readonly string[] DefaultBardSkillNames =
 		{ "Bardic Inspiration", "Lullaby", "War Cry", "Serenade", "Dissonance" };
@@ -86,9 +91,20 @@ public partial class BattleScene : Node2D
 			InstantiateFullRect<BardMinigameBase>("res://scenes/battle/rhythm/skills/DissonanceMinigame.tscn"),
 		};
 
+		_shadowBoltMinigame = InstantiateFullRect<ShadowBoltMinigame>(
+			"res://scenes/battle/rhythm/skills/ShadowBoltMinigame.tscn");
+		_shadowBoltMinigame.SkillCompleted += OnSpellMinigameCompleted;
+
 		_charmMinigame.CharmCompleted += OnCharmCompleted;
 		foreach (var skill in _bardSkills)
 			skill.SkillCompleted += OnSkillCompleted;
+
+		// Load known spells
+		foreach (string path in GameManager.Instance.KnownSpellPaths)
+		{
+			if (ResourceLoader.Exists(path))
+				_knownSpells.Add(GD.Load<SpellData>(path));
+		}
 
 		// Performance tracking
 		_rhythmArena.NoteHit    += grade => _performance.Record((HitGrade)grade);
@@ -191,7 +207,8 @@ public partial class BattleScene : Node2D
 		_rhythmArena.Visible    = false;
 		_enemyNameplate.Visible = newState is BattleState.PlayerTurn or BattleState.EnemyTurn;
 
-		_charmMinigame.Visible = false;
+		_charmMinigame.Visible      = false;
+		_shadowBoltMinigame.Visible = false;
 		foreach (var skill in _bardSkills)
 			skill.Visible = false;
 
@@ -320,9 +337,14 @@ public partial class BattleScene : Node2D
 		_subMenuMode = SubMenuMode.Perform;
 		_actionMenu.Visible = false;
 
-		string[] options = _enemy?.BardicActOptions is { Length: > 0 }
+		string[] bardOptions = _enemy?.BardicActOptions is { Length: > 0 }
 			? _enemy.BardicActOptions
 			: DefaultBardSkillNames;
+
+		// Append "Spells ▶" if the player knows any spells
+		string[] options = _knownSpells.Count > 0
+			? bardOptions.Append("Spells ▶").ToArray()
+			: bardOptions;
 
 		_subMenu.Populate(options);
 		_subMenu.Visible = true;
@@ -381,11 +403,38 @@ public partial class BattleScene : Node2D
 
 	private async Task DoSubMenuOptionSelected(int index)
 	{
+		// ── Spells sub-menu ───────────────────────────────────────────────
+		if (_subMenuMode == SubMenuMode.Spells)
+		{
+			_subMenu.Visible = false;
+			await HandleSpellOption(index);
+			return;
+		}
+
+		// ── Perform sub-menu: check if "Spells ▶" was chosen ─────────────
+		if (_subMenuMode == SubMenuMode.Perform && _knownSpells.Count > 0)
+		{
+			string[] bardOptions = _enemy?.BardicActOptions is { Length: > 0 }
+				? _enemy.BardicActOptions
+				: DefaultBardSkillNames;
+
+			if (index == bardOptions.Length) // "Spells ▶" is appended at this index
+			{
+				_subMenuMode = SubMenuMode.Spells;
+				string[] spellLabels = _knownSpells
+					.Select(s => $"{s.DisplayName}  ({s.MpCost} MP)")
+					.ToArray();
+				_subMenu.Populate(spellLabels); // stays visible, repopulated
+				return;
+			}
+		}
+
+		// ── Items ─────────────────────────────────────────────────────────
 		_subMenu.Visible = false;
 
 		if (_subMenuMode == SubMenuMode.Items) { await HandleItemOption(index); return; }
 
-		// Perform mode — launch the Bard skill minigame
+		// ── Perform — bard skill ──────────────────────────────────────────
 		GD.Print($"[BattleScene] Skill option {index} selected");
 		_currentSkillIndex = index;
 
@@ -447,6 +496,72 @@ public partial class BattleScene : Node2D
 		SetBattleVar("notes_success", successCount.ToString());
 		SetBattleVar("notes_total",   totalNotes.ToString());
 		await RunBattleTimeline("res://dialog/timelines/battle_charm_result.dtl");
+
+		await RunEnemyTurn();
+	}
+
+	// ── Spell handling ────────────────────────────────────────────────────────
+
+	private async Task HandleSpellOption(int index)
+	{
+		if (index >= _knownSpells.Count)
+		{
+			SetState(BattleState.PlayerTurn);
+			return;
+		}
+
+		_currentSpell = _knownSpells[index];
+		GD.Print($"[BattleScene] Spell selected: {_currentSpell.DisplayName}");
+
+		// Check MP before starting the minigame
+		if (!GameManager.Instance.UseMp(_currentSpell.MpCost))
+		{
+			SetBattleVar("spell_name", _currentSpell.DisplayName);
+			SetBattleVar("mp_cost",    _currentSpell.MpCost.ToString());
+			await RunBattleTimeline("res://dialog/timelines/spell_no_mp.dtl");
+			SetState(BattleState.PlayerTurn);
+			return;
+		}
+
+		SetState(BattleState.SkillPhase);
+		_shadowBoltMinigame.Activate();
+	}
+
+	private void OnSpellMinigameCompleted(int gradeInt) => _ = DoSpellCompleted(gradeInt);
+
+	private async Task DoSpellCompleted(int gradeInt)
+	{
+		var grade = (HitGrade)gradeInt;
+		var spell = _currentSpell!;
+
+		if (grade == HitGrade.Miss)
+		{
+			SetBattleVar("spell_name", spell.DisplayName);
+			await RunBattleTimeline("res://dialog/timelines/spell_shadow_bolt_miss.dtl");
+		}
+		else
+		{
+			int   magic      = GameManager.Instance.PlayerStats.Magic;
+			int   resistance = _enemy?.Stats?.Resistance ?? 0;
+			float mult       = RhythmConstants.GradeMultiplier(grade);
+			int   damage     = BattleFormulas.MagicDamage(spell.BasePower, magic, resistance, mult);
+			bool  isCrit     = grade == HitGrade.Perfect;
+			if (isCrit) damage *= 2;
+
+			_enemyCurrentHp -= damage;
+			SpawnDamageNumber(damage, isCrit);
+
+			string result = isCrit
+				? $"★ Perfect! Darkness surges! {damage} magic damage!"
+				: $"♪ The bolt connects! {damage} magic damage.";
+
+			SetBattleVar("spell_name",   spell.DisplayName);
+			SetBattleVar("spell_result", result);
+			SetBattleVar("damage",       damage.ToString());
+			await RunBattleTimeline("res://dialog/timelines/spell_shadow_bolt_cast.dtl");
+
+			if (_enemyCurrentHp <= 0) { await HandleVictory(); return; }
+		}
 
 		await RunEnemyTurn();
 	}

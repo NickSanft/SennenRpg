@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SpellData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/data/SpellData.cs" id="1_SpellData"]
+
+[resource]
+script = ExtResource("1_SpellData")
+SpellId = "shadow_bolt"
+DisplayName = "Shadow Bolt"
+Description = "Hurl a bolt of condensed darkness at your foe."
+BasePower = 18
+MpCost = 8

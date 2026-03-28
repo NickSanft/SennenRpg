@@ -100,6 +100,9 @@ directories/dtl_directory={
 "npc_wendell": "res://dialog/timelines/npc_wendell.dtl",
 "npc_wendell_again": "res://dialog/timelines/npc_wendell_again.dtl",
 "save_point_prompt": "res://dialog/timelines/save_point_prompt.dtl",
+"spell_no_mp": "res://dialog/timelines/spell_no_mp.dtl",
+"spell_shadow_bolt_cast": "res://dialog/timelines/spell_shadow_bolt_cast.dtl",
+"spell_shadow_bolt_miss": "res://dialog/timelines/spell_shadow_bolt_miss.dtl",
 "timelines/npc_test_hello": "res://dialog/timelines/shizu.dtl",
 "walkin_north_exit": "res://dialog/timelines/walkin_north_exit.dtl"
 }

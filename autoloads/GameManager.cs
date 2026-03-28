@@ -32,6 +32,9 @@ public partial class GameManager : Node
 	// Inventory: list of item resource paths (stored as strings for save/load simplicity)
 	public Array<string> InventoryItemPaths { get; private set; } = new();
 
+	// Known spells: list of SpellData resource paths
+	public Array<string> KnownSpellPaths { get; private set; } = new();
+
 	public override void _Ready()
 	{
 		Instance = this;
@@ -92,6 +95,24 @@ public partial class GameManager : Node
 		EmitSignal(SignalName.PlayerStatsChanged);
 	}
 
+	/// <summary>
+	/// Deducts <paramref name="cost"/> MP. Returns false without deducting if insufficient.
+	/// </summary>
+	public bool UseMp(int cost)
+	{
+		if (PlayerStats.CurrentMp < cost) return false;
+		PlayerStats.CurrentMp -= cost;
+		EmitSignal(SignalName.PlayerStatsChanged);
+		return true;
+	}
+
+	/// <summary>Restores MP up to MaxMp and emits PlayerStatsChanged.</summary>
+	public void RestoreMp(int amount)
+	{
+		PlayerStats.CurrentMp = Mathf.Min(PlayerStats.MaxMp, PlayerStats.CurrentMp + amount);
+		EmitSignal(SignalName.PlayerStatsChanged);
+	}
+
 	public bool GetFlag(string key) => Flags.TryGetValue(key, out bool val) && val;
 	public void SetFlag(string key, bool value) => Flags[key] = value;
 
@@ -106,6 +127,8 @@ public partial class GameManager : Node
 		Flags.Clear();
 		InventoryItemPaths.Clear();
 		InventoryItemPaths.Add("res://resources/items/item_001.tres"); // starting Bandage
+		KnownSpellPaths.Clear();
+		KnownSpellPaths.Add("res://resources/spells/shadow_bolt.tres");
 		const string statsPath = "res://resources/characters/player_stats.tres";
 		if (ResourceLoader.Exists(statsPath))
 			PlayerStats = (CharacterStats)GD.Load<CharacterStats>(statsPath).Duplicate();
@@ -129,9 +152,15 @@ public partial class GameManager : Node
 		PlayerStats.Magic       = data.PlayerMagic;
 		PlayerStats.Resistance  = data.PlayerResistance;
 		PlayerStats.Luck        = data.PlayerLuck;
+		PlayerStats.MaxMp       = data.PlayerMaxMp;
+		PlayerStats.CurrentMp   = data.PlayerMp;
 
 		InventoryItemPaths.Clear();
 		foreach (var path in data.InventoryItemPaths)
 			InventoryItemPaths.Add(path);
+
+		KnownSpellPaths.Clear();
+		foreach (var path in data.KnownSpellPaths)
+			KnownSpellPaths.Add(path);
 	}
 }

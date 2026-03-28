@@ -35,11 +35,11 @@ vertical_alignment = 1
 
 [node name="HpLabel" type="Label" parent="HudPanel/VBoxContainer/HBoxContainer"]
 layout_mode = 2
-text = "20 / 20"
+text = "20 / 20 HP"
 vertical_alignment = 1
 
 [node name="HpBarBg" type="ColorRect" parent="HudPanel/VBoxContainer/HBoxContainer"]
-custom_minimum_size = Vector2(200, 20)
+custom_minimum_size = Vector2(160, 20)
 layout_mode = 2
 color = Color(0.15, 0.15, 0.15, 1)
 
@@ -50,7 +50,24 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(1, 1, 0, 1)
 
+[node name="MpLabel" type="Label" parent="HudPanel/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "30 / 30 MP"
+vertical_alignment = 1
+
+[node name="MpBarBg" type="ColorRect" parent="HudPanel/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(100, 20)
+layout_mode = 2
+color = Color(0.15, 0.15, 0.15, 1)
+
+[node name="MpBar" type="ColorRect" parent="HudPanel/VBoxContainer/HBoxContainer/MpBarBg"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.25, 0.45, 1, 1)
+
 [node name="StatsLabel" type="Label" parent="HudPanel/VBoxContainer"]
 layout_mode = 2
-text = "ATK:10  DEF:0  SPD:10  MAG:0  RES:0  LCK:0"
+text = "ATK:10  DEF:0  SPD:10  MAG:8  RES:5  LCK:12"
 theme_override_font_sizes/font_size = 9

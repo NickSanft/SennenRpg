@@ -14,3 +14,5 @@ Resistance = 5
 Luck = 12
 MoveSpeed = 80.0
 InvincibilityDuration = 1.5
+MaxMp = 30
+CurrentMp = 30

@@ -13,6 +13,8 @@ public record SaveData
 	public int PlayerMagic      { get; init; }
 	public int PlayerResistance { get; init; }
 	public int PlayerLuck       { get; init; }
+	public int PlayerMaxMp      { get; init; }
+	public int PlayerMp         { get; init; }
 	public int Gold { get; init; }
 	public int Exp  { get; init; }
 	public string LastMapPath { get; init; } = "";
@@ -20,6 +22,7 @@ public record SaveData
 	public string LastSpawnId { get; init; } = "";
 	public Dictionary<string, bool> Flags { get; init; } = new();
 	public List<string> InventoryItemPaths { get; init; } = new();
+	public List<string> KnownSpellPaths    { get; init; } = new();
 }
 
 public partial class SaveManager : Node
@@ -49,6 +52,8 @@ public partial class SaveManager : Node
 			PlayerMagic      = gm.PlayerStats.Magic,
 			PlayerResistance = gm.PlayerStats.Resistance,
 			PlayerLuck       = gm.PlayerStats.Luck,
+			PlayerMaxMp      = gm.PlayerStats.MaxMp,
+			PlayerMp         = gm.PlayerStats.CurrentMp,
 			Gold = gm.Gold,
 			Exp  = gm.Exp,
 			LastMapPath = gm.LastMapPath,
@@ -56,6 +61,7 @@ public partial class SaveManager : Node
 			LastSpawnId = gm.LastSavePointId, // spawn at save point on load
 			Flags = new Dictionary<string, bool>(gm.Flags),
 			InventoryItemPaths = new List<string>(gm.InventoryItemPaths),
+		KnownSpellPaths    = new List<string>(gm.KnownSpellPaths),
 		};
 
 		string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });

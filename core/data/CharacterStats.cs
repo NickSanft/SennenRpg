@@ -20,4 +20,8 @@ public partial class CharacterStats : Resource
     /// <summary>Overworld movement speed in pixels per second.</summary>
     [Export] public float MoveSpeed { get; set; } = 80f;
     [Export] public float InvincibilityDuration { get; set; } = 1.5f;
+    /// <summary>Maximum mana points. 0 for characters that do not cast spells.</summary>
+    [Export] public int MaxMp { get; set; } = 0;
+    /// <summary>Current mana points.</summary>
+    [Export] public int CurrentMp { get; set; } = 0;
 }
