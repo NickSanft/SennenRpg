@@ -1,6 +1,6 @@
 # SennenRpg
 
-An Undertale-inspired 2D RPG built in **Godot 4.6** with **C# (.NET 10)**. The game features a turn-based battle system with a real-time dodge phase, a branching dialog system via Dialogic 2, a persistent overworld with NPCs and random encounters, and a mercy/spare route system that tracks how you treat enemies.
+A 2D RPG built in **Godot 4.6** with **C# (.NET 10)**. The game features a turn-based battle system with rhythm minigames, a branching dialog system via Dialogic 2, and a persistent overworld with NPCs, random encounters, and save points.
 
 ---
 
@@ -32,7 +32,6 @@ An Undertale-inspired 2D RPG built in **Godot 4.6** with **C# (.NET 10)**. The g
 | Interact / Confirm | Z / Enter / Gamepad A |
 | Cancel / Back | X / Gamepad B |
 | Pause | Escape |
-| Battle dodge | WASD / Arrow keys (same as overworld) |
 
 ---
 
@@ -49,8 +48,8 @@ An Undertale-inspired 2D RPG built in **Godot 4.6** with **C# (.NET 10)**. The g
 - **Vendor NPCs** — a VendorNpc subclass that optionally plays a greeting timeline first, then opens a shop UI with configurable `ShopItemEntry` stock.
 - **Signs** — `InteractSign` objects display multi-line text in a bottom panel popup. Press Z or X to dismiss.
 - **Treasure chests** — `Chest` objects give the player an item on first open (flag-tracked; stays open on revisit).
-- **Journal prop** — `JournalProp` opens a scrollable list of journal entries from `GameManager`. Each entry opens in a full-screen popup.
-- **Save points** — interactable stars that open a native YES/NO confirmation dialog, then write to disk.
+- **Journal prop** — `JournalProp` opens a scrollable list of journal entries. Each entry opens in a full-screen popup.
+- **Save points** — interactable stars that open a YES/NO confirmation dialog, then write to disk.
 - **Encounter triggers** — invisible Area2D triggers that start a battle when walked into. Supports `OneShot` (fires once then removes itself) and `PersistenceFlag` (remembers across save/load cycles).
 - **Enemy pawns** — visible enemy sprites that idle until the player walks within detection range, then chase the player and start a battle on contact.
 - **Map exits** — transition to another map scene with a configurable spawn point ID. Supports walk-off (auto-trigger) and door (interact) modes.
@@ -63,7 +62,7 @@ An Undertale-inspired 2D RPG built in **Godot 4.6** with **C# (.NET 10)**. The g
 A fully hand-crafted map scene (`scenes/overworld/MAPP.tscn`) demonstrating all overworld objects. Built entirely in code — no external tile sheets required. Features:
 - Procedural TileMapLayer floor (wood planks + stone border)
 - Ceiling beams, rugs, a fireplace mantelpiece, bottle rack, windows, and a staircase
-- 7 named NPCs (Shizu, Foran, the Barkeep, and others) with dialog timelines
+- Named NPCs (Shizu, the Barkeep, and others) with dialog timelines
 - Vendor NPC (Barkeep) selling items
 - Furniture objects: tables, chairs, bar stools
 - Interactive sign, dartboard, bar drinks, and journal prop
@@ -71,79 +70,56 @@ A fully hand-crafted map scene (`scenes/overworld/MAPP.tscn`) demonstrating all 
 
 ### Battle System
 
-Battles are a turn-based state machine: **Intro → PlayerTurn ↔ EnemyTurn/DodgePhase → Victory or Defeat**.
+Battles are a turn-based state machine: **Intro → PlayerTurn ↔ EnemyTurn/RhythmPhase → Victory or Defeat**.
 
 #### Player Turn — four actions:
 
 | Action | Behaviour |
 |---|---|
-| **Fight** | Opens the timing minigame (FightBar). A cursor bounces back and forth; pressing confirm when it is near centre deals more damage. Accuracy above 0.8 is a critical hit. |
-| **Act** | Opens a sub-menu of the enemy's Act options. Each option adds mercy percentage. If a Dialogic timeline exists for that act (`act_{enemyId}_{option}.dtl`) it plays before the enemy's turn. |
+| **Fight** | Opens the `RhythmStrike` timing minigame. Press confirm on the beat for a Perfect hit; near-perfect for Good. Grade determines damage multiplier. |
+| **Perform** | Opens the Bard skills sub-menu. Each skill launches a rhythm minigame (see below). Results are shown via Dialogic timeline. |
 | **Item** | Opens the inventory. Using an item heals the player and passes the turn. |
-| **Mercy** | Opens Spare / Flee. Spare succeeds when mercy % ≥ 100 and the enemy has `CanBeSpared = true`. Flee has a 50% chance of success. |
+| **Flee** | 50% chance to escape. On failure, the enemy's turn proceeds as normal. |
 
 #### Damage formula
 
 ```
-damage = max(1, round(playerATK × accuracyMultiplier) − enemyDEF)
-accuracyMultiplier = 1.0 + accuracy × 0.5   // range: 1.0× – 1.5×
+damage = max(1, round(playerATK × gradeMultiplier) − enemyDEF)
+gradeMultiplier: Perfect = 1.5×, Good = 1.0×, Miss = 0.5×
 ```
 
 #### Enemy Turn
 
 1. A random `BattleDialogLine` is shown (or a full Dialogic timeline plays if `BattleTimelinePath` is set on the `EnemyData`).
-2. The **DodgeBox** becomes visible — a 160×120 arena drawn with a white border.
-3. The player controls the **Soul** (red heart) inside the arena.
-4. The enemy's **AttackPattern** spawns bullets for 3 seconds.
-5. Any bullet that exits the arena is automatically culled (8 px grace margin).
-6. After 3 seconds (or if the player's HP hits zero) the phase ends.
+2. The **RhythmArena** activates — a 4-lane note highway scrolls obstacles downward.
+3. The player presses confirm on each lane's beat to avoid damage. Missing notes deals damage.
+4. After the configured number of measures the phase ends and play returns to PlayerTurn.
 
-#### Bullet types
+#### Bard Skills (Perform sub-menu)
 
-| Class | Behaviour |
+| Skill | Description |
 |---|---|
-| `StraightBullet` | Falls straight down at constant speed. |
-| `DirectedBullet` | Travels in any direction set by the spawning pattern. |
-| `BouncingBullet` | Reflects off arena walls for up to 12 seconds. |
-| `ZigZagBullet` | Travels in a zigzag path. |
+| Bardic Inspiration | Single-lane rhythm pattern |
+| Lullaby | Slow, sustained note holds |
+| War Cry | Fast multi-lane pattern |
+| Serenade | Mixed lanes with pauses |
+| Dissonance | Irregular rhythm challenge |
+| Charm | Separate minigame — time button presses within a scrolling window |
 
-#### Attack patterns
-
-| Pattern | Used by | Description |
-|---|---|---|
-| `Pattern001` | Wisplet (via PatternRandom) | Falling rain — bullets spawn at random X positions above the box every 0.4 s. |
-| `Pattern002` | Thornling | Horizontal sweep — a row of 3 bullets flies in from alternating sides every 0.7 s. |
-| `Pattern003` | Gloomfish | Radial burst — 6 bullets spread outward in a ring every 1.5 s. The ring rotates each burst. |
-| `Pattern004` | Dustmote | Chaos — 1–3 bouncing bullets spawn from random edges every 0.5 s at random angles. |
-| `PatternRandom` | Wisplet | Meta-pattern. Picks one of its `Patterns[]` array at random each battle. |
-
-#### Rhythm minigames
-
-Several Act and skill options open rhythm-based minigames (Charm, WarCry, BardicInspiration, Serenade, Dissonance, Lullaby). Notes scroll down lanes; the player presses confirm on the beat. `RhythmClock` drives the master beat and `PerformanceScore` accumulates hit/miss/perfect counts. The final `PerformanceScore` is written to a Dialogic variable before the timeline continues.
+Each skill plays a rhythm minigame and shows a Dialogic result timeline (`battle_skill_result.dtl` or `battle_charm_result.dtl`) with the outcome. `PerformanceScore` accumulates Perfect/Good/Miss counts across the full battle and writes a summary to a Dialogic variable at victory.
 
 #### Victory / Defeat
 
-- **Kill** — `RegisterKill()` increments kill count and recalculates LV and route. Gold and EXP are added.
-- **Spare** — `RegisterSpare()`. No gold or EXP.
-- **Flee** — 50% chance. Returns to the overworld immediately.
-- **Defeat** — "GAME OVER" screen, then returns to the main menu.
-
-#### Route tracking
-
-| Route | Condition |
-|---|---|
-| Pacifist (LV 1) | 0 kills + all pacifist flags |
-| Neutral (LV 2–3) | 1–19 kills |
-| Genocide (LV 4) | ≥ 20 kills |
-
-Route and LV recalculate automatically after every kill or spare.
+- **Victory** — enemy HP reaches 0. Gold and EXP are awarded. `battle_victory.dtl` plays, then the game returns to the overworld.
+- **Flee** — 50% chance. `battle_fled.dtl` plays, then returns to overworld immediately.
+- **Defeat** — player HP reaches 0. `battle_game_over.dtl` plays, then returns to the main menu.
 
 ### Dialog System
 
 All dialog runs through **Dialogic 2**, accessed exclusively via `DialogicBridge.cs`. Direct calls to Dialogic from gameplay code are prohibited.
 
 - **Flag signals** — a Dialogic `Signal Event` with text `flag:my_flag` automatically sets `GameManager.SetFlag("my_flag", true)` with no C# handler needed.
-- **Pre-timeline sync** — `StartTimelineWithFlags()` pushes all `GameManager.Flags` and common variables (`playerName`, `gold`, `love`) into Dialogic before starting, so timelines can branch on game state.
+- **Pre-timeline sync** — `StartTimelineWithFlags()` pushes all `GameManager.Flags` and common variables (`playerName`, `gold`) into Dialogic before starting, so timelines can branch on game state.
 - **Safety net** — if `GameState` is stuck on `Dialog` but Dialogic is not running *and* Dialogic was the one that set the state, the state resets to `Overworld` after 5 seconds. Non-Dialogic UI (signs, journal, shop) that also uses `GameState.Dialog` for player-blocking is excluded.
 - **Timeline preloading** — `OverworldBase` calls `ResourceLoader.LoadThreadedRequest()` on all NPC timelines when a map loads, so the first conversation has no stutter.
 - **DialogRegistry** — an optional short-name registry (`DialogRegistry.Instance.StartTimeline("intro")`) to avoid scattering full `res://` paths across game code.
@@ -153,8 +129,9 @@ All dialog runs through **Dialogic 2**, accessed exclusively via `DialogicBridge
 Saves to `user://save.json` using `System.Text.Json`. The saved data includes:
 
 ```
-PlayerHp, PlayerMaxHp, Gold, Exp, Love, TotalKills, Route,
-LastMapPath, LastSavePointId, Flags (dictionary), InventoryItemPaths (list)
+PlayerHp, PlayerMaxHp, Gold, Exp,
+LastMapPath, LastSavePointId, LastSpawnId,
+Flags (dictionary), InventoryItemPaths (list)
 ```
 
 ---
@@ -177,7 +154,7 @@ SennenRpg/
 │   ├── data/               # Pure-logic + Resource subclasses
 │   │   ├── CharacterStats.cs, EnemyData.cs, EncounterData.cs, ItemData.cs
 │   │   ├── ShopItemEntry.cs        # Line item for vendor shop stock
-│   │   ├── RhythmConstants.cs      # Beat timing, lane counts
+│   │   ├── RhythmConstants.cs      # Beat timing, grade windows, multipliers
 │   │   ├── PerformanceScore.cs     # Hit/miss/perfect accumulator
 │   │   ├── Flags.cs                # Flag name constants + helpers
 │   │   ├── ItemLogic.cs            # CanUse / Apply logic (pure)
@@ -221,15 +198,13 @@ SennenRpg/
 │   │       ├── NpcInteractMenu.cs
 │   │       └── furniture/
 │   │           ├── TableFurniture.cs
-│   │           ├── ChairFurniture.cs  # NorthFacing export live-updates in editor
+│   │           ├── ChairFurniture.cs
 │   │           └── BarStoolFurniture.cs
 │   └── battle/
 │       ├── BattleScene.tscn / .cs     # Root state machine
 │       ├── BattleHUD.cs               # CanvasLayer 10
-│       ├── ActionMenu, SubMenu, FightBar
+│       ├── ActionMenu.cs, SubMenu.cs
 │       ├── ui/                        # DamageNumber, EnemyNameplate
-│       ├── dodge/                     # DodgeBox, Soul, BulletBase variants
-│       ├── patterns/                  # Pattern001–006, PatternRandom
 │       └── rhythm/                    # CharmMinigame, BardMinigameBase + skills + patterns
 │
 ├── resources/
@@ -293,12 +268,9 @@ Central state store. Everything that must survive a scene transition lives here.
 
 ```csharp
 GameManager.Instance.CurrentState        // GameState enum
-GameManager.Instance.CurrentRoute        // RouteType enum
-GameManager.Instance.Love                // LV (1–4)
 GameManager.Instance.PlayerStats         // CharacterStats (live copy)
 GameManager.Instance.Gold
 GameManager.Instance.Exp
-GameManager.Instance.TotalKills
 GameManager.Instance.Flags               // Dictionary<string, bool>
 GameManager.Instance.InventoryItemPaths  // List<string> of .tres paths
 GameManager.Instance.LastMapPath
@@ -307,8 +279,6 @@ GameManager.Instance.LastSpawnId
 GameManager.Instance.SetState(GameState.Battle);
 GameManager.Instance.SetFlag("talked_to_npc_01", true);
 GameManager.Instance.GetFlag("talked_to_npc_01");
-GameManager.Instance.RegisterKill();
-GameManager.Instance.RegisterSpare();
 GameManager.Instance.HealPlayer(10);
 GameManager.Instance.HurtPlayer(5);
 GameManager.Instance.AddGold(15);
@@ -374,19 +344,21 @@ Create as `.tres` files in `resources/enemies/`. All fields are inspector-editab
 
 | Field | Type | Description |
 |---|---|---|
-| `EnemyId` | string | Unique ID, used to find Act timelines |
-| `DisplayName` | string | Shown in battle HUD and dialog |
-| `FlavorText` | string | Shown by "Check" act |
+| `EnemyId` | string | Unique ID, used to find Perform timelines |
+| `DisplayName` | string | Shown in battle UI and dialog |
+| `FlavorText` | string | Shown by the "Check" skill option |
 | `Stats` | CharacterStats | HP, ATK, DEF, Speed, InvincibilityDuration |
 | `BattleSprite` | Texture2D | Enemy graphic (placeholder polygon if null) |
-| `ActOptions` | string[] | Names shown in Act sub-menu |
-| `ActMercyValues` | int[] | Mercy % added per act (parallel to ActOptions) |
+| `BardicActOptions` | string[] | Skill names shown in the Perform sub-menu |
+| `ActOptions` | string[] | Legacy Act options (used for Check/flavor text) |
 | `ActResultTexts` | string[] | Fallback text if no Dialogic timeline exists |
 | `BattleDialogLines` | string[] | Random lines shown before each attack |
 | `BattleTimelinePath` | string | Optional Dialogic timeline for the enemy's turn |
-| `CanBeSpared` | bool | Whether Spare works when mercy ≥ 100% |
-| `GoldDrop` / `ExpDrop` | int | Rewards on kill |
-| `AttackPatternScene` | PackedScene | Pattern node to spawn in DodgeBox |
+| `GoldDrop` / `ExpDrop` | int | Rewards on victory |
+| `AttackPatternScene` | PackedScene | Rhythm pattern scene passed to `RhythmArena` |
+| `BattleBpm` | float | BPM of this enemy's battle track |
+| `BattleBgmPath` | string | BGM file for this enemy's battle |
+| `BattleBeatOffsetSec` | float | Seconds from audio start to beat 1 |
 
 ### `ShopItemEntry` (Resource)
 
@@ -400,9 +372,11 @@ Price       int      Gold cost
 ### `EncounterData` (Resource)
 
 ```
-Enemies            Array<EnemyData>   — currently battles use index 0
-BackgroundId       string             — for future background art switching
-EncounterChancePerStep  float         — 0–100, checked every 32 px of movement
+Enemies                 Array<EnemyData>   — currently battles use index 0
+BackgroundId            string             — for future background art switching
+EncounterChancePerStep  float              — 0–100, checked every 32 px of movement
+BattleBgmPath           string             — overrides enemy BGM if set
+BattleBpm               float              — overrides enemy BPM if set
 ```
 
 ### `CharacterStats` (Resource)
@@ -429,37 +403,10 @@ HealAmount                           int
 ### New Enemy
 
 1. Create `resources/enemies/{id}.tres` — set all `EnemyData` fields.
-2. Create a pattern scene (see below) and assign it to `AttackPatternScene`.
+2. Create a rhythm pattern scene in `scenes/battle/rhythm/patterns/` extending `RhythmPatternBase` and assign it to `AttackPatternScene`.
 3. Create `resources/encounters/{id}.tres` — add your enemy to `Enemies`.
-4. Optionally create Act dialog timelines at `dialog/timelines/act_{enemyId}_{optionName}.dtl`.
+4. Optionally create Perform dialog timelines at `dialog/timelines/act_{enemyId}_{optionName}.dtl`.
 5. Add your encounter to a map's `RandomEncounterTable`, or place an `EnemyPawn` / `EncounterTrigger`.
-
-### New Attack Pattern
-
-Patterns are `Node` (or `Node2D` if containing `Node2D` children) scenes with a `Timer` child.
-
-```csharp
-public partial class MyPattern : Node
-{
-    [Export] public PackedScene? BulletScene { get; set; }
-
-    public override void _Ready()
-    {
-        GetNode<Timer>("SpawnTimer").Timeout += OnSpawn;
-    }
-
-    private void OnSpawn()
-    {
-        var bullet = BulletScene.Instantiate<DirectedBullet>();
-        bullet.Position = new Vector2(0, -50);
-        bullet.SetDirection(Vector2.Down);
-        bullet.Speed = 100f;
-        GetParent().AddChild(bullet); // adds to DodgeBox's BulletContainer
-    }
-}
-```
-
-> **Important:** If your pattern instantiates other nodes that are `Node2D` (e.g. sub-patterns or `PatternRandom`), those intermediate container nodes must also extend `Node2D`, not plain `Node`, so that bullet positions inherit the correct canvas transform.
 
 ### New Map
 
@@ -506,18 +453,16 @@ Objects that build their visuals in `_Ready()` (NPCs, furniture, signs, chests, 
 Godot destroys the current scene tree on every scene change. Cross-scene data lives in autoloads:
 - **Battle encounter** — `BattleRegistry.SetPendingEncounter()` before transitioning; `GetPendingEncounter()` consumes it once in `BattleScene._Ready()`.
 - **Spawn position** — `GameManager.LastSpawnId` is set by `MapExit` and consumed once by `OverworldBase.GetSpawnPosition()`.
-- **Persistent state** — everything else lives in `GameManager` (flags, stats, gold, route).
+- **Persistent state** — everything else lives in `GameManager` (flags, stats, gold).
 
 ### Resource mutability
 `CharacterStats` is a `Resource` — it is shared by default. Always call `.Duplicate()` before modifying if you need a local copy. `GameManager` holds the live player stats copy.
-
-### Bullet culling
-`DodgeBox._Process` calls `CullBulletsRecursive()` every frame. It walks the entire subtree of `BulletContainer` using `GlobalPosition` → `BulletContainer.ToLocal()`, so intermediate wrapper nodes (like `PatternRandom`) at non-zero offsets are handled correctly.
 
 ### CanvasLayer draw order
 
 | Layer | Node |
 |---|---|
+| 0 | InteractPromptBubble / NPC name labels |
 | 2 | GameHud (overworld HP) |
 | 10 | BattleHUD |
 | 50 | PauseMenu |
@@ -530,12 +475,12 @@ Godot destroys the current scene tree on every scene change. Cross-scene data li
 
 ## Enemies Reference
 
-| ID | Name | HP | ATK | DEF | Spare Condition | Pattern |
-|---|---|---|---|---|---|---|
-| `enemy_001` | Wisplet | 20 | 5 | 0 | Greet **or** Hum (50% each) | PatternRandom (all four) |
-| `enemy_002` | Thornling | 35 | 8 | 2 | Water (40%) + Apologize (60%) | Pattern002 — horizontal sweep |
-| `enemy_003` | Gloomfish | 60 | 15 | 3 | Pet + Sing + Offer Light (any ≥ 100%) | Pattern003 — radial burst |
-| `enemy_004` | Dustmote | 12 | 4 | 0 | Hug (instant 100%) | Pattern004 — bouncing chaos |
+| ID | Name | HP | ATK | DEF | Pattern |
+|---|---|---|---|---|---|
+| `enemy_001` | Wisplet | 20 | 5 | 0 | PatternRandom |
+| `enemy_002` | Thornling | 35 | 8 | 2 | Horizontal sweep |
+| `enemy_003` | Gloomfish | 60 | 15 | 3 | Radial burst |
+| `enemy_004` | Dustmote | 12 | 4 | 0 | Bouncing chaos |
 
 ---
 
@@ -546,10 +491,10 @@ Godot destroys the current scene tree on every scene change. Cross-scene data li
 | Scenes | PascalCase.tscn | `BattleScene.tscn` |
 | C# scripts | PascalCase.cs (matches scene) | `BattleScene.cs` |
 | Resources | snake_case.tres | `enemy_001.tres` |
-| Dialog timelines | snake_case.dtl | `npc_toriel_intro.dtl` |
-| Dialogic characters | PascalCase.dch | `Toriel.dch` |
+| Dialog timelines | snake_case.dtl | `npc_intro.dtl` |
+| Dialogic characters | PascalCase.dch | `Barkeep.dch` |
 | Folders | snake_case/ | `scenes/battle/` |
-| Act timelines | `act_{enemyId}_{optionName}.dtl` | `act_enemy_001_greet.dtl` |
+| Perform timelines | `act_{enemyId}_{optionName}.dtl` | `act_enemy_001_greet.dtl` |
 | Battle turn timelines | `battle_{enemyId}_turn.dtl` | `battle_enemy_003_turn.dtl` |
 
 ---
@@ -558,11 +503,10 @@ Godot destroys the current scene tree on every scene change. Cross-scene data li
 
 - **`GetNode<T>()` in constructors** — only call in `_Ready()` or later.
 - **Dialogic `timeline_ended`** — this is a GDScript signal. Always connect via `DialogicBridge.ConnectTimelineEnded()`, never directly.
-- **`BulletBase` references** — bullets call `QueueFree()` on hit and the `DodgeBox` culls them on exit. Never store bullet references.
 - **`CharacterStats` sharing** — it is a `Resource`; call `.Duplicate()` before mutating if you need a local copy.
-- **Pattern intermediate nodes** — any `Node` that sits between `BulletContainer` and actual bullet nodes must extend `Node2D`, not `Node`, or bullets will render at global (0, 0).
 - **`SceneTransition.GoToAsync` is async** — always `await` it or the code after it runs before the transition finishes.
 - **`.tres` C# resource types** — use `type="Resource"` with a `script=` reference in the `.tscn`, not `type="ClassName"`. Godot's C++ parser cannot instantiate C# types by name. Export the property as `Resource[]` and cast with `OfType<T>()` at runtime.
 - **`[Tool]` not inherited** — Godot 4 C# does not propagate `[Tool]` to subclasses. Add it explicitly on every class that needs editor `_Ready()` execution.
 - **`GetChildCount()` guard with pre-baked children** — if a `.tscn` pre-bakes a `CollisionShape2D`, `GetChildCount()` is already 1 when `_Ready()` first runs. Use `> 1` instead of `> 0` for the duplicate-build guard.
 - **`GrabFocus()` before `AddChild()`** — calling `GrabFocus()` before the node is in the scene tree throws an error. Call it after `AddChild()`, wrapped in `CallDeferred` for safety.
+- **DialogicBridge safety net** — only fires when `_dialogicOwnsDialog == true` (set in `StartTimeline()`, cleared in `OnTimelineEndedInternal()`). Non-Dialogic UI that uses `GameState.Dialog` for player-blocking does not trigger it.
