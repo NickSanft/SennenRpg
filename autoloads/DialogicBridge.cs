@@ -40,6 +40,8 @@ public partial class DialogicBridge : Node
 		"charm_result", "skill_result", "performance_summary",
 		"exp_gained", "gold_gained",
 		"notes_success", "notes_total", "item_name", "heal_amount",
+		// Spell variables
+		"spell_name", "spell_result", "mp_cost",
 	];
 
 	/// <summary>
