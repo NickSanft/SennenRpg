@@ -6,8 +6,14 @@
 
 [sub_resource type="Resource" id="CharacterStats_1"]
 script = ExtResource("2_CharacterStats")
+MaxHp = 20
+CurrentHp = 20
 Attack = 5
-Speed = 3.0
+Defense = 0
+Speed = 8
+Magic = 0
+Resistance = 3
+Luck = 5
 
 [resource]
 script = ExtResource("1_EnemyData")
@@ -16,10 +22,8 @@ DisplayName = "Wisplet"
 FlavorText = "A small wandering spirit. Seems lost."
 Stats = SubResource("CharacterStats_1")
 ActOptions = PackedStringArray("Check", "Greet", "Hum")
-ActMercyValues = PackedInt32Array(0, 50, 50)
 ActResultTexts = PackedStringArray("* 20 HP. Looks uncertain.", "* The Wisplet bobs happily.", "* The Wisplet hums along!")
 BattleDialogLines = PackedStringArray("* ...", "* Hm?", "* What do you want?", "* This is scary.")
-CanBeSpared = true
 GoldDrop = 5
 ExpDrop = 3
 AttackPatternScene = ExtResource("3_pattern")

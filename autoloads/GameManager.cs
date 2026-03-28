@@ -120,8 +120,16 @@ public partial class GameManager : Node
 		LastSavePointId = data.LastSavePointId;
 		LastSpawnId = data.LastSpawnId;
 		Flags = new Godot.Collections.Dictionary<string, bool>(data.Flags);
-		PlayerStats.CurrentHp = data.PlayerHp;
-		PlayerStats.MaxHp = data.PlayerMaxHp;
+
+		PlayerStats.CurrentHp   = data.PlayerHp;
+		PlayerStats.MaxHp       = data.PlayerMaxHp;
+		PlayerStats.Attack      = data.PlayerAttack;
+		PlayerStats.Defense     = data.PlayerDefense;
+		PlayerStats.Speed       = data.PlayerSpeed;
+		PlayerStats.Magic       = data.PlayerMagic;
+		PlayerStats.Resistance  = data.PlayerResistance;
+		PlayerStats.Luck        = data.PlayerLuck;
+
 		InventoryItemPaths.Clear();
 		foreach (var path in data.InventoryItemPaths)
 			InventoryItemPaths.Add(path);

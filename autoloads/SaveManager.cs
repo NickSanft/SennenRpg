@@ -5,8 +5,14 @@ namespace SennenRpg.Autoloads;
 
 public record SaveData
 {
-	public int PlayerHp { get; init; }
-	public int PlayerMaxHp { get; init; }
+	public int PlayerHp         { get; init; }
+	public int PlayerMaxHp      { get; init; }
+	public int PlayerAttack     { get; init; }
+	public int PlayerDefense    { get; init; }
+	public int PlayerSpeed      { get; init; }
+	public int PlayerMagic      { get; init; }
+	public int PlayerResistance { get; init; }
+	public int PlayerLuck       { get; init; }
 	public int Gold { get; init; }
 	public int Exp  { get; init; }
 	public string LastMapPath { get; init; } = "";
@@ -35,8 +41,14 @@ public partial class SaveManager : Node
 		var gm = GameManager.Instance;
 		var data = new SaveData
 		{
-			PlayerHp = gm.PlayerStats.CurrentHp,
-			PlayerMaxHp = gm.PlayerStats.MaxHp,
+			PlayerHp         = gm.PlayerStats.CurrentHp,
+			PlayerMaxHp      = gm.PlayerStats.MaxHp,
+			PlayerAttack     = gm.PlayerStats.Attack,
+			PlayerDefense    = gm.PlayerStats.Defense,
+			PlayerSpeed      = gm.PlayerStats.Speed,
+			PlayerMagic      = gm.PlayerStats.Magic,
+			PlayerResistance = gm.PlayerStats.Resistance,
+			PlayerLuck       = gm.PlayerStats.Luck,
 			Gold = gm.Gold,
 			Exp  = gm.Exp,
 			LastMapPath = gm.LastMapPath,
@@ -64,10 +76,6 @@ public partial class SaveManager : Node
 
 	public void ApplyLoadedData(SaveData data)
 	{
-		var gm = GameManager.Instance;
-		gm.PlayerStats.CurrentHp = data.PlayerHp;
-		gm.PlayerStats.MaxHp = data.PlayerMaxHp;
-
-		gm.ApplySaveData(data);
+		GameManager.Instance.ApplySaveData(data);
 	}
 }

@@ -1,6 +1,5 @@
 using Godot;
 using System.Threading.Tasks;
-using System.Threading;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
 
@@ -23,6 +22,7 @@ public partial class BattleScene : Node2D
 	private EnemyData?  _enemy;
 	private int         _enemyCurrentHp;
 	private SubMenuMode _subMenuMode;
+	private bool        _playerGoesFirst;
 
 	// ── Node references ───────────────────────────────────────────────
 	private Node2D          _enemyArea      = null!;
@@ -103,6 +103,13 @@ public partial class BattleScene : Node2D
 			GD.PushWarning("[BattleScene] No pending encounter — using placeholder enemy.");
 
 		_enemyCurrentHp = _enemy?.Stats?.MaxHp ?? 10;
+
+		_playerGoesFirst = BattleFormulas.PlayerGoesFirst(
+			GameManager.Instance.PlayerStats.Speed,
+			_enemy?.Stats?.Speed ?? 0);
+
+		GD.Print($"[BattleScene] Turn order: {(_playerGoesFirst ? "Player" : "Enemy")} goes first " +
+				 $"(player SPD={GameManager.Instance.PlayerStats.Speed}, enemy SPD={_enemy?.Stats?.Speed ?? 0})");
 
 		// Start battle BGM with BPM
 		StartBattleBgm(encounter);
@@ -247,7 +254,11 @@ public partial class BattleScene : Node2D
 		SetState(BattleState.Intro);
 		SetBattleVar("enemy_name", _enemy?.DisplayName ?? "???");
 		await RunBattleTimeline("res://dialog/timelines/battle_intro.dtl");
-		SetState(BattleState.PlayerTurn);
+
+		if (_playerGoesFirst)
+			SetState(BattleState.PlayerTurn);
+		else
+			await RunEnemyTurn();
 	}
 
 	// ── Fight — RhythmStrike ──────────────────────────────────────────
@@ -273,11 +284,13 @@ public partial class BattleScene : Node2D
 
 		int   atk    = GameManager.Instance.PlayerStats.Attack;
 		int   def    = _enemy?.Stats?.Defense ?? 0;
+		int   luck   = GameManager.Instance.PlayerStats.Luck;
 		float mult   = RhythmConstants.GradeMultiplier(grade);
-		int   damage = Mathf.Max(1, Mathf.RoundToInt(atk * mult) - def);
+		bool  isCrit = BattleFormulas.IsCrit(grade == HitGrade.Perfect, luck, GD.Randf());
+		int   damage = BattleFormulas.PhysicalDamage(atk, def, mult);
+		if (isCrit) damage *= 2;
 		_enemyCurrentHp -= damage;
 
-		bool   isCrit   = grade == HitGrade.Perfect;
 		string hitLabel = grade switch
 		{
 			HitGrade.Perfect => "Perfect hit!",

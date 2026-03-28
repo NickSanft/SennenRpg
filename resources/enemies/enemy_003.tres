@@ -10,7 +10,10 @@ MaxHp = 60
 CurrentHp = 60
 Attack = 15
 Defense = 3
-Speed = 2.0
+Speed = 5
+Magic = 8
+Resistance = 6
+Luck = 4
 
 [resource]
 script = ExtResource("1_EnemyData")
@@ -19,10 +22,8 @@ DisplayName = "Gloomfish"
 FlavorText = "A deep-sea creature far from home. Its glow is the only light it knows."
 Stats = SubResource("CharacterStats_1")
 ActOptions = PackedStringArray("Check", "Pet", "Sing", "Offer Light")
-ActMercyValues = PackedInt32Array(0, 30, 40, 30)
 ActResultTexts = PackedStringArray("* 60 HP. Bioluminescent scales.\n* Looks lonely.", "* You reach out. It nudges your hand cautiously.", "* You hum softly. The Gloomfish harmonizes.", "* You produce a small light. It stares, transfixed.")
 BattleDialogLines = PackedStringArray("* ...glub.", "* (It pulses faintly.)", "* The water feels cold here.", "* It circles you warily.")
-CanBeSpared = true
 GoldDrop = 15
 ExpDrop = 10
 AttackPatternScene = ExtResource("3_pattern")

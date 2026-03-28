@@ -10,7 +10,10 @@ MaxHp = 45
 CurrentHp = 45
 Attack = 12
 Defense = 5
-Speed = 2.0
+Speed = 3
+Magic = 0
+Resistance = 8
+Luck = 2
 
 [resource]
 script = ExtResource("1_EnemyData")
@@ -19,10 +22,8 @@ DisplayName = "Stonecrawler"
 FlavorText = "An ancient creature of compressed earth. It has been moving for centuries."
 Stats = SubResource("CharacterStats_1")
 ActOptions = PackedStringArray("Check", "Chip Away", "Tap Gently")
-ActMercyValues = PackedInt32Array(0, 30, 70)
 ActResultTexts = PackedStringArray("* 45 HP. Tough exterior.\n* Moves very slowly.", "* You chip at the surface.\n* A small crack appears.", "* You tap politely.\n* It pauses, confused.")
 BattleDialogLines = PackedStringArray("* ...thud.", "* (It shifts its weight.)", "* (The ground trembles slightly.)", "* ...hrm.")
-CanBeSpared = true
 GoldDrop = 12
 ExpDrop = 8
 AttackPatternScene = ExtResource("3_pattern")

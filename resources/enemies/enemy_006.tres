@@ -10,7 +10,10 @@ MaxHp = 18
 CurrentHp = 18
 Attack = 7
 Defense = 0
-Speed = 5.0
+Speed = 18
+Magic = 3
+Resistance = 2
+Luck = 10
 
 [resource]
 script = ExtResource("1_EnemyData")
@@ -19,10 +22,8 @@ DisplayName = "Flickerfly"
 FlavorText = "A creature of light and nerves. It can't help flickering when startled."
 Stats = SubResource("CharacterStats_1")
 ActOptions = PackedStringArray("Check", "Admire Wings", "Stay Still")
-ActMercyValues = PackedInt32Array(0, 50, 50)
 ActResultTexts = PackedStringArray("* 18 HP. Moves in erratic bursts.", "* You stare at its wings.\n* It slows down, flattered.", "* You go perfectly still.\n* The Flickerfly relaxes.")
 BattleDialogLines = PackedStringArray("* zzzt—!", "* (It darts left, then right.)", "* flicker flicker", "* (It can't decide where to look.)")
-CanBeSpared = true
 GoldDrop = 6
 ExpDrop = 4
 AttackPatternScene = ExtResource("3_pattern")

@@ -10,7 +10,10 @@ MaxHp = 35
 CurrentHp = 35
 Attack = 8
 Defense = 2
-Speed = 3.0
+Speed = 6
+Magic = 0
+Resistance = 4
+Luck = 3
 
 [resource]
 script = ExtResource("1_EnemyData")
@@ -19,10 +22,8 @@ DisplayName = "Thornling"
 FlavorText = "A small plant sprite prickled by the world. It just wants space."
 Stats = SubResource("CharacterStats_1")
 ActOptions = PackedStringArray("Check", "Water", "Apologize")
-ActMercyValues = PackedInt32Array(0, 40, 60)
 ActResultTexts = PackedStringArray("* 35 HP. Keeps its thorns raised.", "* You offer water. Its leaves perk up.", "* You apologize. It seems surprised.")
-BattleDialogLines = PackedStringArray("* Don\'t come closer...", "* These thorns aren\'t for show.", "* I didn\'t ask to be here either.", "* ...")
-CanBeSpared = true
+BattleDialogLines = PackedStringArray("* Don't come closer...", "* These thorns aren't for show.", "* I didn't ask to be here either.", "* ...")
 GoldDrop = 8
 ExpDrop = 5
 AttackPatternScene = ExtResource("3_pattern")

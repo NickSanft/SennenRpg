@@ -21,6 +21,7 @@
     <!-- Include only the pure-logic source files we want to test.
          This avoids pulling in the full Godot.NET.Sdk project graph. -->
     <ItemGroup>
+        <Compile Include="../core/data/BattleFormulas.cs" />
         <Compile Include="../core/data/RhythmConstants.cs" />
         <Compile Include="../core/data/PerformanceScore.cs" />
         <Compile Include="../core/data/Flags.cs" />
