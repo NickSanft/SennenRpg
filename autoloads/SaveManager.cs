@@ -9,9 +9,6 @@ public record SaveData
 	public int PlayerMaxHp { get; init; }
 	public int Gold { get; init; }
 	public int Exp  { get; init; }
-	public int Love { get; init; }
-	public int TotalKills { get; init; }
-	public int Route { get; init; }
 	public string LastMapPath { get; init; } = "";
 	public string LastSavePointId { get; init; } = "";
 	public string LastSpawnId { get; init; } = "";
@@ -42,9 +39,6 @@ public partial class SaveManager : Node
 			PlayerMaxHp = gm.PlayerStats.MaxHp,
 			Gold = gm.Gold,
 			Exp  = gm.Exp,
-			Love = gm.Love,
-			TotalKills = gm.TotalKills,
-			Route = (int)gm.CurrentRoute,
 			LastMapPath = gm.LastMapPath,
 			LastSavePointId = gm.LastSavePointId,
 			LastSpawnId = gm.LastSavePointId, // spawn at save point on load
@@ -74,9 +68,6 @@ public partial class SaveManager : Node
 		gm.PlayerStats.CurrentHp = data.PlayerHp;
 		gm.PlayerStats.MaxHp = data.PlayerMaxHp;
 
-		// Use reflection-safe setters — add public setters or internal methods to GameManager
-		// for Gold, Love, TotalKills, Route, LastMapPath, Flags as needed.
-		// For now, GameManager will expose Apply(SaveData) method:
 		gm.ApplySaveData(data);
 	}
 }
