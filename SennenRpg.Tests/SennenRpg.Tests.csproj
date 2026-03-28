@@ -34,6 +34,12 @@
         <Compile Include="../core/data/EquipmentSlot.cs" />
         <Compile Include="../core/data/EquipmentBonuses.cs" />
         <Compile Include="../core/data/EquipmentLogic.cs" />
+        <Compile Include="../core/data/EncounterLogic.cs" />
+        <Compile Include="../core/data/DayNightLogic.cs" />
+        <Compile Include="../core/data/QuestConditionType.cs" />
+        <Compile Include="../core/data/QuestCondition.cs" />
+        <Compile Include="../core/data/QuestRewardOption.cs" />
+        <Compile Include="../core/data/QuestLogic.cs" />
     </ItemGroup>
 
 </Project>
