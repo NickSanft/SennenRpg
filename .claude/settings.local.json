@@ -7,7 +7,24 @@
       "Bash(ls:*)",
       "mcp__ide__getDiagnostics",
       "Bash(dotnet package:*)",
-      "Bash(dotnet add:*)"
+      "Bash(dotnet add:*)",
+      "Bash(ffmpeg:*)",
+      "Bash(python3:*)",
+      "Bash(ffprobe:*)",
+      "Bash(powershell -Command \"\n\\\\$bytes = [System.IO.File]::ReadAllBytes\\('C:/Users/nicho/Documents/GitHub/SennenRpg/assets/sprites/npcs/npc.png'\\)\n\\\\$w = [BitConverter]::ToInt32\\([byte[]]\\(\\\\$bytes[19],\\\\$bytes[18],\\\\$bytes[17],\\\\$bytes[16]\\),0\\)\n\\\\$h = [BitConverter]::ToInt32\\([byte[]]\\(\\\\$bytes[23],\\\\$bytes[22],\\\\$bytes[21],\\\\$bytes[20]\\),0\\)\nWrite-Output \\\\\"Width: \\\\$w, Height: \\\\$h\\\\\"\n\")",
+      "Bash(powershell -NoProfile -Command \"Get-ChildItem 'C:\\\\Users\\\\nicho\\\\Documents\\\\GitHub\\\\SennenRpg\\\\scenes\\\\overworld\\\\objects\\\\' | Where-Object { $_.Name -match '^[Nn]pc' } | Select-Object Name, FullName\")",
+      "Bash(cmd /c \"dir C:\\\\Users\\\\nicho\\\\Documents\\\\GitHub\\\\SennenRpg\\\\scenes\\\\overworld\\\\objects\\\\npc*\")",
+      "Bash(cmd /c \"dir /b C:\\\\Users\\\\nicho\\\\Documents\\\\GitHub\\\\SennenRpg\\\\scenes\\\\overworld\\\\objects\\\\\")",
+      "Bash(for f:*)",
+      "Bash(do echo:*)",
+      "Read(//c/Users/nicho/Documents/GitHub/SennenRpg/**)",
+      "Bash(done)",
+      "Read(//mnt/c/Users/nicho/Documents/GitHub/**)",
+      "Bash(dotnet build:*)",
+      "Bash(python:*)",
+      "Bash(where python:*)",
+      "Bash(ls /c/Python*)",
+      "Read(//c/Users/nicho/AppData/Local/Programs/Python/**)"
     ]
   }
 }
