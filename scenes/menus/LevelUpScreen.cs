@@ -17,8 +17,6 @@ namespace SennenRpg.Scenes.Menus;
 public partial class LevelUpScreen : CanvasLayer
 {
     // ── Node references (built in _Ready) ─────────────────────────────────────
-    private ColorRect  _overlay    = null!;
-    private Control    _panel      = null!;
     private Label      _titleLabel = null!;
     private Label      _levelLabel = null!;
 
@@ -60,48 +58,50 @@ public partial class LevelUpScreen : CanvasLayer
     private void BuildUI()
     {
         // Full-screen dark overlay
-        _overlay = new ColorRect
+        var overlay = new ColorRect
         {
-            Color          = new Color(0f, 0f, 0f, 0.80f),
-            AnchorRight    = 1f,
-            AnchorBottom   = 1f,
+            Color        = new Color(0f, 0f, 0f, 0.80f),
+            AnchorRight  = 1f,
+            AnchorBottom = 1f,
         };
-        AddChild(_overlay);
+        AddChild(overlay);
 
-        // Centred panel
-        _panel = new Control();
-        _panel.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.Center);
-        _panel.CustomMinimumSize = new Vector2(340f, 0f);
-        AddChild(_panel);
-
-        // Background panel
-        var bg = new ColorRect
-        {
-            Color          = new Color(0.07f, 0.07f, 0.12f, 1f),
-            AnchorRight    = 1f,
-            AnchorBottom   = 1f,
-        };
-        _panel.AddChild(bg);
-
-        // Border (drawn by a second rect slightly inset)
-        var border = new NinePatchRect
+        // CenterContainer reliably centres the panel after layout runs
+        var centerer = new CenterContainer
         {
             AnchorRight  = 1f,
             AnchorBottom = 1f,
         };
-        _panel.AddChild(border);
+        AddChild(centerer);
 
-        // Content VBox
-        var vbox = new VBoxContainer
+        // PanelContainer auto-sizes to content; StyleBoxFlat provides the background + border
+        var panelContainer = new PanelContainer
         {
-            AnchorRight  = 1f,
-            AnchorBottom = 1f,
-            OffsetLeft   = 16f,
-            OffsetRight  = -16f,
-            OffsetTop    = 12f,
-            OffsetBottom = -12f,
+            CustomMinimumSize = new Vector2(340f, 0f),
         };
-        _panel.AddChild(vbox);
+        var style = new StyleBoxFlat
+        {
+            BgColor               = new Color(0.07f, 0.07f, 0.12f, 1f),
+            BorderWidthLeft       = 1, BorderWidthRight  = 1,
+            BorderWidthTop        = 1, BorderWidthBottom = 1,
+            BorderColor           = new Color(0.25f, 0.25f, 0.35f),
+            CornerRadiusTopLeft    = 4, CornerRadiusTopRight    = 4,
+            CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
+        };
+        panelContainer.AddThemeStyleboxOverride("panel", style);
+        centerer.AddChild(panelContainer);
+
+        // MarginContainer for padding inside the panel
+        var margin = new MarginContainer();
+        margin.AddThemeConstantOverride("margin_left",   16);
+        margin.AddThemeConstantOverride("margin_right",  16);
+        margin.AddThemeConstantOverride("margin_top",    12);
+        margin.AddThemeConstantOverride("margin_bottom", 12);
+        panelContainer.AddChild(margin);
+
+        // Content VBox — no longer needs AnchorRight/Bottom; it's driven by MarginContainer
+        var vbox = new VBoxContainer();
+        margin.AddChild(vbox);
 
         // Title
         _titleLabel = new Label
