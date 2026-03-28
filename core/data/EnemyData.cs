@@ -21,19 +21,15 @@ public partial class EnemyData : Resource
 	/// Set this if the track has silence or a musical intro before beat 1.
 	/// </summary>
 	[Export] public float BattleBeatOffsetSec { get; set; } = 0f;
-	/// <summary>Which Bard skills this enemy responds to. Parallel to SkillMercyValues.</summary>
+	/// <summary>Which Bard skills this enemy responds to.</summary>
 	[Export] public string[] BardicActOptions { get; set; } = [];
-	/// <summary>Mercy % granted by each successful Bard skill. Parallel to BardicActOptions.</summary>
-	[Export] public int[] SkillMercyValues { get; set; } = [];
 
 	// ── Legacy Act fields (still used for Check/flavor text) ───────────
 	[Export] public string[] ActOptions { get; set; } = [];
-	[Export] public int[] ActMercyValues { get; set; } = [];
 	[Export] public string[] ActResultTexts { get; set; } = [];
 
 	[Export] public string[] BattleDialogLines { get; set; } = [];
 	[Export] public string BattleTimelinePath { get; set; } = "";
-	[Export] public bool CanBeSpared { get; set; } = false;
 	[Export] public int GoldDrop { get; set; } = 0;
 	[Export] public int ExpDrop { get; set; } = 0;
 	[Export] public PackedScene? AttackPatternScene { get; set; }

@@ -17,13 +17,11 @@ public enum BattleState { Intro, PlayerTurn, EnemyTurn, RhythmPhase, StrikePhase
 /// </summary>
 public partial class BattleScene : Node2D
 {
-	private enum SubMenuMode { Perform, Mercy, Items }
+	private enum SubMenuMode { Perform, Items }
 
 	private BattleState _state;
 	private EnemyData?  _enemy;
 	private int         _enemyCurrentHp;
-	private bool        _enemyCanBeSpared;
-	private int         _mercyPercent;
 	private SubMenuMode _subMenuMode;
 
 	// ── Node references ───────────────────────────────────────────────
@@ -67,7 +65,7 @@ public partial class BattleScene : Node2D
 		_actionMenu.FightSelected   += OnFightSelected;
 		_actionMenu.PerformSelected += OnPerformSelected;
 		_actionMenu.ItemSelected    += OnItemSelected;
-		_actionMenu.MercySelected   += OnMercySelected;
+		_actionMenu.FleeSelected    += OnFleeSelected;
 
 		_subMenu.OptionSelected += OnSubMenuOptionSelected;
 		_subMenu.Cancelled      += OnSubMenuCancelled;
@@ -296,7 +294,7 @@ public partial class BattleScene : Node2D
 		await RunBattleTimeline("res://dialog/timelines/battle_hit.dtl");
 
 		if (_enemyCurrentHp <= 0)
-			await HandleVictory(killed: true);
+			await HandleVictory();
 		else
 			await RunEnemyTurn();
 	}
@@ -344,17 +342,24 @@ public partial class BattleScene : Node2D
 		_subMenu.Visible = true;
 	}
 
-	// ── Mercy ─────────────────────────────────────────────────────────
+	// ── Flee ──────────────────────────────────────────────────────────
 
-	private void OnMercySelected()
+	private void OnFleeSelected() => _ = DoFleeSelected();
+
+	private async Task DoFleeSelected()
 	{
-		GD.Print("[BattleScene] Mercy selected");
-		_subMenuMode = SubMenuMode.Mercy;
+		GD.Print("[BattleScene] Flee selected");
 		_actionMenu.Visible = false;
-
-		string spareLabel = _enemyCanBeSpared ? "Spare" : $"Spare ({_mercyPercent}%)";
-		_subMenu.Populate([spareLabel, "Flee"]);
-		_subMenu.Visible = true;
+		bool escaped = GD.Randf() < 0.5f;
+		if (escaped)
+		{
+			await HandleFlee();
+		}
+		else
+		{
+			await RunBattleTimeline("res://dialog/timelines/battle_flee_blocked.dtl");
+			await RunEnemyTurn();
+		}
 	}
 
 	// ── Sub-menu dispatch ─────────────────────────────────────────────
@@ -365,8 +370,7 @@ public partial class BattleScene : Node2D
 	{
 		_subMenu.Visible = false;
 
-		if (_subMenuMode == SubMenuMode.Mercy) { await HandleMercyOption(index); return; }
-		if (_subMenuMode == SubMenuMode.Items)  { await HandleItemOption(index);  return; }
+		if (_subMenuMode == SubMenuMode.Items) { await HandleItemOption(index); return; }
 
 		// Perform mode — launch the Bard skill minigame
 		GD.Print($"[BattleScene] Skill option {index} selected");
@@ -389,55 +393,11 @@ public partial class BattleScene : Node2D
 		_bardSkills[skillIndex].Activate();
 	}
 
-	private async Task HandleMercyOption(int index)
-	{
-		if (index == 0)
-		{
-			if (_enemyCanBeSpared)
-			{
-				await HandleVictory(killed: false);
-			}
-			else
-			{
-				await RunBattleTimeline("res://dialog/timelines/battle_mercy_ignored.dtl");
-				await RunEnemyTurn();
-			}
-		}
-		else
-		{
-			bool escaped = GD.RandRange(0, 1) == 0;
-			if (escaped)
-			{
-				await HandleFlee();
-			}
-			else
-			{
-				await RunBattleTimeline("res://dialog/timelines/battle_flee_blocked.dtl");
-				await RunEnemyTurn();
-			}
-		}
-	}
-
-	private void OnActDialogEnded()
-	{
-		GameManager.Instance.SetState(GameState.Battle);
-		_ = RunEnemyTurn();
-	}
-
 	private void OnSkillCompleted(int gradeInt) => _ = DoSkillCompleted(gradeInt);
 
 	private async Task DoSkillCompleted(int gradeInt)
 	{
 		var grade = (HitGrade)gradeInt;
-
-		int baseMercy = (_enemy?.SkillMercyValues is { Length: > 0 } && _currentSkillIndex < _enemy.SkillMercyValues.Length)
-			? _enemy.SkillMercyValues[_currentSkillIndex]
-			: 20;
-
-		int mercyGain = Mathf.RoundToInt(baseMercy * RhythmConstants.GradeMultiplier(grade));
-		_mercyPercent = Mathf.Clamp(_mercyPercent + mercyGain, 0, 100);
-		_enemyCanBeSpared = _mercyPercent >= 100 && (_enemy?.CanBeSpared ?? false);
-		_enemyNameplate.UpdateMercy(_mercyPercent, _enemyCanBeSpared);
 
 		string result = grade switch
 		{
@@ -446,13 +406,10 @@ public partial class BattleScene : Node2D
 			_                => "♩ The performance falls flat...",
 		};
 
-		GD.Print($"[BattleScene] Skill grade={grade}, mercy+{mercyGain} → {_mercyPercent}%");
+		GD.Print($"[BattleScene] Skill grade={grade}");
 
 		SetBattleVar("skill_result", result);
-		string path = _enemyCanBeSpared
-			? "res://dialog/timelines/battle_skill_spare_ready.dtl"
-			: "res://dialog/timelines/battle_skill_result.dtl";
-		await RunBattleTimeline(path);
+		await RunBattleTimeline("res://dialog/timelines/battle_skill_result.dtl");
 
 		await RunEnemyTurn();
 	}
@@ -464,12 +421,6 @@ public partial class BattleScene : Node2D
 		float ratio = totalNotes > 0 ? (float)successCount / totalNotes : 0f;
 		var grade = ratio >= 0.75f ? HitGrade.Perfect : ratio >= 0.5f ? HitGrade.Good : HitGrade.Miss;
 
-		int baseMercy = 30;
-		int mercyGain = Mathf.RoundToInt(baseMercy * RhythmConstants.GradeMultiplier(grade));
-		_mercyPercent = Mathf.Clamp(_mercyPercent + mercyGain, 0, 100);
-		_enemyCanBeSpared = _mercyPercent >= 100 && (_enemy?.CanBeSpared ?? false);
-		_enemyNameplate.UpdateMercy(_mercyPercent, _enemyCanBeSpared);
-
 		string result = grade switch
 		{
 			HitGrade.Perfect => "★ Charmed! The enemy can't resist.",
@@ -477,15 +428,12 @@ public partial class BattleScene : Node2D
 			_                => "♩ The charm attempt fizzles.",
 		};
 
-		GD.Print($"[BattleScene] Charm {successCount}/{totalNotes}, grade={grade}, mercy+{mercyGain} → {_mercyPercent}%");
+		GD.Print($"[BattleScene] Charm {successCount}/{totalNotes}, grade={grade}");
 
 		SetBattleVar("charm_result",  result);
 		SetBattleVar("notes_success", successCount.ToString());
 		SetBattleVar("notes_total",   totalNotes.ToString());
-		string path = _enemyCanBeSpared
-			? "res://dialog/timelines/battle_charm_spare_ready.dtl"
-			: "res://dialog/timelines/battle_charm_result.dtl";
-		await RunBattleTimeline(path);
+		await RunBattleTimeline("res://dialog/timelines/battle_charm_result.dtl");
 
 		await RunEnemyTurn();
 	}
@@ -585,31 +533,21 @@ public partial class BattleScene : Node2D
 
 	// ── Victory / Defeat / Flee ───────────────────────────────────────
 
-	private async Task HandleVictory(bool killed)
+	private async Task HandleVictory()
 	{
 		SetState(BattleState.Victory);
 		RhythmClock.Instance.Stop();
 		AudioManager.Instance.StopBgm(fadeTime: 0.5f);
 
-		if (killed)
-		{
-			int gold = _enemy?.GoldDrop ?? 0;
-			int exp  = _enemy?.ExpDrop  ?? 0;
-			GameManager.Instance.RegisterKill();
-			GameManager.Instance.AddGold(gold);
-			GameManager.Instance.AddExp(exp);
+		int gold = _enemy?.GoldDrop ?? 0;
+		int exp  = _enemy?.ExpDrop  ?? 0;
+		GameManager.Instance.AddGold(gold);
+		GameManager.Instance.AddExp(exp);
 
-			SetBattleVar("gold_gained",          gold.ToString());
-			SetBattleVar("exp_gained",            exp.ToString());
-			SetBattleVar("love",                  GameManager.Instance.Love.ToString());
-			SetBattleVar("performance_summary",   _performance.GetSummaryText());
-			await RunBattleTimeline("res://dialog/timelines/battle_victory.dtl");
-		}
-		else
-		{
-			GameManager.Instance.RegisterSpare();
-			await RunBattleTimeline("res://dialog/timelines/battle_spared.dtl");
-		}
+		SetBattleVar("gold_gained",        gold.ToString());
+		SetBattleVar("exp_gained",          exp.ToString());
+		SetBattleVar("performance_summary", _performance.GetSummaryText());
+		await RunBattleTimeline("res://dialog/timelines/battle_victory.dtl");
 
 		await ReturnToOverworld();
 	}
