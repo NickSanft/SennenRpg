@@ -25,5 +25,5 @@ ActOptions = PackedStringArray("Check", "Greet", "Hum")
 ActResultTexts = PackedStringArray("* 20 HP. Looks uncertain.", "* The Wisplet bobs happily.", "* The Wisplet hums along!")
 BattleDialogLines = PackedStringArray("* ...", "* Hm?", "* What do you want?", "* This is scary.")
 GoldDrop = 5
-ExpDrop = 3
+ExpDrop = 100
 AttackPatternScene = ExtResource("3_pattern")

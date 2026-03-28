@@ -6,24 +6,25 @@ namespace SennenRpg.Scenes.Menus;
 
 /// <summary>
 /// Player stats + XP progress screen. Layer 52 — opened from PauseMenu.
-/// All child nodes built in code. Shows base / total columns and an XP bar.
+/// All child nodes built in code. Shows base / equip-bonus / total columns and an XP bar.
+///
+/// Uses CenterContainer so the panel reliably centres itself after layout runs,
+/// avoiding the SetAnchorsAndOffsetsPreset(Center) + zero-height pitfall.
 /// </summary>
 public partial class StatsMenu : CanvasLayer
 {
     [Signal] public delegate void ClosedEventHandler();
 
     private static readonly Color Gold       = new(1.0f, 0.85f, 0.1f);
-    private static readonly Color GreenBonus = new(0.3f, 1.0f, 0.4f);
-    private static readonly Color BarFg      = new(0.25f, 0.75f, 1.0f);   // cyan-blue for XP
+    private static readonly Color BarFg      = new(0.25f, 0.75f, 1.0f);
     private static readonly Color BarBg      = new(0.15f, 0.15f, 0.25f);
     private static readonly Color SubtleGrey = new(0.55f, 0.55f, 0.55f);
     private static readonly Color BgColour   = new(0.07f, 0.07f, 0.12f, 1f);
 
-    private Label      _headerLabel  = null!;
-    private Label      _xpLabel      = null!;
-    private ColorRect  _xpBar        = null!;
-    private ColorRect  _xpBarBg      = null!;
-    private Label      _statsLabel   = null!;
+    private Label     _headerLabel = null!;
+    private Label     _xpLabel     = null!;
+    private ColorRect _xpBar       = null!;
+    private Label     _statsLabel  = null!;
 
     // ── Setup ─────────────────────────────────────────────────────────────────
 
@@ -36,6 +37,7 @@ public partial class StatsMenu : CanvasLayer
 
     private void BuildUI()
     {
+        // Full-screen dim overlay
         var overlay = new ColorRect
         {
             Color        = new Color(0f, 0f, 0f, 0.75f),
@@ -44,28 +46,44 @@ public partial class StatsMenu : CanvasLayer
         };
         AddChild(overlay);
 
-        var panel = new Control();
-        panel.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.Center);
-        panel.CustomMinimumSize = new Vector2(360f, 0f);
-        AddChild(panel);
-
-        var bg = new ColorRect
-        {
-            Color        = BgColour,
-            AnchorRight  = 1f,
-            AnchorBottom = 1f,
-        };
-        panel.AddChild(bg);
-
-        var outer = new VBoxContainer
+        // CenterContainer fills the viewport and centres its single child automatically.
+        // This avoids the zero-height issue that affects Control + SetAnchorsAndOffsetsPreset(Center).
+        var centerer = new CenterContainer
         {
             AnchorRight  = 1f,
             AnchorBottom = 1f,
-            OffsetLeft   = 16f, OffsetRight  = -16f,
-            OffsetTop    = 12f, OffsetBottom = -12f,
         };
+        AddChild(centerer);
+
+        // PanelContainer auto-sizes to content and provides the dark background via StyleBox.
+        var panelContainer = new PanelContainer
+        {
+            CustomMinimumSize = new Vector2(360f, 0f),
+        };
+        var style = new StyleBoxFlat
+        {
+            BgColor          = BgColour,
+            BorderWidthLeft   = 1, BorderWidthRight  = 1,
+            BorderWidthTop    = 1, BorderWidthBottom = 1,
+            BorderColor       = new Color(0.25f, 0.25f, 0.35f),
+            CornerRadiusTopLeft    = 4, CornerRadiusTopRight    = 4,
+            CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
+        };
+        panelContainer.AddThemeStyleboxOverride("panel", style);
+        centerer.AddChild(panelContainer);
+
+        // MarginContainer provides padding inside the panel.
+        var margin = new MarginContainer();
+        margin.AddThemeConstantOverride("margin_left",   16);
+        margin.AddThemeConstantOverride("margin_right",  16);
+        margin.AddThemeConstantOverride("margin_top",    12);
+        margin.AddThemeConstantOverride("margin_bottom", 12);
+        panelContainer.AddChild(margin);
+
+        // VBoxContainer holds all content rows.
+        var outer = new VBoxContainer();
         outer.AddThemeConstantOverride("separation", 6);
-        panel.AddChild(outer);
+        margin.AddChild(outer);
 
         // Title
         var title = new Label
@@ -89,60 +107,30 @@ public partial class StatsMenu : CanvasLayer
         _xpLabel.AddThemeFontSizeOverride("font_size", 11);
         outer.AddChild(_xpLabel);
 
-        // XP bar (background + fill)
-        _xpBarBg = new ColorRect
+        // XP bar: background ColorRect containing the fill bar as a child
+        var xpBarBg = new ColorRect
         {
             Color             = BarBg,
             CustomMinimumSize = new Vector2(0f, 10f),
         };
-        outer.AddChild(_xpBarBg);
+        outer.AddChild(xpBarBg);
 
         _xpBar = new ColorRect
         {
-            Color             = BarFg,
-            AnchorBottom      = 1f,  // fills height of parent
-            AnchorRight       = 0f,  // width controlled by OffsetRight
+            Color         = BarFg,
+            AnchorTop     = 0f,
+            AnchorBottom  = 1f,
+            AnchorLeft    = 0f,
+            AnchorRight   = 0f,   // set to progress in Refresh()
         };
-        _xpBarBg.AddChild(_xpBar);
+        xpBarBg.AddChild(_xpBar);
 
         outer.AddChild(new HSeparator());
 
-        // Stats table
-        var colHeader = new HBoxContainer();
-        outer.AddChild(colHeader);
+        // Column headers
+        outer.AddChild(MakeStatHeaderRow());
 
-        var hStatCol = new Label { Text = "STAT", CustomMinimumSize = new Vector2(80f, 0f) };
-        hStatCol.AddThemeFontSizeOverride("font_size", 10);
-        hStatCol.Modulate = SubtleGrey;
-        var hBase = new Label
-        {
-            Text                = "BASE",
-            HorizontalAlignment = HorizontalAlignment.Right,
-            CustomMinimumSize   = new Vector2(60f, 0f),
-        };
-        hBase.AddThemeFontSizeOverride("font_size", 10);
-        hBase.Modulate = SubtleGrey;
-        var hBonus = new Label
-        {
-            Text                = "EQUIP",
-            HorizontalAlignment = HorizontalAlignment.Right,
-            CustomMinimumSize   = new Vector2(60f, 0f),
-        };
-        hBonus.AddThemeFontSizeOverride("font_size", 10);
-        hBonus.Modulate = SubtleGrey;
-        var hTotal = new Label
-        {
-            Text                = "TOTAL",
-            HorizontalAlignment = HorizontalAlignment.Right,
-            CustomMinimumSize   = new Vector2(60f, 0f),
-        };
-        hTotal.AddThemeFontSizeOverride("font_size", 10);
-        hTotal.Modulate = SubtleGrey;
-        colHeader.AddChild(hStatCol);
-        colHeader.AddChild(hBase);
-        colHeader.AddChild(hBonus);
-        colHeader.AddChild(hTotal);
-
+        // Stat rows (one Label; monospace-aligned via fixed-width columns)
         _statsLabel = new Label { AutowrapMode = TextServer.AutowrapMode.Off };
         _statsLabel.AddThemeFontSizeOverride("font_size", 11);
         outer.AddChild(_statsLabel);
@@ -157,6 +145,29 @@ public partial class StatsMenu : CanvasLayer
         };
         hint.AddThemeFontSizeOverride("font_size", 9);
         outer.AddChild(hint);
+    }
+
+    private static HBoxContainer MakeStatHeaderRow()
+    {
+        var row = new HBoxContainer();
+        AddHeaderCell(row, "STAT",  80f, HorizontalAlignment.Left);
+        AddHeaderCell(row, "BASE",  60f, HorizontalAlignment.Right);
+        AddHeaderCell(row, "EQUIP", 60f, HorizontalAlignment.Right);
+        AddHeaderCell(row, "TOTAL", 60f, HorizontalAlignment.Right);
+        return row;
+    }
+
+    private static void AddHeaderCell(HBoxContainer row, string text, float width, HorizontalAlignment align)
+    {
+        var lbl = new Label
+        {
+            Text                = text,
+            HorizontalAlignment = align,
+            CustomMinimumSize   = new Vector2(width, 0f),
+            Modulate            = new Color(0.55f, 0.55f, 0.55f),
+        };
+        lbl.AddThemeFontSizeOverride("font_size", 10);
+        row.AddChild(lbl);
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -182,46 +193,45 @@ public partial class StatsMenu : CanvasLayer
 
     private void Refresh()
     {
-        var gm   = GameManager.Instance;
+        var gm    = GameManager.Instance;
         var base_ = gm.PlayerStats;
-        var eff  = gm.EffectiveStats;
-        int lv   = gm.PlayerLevel;
+        var eff   = gm.EffectiveStats;
+        int lv    = gm.PlayerLevel;
 
-        // Header
-        _headerLabel.Text = $"{gm.PlayerName}   Level {lv}";
+        _headerLabel.Text = $"{gm.PlayerName}   ·   Level {lv}";
 
-        // XP
-        int currentXp   = gm.Exp;
-        bool atMax       = lv >= LevelData.MaxLevel;
-        int  prevThresh  = LevelData.ExpThreshold(lv);
-        int  nextThresh  = atMax ? prevThresh : LevelData.ExpThreshold(lv + 1);
-        int  xpIntoLevel = currentXp - prevThresh;
-        int  xpNeeded    = nextThresh - prevThresh;
-        int  xpToGo      = atMax ? 0 : nextThresh - currentXp;
-        float progress   = atMax || xpNeeded <= 0 ? 1f : (float)xpIntoLevel / xpNeeded;
-        progress = Mathf.Clamp(progress, 0f, 1f);
+        // XP progress
+        int   currentXp   = gm.Exp;
+        bool  atMax       = lv >= LevelData.MaxLevel;
+        int   prevThresh  = LevelData.ExpThreshold(lv);
+        int   nextThresh  = atMax ? prevThresh : LevelData.ExpThreshold(lv + 1);
+        int   xpIntoLevel = currentXp - prevThresh;
+        int   xpNeeded    = nextThresh - prevThresh;
+        int   xpToGo      = atMax ? 0 : nextThresh - currentXp;
+        float progress    = atMax || xpNeeded <= 0 ? 1f
+                          : Mathf.Clamp((float)xpIntoLevel / xpNeeded, 0f, 1f);
 
         _xpLabel.Text = atMax
-            ? $"EXP: {currentXp}  (MAX LEVEL)"
+            ? $"EXP: {currentXp}   (MAX LEVEL)"
             : $"EXP: {currentXp} / {nextThresh}   ({xpToGo} to next level)";
 
-        // XP bar fill (use OffsetRight to set proportional width via deferred call)
-        _xpBar.CallDeferred(GodotObject.MethodName.Set, "anchor_right", (double)progress);
+        _xpBar.AnchorRight = progress;
 
-        // Stats table rows
-        _statsLabel.Text = StatRow("HP",  base_.MaxHp,      eff.MaxHp)
-                         + StatRow("ATK", base_.Attack,     eff.Attack)
-                         + StatRow("DEF", base_.Defense,    eff.Defense)
-                         + StatRow("SPD", base_.Speed,      eff.Speed)
-                         + StatRow("MAG", base_.Magic,      eff.Magic)
-                         + StatRow("RES", base_.Resistance, eff.Resistance)
-                         + StatRow("LCK", base_.Luck,       eff.Luck)
-                         + StatRow("MP",  base_.MaxMp,      eff.MaxMp);
+        // Stat rows
+        _statsLabel.Text =
+              StatRow("HP",  base_.MaxHp,      eff.MaxHp)
+            + StatRow("ATK", base_.Attack,     eff.Attack)
+            + StatRow("DEF", base_.Defense,    eff.Defense)
+            + StatRow("SPD", base_.Speed,      eff.Speed)
+            + StatRow("MAG", base_.Magic,      eff.Magic)
+            + StatRow("RES", base_.Resistance, eff.Resistance)
+            + StatRow("LCK", base_.Luck,       eff.Luck)
+            + StatRow("MP",  base_.MaxMp,      eff.MaxMp);
     }
 
     private static string StatRow(string name, int baseVal, int effVal)
     {
-        int bonus = effVal - baseVal;
+        int    bonus    = effVal - baseVal;
         string bonusStr = bonus > 0 ? $"+{bonus}" : "—";
         return $"{name,-6}{baseVal,8}{bonusStr,8}{effVal,8}\n";
     }
