@@ -305,7 +305,7 @@ public partial class LevelUpScreen : CanvasLayer
 
     private void UpdateHint(string text)
     {
-        var hint = _panel.FindChild("DismissHint", recursive: true) as Label;
+        var hint = FindChild("DismissHint", recursive: true) as Label;
         if (hint != null) hint.Text = text;
     }
 
