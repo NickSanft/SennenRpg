@@ -44,13 +44,6 @@ public partial class TestRunner : Node
         });
 
         // ── GameManager stats ────────────────────────────────────────────────
-        Check("GameManager RegisterKill increments TotalKills", () =>
-        {
-            int before = GameManager.Instance.TotalKills;
-            GameManager.Instance.RegisterKill();
-            return GameManager.Instance.TotalKills == before + 1;
-        });
-
         Check("GameManager AddGold increments Gold", () =>
         {
             int before = GameManager.Instance.Gold;
@@ -73,31 +66,27 @@ public partial class TestRunner : Node
         {
             var original = new SaveData
             {
-                PlayerHp   = 20,
-                PlayerMaxHp = 80,
-                Gold       = 500,
-                Exp        = 120,
-                Love       = 2,
-                TotalKills = 3,
-                Route      = 1,
-                LastMapPath    = "res://scenes/overworld/maps/Town.tscn",
+                PlayerHp        = 20,
+                PlayerMaxHp     = 80,
+                Gold            = 500,
+                Exp             = 120,
+                LastMapPath     = "res://scenes/overworld/maps/Town.tscn",
                 LastSavePointId = "save_01",
-                LastSpawnId    = "save_01",
-                Flags      = new System.Collections.Generic.Dictionary<string, bool>
-                             { ["met_npc_foran"] = true, ["bought_item"] = false },
+                LastSpawnId     = "save_01",
+                Flags           = new System.Collections.Generic.Dictionary<string, bool>
+                                  { ["met_npc_foran"] = true, ["bought_item"] = false },
                 InventoryItemPaths = new System.Collections.Generic.List<string>
                                      { "res://resources/items/item_001.tres" },
             };
 
-            string json   = JsonSerializer.Serialize(original);
-            var   loaded  = JsonSerializer.Deserialize<SaveData>(json);
+            string json  = JsonSerializer.Serialize(original);
+            var   loaded = JsonSerializer.Deserialize<SaveData>(json);
 
             return loaded != null
-                && loaded.PlayerHp        == original.PlayerHp
-                && loaded.Gold            == original.Gold
-                && loaded.TotalKills      == original.TotalKills
-                && loaded.LastMapPath     == original.LastMapPath
-                && loaded.Flags.Count     == original.Flags.Count
+                && loaded.PlayerHp               == original.PlayerHp
+                && loaded.Gold                   == original.Gold
+                && loaded.LastMapPath            == original.LastMapPath
+                && loaded.Flags.Count            == original.Flags.Count
                 && loaded.Flags["met_npc_foran"] == true
                 && loaded.InventoryItemPaths.Count == 1;
         });

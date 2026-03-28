@@ -17,6 +17,3 @@ alignment = 1
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 11
 
-[node name="MercyLabel" type="Label" parent="VBox"]
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 10

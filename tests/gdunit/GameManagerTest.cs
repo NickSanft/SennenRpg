@@ -59,31 +59,6 @@ public sealed class GameManagerTest
         await a2;
     }
 
-    // ── Kill / route ──────────────────────────────────────────────────────────
-
-    [TestCase]
-    [RequireGodotRuntime]
-    public void RegisterKill_IncrementsTotalKills()
-    {
-        var gm = GameManager.Instance;
-        int before = gm.TotalKills;
-        gm.RegisterKill();
-        AssertThat(gm.TotalKills).IsEqual(before + 1);
-    }
-
-    [TestCase]
-    [RequireGodotRuntime]
-    public void RegisterKill_UpdatesLove()
-    {
-        // 0 kills → LV 1; any kill → LV ≥ 2
-        var gm = GameManager.Instance;
-        // Reset so test is deterministic
-        gm.ResetForNewGame();
-        AssertThat(gm.Love).IsEqual(1);
-        gm.RegisterKill();
-        AssertThat(gm.Love).IsGreaterEqual(1); // still 1 until kill count threshold
-    }
-
     [TestCase]
     [RequireGodotRuntime]
     public void AddGold_IncreasesGold()
@@ -131,13 +106,11 @@ public sealed class GameManagerTest
 
     [TestCase]
     [RequireGodotRuntime]
-    public void ResetForNewGame_SetsGoldAndKillsToZero()
+    public void ResetForNewGame_SetsGoldToStartingAmount()
     {
         var gm = GameManager.Instance;
         gm.AddGold(999);
-        gm.RegisterKill();
         gm.ResetForNewGame();
-        AssertThat(gm.Gold).IsEqual(0);
-        AssertThat(gm.TotalKills).IsEqual(0);
+        AssertThat(gm.Gold).IsEqual(100);
     }
 }

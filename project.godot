@@ -53,7 +53,6 @@ directories/dch_directory={
 }
 directories/dtl_directory={
 "battle_charm_result": "res://dialog/timelines/battle_charm_result.dtl",
-"battle_charm_spare_ready": "res://dialog/timelines/battle_charm_spare_ready.dtl",
 "battle_enemy_dialog": "res://dialog/timelines/battle_enemy_dialog.dtl",
 "battle_fled": "res://dialog/timelines/battle_fled.dtl",
 "battle_flee_blocked": "res://dialog/timelines/battle_flee_blocked.dtl",
@@ -63,11 +62,8 @@ directories/dtl_directory={
 "battle_item_gone": "res://dialog/timelines/battle_item_gone.dtl",
 "battle_item_nothing": "res://dialog/timelines/battle_item_nothing.dtl",
 "battle_item_used": "res://dialog/timelines/battle_item_used.dtl",
-"battle_mercy_ignored": "res://dialog/timelines/battle_mercy_ignored.dtl",
 "battle_no_items": "res://dialog/timelines/battle_no_items.dtl",
 "battle_skill_result": "res://dialog/timelines/battle_skill_result.dtl",
-"battle_skill_spare_ready": "res://dialog/timelines/battle_skill_spare_ready.dtl",
-"battle_spared": "res://dialog/timelines/battle_spared.dtl",
 "battle_strike_prompt": "res://dialog/timelines/battle_strike_prompt.dtl",
 "battle_victory": "res://dialog/timelines/battle_victory.dtl",
 "cutscene_lily_effect": "res://dialog/timelines/cutscene_lily_effect.dtl",
