@@ -38,7 +38,7 @@ public partial class DialogicBridge : Node
 	[
 		"enemy_name", "damage", "hit_label", "enemy_dialog",
 		"charm_result", "skill_result", "performance_summary",
-		"exp_gained", "gold_gained", "love",
+		"exp_gained", "gold_gained",
 		"notes_success", "notes_total", "item_name", "heal_amount",
 	];
 
@@ -166,7 +166,6 @@ public partial class DialogicBridge : Node
 
 		ForceSetVariable("playerName", Variant.From(GameManager.Instance.PlayerName));
 		ForceSetVariable("gold",       Variant.From(GameManager.Instance.Gold));
-		ForceSetVariable("love",       Variant.From(GameManager.Instance.Love));
 
 		StartTimeline(timelinePath);
 	}

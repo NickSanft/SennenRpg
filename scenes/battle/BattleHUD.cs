@@ -11,7 +11,6 @@ namespace SennenRpg.Scenes.Battle;
 public partial class BattleHUD : CanvasLayer
 {
 	private Label _nameLabel = null!;
-	private Label _lvLabel   = null!;
 	private Label _hpLabel   = null!;
 	private ColorRect _hpBarBg = null!;
 	private ColorRect _hpBar   = null!;
@@ -21,7 +20,6 @@ public partial class BattleHUD : CanvasLayer
 		Layer = 10;
 
 		_nameLabel = GetNode<Label>("HudPanel/HBoxContainer/NameLabel");
-		_lvLabel   = GetNode<Label>("HudPanel/HBoxContainer/LvLabel");
 		_hpLabel   = GetNode<Label>("HudPanel/HBoxContainer/HpLabel");
 		_hpBarBg   = GetNode<ColorRect>("HudPanel/HBoxContainer/HpBarBg");
 		_hpBar     = GetNode<ColorRect>("HudPanel/HBoxContainer/HpBarBg/HpBar");
@@ -43,7 +41,6 @@ public partial class BattleHUD : CanvasLayer
 	{
 		var stats = GameManager.Instance.PlayerStats;
 		_nameLabel.Text = "* " + GameManager.Instance.PlayerName;
-		_lvLabel.Text   = $"LV {GameManager.Instance.Love}";
 		_hpLabel.Text   = $"{stats.CurrentHp} / {stats.MaxHp}";
 
 		float ratio = stats.MaxHp > 0 ? (float)stats.CurrentHp / stats.MaxHp : 0f;
