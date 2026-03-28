@@ -32,7 +32,6 @@ public partial class EquipmentMenu : CanvasLayer
         { EquipmentSlot.Weapon, EquipmentSlot.Shield, EquipmentSlot.Gloves, EquipmentSlot.Accessory };
 
     // ── Node references ───────────────────────────────────────────────────────
-    private Control _panel       = null!;
     private Label   _statsLabel  = null!;
 
     // Item picker (visible when choosing what to equip / unequip)
@@ -63,29 +62,42 @@ public partial class EquipmentMenu : CanvasLayer
         };
         AddChild(overlay);
 
-        // Centred panel
-        _panel = new Control();
-        _panel.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.Center);
-        _panel.CustomMinimumSize = new Vector2(460f, 0f);
-        AddChild(_panel);
-
-        var bg = new ColorRect
-        {
-            Color        = BgColour,
-            AnchorRight  = 1f,
-            AnchorBottom = 1f,
-        };
-        _panel.AddChild(bg);
-
-        // Outer VBox
-        var outer = new VBoxContainer
+        // CenterContainer reliably centres the panel after layout runs
+        var centerer = new CenterContainer
         {
             AnchorRight  = 1f,
             AnchorBottom = 1f,
-            OffsetLeft   = 16f, OffsetRight  = -16f,
-            OffsetTop    = 12f, OffsetBottom = -12f,
         };
-        _panel.AddChild(outer);
+        AddChild(centerer);
+
+        // PanelContainer auto-sizes to content; StyleBoxFlat provides the background + border
+        var panelContainer = new PanelContainer
+        {
+            CustomMinimumSize = new Vector2(460f, 0f),
+        };
+        var style = new StyleBoxFlat
+        {
+            BgColor               = BgColour,
+            BorderWidthLeft       = 1, BorderWidthRight  = 1,
+            BorderWidthTop        = 1, BorderWidthBottom = 1,
+            BorderColor           = new Color(0.25f, 0.25f, 0.35f),
+            CornerRadiusTopLeft    = 4, CornerRadiusTopRight    = 4,
+            CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
+        };
+        panelContainer.AddThemeStyleboxOverride("panel", style);
+        centerer.AddChild(panelContainer);
+
+        // MarginContainer for padding inside the panel
+        var margin = new MarginContainer();
+        margin.AddThemeConstantOverride("margin_left",   16);
+        margin.AddThemeConstantOverride("margin_right",  16);
+        margin.AddThemeConstantOverride("margin_top",    12);
+        margin.AddThemeConstantOverride("margin_bottom", 12);
+        panelContainer.AddChild(margin);
+
+        // Outer VBox — driven by MarginContainer
+        var outer = new VBoxContainer();
+        margin.AddChild(outer);
 
         // Title
         var title = new Label

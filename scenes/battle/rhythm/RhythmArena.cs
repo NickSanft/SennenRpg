@@ -5,17 +5,14 @@ using SennenRpg.Core.Data;
 namespace SennenRpg.Scenes.Battle;
 
 /// <summary>
-/// Horizontal note-highway arena that replaces DodgeBox.
-/// Four lanes (rows) scroll left → right. The player presses lane_0–lane_3
+/// Horizontal note-highway arena.
+/// Four lanes scroll left → right. The player presses lane_0–lane_3
 /// when notes reach the HitZone on the right side.
 ///
-/// Arena is centred at its Node2D origin.
+/// Arena centred at its Node2D origin.
 ///   Width  = 224 px  (ArenaHalfW × 2)
 ///   Height = 144 px  (4 lanes × 36 px)
-///   HitZone at X = +90 (relative to centre)
-///   Spawn   at X = -96 (off-screen left)
-///   Travel distance = 186 px
-///   At BeatsUntilArrival=3, BPM 180 → 1.0 s → speed 186 px/s
+///   HitZone at X = +90   Spawn at X = -96
 /// </summary>
 public partial class RhythmArena : Node2D
 {
@@ -25,59 +22,97 @@ public partial class RhythmArena : Node2D
 
     // ── Arena geometry constants ──────────────────────────────────────
     public const float ArenaHalfW  = 112f;
-    public const float ArenaHalfH  = 18f;
+    public const float ArenaHalfH  = 72f;
     public const float HitZoneX    = 90f;
     public const float SpawnX      = -96f;
     public const int   BeatsUntilArrival = 3;
     public const float LaneHeight  = 36f;
 
     /// <summary>Y-centre of each lane relative to arena centre.</summary>
-    public static readonly float[] LaneCenterY = { 0f };
+    public static readonly float[] LaneCenterY = { -54f, -18f, 18f, 54f };
 
     // ── Hit-window constants (pixels) ─────────────────────────────────
-    /// <summary>Pixel distance from HitZone that corresponds to GoodWindowSec at base speed.</summary>
-    public const float GoodWindowPx  = 22f;
-    /// <summary>Pixel distance that corresponds to PerfectWindowSec at base speed.</summary>
+    public const float GoodWindowPx    = 22f;
     public const float PerfectWindowPx = 9f;
-    /// <summary>Extra pixels past GoodWindowPx before a note is irrecoverable.</summary>
-    private const float MissGracePx  = 10f;
+    private const float MissGracePx   = 10f;
 
     // ── Node references ───────────────────────────────────────────────
     public Node2D ObstacleContainer { get; private set; } = null!;
 
     // ── State ─────────────────────────────────────────────────────────
-    private bool              _running;
+    private bool               _running;
     private RhythmPatternBase? _activePattern;
     private Label?             _feedbackLabel;
+    private Label?             _comboLabel;
+    private Label?             _breakLabel;
 
-    private PackedScene _standardObstacleScene = null!;
+    private PackedScene  _standardObstacleScene = null!;
+    private PackedScene? _holdObstacleScene;
+
+    // Hold-note tracking (one slot per lane)
+    private readonly HoldObstacle?[] _laneHeldObstacles = new HoldObstacle?[4];
+    private readonly float[]         _laneHoldElapsed   = new float[4];
+
+    // Combo / streak tracking
+    private int _currentStreak;
+    private int _maxStreak;
+
+    /// <summary>Maximum consecutive hit streak this phase — read by BattleScene after phase ends.</summary>
+    public int MaxStreak => _maxStreak;
+
+    // ── Setup ─────────────────────────────────────────────────────────
 
     public override void _Ready()
     {
         _standardObstacleScene = GD.Load<PackedScene>("res://scenes/battle/rhythm/StandardObstacle.tscn");
+        const string holdPath  = "res://scenes/battle/rhythm/HoldObstacle.tscn";
+        if (ResourceLoader.Exists(holdPath))
+            _holdObstacleScene = GD.Load<PackedScene>(holdPath);
 
-        ObstacleContainer = new Node2D();
-        ObstacleContainer.Name = "ObstacleContainer";
+        ObstacleContainer      = new Node2D { Name = "ObstacleContainer" };
         AddChild(ObstacleContainer);
 
-        // Feedback label ("PERFECT", "GOOD", "MISS")
-        _feedbackLabel = new Label();
-        _feedbackLabel.HorizontalAlignment = HorizontalAlignment.Center;
+        _feedbackLabel = new Label
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Position            = new Vector2(-40f, -ArenaHalfH - 24f),
+            Visible             = false,
+        };
         _feedbackLabel.AddThemeFontSizeOverride("font_size", 14);
-        _feedbackLabel.Position = new Vector2(-40f, -ArenaHalfH - 24f);
-        _feedbackLabel.Visible  = false;
         AddChild(_feedbackLabel);
+
+        _comboLabel = new Label
+        {
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Position            = new Vector2(ArenaHalfW - 4f, -ArenaHalfH - 20f),
+            Modulate            = new Color(1f, 0.85f, 0.1f),
+            Visible             = false,
+        };
+        _comboLabel.AddThemeFontSizeOverride("font_size", 12);
+        AddChild(_comboLabel);
+
+        _breakLabel = new Label
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Text                = "BREAK!",
+            Modulate            = Colors.Red,
+            Position            = new Vector2(-30f, -ArenaHalfH - 20f),
+            Visible             = false,
+        };
+        _breakLabel.AddThemeFontSizeOverride("font_size", 14);
+        AddChild(_breakLabel);
 
         Visible = false;
     }
 
     // ── Public API ────────────────────────────────────────────────────
 
-    /// <summary>Start the rhythm phase with the given pattern scene for totalMeasures measures.</summary>
     public void StartPhase(PackedScene? patternScene, int totalMeasures = 2)
     {
-        _running = true;
-        Visible  = true;
+        _running       = true;
+        _currentStreak = 0;
+        _maxStreak     = 0;
+        Visible        = true;
         QueueRedraw();
 
         if (patternScene != null)
@@ -89,28 +124,36 @@ public partial class RhythmArena : Node2D
         }
         else
         {
-            // No pattern — end after the specified duration
             float dur = totalMeasures * RhythmConstants.BeatsPerMeasure
                         * RhythmClock.Instance.BeatInterval;
             GetTree().CreateTimer(dur).Timeout += EndPhase;
         }
     }
 
-    /// <summary>Spawn a StandardObstacle in the given lane, arriving in beatsUntilArrival beats.</summary>
+    /// <summary>Spawn a StandardObstacle in the given lane.</summary>
     public void CreateObstacle(int lane, int beatsUntilArrival, int damage)
     {
         if (lane < 0 || lane >= LaneCenterY.Length) return;
 
-        var obs = _standardObstacleScene.Instantiate<StandardObstacle>();
-        obs.Lane = lane;
-        obs.Damage = damage;
+        var obs        = _standardObstacleScene.Instantiate<StandardObstacle>();
+        obs.Lane       = lane;
+        obs.Damage     = damage;
+        obs.TravelSpeed = (HitZoneX - SpawnX) / (RhythmClock.Instance.BeatInterval * beatsUntilArrival);
+        obs.Position   = new Vector2(SpawnX, LaneCenterY[lane]);
+        ObstacleContainer.AddChild(obs);
+    }
 
-        // Compute speed: the note must travel (HitZoneX - SpawnX) in exactly
-        // beatsUntilArrival beats, so speed = distance / time.
-        float travelTime = RhythmClock.Instance.BeatInterval * beatsUntilArrival;
-        obs.TravelSpeed  = (HitZoneX - SpawnX) / travelTime;
+    /// <summary>Spawn a HoldObstacle in the given lane.</summary>
+    public void CreateHoldObstacle(int lane, int holdBeats, int beatsUntilArrival, int damage)
+    {
+        if (_holdObstacleScene == null || lane < 0 || lane >= LaneCenterY.Length) return;
 
-        obs.Position = new Vector2(SpawnX, LaneCenterY[lane]);
+        var obs        = _holdObstacleScene.Instantiate<HoldObstacle>();
+        obs.Lane       = lane;
+        obs.Damage     = damage;
+        obs.HoldBeats  = holdBeats;
+        obs.TravelSpeed = (HitZoneX - SpawnX) / (RhythmClock.Instance.BeatInterval * beatsUntilArrival);
+        obs.Position   = new Vector2(SpawnX, LaneCenterY[lane]);
         ObstacleContainer.AddChild(obs);
     }
 
@@ -119,22 +162,48 @@ public partial class RhythmArena : Node2D
     public override void _Process(double delta)
     {
         if (!_running) return;
-        QueueRedraw(); // update beat-pulse visual each frame
+        QueueRedraw();
 
-        float dt      = (float)delta;
-        float missX   = HitZoneX + GoodWindowPx + MissGracePx;
+        float dt    = (float)delta;
+        float missX = HitZoneX + GoodWindowPx + MissGracePx;
 
+        // Advance held-note timers
+        for (int lane = 0; lane < LaneCenterY.Length; lane++)
+        {
+            if (_laneHeldObstacles[lane] is not { } hObs) continue;
+
+            _laneHoldElapsed[lane] += dt;
+            float ratio = _laneHoldElapsed[lane] / hObs.FullHoldTime;
+            hObs.HoldProgress = (float)System.Math.Min(ratio, 1.0);
+
+            if (_laneHoldElapsed[lane] >= hObs.FullHoldTime)
+            {
+                // Full hold — auto-complete as Perfect
+                _laneHeldObstacles[lane] = null;
+                hObs.Resolve(HitGrade.Perfect);
+                EmitSignal(SignalName.NoteHit, (int)HitGrade.Perfect);
+                ShowFeedback(HitGrade.Perfect, lane);
+                RecordHit(HitGrade.Perfect);
+            }
+        }
+
+        // Move and miss-check obstacles
         foreach (Node child in ObstacleContainer.GetChildren())
         {
-            if (child is not StandardObstacle obs || obs.IsResolved) continue;
+            if (child is not ObstacleBase obs || obs.IsResolved) continue;
+            if (obs is HoldObstacle heldObs && heldObs.IsBeingHeld) continue;
 
-            // Move rightward
             obs.Position += new Vector2(obs.TravelSpeed * dt, 0f);
 
-            // Past the miss threshold → unrecoverable, apply damage
             if (obs.Position.X > missX)
             {
-                EmitSignal(SignalName.PlayerHurt, obs.Damage);
+                // Apply combo-reduced damage
+                float mult       = (float)System.Math.Clamp(1.0 - _currentStreak * 0.05, 0.5, 1.0);
+                int   dmg        = System.Math.Max(1, (int)(obs.Damage * mult));
+                bool  hadStreak  = _currentStreak >= 3;
+                _currentStreak   = 0;
+                UpdateComboDisplay(hadStreak);
+                EmitSignal(SignalName.PlayerHurt, dmg);
                 obs.Resolve(HitGrade.Miss);
             }
         }
@@ -146,16 +215,31 @@ public partial class RhythmArena : Node2D
 
         for (int lane = 0; lane < LaneCenterY.Length; lane++)
         {
+            // Hold-note release
+            if (e.IsActionReleased($"lane_{lane}") && _laneHeldObstacles[lane] is { } hObs)
+            {
+                float ratio = _laneHoldElapsed[lane] / hObs.FullHoldTime;
+                var   grade = ratio >= 0.85f ? HitGrade.Perfect
+                            : ratio >= 0.45f ? HitGrade.Good
+                            : HitGrade.Miss;
+                _laneHeldObstacles[lane] = null;
+                hObs.Resolve(grade);
+                EmitSignal(SignalName.NoteHit, (int)grade);
+                ShowFeedback(grade, lane);
+                RecordHit(grade);
+                GetViewport().SetInputAsHandled();
+            }
+
             if (!e.IsActionPressed($"lane_{lane}")) continue;
 
-            // Find the closest unresolved obstacle in this lane near the HitZone
+            // Find closest unresolved obstacle in this lane
             ObstacleBase? best     = null;
             float         bestDist = float.MaxValue;
 
             foreach (Node child in ObstacleContainer.GetChildren())
             {
-                if (child is not StandardObstacle obs) continue;
-                if (obs.IsResolved || obs.Lane != lane) continue;
+                if (child is not ObstacleBase obs || obs.IsResolved || obs.Lane != lane) continue;
+                if (obs is HoldObstacle h && h.IsBeingHeld) continue;
 
                 float dist = Mathf.Abs(obs.Position.X - HitZoneX);
                 if (dist <= GoodWindowPx + MissGracePx && dist < bestDist)
@@ -167,16 +251,23 @@ public partial class RhythmArena : Node2D
 
             if (best != null)
             {
-                // Convert pixel deviation → seconds for grade calculation
-                float deviationSec = bestDist / best.TravelSpeed;
-                var   grade        = RhythmConstants.GradeDeviation(deviationSec);
-                best.Resolve(grade);
-                EmitSignal(SignalName.NoteHit, (int)grade);
-                ShowFeedback(grade, lane);
+                if (best is HoldObstacle holdObs)
+                {
+                    holdObs.StartHold();
+                    _laneHeldObstacles[lane] = holdObs;
+                    _laneHoldElapsed[lane]   = 0f;
+                }
+                else
+                {
+                    float deviationSec = bestDist / best.TravelSpeed;
+                    var   grade        = RhythmConstants.GradeDeviation(deviationSec);
+                    best.Resolve(grade);
+                    EmitSignal(SignalName.NoteHit, (int)grade);
+                    ShowFeedback(grade, lane);
+                    RecordHit(grade);
+                }
+                GetViewport().SetInputAsHandled();
             }
-            // No obstacle nearby → false press, no effect (good UX)
-
-            GetViewport().SetInputAsHandled();
         }
     }
 
@@ -187,9 +278,7 @@ public partial class RhythmArena : Node2D
         var halfV = new Vector2(ArenaHalfW, ArenaHalfH);
         var bg    = new Rect2(-halfV, halfV * 2f);
 
-        // Dark background
         DrawRect(bg, new Color(0.06f, 0.06f, 0.10f, 1f));
-        // White border
         DrawRect(bg, Colors.White, filled: false, width: 2f);
 
         // Lane dividers
@@ -200,29 +289,85 @@ public partial class RhythmArena : Node2D
                      new Color(1, 1, 1, 0.15f), 1f);
         }
 
-        // Lane colour strips on the left edge
+        // Lane colour strips on left edge
         for (int i = 0; i < LaneCenterY.Length; i++)
         {
-            var col  = ObstacleBase.LaneColors[i] with { A = 0.25f };
+            var col = ObstacleBase.LaneColors[i] with { A = 0.25f };
             DrawRect(new Rect2(-ArenaHalfW, LaneCenterY[i] - LaneHeight * 0.5f, 20f, LaneHeight), col);
         }
 
-        // Hit zone vertical line
+        // Hit zone line
         DrawLine(new Vector2(HitZoneX, -ArenaHalfH),
                  new Vector2(HitZoneX,  ArenaHalfH),
                  Colors.White with { A = 0.8f }, 2f);
 
-        // Beat pulse: brighter hit zone glow on the beat (BeatPhase near 0)
+        // Per-lane crosshair markers at the hit zone (gold)
+        var crosshairColor = new Color(1f, 0.85f, 0.1f, 0.65f);
+        const float tickLen = 10f;
+        foreach (float cy in LaneCenterY)
+            DrawLine(new Vector2(HitZoneX - tickLen, cy), new Vector2(HitZoneX + tickLen, cy),
+                     crosshairColor, 2f);
+
+        // Beat pulse
         float pulse = Mathf.Max(0f, 1f - RhythmClock.Instance.BeatPhase * 4f);
         if (pulse > 0f)
         {
+            // Hit zone glow
             DrawLine(new Vector2(HitZoneX, -ArenaHalfH),
                      new Vector2(HitZoneX,  ArenaHalfH),
                      Colors.White with { A = pulse * 0.6f }, 6f);
+
+            // Lane colour pulse
+            for (int i = 0; i < LaneCenterY.Length; i++)
+            {
+                var laneCol = ObstacleBase.LaneColors[i] with { A = pulse * 0.12f };
+                DrawRect(new Rect2(-ArenaHalfW, LaneCenterY[i] - LaneHeight * 0.5f,
+                                   ArenaHalfW * 2f, LaneHeight), laneCol);
+            }
         }
     }
 
     // ── Internal helpers ──────────────────────────────────────────────
+
+    private void RecordHit(HitGrade grade)
+    {
+        if (grade != HitGrade.Miss)
+        {
+            _currentStreak++;
+            if (_currentStreak > _maxStreak) _maxStreak = _currentStreak;
+            UpdateComboDisplay(false);
+        }
+        else
+        {
+            bool hadStreak = _currentStreak >= 3;
+            _currentStreak = 0;
+            UpdateComboDisplay(hadStreak);
+        }
+    }
+
+    private void UpdateComboDisplay(bool streakBroken)
+    {
+        if (_comboLabel == null || _breakLabel == null) return;
+
+        if (streakBroken)
+        {
+            _comboLabel.Visible = false;
+            _breakLabel.Visible = true;
+            GetTree().CreateTimer(0.5f).Timeout +=
+                () => { if (_breakLabel != null) _breakLabel.Visible = false; };
+            return;
+        }
+
+        if (_currentStreak >= 3)
+        {
+            _comboLabel.Text    = $"COMBO ×{_currentStreak}";
+            _comboLabel.Visible = true;
+        }
+        else
+        {
+            _comboLabel.Visible = false;
+        }
+    }
 
     private void ShowFeedback(HitGrade grade, int lane)
     {
@@ -237,13 +382,12 @@ public partial class RhythmArena : Node2D
         _feedbackLabel.Position = new Vector2(-30f, LaneCenterY[lane] - 20f);
         _feedbackLabel.Visible  = true;
 
-        GetTree().CreateTimer(0.4f).Timeout += () => { if (_feedbackLabel != null) _feedbackLabel.Visible = false; };
+        GetTree().CreateTimer(0.4f).Timeout +=
+            () => { if (_feedbackLabel != null) _feedbackLabel.Visible = false; };
     }
 
     private void OnPatternFinished()
     {
-        // Grace must be at least BeatsUntilArrival so the last note spawned
-        // has time to travel to the hit zone before the phase ends.
         float grace = (BeatsUntilArrival + 1) * RhythmClock.Instance.BeatInterval;
         GetTree().CreateTimer(grace).Timeout += EndPhase;
     }
@@ -252,11 +396,20 @@ public partial class RhythmArena : Node2D
     {
         _running = false;
 
-        // Free all remaining obstacles
+        // Release any still-held notes as misses
+        for (int lane = 0; lane < LaneCenterY.Length; lane++)
+        {
+            if (_laneHeldObstacles[lane] is { } hObs && !hObs.IsResolved)
+            {
+                _laneHeldObstacles[lane] = null;
+                hObs.Resolve(HitGrade.Miss);
+            }
+        }
+
         foreach (Node child in ObstacleContainer.GetChildren())
             child.QueueFree();
 
-        GD.Print("[RhythmArena] Phase ended.");
+        GD.Print($"[RhythmArena] Phase ended. Max combo streak: {_maxStreak}");
         Visible = false;
         EmitSignal(SignalName.PhaseEnded);
     }

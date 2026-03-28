@@ -4,13 +4,8 @@ using SennenRpg.Core.Data;
 namespace SennenRpg.Scenes.Battle;
 
 /// <summary>
-/// Replaces Pattern002 (Thornling horizontal sweep).
-/// Fills three of four lanes each measure, cycling the safe lane.
-/// On beats 0 and 2 obstacles arrive. Player must identify and avoid
-/// pressing the three active lanes (or press the one safe lane key, which
-/// does nothing since no obstacle is in it — this is forgiving by design).
-/// For a "survive" pattern: three lanes spawn obstacles, one is safe.
-/// Player presses the SAFE lane to "dodge" — pressed lanes without obstacles do nothing.
+/// Three of four lanes are active each measure; the safe lane rotates.
+/// Spawns on strong beats (0 and 2). Player must track which lane is clear.
 /// </summary>
 public partial class LaneSweepPattern : RhythmPatternBase
 {
@@ -24,9 +19,16 @@ public partial class LaneSweepPattern : RhythmPatternBase
 
     protected override void SpawnOnBeat(int beatInMeasure, int totalBeat)
     {
-        // Only spawn on strong beats (0 and 2)
         if (beatInMeasure != 0 && beatInMeasure != 2) return;
 
-        SpawnObstacle(0);
+        // Rotate safe lane each measure (every 4 beats)
+        if (beatInMeasure == 0 && totalBeat > 0)
+            _safeLane = (_safeLane + 1) % 4;
+
+        for (int lane = 0; lane < 4; lane++)
+        {
+            if (lane == _safeLane) continue;
+            SpawnObstacle(lane);
+        }
     }
 }

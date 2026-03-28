@@ -5,10 +5,8 @@ using SennenRpg.Core.Data;
 namespace SennenRpg.Scenes.Battle;
 
 /// <summary>
-/// Replaces Pattern006 (Flickerfly zigzag).
-/// Spawns obstacles on the OFF-beat (half-beat) rather than on the beat,
-/// creating syncopation. Also alternates between two specific lanes per
-/// measure to create a cross-pattern. Rewards good rhythm internalization.
+/// Off-beat (half-beat) only pattern with an alternating cross-lane sequence.
+/// Rewards internalising the rhythm rather than just reacting to visuals.
 /// </summary>
 public partial class SyncopatedPattern : RhythmPatternBase
 {
@@ -19,7 +17,6 @@ public partial class SyncopatedPattern : RhythmPatternBase
     public override void _Ready()
     {
         base._Ready();
-        // Alternating cross-lane sequence: 0↔3, 1↔2
         _laneSequence = new[] { 0, 3, 1, 2, 3, 0, 2, 1 };
     }
 
@@ -32,7 +29,8 @@ public partial class SyncopatedPattern : RhythmPatternBase
         if (phase >= 0.5f && !_halfBeatFired)
         {
             _halfBeatFired = true;
-            SpawnObstacle(0);
+            int lane = _laneSequence[_halfBeatCount % _laneSequence.Length];
+            SpawnObstacle(lane);
             _halfBeatCount++;
         }
         if (phase < 0.5f)
@@ -41,6 +39,6 @@ public partial class SyncopatedPattern : RhythmPatternBase
 
     protected override void SpawnOnBeat(int beatInMeasure, int totalBeat)
     {
-        // No on-beat spawns for this pattern — only off-beat (handled in _Process)
+        // All spawning happens on the half-beat in _Process
     }
 }

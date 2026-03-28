@@ -6,8 +6,8 @@ namespace SennenRpg.Scenes.Battle;
 /// <summary>
 /// Base class for all rhythm arena obstacles (notes).
 /// Travels horizontally (left → right) through the RhythmArena.
-/// RhythmArena manages movement and hit detection — this class just
-/// holds state and draws its visual.
+/// RhythmArena manages movement and hit detection — this class holds state
+/// and draws its visual, plus plays a scale-pop animation on resolve.
 /// </summary>
 public abstract partial class ObstacleBase : Node2D
 {
@@ -34,13 +34,29 @@ public abstract partial class ObstacleBase : Node2D
 
     /// <summary>
     /// Resolve this obstacle with the given grade.
-    /// Emits Resolved, marks as resolved, and queues free.
+    /// Plays a scale-pop tween on hit, fades out on miss, then queues free.
     /// </summary>
     public void Resolve(HitGrade grade)
     {
         if (IsResolved) return;
         IsResolved = true;
         EmitSignal(SignalName.Resolved, (int)grade);
-        QueueFree();
+
+        if (grade == HitGrade.Miss)
+        {
+            // Quick red fade-out
+            Modulate = Colors.Red;
+            var fadeTween = CreateTween();
+            fadeTween.TweenProperty(this, "modulate:a", 0f, 0.12f);
+            fadeTween.TweenCallback(Callable.From(QueueFree));
+            return;
+        }
+
+        // Scale-pop: flash gold (Perfect) or white (Good), then shrink away
+        Modulate = grade == HitGrade.Perfect ? new Color(1f, 0.85f, 0.1f) : Colors.White;
+        var tween = CreateTween();
+        tween.TweenProperty(this, "scale", new Vector2(1.4f, 1.4f), 0.06f);
+        tween.TweenProperty(this, "scale", Vector2.Zero,            0.10f);
+        tween.TweenCallback(Callable.From(QueueFree));
     }
 }

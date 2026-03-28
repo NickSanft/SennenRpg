@@ -635,9 +635,12 @@ public partial class BattleScene : Node2D
 		BeginRhythmPhase();
 	}
 
-	private void BeginRhythmPhase()
+	private void BeginRhythmPhase() => _ = DoBeginRhythmPhase();
+
+	private async Task DoBeginRhythmPhase()
 	{
 		SetState(BattleState.RhythmPhase);
+		await ShowPhaseCard("⚠  DODGE!  ⚠", new Color(1f, 0.3f, 0.3f));
 
 		PackedScene? patternScene = _enemy?.AttackPatternScene;
 		_rhythmArena.StartPhase(patternScene, totalMeasures: 2);
@@ -645,10 +648,32 @@ public partial class BattleScene : Node2D
 		GD.Print($"[BattleScene] RhythmPhase started. Pattern: {patternScene?.ResourcePath ?? "none"}");
 	}
 
+	private async Task ShowPhaseCard(string text, Color color)
+	{
+		var label = new Label
+		{
+			Text                = text,
+			HorizontalAlignment = HorizontalAlignment.Center,
+			VerticalAlignment   = VerticalAlignment.Center,
+			AnchorLeft          = 0f, AnchorTop    = 0f,
+			AnchorRight         = 1f, AnchorBottom = 1f,
+			Modulate            = color with { A = 0f },
+		};
+		label.AddThemeFontSizeOverride("font_size", 32);
+		AddChild(label);
+
+		var tween = CreateTween();
+		tween.TweenProperty(label, "modulate:a", 1f, 0.2f);
+		tween.TweenInterval(0.5f);
+		tween.TweenProperty(label, "modulate:a", 0f, 0.3f);
+		await ToSignal(tween, Tween.SignalName.Finished);
+		label.QueueFree();
+	}
+
 	private void OnRhythmPhaseEnded()
 	{
 		if (_state != BattleState.RhythmPhase) return;
-		GD.Print("[BattleScene] Rhythm phase ended.");
+		GD.Print($"[BattleScene] Rhythm phase ended. Max combo: {_rhythmArena.MaxStreak}");
 		SetState(BattleState.PlayerTurn);
 	}
 
