@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EquipmentData" format=4]
+
+[ext_resource type="Script" path="res://core/data/EquipmentData.cs" id="1_eqdata"]
+
+[resource]
+script = ExtResource("1_eqdata")
+EquipmentId = "leather_body"
+DisplayName = "Leather Armour"
+Description = "Tough leather armour. Increases defence and max HP."
+Slot = 3
+BonusMaxHp = 5
+BonusDefense = 4

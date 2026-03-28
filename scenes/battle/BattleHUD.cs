@@ -49,7 +49,7 @@ public partial class BattleHUD : CanvasLayer
 		var stats = GameManager.Instance.PlayerStats;
 
 		_nameLabel.Text = "* " + GameManager.Instance.PlayerName;
-		_lvLabel.Text   = "LV 1";
+		_lvLabel.Text   = $"LV {GameManager.Instance.PlayerLevel}";
 		_hpLabel.Text   = $"{stats.CurrentHp} / {stats.MaxHp} HP";
 		_mpLabel.Text   = $"{stats.CurrentMp} / {stats.MaxMp} MP";
 

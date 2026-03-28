@@ -1,0 +1,4 @@
+[gd_scene format=4]
+[ext_resource type="Script" path="res://scenes/menus/EquipmentMenu.cs" id="1"]
+[node name="EquipmentMenu" type="CanvasLayer"]
+script = ExtResource("1")

@@ -22,6 +22,7 @@
          This avoids pulling in the full Godot.NET.Sdk project graph. -->
     <ItemGroup>
         <Compile Include="../core/data/BattleFormulas.cs" />
+        <Compile Include="../core/data/LevelData.cs" />
         <Compile Include="../core/data/RhythmConstants.cs" />
         <Compile Include="../core/data/PerformanceScore.cs" />
         <Compile Include="../core/data/Flags.cs" />
@@ -30,6 +31,9 @@
         <Compile Include="../core/data/DialogicSignalParser.cs" />
         <Compile Include="../core/data/JournalData.cs" />
         <Compile Include="../core/data/NpcLogic.cs" />
+        <Compile Include="../core/data/EquipmentSlot.cs" />
+        <Compile Include="../core/data/EquipmentBonuses.cs" />
+        <Compile Include="../core/data/EquipmentLogic.cs" />
     </ItemGroup>
 
 </Project>

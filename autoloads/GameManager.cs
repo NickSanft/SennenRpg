@@ -1,6 +1,8 @@
 using Godot;
 using Godot.Collections;
+using System.Collections.Generic;
 using SennenRpg.Core.Data;
+using EquipDict = System.Collections.Generic.Dictionary<SennenRpg.Core.Data.EquipmentSlot, string>;
 
 namespace SennenRpg.Autoloads;
 
@@ -12,12 +14,20 @@ public partial class GameManager : Node
 
 	[Signal] public delegate void GameStateChangedEventHandler(GameState newState);
 	[Signal] public delegate void PlayerStatsChangedEventHandler();
+	/// <summary>Fired after level-up stat rolls are applied. Read PendingLevelUps for results.</summary>
+	[Signal] public delegate void PlayerLeveledUpEventHandler();
 
 	public GameState CurrentState { get; private set; } = GameState.Boot;
 
 	public string PlayerName { get; private set; } = "Sen";
-	public int Gold { get; private set; }
-	public int Exp  { get; private set; }
+	public int Gold        { get; private set; }
+	public int Exp         { get; private set; }
+	public int PlayerLevel { get; private set; } = 1;
+
+	/// <summary>Results from the most recent level-up batch. Read and clear after showing the screen.</summary>
+	public List<LevelUpResult> PendingLevelUps { get; } = new();
+
+	private GrowthRates? _growthRates;
 	public string LastMapPath { get; private set; } = "";
 	public string LastSavePointId { get; private set; } = "";
 	/// <summary>Spawn point ID to use when the next map loads. Set by MapExit before transitioning.</summary>
@@ -35,6 +45,10 @@ public partial class GameManager : Node
 	// Known spells: list of SpellData resource paths
 	public Array<string> KnownSpellPaths { get; private set; } = new();
 
+	// Equipment: owned (picked up) and equipped (one per slot)
+	public Array<string> OwnedEquipmentPaths { get; private set; } = new();
+	public EquipDict EquippedItemPaths { get; private set; } = new();
+
 	public override void _Ready()
 	{
 		Instance = this;
@@ -47,6 +61,10 @@ public partial class GameManager : Node
 			var loaded = GD.Load<CharacterStats>(statsPath);
 			PlayerStats = (CharacterStats)loaded.Duplicate(); // Local copy so we can modify HP
 		}
+
+		const string growthPath = "res://resources/characters/player_growth_rates.tres";
+		if (ResourceLoader.Exists(growthPath))
+			_growthRates = GD.Load<GrowthRates>(growthPath);
 	}
 
 	public void SetState(GameState newState)
@@ -70,7 +88,59 @@ public partial class GameManager : Node
 		Gold = Mathf.Max(0, Gold - amount);
 		EmitSignal(SignalName.PlayerStatsChanged);
 	}
-	public void AddExp(int amount)  => Exp  += amount;
+	public void AddExp(int amount)
+	{
+		Exp += amount;
+		CheckAndApplyLevelUp();
+	}
+
+	private void CheckAndApplyLevelUp()
+	{
+		int gained = LevelData.CheckLevelUp(Exp, PlayerLevel);
+		if (gained == 0) return;
+
+		PendingLevelUps.Clear();
+		for (int i = 0; i < gained; i++)
+		{
+			PlayerLevel++;
+			PendingLevelUps.Add(RollGrowth(PlayerLevel));
+		}
+
+		EmitSignal(SignalName.PlayerLeveledUp);
+		EmitSignal(SignalName.PlayerStatsChanged);
+	}
+
+	private LevelUpResult RollGrowth(int newLevel)
+	{
+		var s = PlayerStats;
+		int oldHp  = s.MaxHp,      oldAtk = s.Attack,  oldDef = s.Defense,
+			oldSpd = s.Speed,       oldMag = s.Magic,   oldRes = s.Resistance,
+			oldLck = s.Luck;
+
+		if (_growthRates != null)
+		{
+			if (GD.RandRange(0, 99) < _growthRates.MaxHp)
+				{ s.MaxHp++; s.CurrentHp++; }                   // HP up heals too
+			if (GD.RandRange(0, 99) < _growthRates.Attack)     s.Attack++;
+			if (GD.RandRange(0, 99) < _growthRates.Defense)    s.Defense++;
+			if (GD.RandRange(0, 99) < _growthRates.Speed)      s.Speed++;
+			if (GD.RandRange(0, 99) < _growthRates.Magic)      s.Magic++;
+			if (GD.RandRange(0, 99) < _growthRates.Resistance) s.Resistance++;
+			if (GD.RandRange(0, 99) < _growthRates.Luck)       s.Luck++;
+		}
+
+		return new LevelUpResult
+		{
+			NewLevel      = newLevel,
+			OldMaxHp      = oldHp,  NewMaxHp      = s.MaxHp,
+			OldAttack     = oldAtk, NewAttack     = s.Attack,
+			OldDefense    = oldDef, NewDefense    = s.Defense,
+			OldSpeed      = oldSpd, NewSpeed      = s.Speed,
+			OldMagic      = oldMag, NewMagic      = s.Magic,
+			OldResistance = oldRes, NewResistance = s.Resistance,
+			OldLuck       = oldLck, NewLuck       = s.Luck,
+		};
+	}
 
 	public void AddItem(string resourcePath)    => InventoryItemPaths.Add(resourcePath);
 	public bool RemoveItem(string resourcePath)
@@ -113,14 +183,85 @@ public partial class GameManager : Node
 		EmitSignal(SignalName.PlayerStatsChanged);
 	}
 
+	// ── Equipment ─────────────────────────────────────────────────────────────
+
+	/// <summary>Add a piece of equipment to the player's owned pool (e.g. from a chest).</summary>
+	public void AddEquipment(string resourcePath) => OwnedEquipmentPaths.Add(resourcePath);
+
+	/// <summary>Returns the equipped EquipmentData for a slot, or null if empty.</summary>
+	public EquipmentData? GetEquipped(EquipmentSlot slot)
+	{
+		if (!EquippedItemPaths.TryGetValue(slot, out string? path) || string.IsNullOrEmpty(path))
+			return null;
+		return ResourceLoader.Exists(path) ? GD.Load<EquipmentData>(path) : null;
+	}
+
+	/// <summary>Equip an item from OwnedEquipmentPaths into the given slot.</summary>
+	public void Equip(EquipmentSlot slot, string path)
+	{
+		// If something was already equipped in that slot, return it to the owned pool
+		if (EquippedItemPaths.TryGetValue(slot, out string? current) && !string.IsNullOrEmpty(current))
+			OwnedEquipmentPaths.Add(current);
+
+		EquippedItemPaths[slot] = path;
+		OwnedEquipmentPaths.Remove(path);
+		EmitSignal(SignalName.PlayerStatsChanged);
+	}
+
+	/// <summary>Unequip the item in a slot, returning it to OwnedEquipmentPaths.</summary>
+	public void Unequip(EquipmentSlot slot)
+	{
+		if (!EquippedItemPaths.TryGetValue(slot, out string? path) || string.IsNullOrEmpty(path))
+			return;
+		OwnedEquipmentPaths.Add(path);
+		EquippedItemPaths.Remove(slot);
+		EmitSignal(SignalName.PlayerStatsChanged);
+	}
+
+	/// <summary>
+	/// Effective combat stats: PlayerStats + all equipped item bonuses.
+	/// Computed fresh each call — no caching needed at this scale.
+	/// Use this for all battle damage calculations instead of PlayerStats directly.
+	/// </summary>
+	public CharacterStats EffectiveStats
+	{
+		get
+		{
+			var bonusList = new List<EquipmentBonuses>();
+			foreach (var kv in EquippedItemPaths)
+			{
+				if (ResourceLoader.Exists(kv.Value))
+					bonusList.Add(GD.Load<EquipmentData>(kv.Value).Bonuses);
+			}
+			var bonus = EquipmentLogic.SumBonuses(bonusList);
+			var s = PlayerStats;
+			return new CharacterStats
+			{
+				MaxHp                = s.MaxHp      + bonus.MaxHp,
+				CurrentHp            = s.CurrentHp,
+				Attack               = s.Attack     + bonus.Attack,
+				Defense              = s.Defense    + bonus.Defense,
+				Speed                = s.Speed      + bonus.Speed,
+				Magic                = s.Magic      + bonus.Magic,
+				Resistance           = s.Resistance + bonus.Resistance,
+				Luck                 = s.Luck       + bonus.Luck,
+				MoveSpeed            = s.MoveSpeed,
+				MaxMp                = s.MaxMp,
+				CurrentMp            = s.CurrentMp,
+				InvincibilityDuration = s.InvincibilityDuration,
+			};
+		}
+	}
+
 	public bool GetFlag(string key) => Flags.TryGetValue(key, out bool val) && val;
 	public void SetFlag(string key, bool value) => Flags[key] = value;
 
 	/// <summary>Resets all runtime state for a fresh new game.</summary>
 	public void ResetForNewGame()
 	{
-		Gold = 100;
-		Exp  = 0;
+		Gold        = 100;
+		Exp         = 0;
+		PlayerLevel = 1;
 		LastMapPath = "";
 		LastSavePointId = "";
 		LastSpawnId = "";
@@ -129,6 +270,14 @@ public partial class GameManager : Node
 		InventoryItemPaths.Add("res://resources/items/item_001.tres"); // starting Bandage
 		KnownSpellPaths.Clear();
 		KnownSpellPaths.Add("res://resources/spells/shadow_bolt.tres");
+
+		OwnedEquipmentPaths.Clear();
+		OwnedEquipmentPaths.Add("res://resources/equipment/iron_sword.tres");
+		OwnedEquipmentPaths.Add("res://resources/equipment/leather_cap.tres");
+		OwnedEquipmentPaths.Add("res://resources/equipment/leather_body.tres");
+		OwnedEquipmentPaths.Add("res://resources/equipment/lucky_charm.tres");
+		EquippedItemPaths.Clear();
+
 		const string statsPath = "res://resources/characters/player_stats.tres";
 		if (ResourceLoader.Exists(statsPath))
 			PlayerStats = (CharacterStats)GD.Load<CharacterStats>(statsPath).Duplicate();
@@ -137,8 +286,9 @@ public partial class GameManager : Node
 
 	public void ApplySaveData(SaveData data)
 	{
-		Gold = data.Gold;
-		Exp  = data.Exp;
+		Gold        = data.Gold;
+		Exp         = data.Exp;
+		PlayerLevel = data.PlayerLevel > 0 ? data.PlayerLevel : 1;
 		LastMapPath = data.LastMapPath;
 		LastSavePointId = data.LastSavePointId;
 		LastSpawnId = data.LastSpawnId;
@@ -162,5 +312,16 @@ public partial class GameManager : Node
 		KnownSpellPaths.Clear();
 		foreach (var path in data.KnownSpellPaths)
 			KnownSpellPaths.Add(path);
+
+		OwnedEquipmentPaths.Clear();
+		foreach (var path in data.OwnedEquipmentPaths)
+			OwnedEquipmentPaths.Add(path);
+
+		EquippedItemPaths.Clear();
+		foreach (var kv in data.EquippedItemPaths)
+		{
+			if (System.Enum.TryParse<EquipmentSlot>(kv.Key, out var slot))
+				EquippedItemPaths[slot] = kv.Value;
+		}
 	}
 }

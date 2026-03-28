@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
+using SennenRpg.Scenes.Menus;
 
 namespace SennenRpg.Scenes.Battle;
 
@@ -36,6 +37,7 @@ public partial class BattleScene : Node2D
 	private EnemyNameplate  _enemyNameplate = null!;
 	private Node2D          _enemyVisual    = null!;
 
+	private LevelUpScreen      _levelUpScreen      = null!;
 	private CharmMinigame      _charmMinigame      = null!;
 	private BardMinigameBase[] _bardSkills         = null!;
 	private ShadowBoltMinigame _shadowBoltMinigame = null!;
@@ -91,6 +93,10 @@ public partial class BattleScene : Node2D
 			InstantiateFullRect<BardMinigameBase>("res://scenes/battle/rhythm/skills/DissonanceMinigame.tscn"),
 		};
 
+		_levelUpScreen = GD.Load<PackedScene>("res://scenes/menus/LevelUpScreen.tscn")
+							.Instantiate<LevelUpScreen>();
+		AddChild(_levelUpScreen);
+
 		_shadowBoltMinigame = InstantiateFullRect<ShadowBoltMinigame>(
 			"res://scenes/battle/rhythm/skills/ShadowBoltMinigame.tscn");
 		_shadowBoltMinigame.SkillCompleted += OnSpellMinigameCompleted;
@@ -121,11 +127,11 @@ public partial class BattleScene : Node2D
 		_enemyCurrentHp = _enemy?.Stats?.MaxHp ?? 10;
 
 		_playerGoesFirst = BattleFormulas.PlayerGoesFirst(
-			GameManager.Instance.PlayerStats.Speed,
+			GameManager.Instance.EffectiveStats.Speed,
 			_enemy?.Stats?.Speed ?? 0);
 
 		GD.Print($"[BattleScene] Turn order: {(_playerGoesFirst ? "Player" : "Enemy")} goes first " +
-				 $"(player SPD={GameManager.Instance.PlayerStats.Speed}, enemy SPD={_enemy?.Stats?.Speed ?? 0})");
+				 $"(player SPD={GameManager.Instance.EffectiveStats.Speed}, enemy SPD={_enemy?.Stats?.Speed ?? 0})");
 
 		// Start battle BGM with BPM
 		StartBattleBgm(encounter);
@@ -299,9 +305,9 @@ public partial class BattleScene : Node2D
 		var grade = (HitGrade)gradeInt;
 		_rhythmStrike.Visible = false;
 
-		int   atk    = GameManager.Instance.PlayerStats.Attack;
+		int   atk    = GameManager.Instance.EffectiveStats.Attack;
 		int   def    = _enemy?.Stats?.Defense ?? 0;
-		int   luck   = GameManager.Instance.PlayerStats.Luck;
+		int   luck   = GameManager.Instance.EffectiveStats.Luck;
 		float mult   = RhythmConstants.GradeMultiplier(grade);
 		bool  isCrit = BattleFormulas.IsCrit(grade == HitGrade.Perfect, luck, GD.Randf());
 		int   damage = BattleFormulas.PhysicalDamage(atk, def, mult);
@@ -541,7 +547,7 @@ public partial class BattleScene : Node2D
 		}
 		else
 		{
-			int   magic      = GameManager.Instance.PlayerStats.Magic;
+			int   magic      = GameManager.Instance.EffectiveStats.Magic;
 			int   resistance = _enemy?.Stats?.Resistance ?? 0;
 			float mult       = RhythmConstants.GradeMultiplier(grade);
 			int   damage     = BattleFormulas.MagicDamage(spell.BasePower, magic, resistance, mult);
@@ -670,7 +676,15 @@ public partial class BattleScene : Node2D
 		int gold = _enemy?.GoldDrop ?? 0;
 		int exp  = _enemy?.ExpDrop  ?? 0;
 		GameManager.Instance.AddGold(gold);
-		GameManager.Instance.AddExp(exp);
+		GameManager.Instance.AddExp(exp); // may populate PendingLevelUps
+
+		// Show level-up screen for each level gained before the victory dialog
+		if (GameManager.Instance.PendingLevelUps.Count > 0)
+		{
+			var pending = new List<LevelUpResult>(GameManager.Instance.PendingLevelUps);
+			GameManager.Instance.PendingLevelUps.Clear();
+			await _levelUpScreen.ShowAll(pending);
+		}
 
 		SetBattleVar("gold_gained",        gold.ToString());
 		SetBattleVar("exp_gained",          exp.ToString());
