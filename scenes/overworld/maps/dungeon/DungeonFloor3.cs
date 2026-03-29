@@ -13,7 +13,6 @@ namespace SennenRpg.Scenes.Overworld;
 /// Assign BossEncounterData in the Inspector to the floor-3 boss EncounterData resource.
 /// SurfaceReturnTile must match the ReturnTile on the dungeon WorldMapEntrance in WorldMap.tscn.
 /// </summary>
-[Tool]
 public partial class DungeonFloor3 : OverworldBase
 {
     [Export] public EncounterData? BossEncounterData { get; set; }

@@ -1,17 +1,9 @@
-[gd_resource type="TileSet" load_steps=3 format=3 uid="uid://sennentiles_shared"]
-
-; Shared Sennen tileset — used by all dungeon floor maps.
-; After opening in the editor:
-;   1. Select this resource in the TileSet panel.
-;   2. Add a Physics Layer (Project > TileSet > Add Physics Layer) so wall tiles can have collision.
-;   3. Paint collision shapes on wall tiles in the TileSet editor.
-;   4. Optionally add Terrain Sets for autotiling.
+[gd_resource type="TileSet" format=3 uid="uid://bpmahlkk4y1kg"]
 
 [ext_resource type="Texture2D" uid="uid://lhilsf0yodad" path="res://assets/tilesets/sennen_tiles.png" id="1_tex"]
 
 [sub_resource type="TileSetAtlasSource" id="AtlasSrc_sennen"]
 texture = ExtResource("1_tex")
-texture_region_size = Vector2i(16, 16)
 0:0/0 = 0
 1:0/0 = 0
 2:0/0 = 0
@@ -51,7 +43,5 @@ texture_region_size = Vector2i(16, 16)
 3:4/0 = 0
 
 [resource]
-tile_size = Vector2i(16, 16)
 physics_layer_0/collision_layer = 1
-physics_layer_0/collision_mask = 1
 sources/0 = SubResource("AtlasSrc_sennen")

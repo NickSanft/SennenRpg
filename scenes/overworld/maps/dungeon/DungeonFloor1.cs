@@ -10,7 +10,6 @@ namespace SennenRpg.Scenes.Overworld;
 /// manually here because returning to the WorldMap requires setting
 /// GameManager.WorldMapReturnTile before transitioning.
 /// </summary>
-[Tool]
 public partial class DungeonFloor1 : OverworldBase
 {
     /// <summary>

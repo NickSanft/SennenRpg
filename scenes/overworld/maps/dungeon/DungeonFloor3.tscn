@@ -2,9 +2,9 @@
 
 [ext_resource type="PackedScene" uid="uid://bs06dan353qo1" path="res://scenes/overworld/overworld_base.tscn" id="1_base"]
 [ext_resource type="Script" path="res://scenes/overworld/maps/dungeon/DungeonFloor3.cs" id="2_script"]
-[ext_resource type="TileSet" uid="uid://sennentiles_shared" path="res://resources/tilesets/sennen_tiles.tres" id="3_tileset"]
-[ext_resource type="Script" path="res://scenes/overworld/objects/SpawnPoint.cs" id="4_spawn"]
-[ext_resource type="Script" path="res://scenes/overworld/objects/MapExit.cs" id="5_mapexit"]
+[ext_resource type="TileSet" uid="uid://bpmahlkk4y1kg" path="res://resources/tilesets/sennen_tiles.tres" id="3_tileset"]
+[ext_resource type="Script" uid="uid://hcefwe11an6s" path="res://scenes/overworld/objects/SpawnPoint.cs" id="4_spawn"]
+[ext_resource type="Script" uid="uid://ctpvffxw8avmu" path="res://scenes/overworld/objects/MapExit.cs" id="5_mapexit"]
 
 [sub_resource type="RectangleShape2D" id="Shape_StairsUp"]
 size = Vector2(16, 16)
@@ -18,31 +18,27 @@ size = Vector2(16, 16)
 [node name="DungeonFloor3" instance=ExtResource("1_base")]
 script = ExtResource("2_script")
 MapId = "Dungeon - Floor 3"
-BgmPath = ""
 
-; ── Tile layers ──────────────────────────────────────────────────────────────
-; Tile data is left empty — paint tiles in the Godot editor.
-
-[node name="Ground" parent="Ground" type="TileMapLayer" parent_id_path=PackedInt32Array(1739729204)]
+; ── TileMapLayer tileset assignments ─────────────────────────────────────────
+[node name="Ground" parent="."]
 tile_set = ExtResource("3_tileset")
 
-[node name="Walls" parent="." type="TileMapLayer" parent_id_path=PackedInt32Array(429113068)]
+[node name="Ground" parent="Ground"]
 tile_set = ExtResource("3_tileset")
 
-[node name="Objects" parent="." type="TileMapLayer" parent_id_path=PackedInt32Array(1501605227)]
+[node name="Walls" parent="."]
 tile_set = ExtResource("3_tileset")
 
-; ── Spawn points ─────────────────────────────────────────────────────────────
+[node name="Objects" parent="."]
+tile_set = ExtResource("3_tileset")
 
-[node name="SpawnPoints" type="Node2D" parent="."]
-
-[node name="StairsUpSpawn" type="Node2D" parent="SpawnPoints"]
+; ── Spawn points ──────────────────────────────────────────────────────────────
+[node name="StairsUpSpawn" type="Node2D" parent="."]
 script = ExtResource("4_spawn")
-SpawnId = "stairs_up"
 position = Vector2(64, 64)
+SpawnId = "stairs_up"
 
-; ── Stairs Up — returns to Floor 2 ───────────────────────────────────────────
-
+; ── StairsUp: MapExit → DungeonFloor2, spawn "stairs_down" ───────────────────
 [node name="StairsUp" type="Area2D" parent="."]
 script = ExtResource("5_mapexit")
 position = Vector2(64, 64)
@@ -54,10 +50,9 @@ ExitHint = 1
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StairsUp"]
 shape = SubResource("Shape_StairsUp")
 
-; ── Boss encounter trigger ────────────────────────────────────────────────────
-; DungeonFloor3.cs manages Monitoring on this node.
-; Place this in front of the boss chamber entrance in the editor.
-
+; ── BossEntrance: plain Area2D — DungeonFloor3.cs handles this ───────────────
+; Place in front of the boss chamber in the editor. DungeonFloor3.cs disables
+; Monitoring on this node after DungeonBossDefeated flag is set.
 [node name="BossEntrance" type="Area2D" parent="."]
 position = Vector2(192, 64)
 collision_layer = 1
@@ -66,10 +61,8 @@ collision_mask = 1
 [node name="CollisionShape2D" type="CollisionShape2D" parent="BossEntrance"]
 shape = SubResource("Shape_Boss")
 
-; ── Warp to surface ───────────────────────────────────────────────────────────
-; Only active after DungeonBossDefeated flag is set.
-; Place this near the boss chamber exit / altar in the editor.
-
+; ── WarpToSurface: plain Area2D — DungeonFloor3.cs enables this after boss ───
+; Place near the boss chamber exit / altar in the editor.
 [node name="WarpToSurface" type="Area2D" parent="."]
 position = Vector2(192, 128)
 collision_layer = 1
