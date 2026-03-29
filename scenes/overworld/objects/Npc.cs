@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Godot;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
@@ -278,7 +279,17 @@ public partial class Npc : CharacterBody2D, IInteractable
 	public void HidePrompt() => _prompt?.HideBubble();
 
 	private string ChooseTimeline()
-		=> SelectTimeline(TimelinePath, AltRequiredFlags, AltTimelinePaths, GameManager.Instance.GetFlag);
+	{
+		// Quest giver overrides take priority over normal alt-flag branching
+		var questGiver = GetNodeOrNull<QuestGiver>("QuestGiver");
+		if (questGiver != null)
+		{
+			string questOverride = questGiver.GetQuestTimelineOverride();
+			if (!string.IsNullOrEmpty(questOverride))
+				return questOverride;
+		}
+		return SelectTimeline(TimelinePath, AltRequiredFlags, AltTimelinePaths, GameManager.Instance.GetFlag);
+	}
 
 	/// <summary>Delegates to <see cref="NpcLogic.SelectTimeline"/>.</summary>
 	public static string SelectTimeline(
@@ -378,7 +389,9 @@ public partial class Npc : CharacterBody2D, IInteractable
 			_sprite.Play(anim);
 	}
 
-	private void OnTimelineEnded()
+	private void OnTimelineEnded() => _ = DoOnTimelineEnded();
+
+	private async Task DoOnTimelineEnded()
 	{
 		_talkCooldown  = TalkCooldownSec;
 		_pendingPlayer = null;
@@ -390,6 +403,11 @@ public partial class Npc : CharacterBody2D, IInteractable
 			GameManager.Instance.SetFlag(flag, true);
 			GD.Print($"[Npc] Flag set: {flag}");
 		}
+
+		// Let the QuestGiver handle post-dialog state transitions and reward screen
+		var questGiver = GetNodeOrNull<QuestGiver>("QuestGiver");
+		if (questGiver != null)
+			await questGiver.HandlePostDialog(GetTree().Root);
 
 		// Reset to default facing so the NPC doesn't stay turned toward the player
 		if (_sprite != null) _sprite.FlipH = false;
