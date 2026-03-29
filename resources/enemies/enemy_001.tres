@@ -3,16 +3,12 @@
 [ext_resource type="Script" uid="uid://c5d22rd36ltx4" path="res://core/data/EnemyData.cs" id="1_EnemyData"]
 [ext_resource type="Script" uid="uid://dqonjuygth0gq" path="res://core/data/CharacterStats.cs" id="2_CharacterStats"]
 [ext_resource type="PackedScene" path="res://scenes/battle/rhythm/patterns/BeatRainPattern.tscn" id="3_pattern"]
-[ext_resource type="Texture2D" path="res://assets/sprites/enemies/wisplet.png" id="4_sprite"]
+[ext_resource type="Texture2D" uid="uid://cq6k7x26sgirc" path="res://assets/sprites/enemies/wisplet.png" id="4_sprite"]
 
 [sub_resource type="Resource" id="CharacterStats_1"]
 script = ExtResource("2_CharacterStats")
-MaxHp = 20
-CurrentHp = 20
 Attack = 5
-Defense = 0
 Speed = 8
-Magic = 0
 Resistance = 3
 Luck = 5
 

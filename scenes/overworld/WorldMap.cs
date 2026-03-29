@@ -60,6 +60,11 @@ public partial class WorldMap : Node2D
 		gm.SetLastMap("res://scenes/overworld/WorldMap.tscn");
 		gm.SetState(GameState.Overworld);
 
+		// Spawn PauseMenu so ESC works on the world map
+		const string pausePath = "res://scenes/menus/PauseMenu.tscn";
+		if (ResourceLoader.Exists(pausePath))
+			AddChild(GD.Load<PackedScene>(pausePath).Instantiate());
+
 		ApplyDayNightBgm(animate: false);
 	}
 

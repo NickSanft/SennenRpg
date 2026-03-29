@@ -19,15 +19,15 @@ anchor_bottom = 1.0
 color = Color(0.08, 0.08, 0.08, 1)
 
 [node name="EnemyArea" type="Node2D" parent="."]
-position = Vector2(320, 100)
+position = Vector2(576, 100)
 
 [node name="DialogBox" type="PanelContainer" parent="."]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 20.0
-offset_top = 260.0
-offset_right = 620.0
-offset_bottom = 340.0
+offset_left = 276.0
+offset_top = 250.0
+offset_right = 876.0
+offset_bottom = 330.0
 
 [node name="DialogLabel" type="Label" parent="DialogBox"]
 layout_mode = 2
@@ -37,23 +37,23 @@ autowrap_mode = 3
 [node name="ActionMenu" parent="." instance=ExtResource("2_actionmenu")]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 20.0
-offset_top = 350.0
-offset_right = 340.0
-offset_bottom = 430.0
+offset_left = 416.0
+offset_top = 345.0
+offset_right = 736.0
+offset_bottom = 425.0
 visible = false
 
 [node name="SubMenu" parent="." instance=ExtResource("3_submenu")]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 350.0
-offset_top = 350.0
-offset_right = 570.0
-offset_bottom = 430.0
+offset_left = 466.0
+offset_top = 345.0
+offset_right = 686.0
+offset_bottom = 425.0
 visible = false
 
 [node name="RhythmArena" parent="." instance=ExtResource("5_rhythmarena")]
-position = Vector2(320, 200)
+position = Vector2(576, 200)
 visible = false
 
 [node name="RhythmStrike" parent="." instance=ExtResource("6_rhythmstrike")]
@@ -66,9 +66,9 @@ visible = false
 [node name="EnemyNameplate" parent="." instance=ExtResource("7_nameplate")]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 240.0
+offset_left = 496.0
 offset_top = 155.0
-offset_right = 400.0
+offset_right = 656.0
 offset_bottom = 195.0
 
 [node name="BattleHUD" parent="." instance=ExtResource("4_battlehud")]
