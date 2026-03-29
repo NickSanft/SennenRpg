@@ -16,8 +16,8 @@ public partial class WorldMap : Node2D
 {
 	private const string PlayerScene  = "res://scenes/overworld/WorldMapPlayer.tscn";
 	private const string BattleScene  = "res://scenes/battle/BattleScene.tscn";
-	private const string DayBgmPath   = "";  // set to a world BGM path when available
-	private const string NightBgmPath = "";
+	private const string DayBgmPath   = "res://assets/music/Divora - Ominous Augury - DND 7 - 05 Drifting in the Astral Paring (Ambient).wav";
+	private const string NightBgmPath = "res://assets/music/Divora - Ominous Augury - DND 7 - 06 Drifting in the Astral Paring.wav";
 
 	[Export] public Array<EncounterData> DayEncounters   { get; set; } = new();
 	[Export] public Array<EncounterData> NightEncounters { get; set; } = new();
@@ -135,7 +135,7 @@ public partial class WorldMap : Node2D
 	public bool IsTilePassable(Vector2I tile)
 	{
 		var tileData = _collision.GetCellTileData(tile);
-		if (tileData == null) return false;   // out of bounds / empty = blocked
+		if (tileData == null) return true;    // no collision tile painted = passable
 		// AsBool() returns false when the custom data key doesn't exist (Nil variant)
 		return !tileData.GetCustomData("impassable").AsBool();
 	}

@@ -13,7 +13,8 @@ public partial class WorldMapPlayer : CharacterBody2D
 {
 	public const int TileSize = 16;
 
-	[Export] public float MoveTime { get; set; } = 0.18f;
+	[Export] public float MoveTime  { get; set; } = 0.18f;
+	[Export] public float HoldDelay { get; set; } = 0.35f;
 
 	[Signal] public delegate void StepTakenEventHandler(Vector2I newTile);
 
@@ -21,6 +22,8 @@ public partial class WorldMapPlayer : CharacterBody2D
 	private bool              _moving    = false;
 	private Vector2I          _facingDir = Vector2I.Down;
 	private WorldMap?         _worldMap;
+	private Vector2I          _heldDir   = Vector2I.Zero;
+	private float             _holdTimer = 0f;
 
 	public Vector2I CurrentTile => WorldToTile(Position);
 
@@ -41,26 +44,53 @@ public partial class WorldMapPlayer : CharacterBody2D
 		Position = TileToWorld(WorldToTile(Position));
 	}
 
-	public override void _UnhandledInput(InputEvent e)
+	public override void _Process(double delta)
 	{
 		if (Engine.IsEditorHint()) return;
-		if (_moving) return;
 		if (GameManager.Instance.CurrentState != GameState.Overworld) return;
 
-		Vector2I dir = Vector2I.Zero;
-		if      (e.IsActionPressed("move_up"))    { dir = Vector2I.Up;    _facingDir = Vector2I.Up; }
-		else if (e.IsActionPressed("move_down"))  { dir = Vector2I.Down;  _facingDir = Vector2I.Down; }
-		else if (e.IsActionPressed("move_left"))  { dir = Vector2I.Left;  _facingDir = Vector2I.Left; }
-		else if (e.IsActionPressed("move_right")) { dir = Vector2I.Right; _facingDir = Vector2I.Right; }
-		else return;
+		Vector2I dir = ReadDirection();
 
+		if (dir == Vector2I.Zero)
+		{
+			_heldDir   = Vector2I.Zero;
+			_holdTimer = 0f;
+			return;
+		}
+
+		if (dir != _heldDir)
+		{
+			// New direction pressed — move immediately
+			_heldDir   = dir;
+			_holdTimer = 0f;
+			if (!_moving) TryMoveDir(dir);
+			return;
+		}
+
+		// Same direction held — wait for HoldDelay then repeat each MoveTime
+		if (_moving) return;
+
+		_holdTimer += (float)delta;
+		if (_holdTimer >= HoldDelay)
+			TryMoveDir(dir);
+	}
+
+	private void TryMoveDir(Vector2I dir)
+	{
+		_facingDir = dir;
 		UpdateFacing();
 		Vector2I targetTile = CurrentTile + dir;
-
 		if (_worldMap != null && !_worldMap.IsTilePassable(targetTile)) return;
-
 		_ = DoMove(targetTile);
-		GetViewport().SetInputAsHandled();
+	}
+
+	private static Vector2I ReadDirection()
+	{
+		if (Input.IsActionPressed("move_up"))    return Vector2I.Up;
+		if (Input.IsActionPressed("move_down"))  return Vector2I.Down;
+		if (Input.IsActionPressed("move_left"))  return Vector2I.Left;
+		if (Input.IsActionPressed("move_right")) return Vector2I.Right;
+		return Vector2I.Zero;
 	}
 
 	private async Task DoMove(Vector2I targetTile)
