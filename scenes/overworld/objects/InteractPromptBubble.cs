@@ -66,7 +66,15 @@ public partial class InteractPromptBubble : Node2D
 
 	public override void _ExitTree()
 	{
+		// QueueFree the canvas (which also frees _screenNode and _bobNode as its children).
+		// Null all GodotObject fields immediately so Godot's hot-reload serializer does not
+		// encounter freed native objects when it runs SaveGodotObjectData this frame.
+		_tween?.Kill();
+		_tween      = null;
 		_canvas?.QueueFree();
+		_canvas     = null!;
+		_screenNode = null!;
+		_bobNode    = null!;
 	}
 
 	public void ShowBubble()
