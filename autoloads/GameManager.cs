@@ -52,6 +52,15 @@ public partial class GameManager : Node
 	// Single cached CharacterStats for EffectiveStats — never recreated to avoid GodotObject GCHandle races
 	private CharacterStats _effectiveStatsCache = new CharacterStats();
 
+	// World map state
+	public Vector2I WorldMapSpawnTile     { get; set; } = new Vector2I(10, 8);
+	public Vector2I WorldMapReturnTile    { get; set; } = Vector2I.Zero;
+	public bool     IsNight               { get; set; } = false;
+	public int      TilesWalkedOnWorldMap { get; set; } = 0;
+
+	// Kill tracking: keyed by EnemyData.EnemyId
+	public System.Collections.Generic.Dictionary<string, int> KillCounts { get; } = new();
+
 	public override void _Ready()
 	{
 		Instance = this;
@@ -257,6 +266,13 @@ public partial class GameManager : Node
 	public bool GetFlag(string key) => Flags.TryGetValue(key, out bool val) && val;
 	public void SetFlag(string key, bool value) => Flags[key] = value;
 
+	/// <summary>Increments the kill counter for the given enemy ID.</summary>
+	public void RecordKill(string enemyId)
+	{
+		KillCounts[enemyId] = KillCounts.GetValueOrDefault(enemyId, 0) + 1;
+		GD.Print($"[GameManager] Kill recorded: {enemyId} (total: {KillCounts[enemyId]})");
+	}
+
 	/// <summary>Resets all runtime state for a fresh new game.</summary>
 	public void ResetForNewGame()
 	{
@@ -282,6 +298,12 @@ public partial class GameManager : Node
 		OwnedEquipmentPaths.Add("res://resources/equipment/work_gloves.tres");
 		OwnedEquipmentPaths.Add("res://resources/equipment/lucky_charm.tres");
 		EquippedItemPaths.Clear();
+
+		WorldMapSpawnTile     = new Vector2I(10, 8);
+		WorldMapReturnTile    = Vector2I.Zero;
+		IsNight               = false;
+		TilesWalkedOnWorldMap = 0;
+		KillCounts.Clear();
 
 		const string statsPath = "res://resources/characters/player_stats.tres";
 		if (ResourceLoader.Exists(statsPath))
@@ -328,5 +350,11 @@ public partial class GameManager : Node
 			if (System.Enum.TryParse<EquipmentSlot>(kv.Key, out var slot))
 				EquippedItemPaths[slot] = kv.Value;
 		}
+
+		WorldMapSpawnTile     = new Vector2I(data.WorldMapSpawnTileX, data.WorldMapSpawnTileY);
+		IsNight               = data.IsNight;
+		TilesWalkedOnWorldMap = data.TilesWalkedOnWorldMap;
+		KillCounts.Clear();
+		foreach (var kv in data.KillCounts) KillCounts[kv.Key] = kv.Value;
 	}
 }

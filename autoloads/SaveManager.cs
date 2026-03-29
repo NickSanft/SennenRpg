@@ -27,6 +27,15 @@ public record SaveData
 	public List<string>              OwnedEquipmentPaths { get; init; } = new();
 	/// <summary>Slot enum name → resource path. Empty string means nothing equipped in that slot.</summary>
 	public Dictionary<string, string> EquippedItemPaths  { get; init; } = new();
+
+	// World map / progression state
+	public int    WorldMapSpawnTileX    { get; init; } = 10;
+	public int    WorldMapSpawnTileY    { get; init; } = 8;
+	public bool   IsNight               { get; init; } = false;
+	public int    TilesWalkedOnWorldMap { get; init; } = 0;
+	public Dictionary<string, int>  KillCounts        { get; init; } = new();
+	public List<string>             ActiveQuestIds    { get; init; } = new();
+	public List<string>             CompletedQuestIds { get; init; } = new();
 }
 
 public partial class SaveManager : Node
@@ -69,6 +78,11 @@ public partial class SaveManager : Node
 			KnownSpellPaths     = new List<string>(gm.KnownSpellPaths),
 			OwnedEquipmentPaths = new List<string>(gm.OwnedEquipmentPaths),
 			EquippedItemPaths   = SerialiseEquipped(gm.EquippedItemPaths),
+			WorldMapSpawnTileX    = gm.WorldMapSpawnTile.X,
+			WorldMapSpawnTileY    = gm.WorldMapSpawnTile.Y,
+			IsNight               = gm.IsNight,
+			TilesWalkedOnWorldMap = gm.TilesWalkedOnWorldMap,
+			KillCounts            = new Dictionary<string, int>(gm.KillCounts),
 		};
 
 		string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
