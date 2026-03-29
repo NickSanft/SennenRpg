@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="QuestData" format=3]
+
+[ext_resource type="Script" path="res://core/data/QuestData.cs" id="1_QuestData"]
+
+[resource]
+script = ExtResource("1_QuestData")
+QuestId = "rork_wisplet_hunt"
+Title = "Rork's Request"
+Description = "Rork wants you to deal with the Wisplets near town. Kill one and report back."
+BaseExpReward = 150
+ConditionTypes = PackedStringArray("KillCount")
+ConditionTargetIds = PackedStringArray("wisplet")
+ConditionCounts = PackedInt32Array(1)
+RewardLabels = PackedStringArray("Iron Sword  (+5 ATK)", "Lucky Charm  (+10 LCK)", "Bag of Gold  (50g)")
+RewardExpBonuses = PackedInt32Array(0, 0, 0)
+RewardItemPaths = PackedStringArray("res://resources/equipment/iron_sword.tres", "res://resources/equipment/lucky_charm.tres", "")
+RewardGoldBonuses = PackedInt32Array(0, 0, 50)
