@@ -15,8 +15,10 @@ size = Vector2(16, 16)
 [node name="DungeonFloor2" unique_id=1459711505 instance=ExtResource("1_base")]
 script = ExtResource("2_script")
 MapId = "Dungeon - Floor 2"
+UseSmallPlayer = true
 
 [node name="Ground" parent="." index="1" unique_id=1739729204]
+tile_map_data = PackedByteArray("AAADAAQAAAABAAEAAAAIAAQAAAABAAEAAAA=")
 tile_set = ExtResource("3_tileset")
 
 [node name="Ground" parent="Ground" index="0" unique_id=1278619425]
@@ -30,17 +32,17 @@ tile_set = ExtResource("3_tileset")
 tile_set = ExtResource("3_tileset")
 
 [node name="StairsUpSpawn" type="Node2D" parent="." index="7" unique_id=1853986457]
-position = Vector2(64, 64)
+position = Vector2(72, 72)
 script = ExtResource("4_spawn")
 SpawnId = "stairs_up"
 
 [node name="StairsDownSpawn" type="Node2D" parent="." index="8" unique_id=681581576]
-position = Vector2(128, 64)
+position = Vector2(120, 72)
 script = ExtResource("4_spawn")
 SpawnId = "stairs_down"
 
 [node name="StairsUp" type="Area2D" parent="." index="9" unique_id=166269314]
-position = Vector2(64, 64)
+position = Vector2(48, 64)
 script = ExtResource("5_mapexit")
 TargetMapPath = "res://scenes/overworld/maps/dungeon/DungeonFloor1.tscn"
 TargetSpawnId = "stairs_down"
@@ -48,7 +50,7 @@ AutoTrigger = true
 ExitHint = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StairsUp" index="0" unique_id=1988918646]
-position = Vector2(-8, -8)
+position = Vector2(8, 8)
 shape = SubResource("Shape_StairsUp")
 
 [node name="StairsDown" type="Area2D" parent="." index="10" unique_id=763423636]
@@ -60,5 +62,5 @@ AutoTrigger = true
 ExitHint = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StairsDown" index="0" unique_id=942200754]
-position = Vector2(8, -8)
+position = Vector2(8, 8)
 shape = SubResource("Shape_StairsDown")

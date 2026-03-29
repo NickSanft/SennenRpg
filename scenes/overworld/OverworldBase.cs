@@ -9,8 +9,14 @@ namespace SennenRpg.Scenes.Overworld;
 
 public partial class OverworldBase : Node2D
 {
-	[Export] public string MapId   { get; set; } = "";
-	[Export] public string BgmPath { get; set; } = "";
+	[Export] public string MapId        { get; set; } = "";
+	[Export] public string BgmPath      { get; set; } = "";
+
+	/// <summary>
+	/// When true, spawns DungeonPlayer (16×16 Sen_Overworld sprite, grid-locked movement)
+	/// instead of the default Player (32×32, free movement). Set on dungeon floor scenes.
+	/// </summary>
+	[Export] public bool UseSmallPlayer { get; set; } = false;
 
 	/// <summary>
 	/// Encounters rolled during overworld movement. Each entry is checked independently
@@ -47,7 +53,10 @@ public partial class OverworldBase : Node2D
 		GameManager.Instance.SetState(GameState.Overworld);
 
 		// Spawn player into YSort so it Y-sorts with NPCs
-		var playerScene = GD.Load<PackedScene>("res://scenes/player/Player.tscn");
+		string playerPath = UseSmallPlayer
+			? "res://scenes/player/DungeonPlayer.tscn"
+			: "res://scenes/player/Player.tscn";
+		var playerScene = GD.Load<PackedScene>(playerPath);
 		_player = playerScene.Instantiate<CharacterBody2D>();
 		YSort.AddChild(_player);
 		_player.GlobalPosition = GetSpawnPosition();

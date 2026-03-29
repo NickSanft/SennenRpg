@@ -14,6 +14,7 @@ size = Vector2(16, 16)
 
 [node name="DungeonFloor1" unique_id=1983848172 instance=ExtResource("1_base")]
 script = ExtResource("2_script")
+UseSmallPlayer = true
 SurfaceReturnTile = Vector2i(8, 12)
 
 [node name="Ground" parent="." index="1" unique_id=1739729204]
@@ -30,12 +31,12 @@ tile_set = ExtResource("3_tileset")
 tile_set = ExtResource("3_tileset")
 
 [node name="EntranceSpawn" type="Node2D" parent="." index="7" unique_id=1022997610]
-position = Vector2(64, 64)
+position = Vector2(72, 72)
 script = ExtResource("4_spawn")
 SpawnId = "entrance"
 
 [node name="StairsDownSpawn" type="Node2D" parent="." index="8" unique_id=2039232628]
-position = Vector2(128, 64)
+position = Vector2(120, 72)
 script = ExtResource("4_spawn")
 SpawnId = "stairs_down"
 
@@ -52,8 +53,8 @@ position = Vector2(8, 8)
 shape = SubResource("Shape_StairsDown")
 
 [node name="StairsUp" type="Area2D" parent="." index="10" unique_id=2021648]
-position = Vector2(64, 64)
+position = Vector2(48, 64)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StairsUp" index="0" unique_id=2116324280]
-position = Vector2(-8, 8)
+position = Vector2(8, 8)
 shape = SubResource("Shape_StairsUp")

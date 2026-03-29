@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EnemyData" format=3 uid="uid://dungeon_warden_01"]
+[gd_resource type="Resource" script_class="EnemyData" format=3 uid="uid://b40epllnx5foh"]
 
 [ext_resource type="Script" uid="uid://c5d22rd36ltx4" path="res://core/data/EnemyData.cs" id="1_EnemyData"]
 [ext_resource type="Script" uid="uid://dqonjuygth0gq" path="res://core/data/CharacterStats.cs" id="2_CharacterStats"]
@@ -24,7 +24,7 @@ Stats = SubResource("CharacterStats_1")
 BattleBpm = 110.0
 BardicActOptions = PackedStringArray("Lullaby", "Dirge")
 ActOptions = PackedStringArray("Check", "Examine Cracks", "Speak")
-ActResultTexts = PackedStringArray("* 80 HP. Ancient and unyielding.", "* Deep fissures run through its stone hide.\n* It doesn't seem to notice.", "* ...\n* It does not speak.")
+ActResultTexts = PackedStringArray("* 80 HP. Ancient and unyielding.", "* Deep fissures run through its stone hide.\n* It doesn\'t seem to notice.", "* ...\n* It does not speak.")
 BattleDialogLines = PackedStringArray("* ...", "* (The ground trembles.)", "* (Its eyes burn with pale fire.)", "* INTRUDER.")
 GoldDrop = 50
 ExpDrop = 500
