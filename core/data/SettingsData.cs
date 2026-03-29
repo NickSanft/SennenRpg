@@ -1,0 +1,46 @@
+using System.Collections.Generic;
+
+namespace SennenRpg.Core.Data;
+
+// ── Enums ─────────────────────────────────────────────────────────────────────
+
+public enum TextSize           { Small, Medium, Large }
+public enum ColorblindMode     { Normal, Protanopia, Deuteranopia, Tritanopia }
+public enum BattleDifficulty   { Easy, Normal, Hard }
+public enum EncounterRateMode  { Normal, Low, Off }
+public enum RhythmTimingWindow { Tight, Normal, Forgiving, AutoHit }
+public enum BattleTextSpeed    { Slow, Normal, Fast, Instant }
+
+/// <summary>
+/// Immutable record holding all player settings.
+/// No Godot dependency — serialised to/from user://settings.json by SettingsManager.
+/// </summary>
+public record SettingsData
+{
+    // ── Audio ──────────────────────────────────────────────────────────
+    public float MasterVolume       { get; init; } = 1.0f;
+    public float BgmVolume          { get; init; } = 0.8f;
+    public float SfxVolume          { get; init; } = 1.0f;
+    public float DialogTypingVolume { get; init; } = 0.6f;
+
+    // ── Display ────────────────────────────────────────────────────────
+    public TextSize       TextSize           { get; init; } = TextSize.Medium;
+    public bool           HighContrastMode   { get; init; } = false;
+    public ColorblindMode ColorblindMode     { get; init; } = ColorblindMode.Normal;
+    public bool           ScreenFlashEffects { get; init; } = true;
+
+    // ── Gameplay ───────────────────────────────────────────────────────
+    public BattleDifficulty   BattleDifficulty   { get; init; } = BattleDifficulty.Normal;
+    public EncounterRateMode  EncounterRateMode  { get; init; } = EncounterRateMode.Normal;
+    public RhythmTimingWindow RhythmTimingWindow { get; init; } = RhythmTimingWindow.Normal;
+    public BattleTextSpeed    BattleTextSpeed    { get; init; } = BattleTextSpeed.Normal;
+    public bool               AutoAdvanceDialog  { get; init; } = false;
+
+    // ── Subtitles / Dialog ─────────────────────────────────────────────
+    public bool AlwaysShowSpeakerName { get; init; } = true;
+    public bool DialogHistoryEnabled  { get; init; } = true;
+
+    // ── Controls ──────────────────────────────────────────────────────
+    /// <summary>Action name → Godot Key enum integer. Empty = use project defaults.</summary>
+    public Dictionary<string, int> KeyBindings { get; init; } = new();
+}
