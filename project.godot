@@ -29,6 +29,7 @@ DialogRegistry="*res://autoloads/DialogRegistry.cs"
 RhythmClock="*res://autoloads/RhythmClock.cs"
 QuestManager="*res://autoloads/QuestManager.cs"
 SettingsManager="*res://autoloads/SettingsManager.cs"
+AccessibilityOverlay="*res://autoloads/AccessibilityOverlay.cs"
 
 [dialogic]
 

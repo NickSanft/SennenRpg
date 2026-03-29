@@ -54,6 +54,7 @@ public partial class SettingsManager : Node
         ApplyTextSize(Current);
         ApplyColorblind(Current);
         ApplyHighContrast(Current);
+        AccessibilityOverlay.Instance?.Apply(Current.ColorblindMode, Current.HighContrastMode);
     }
 
     // ── Persistence ───────────────────────────────────────────────────────
@@ -99,6 +100,8 @@ public partial class SettingsManager : Node
         ApplyTextSize(s);
         ApplyColorblind(s);
         ApplyHighContrast(s);
+        // Full-screen shader: affects all sprites, tiles, and HUDs
+        AccessibilityOverlay.Instance?.Apply(s.ColorblindMode, s.HighContrastMode);
     }
 
     // ── Audio ─────────────────────────────────────────────────────────────
