@@ -698,6 +698,10 @@ public partial class BattleScene : Node2D
 		RhythmClock.Instance.Stop();
 		AudioManager.Instance.StopBgm(fadeTime: 0.5f);
 
+		// Record kill for quest tracking
+		if (!string.IsNullOrEmpty(_enemy?.EnemyId))
+			GameManager.Instance.RecordKill(_enemy.EnemyId);
+
 		int gold = _enemy?.GoldDrop ?? 0;
 		int exp  = _enemy?.ExpDrop  ?? 0;
 		GameManager.Instance.AddGold(gold);

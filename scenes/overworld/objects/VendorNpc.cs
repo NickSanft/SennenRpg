@@ -34,8 +34,19 @@ public partial class VendorNpc : Npc
 		if (player is Node2D p2d)
 			FaceToward(p2d.GlobalPosition);
 
-		// Use Dialog state to block player movement during the shop interaction
 		GameManager.Instance.SetState(GameState.Dialog);
+
+		// When a QuestGiver child is present, offer Talk and Shop as separate options
+		if (GetNodeOrNull<QuestGiver>("QuestGiver") != null)
+		{
+			var menu = new NpcInteractMenu();
+			GetTree().Root.AddChild(menu);
+			menu.Open("", showShop: true);
+			menu.TalkSelected += () => base.Interact(player);
+			menu.ShopSelected += OpenShop;
+			menu.Cancelled    += () => GameManager.Instance.SetState(GameState.Overworld);
+			return;
+		}
 
 		string timeline = Npc.SelectTimeline(TimelinePath, AltRequiredFlags, AltTimelinePaths,
 			GameManager.Instance.GetFlag);

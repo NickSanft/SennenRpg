@@ -264,13 +264,19 @@ public partial class GameManager : Node
 	}
 
 	public bool GetFlag(string key) => Flags.TryGetValue(key, out bool val) && val;
-	public void SetFlag(string key, bool value) => Flags[key] = value;
 
-	/// <summary>Increments the kill counter for the given enemy ID.</summary>
+	public void SetFlag(string key, bool value)
+	{
+		Flags[key] = value;
+		QuestManager.Instance?.NotifyFlagChanged(key);
+	}
+
+	/// <summary>Increments the kill counter for the given enemy ID and notifies QuestManager.</summary>
 	public void RecordKill(string enemyId)
 	{
 		KillCounts[enemyId] = KillCounts.GetValueOrDefault(enemyId, 0) + 1;
 		GD.Print($"[GameManager] Kill recorded: {enemyId} (total: {KillCounts[enemyId]})");
+		QuestManager.Instance?.NotifyKill(enemyId);
 	}
 
 	/// <summary>Resets all runtime state for a fresh new game.</summary>

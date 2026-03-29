@@ -11,11 +11,13 @@ namespace SennenRpg.Scenes.Overworld;
 public partial class NpcInteractMenu : CanvasLayer
 {
 	[Signal] public delegate void TalkSelectedEventHandler();
+	[Signal] public delegate void ShopSelectedEventHandler();
 	[Signal] public delegate void CancelledEventHandler();
 
 	private Panel         _panel         = null!;
 	private VBoxContainer _vbox          = null!;
 	private Button        _talkButton    = null!;
+	private Button        _shopButton    = null!;
 	private Button        _examineButton = null!;
 	private Button        _cancelButton  = null!;
 	private Label         _descLabel     = null!;
@@ -23,6 +25,7 @@ public partial class NpcInteractMenu : CanvasLayer
 
 	private string _description = "";
 	private bool   _showingDesc;
+	private bool   _showShop;
 
 	public override void _Ready()
 	{
@@ -61,6 +64,10 @@ public partial class NpcInteractMenu : CanvasLayer
 		_talkButton.Pressed += OnTalk;
 		_vbox.AddChild(_talkButton);
 
+		_shopButton = new Button { Text = "Shop", Visible = false };
+		_shopButton.Pressed += OnShop;
+		_vbox.AddChild(_shopButton);
+
 		_examineButton = new Button { Text = "Examine" };
 		_examineButton.Pressed += OnExamine;
 		_vbox.AddChild(_examineButton);
@@ -98,9 +105,12 @@ public partial class NpcInteractMenu : CanvasLayer
 	}
 
 	/// <summary>Populate and display the menu. Call after adding to the scene tree.</summary>
-	public void Open(string description)
+	/// <param name="description">Character description shown by Examine, or empty to hide Examine.</param>
+	/// <param name="showShop">When true, shows a Shop button that emits ShopSelected.</param>
+	public void Open(string description, bool showShop = false)
 	{
 		_description = description;
+		_showShop    = showShop;
 		ShowMainButtons();
 	}
 
@@ -110,6 +120,7 @@ public partial class NpcInteractMenu : CanvasLayer
 	{
 		_showingDesc = false;
 		_talkButton.Visible    = true;
+		_shopButton.Visible    = _showShop;
 		_examineButton.Visible = !string.IsNullOrEmpty(_description);
 		_cancelButton.Visible  = true;
 		_descLabel.Visible     = false;
@@ -138,6 +149,12 @@ public partial class NpcInteractMenu : CanvasLayer
 	{
 		QueueFree();
 		EmitSignal(SignalName.TalkSelected);
+	}
+
+	private void OnShop()
+	{
+		QueueFree();
+		EmitSignal(SignalName.ShopSelected);
 	}
 
 	private void OnExamine() => ShowDescView();

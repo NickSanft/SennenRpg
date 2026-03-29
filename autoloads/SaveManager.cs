@@ -83,6 +83,8 @@ public partial class SaveManager : Node
 			IsNight               = gm.IsNight,
 			TilesWalkedOnWorldMap = gm.TilesWalkedOnWorldMap,
 			KillCounts            = new Dictionary<string, int>(gm.KillCounts),
+			ActiveQuestIds    = QuestManager.Instance.GetActiveQuestIds(),
+			CompletedQuestIds = QuestManager.Instance.GetCompletedQuestIds(),
 		};
 
 		string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
@@ -104,6 +106,7 @@ public partial class SaveManager : Node
 	public void ApplyLoadedData(SaveData data)
 	{
 		GameManager.Instance.ApplySaveData(data);
+		QuestManager.Instance.ApplySaveData(data.ActiveQuestIds, data.CompletedQuestIds);
 	}
 
 	private static Dictionary<string, string> SerialiseEquipped(
