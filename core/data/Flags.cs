@@ -62,6 +62,19 @@ public static class Flags
     /// <summary>Set when the player walks close to the northern exit in the test room.</summary>
     public const string SeenNorthExitHint = "seen_north_exit_hint";
 
+    // ── Dungeon flags ─────────────────────────────────────────────────────
+
+    /// <summary>Set the first time the player enters the dungeon from the world map.</summary>
+    public const string DungeonDiscovered = "dungeon_discovered";
+
+    /// <summary>Set when the dungeon boss on floor 3 is defeated.</summary>
+    public const string DungeonBossDefeated = "dungeon_boss_defeated";
+
+    // ── Meta / flow flags ─────────────────────────────────────────────────
+
+    /// <summary>Set after the introductory cutscene plays on a new game. Prevents it replaying.</summary>
+    public const string IntroCutsceneSeen = "intro_cutscene_seen";
+
     // ── Helper ───────────────────────────────────────────────────────────────
 
     /// <summary>

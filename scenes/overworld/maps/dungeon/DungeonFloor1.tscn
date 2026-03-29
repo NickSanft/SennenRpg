@@ -1,0 +1,68 @@
+[gd_scene format=3 uid="uid://dungeonfloor001"]
+
+[ext_resource type="PackedScene" uid="uid://bs06dan353qo1" path="res://scenes/overworld/overworld_base.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scenes/overworld/maps/dungeon/DungeonFloor1.cs" id="2_script"]
+[ext_resource type="TileSet" uid="uid://sennentiles_shared" path="res://resources/tilesets/sennen_tiles.tres" id="3_tileset"]
+[ext_resource type="Script" path="res://scenes/overworld/objects/SpawnPoint.cs" id="4_spawn"]
+[ext_resource type="Script" path="res://scenes/overworld/objects/MapExit.cs" id="5_mapexit"]
+
+[sub_resource type="RectangleShape2D" id="Shape_StairsDown"]
+size = Vector2(16, 16)
+
+[sub_resource type="RectangleShape2D" id="Shape_StairsUp"]
+size = Vector2(16, 16)
+
+[node name="DungeonFloor1" instance=ExtResource("1_base")]
+script = ExtResource("2_script")
+MapId = "Dungeon - Floor 1"
+BgmPath = ""
+
+; ── Tile layers ──────────────────────────────────────────────────────────────
+; Tile data is left empty — paint tiles in the Godot editor.
+
+[node name="Ground" parent="Ground" type="TileMapLayer" parent_id_path=PackedInt32Array(1739729204)]
+tile_set = ExtResource("3_tileset")
+
+[node name="Walls" parent="." type="TileMapLayer" parent_id_path=PackedInt32Array(429113068)]
+tile_set = ExtResource("3_tileset")
+
+[node name="Objects" parent="." type="TileMapLayer" parent_id_path=PackedInt32Array(1501605227)]
+tile_set = ExtResource("3_tileset")
+
+; ── Spawn points ─────────────────────────────────────────────────────────────
+; Move these nodes in the editor to the correct tile positions.
+
+[node name="SpawnPoints" type="Node2D" parent="."]
+
+[node name="EntranceSpawn" type="Node2D" parent="SpawnPoints"]
+script = ExtResource("4_spawn")
+SpawnId = "entrance"
+position = Vector2(64, 64)
+
+[node name="StairsDownSpawn" type="Node2D" parent="SpawnPoints"]
+script = ExtResource("4_spawn")
+SpawnId = "stairs_down"
+position = Vector2(128, 64)
+
+; ── Exits ─────────────────────────────────────────────────────────────────────
+
+; StairsDown — leads to Floor 2. AutoTrigger fires when player walks into it.
+[node name="StairsDown" type="Area2D" parent="."]
+script = ExtResource("5_mapexit")
+position = Vector2(128, 64)
+TargetMapPath = "res://scenes/overworld/maps/dungeon/DungeonFloor2.tscn"
+TargetSpawnId = "stairs_up"
+AutoTrigger = true
+ExitHint = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StairsDown"]
+shape = SubResource("Shape_StairsDown")
+
+; StairsUp — returns to the world map surface. Handled by DungeonFloor1.cs.
+[node name="StairsUp" type="Area2D" parent="."]
+position = Vector2(64, 64)
+collision_layer = 1
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StairsUp"]
+shape = SubResource("Shape_StairsUp")
