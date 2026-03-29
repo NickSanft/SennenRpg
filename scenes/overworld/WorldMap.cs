@@ -57,7 +57,7 @@ public partial class WorldMap : Node2D
 		_dayNight.ApplyImmediate(gm.IsNight);
 
 		// Register this as the current map so battle returns here
-		gm.LastMapPath = "res://scenes/overworld/WorldMap.tscn";
+		gm.SetLastMap("res://scenes/overworld/WorldMap.tscn");
 		gm.SetState(GameState.Overworld);
 
 		ApplyDayNightBgm(animate: false);
@@ -136,7 +136,8 @@ public partial class WorldMap : Node2D
 	{
 		var tileData = _collision.GetCellTileData(tile);
 		if (tileData == null) return false;   // out of bounds / empty = blocked
-		return !(bool)(tileData.GetCustomData("impassable") ?? (Variant)false);
+		// AsBool() returns false when the custom data key doesn't exist (Nil variant)
+		return !tileData.GetCustomData("impassable").AsBool();
 	}
 
 	// ── BGM ───────────────────────────────────────────────────────────────────

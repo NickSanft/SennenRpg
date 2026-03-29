@@ -62,10 +62,10 @@ public partial class Npc : CharacterBody2D, IInteractable
 	private Vector2[]              _patrolRoute  = [];
 	private int                    _patrolIndex  = 0;
 	private float                  _patrolWait   = 0f;  // countdown between waypoints
-	private bool                   _patrolActive = false;
+	protected bool                 _patrolActive = false;
 	private bool                   _emoteShown;
-	private string                 _characterDescription = "";
-	private Node?                  _pendingPlayer;
+	protected string               _characterDescription = "";
+	protected Node?                _pendingPlayer;
 	private CanvasLayer?           _nameCanvas;
 	private Node2D?                _nameLabelNode;
 
@@ -236,12 +236,12 @@ public partial class Npc : CharacterBody2D, IInteractable
 		StartTalkSequence();
 	}
 
-	private void OnMenuTalkSelected()
+	protected virtual void OnMenuTalkSelected()
 	{
 		StartTalkSequence();
 	}
 
-	private void OnMenuCancelled()
+	protected virtual void OnMenuCancelled()
 	{
 		_pendingPlayer = null;
 		_patrolActive  = PatrolPoints.Length >= 1;

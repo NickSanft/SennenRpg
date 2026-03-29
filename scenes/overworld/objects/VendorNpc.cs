@@ -36,15 +36,22 @@ public partial class VendorNpc : Npc
 
 		GameManager.Instance.SetState(GameState.Dialog);
 
-		// When a QuestGiver child is present, offer Talk and Shop as separate options
+		// When a QuestGiver child is present, show Talk / Shop / [Examine] / Cancel
+		// in a single menu rather than two nested menus.
 		if (GetNodeOrNull<QuestGiver>("QuestGiver") != null)
 		{
+			_patrolActive  = false;
+			Velocity       = Vector2.Zero;
+			_pendingPlayer = player;
+			if (player is Node2D p2d2) FaceToward(p2d2.GlobalPosition);
+
+			GameManager.Instance.SetState(GameState.Dialog);
 			var menu = new NpcInteractMenu();
 			GetTree().Root.AddChild(menu);
-			menu.Open("", showShop: true);
-			menu.TalkSelected += () => base.Interact(player);
+			menu.Open(_characterDescription, showShop: true);
+			menu.TalkSelected += OnMenuTalkSelected;
 			menu.ShopSelected += OpenShop;
-			menu.Cancelled    += () => GameManager.Instance.SetState(GameState.Overworld);
+			menu.Cancelled    += OnMenuCancelled;
 			return;
 		}
 
