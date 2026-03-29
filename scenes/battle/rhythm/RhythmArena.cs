@@ -1,6 +1,7 @@
 using Godot;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
+using static SennenRpg.Core.Data.RhythmTimingWindow;
 
 namespace SennenRpg.Scenes.Battle;
 
@@ -32,9 +33,21 @@ public partial class RhythmArena : Node2D
     public static readonly float[] LaneCenterY = { -54f, -18f, 18f, 54f };
 
     // ── Hit-window constants (pixels) ─────────────────────────────────
-    public const float GoodWindowPx    = 22f;
-    public const float PerfectWindowPx = 9f;
-    private const float MissGracePx   = 10f;
+    // Base values used when SettingsManager is unavailable (editor, tests).
+    private const float BaseGoodWindowPx    = 22f;
+    private const float BasePerfectWindowPx = 9f;
+    private const float MissGracePx         = 10f;
+
+    private RhythmTimingWindow TimingWindow
+        => SettingsManager.Instance?.Current.RhythmTimingWindow ?? Normal;
+
+    private float GoodWindowPx
+        => SettingsLogic.RhythmGoodWindowPx(TimingWindow);
+
+    private float PerfectWindowPx
+        => SettingsLogic.RhythmPerfectWindowPx(TimingWindow);
+
+    private bool IsAutoHit => TimingWindow == AutoHit;
 
     // ── Node references ───────────────────────────────────────────────
     public Node2D ObstacleContainer { get; private set; } = null!;
@@ -165,7 +178,8 @@ public partial class RhythmArena : Node2D
         QueueRedraw();
 
         float dt    = (float)delta;
-        float missX = HitZoneX + GoodWindowPx + MissGracePx;
+        float safeWindow = GoodWindowPx >= float.MaxValue / 2f ? float.MaxValue / 4f : GoodWindowPx;
+        float missX = HitZoneX + safeWindow + MissGracePx;
 
         // Advance held-note timers
         for (int lane = 0; lane < LaneCenterY.Length; lane++)
@@ -187,6 +201,8 @@ public partial class RhythmArena : Node2D
             }
         }
 
+        bool autoHit = IsAutoHit;
+
         // Move and miss-check obstacles
         foreach (Node child in ObstacleContainer.GetChildren())
         {
@@ -194,6 +210,16 @@ public partial class RhythmArena : Node2D
             if (obs is HoldObstacle heldObs && heldObs.IsBeingHeld) continue;
 
             obs.Position += new Vector2(obs.TravelSpeed * dt, 0f);
+
+            // AutoHit: resolve as Perfect when note reaches the hit zone
+            if (autoHit && obs.Position.X >= HitZoneX - 5f)
+            {
+                obs.Resolve(HitGrade.Perfect);
+                EmitSignal(SignalName.NoteHit, (int)HitGrade.Perfect);
+                ShowFeedback(HitGrade.Perfect, obs.Lane);
+                RecordHit(HitGrade.Perfect);
+                continue;
+            }
 
             if (obs.Position.X > missX)
             {
@@ -241,8 +267,9 @@ public partial class RhythmArena : Node2D
                 if (child is not ObstacleBase obs || obs.IsResolved || obs.Lane != lane) continue;
                 if (obs is HoldObstacle h && h.IsBeingHeld) continue;
 
+                float safeGoodWindow = GoodWindowPx >= float.MaxValue / 2f ? float.MaxValue / 4f : GoodWindowPx;
                 float dist = Mathf.Abs(obs.Position.X - HitZoneX);
-                if (dist <= GoodWindowPx + MissGracePx && dist < bestDist)
+                if (dist <= safeGoodWindow + MissGracePx && dist < bestDist)
                 {
                     best     = obs;
                     bestDist = dist;
@@ -259,8 +286,9 @@ public partial class RhythmArena : Node2D
                 }
                 else
                 {
-                    float deviationSec = bestDist / best.TravelSpeed;
-                    var   grade        = RhythmConstants.GradeDeviation(deviationSec);
+                    float deviationSec  = bestDist / best.TravelSpeed;
+                    float timingScale   = SettingsLogic.RhythmTimingScale(TimingWindow);
+                    var   grade         = RhythmConstants.GradeDeviationScaled(deviationSec, timingScale);
                     best.Resolve(grade);
                     EmitSignal(SignalName.NoteHit, (int)grade);
                     ShowFeedback(grade, lane);

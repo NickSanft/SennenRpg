@@ -1,5 +1,6 @@
 using Godot;
 using System.Threading.Tasks;
+using SennenRpg.Autoloads;
 
 namespace SennenRpg.Scenes.Overworld;
 
@@ -40,7 +41,8 @@ public partial class DayNightOverlay : CanvasLayer
 	{
 		Color target = toNight ? NightColor : DayColor;
 		var tween = CreateTween();
-		tween.TweenProperty(_overlay, "color", Colors.White with { A = 0.55f }, 0.25f);
+		if (SettingsManager.Instance?.Current.ScreenFlashEffects != false)
+			tween.TweenProperty(_overlay, "color", Colors.White with { A = 0.55f }, 0.25f);
 		tween.TweenProperty(_overlay, "color", target, 2.5f);
 		await ToSignal(tween, Tween.SignalName.Finished);
 	}

@@ -40,6 +40,8 @@
         <Compile Include="../core/data/QuestCondition.cs" />
         <Compile Include="../core/data/QuestRewardOption.cs" />
         <Compile Include="../core/data/QuestLogic.cs" />
+        <Compile Include="../core/data/SettingsData.cs" />
+        <Compile Include="../core/data/SettingsLogic.cs" />
     </ItemGroup>
 
 </Project>

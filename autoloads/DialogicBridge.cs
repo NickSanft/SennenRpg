@@ -230,6 +230,20 @@ public partial class DialogicBridge : Node
 		return varSubsystem?.Call("get_variable", name) ?? default;
 	}
 
+	/// <summary>
+	/// Applies text speed and auto-advance settings to Dialogic's Text subsystem.
+	/// Called by SettingsManager whenever those settings change.
+	/// charsPerSecond = 0 means instant (no typing animation).
+	/// </summary>
+	public void ApplyTextSettings(float charsPerSecond, bool autoAdvance)
+	{
+		if (_dialogic == null) return;
+		var textSys = _dialogic.Call("get_subsystem", "Text").AsGodotObject();
+		if (textSys == null) return;
+		textSys.Set("speed", charsPerSecond);
+		textSys.Set("auto_advance", autoAdvance);
+	}
+
 	/// <summary>Connect a callback to fire when the current timeline ends.</summary>
 	public void ConnectTimelineEnded(Callable callback)
 	{

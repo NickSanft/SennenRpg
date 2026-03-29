@@ -18,6 +18,14 @@ public partial class AudioManager : Node
 	private AudioStreamPlayer[] _sfxPool = null!;
 	private int _sfxPoolIndex = 0;
 
+	// Volume state (linear 0–1)
+	private float _masterLinear = 1f;
+	private float _bgmLinear    = 0.8f;
+	private float _sfxLinear    = 1f;
+
+	private float BgmTargetDb => SettingsLogic.LinearToDb(_masterLinear * _bgmLinear);
+	private float SfxTargetDb => SettingsLogic.LinearToDb(_masterLinear * _sfxLinear);
+
 	public override void _Ready()
 	{
 		Instance    = this;
@@ -62,8 +70,28 @@ public partial class AudioManager : Node
 
 		var tween = CreateTween();
 		tween.TweenProperty(outgoing, "volume_db", -80f, fadeTime);
-		tween.Parallel().TweenProperty(incoming, "volume_db", 0f, fadeTime);
+		tween.Parallel().TweenProperty(incoming, "volume_db", BgmTargetDb, fadeTime);
 		tween.TweenCallback(Callable.From(outgoing.Stop));
+	}
+
+	/// <summary>
+	/// Applies volume settings from SettingsManager. All values are linear 0–1.
+	/// Changes take effect immediately on all currently-playing players.
+	/// </summary>
+	public void SetVolumes(float master, float bgm, float sfx, float _dialogTyping)
+	{
+		_masterLinear = Mathf.Clamp(master, 0f, 1f);
+		_bgmLinear    = Mathf.Clamp(bgm,    0f, 1f);
+		_sfxLinear    = Mathf.Clamp(sfx,    0f, 1f);
+
+		// Apply to BGM players that are currently active
+		if (_bgmPlayer.Playing)  _bgmPlayer.VolumeDb  = BgmTargetDb;
+		if (_bgmPlayerB.Playing) _bgmPlayerB.VolumeDb = BgmTargetDb;
+
+		// Apply to SFX pool
+		float sfxDb = SfxTargetDb;
+		foreach (var player in _sfxPool)
+			player.VolumeDb = sfxDb;
 	}
 
 	public void StopBgm(float fadeTime = 1.0f)

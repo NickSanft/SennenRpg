@@ -28,6 +28,7 @@ Dialogic="*uid://ds2q0uclmolvu"
 DialogRegistry="*res://autoloads/DialogRegistry.cs"
 RhythmClock="*res://autoloads/RhythmClock.cs"
 QuestManager="*res://autoloads/QuestManager.cs"
+SettingsManager="*res://autoloads/SettingsManager.cs"
 
 [dialogic]
 

@@ -118,7 +118,9 @@ public partial class WorldMap : Node2D
 		var enc = gm.IsNight ? NightEncounters : DayEncounters;
 		if (enc.Count == 0) return;
 
-		float rate = EncounterLogic.EncounterRate(gm.EffectiveStats.Luck, gm.IsNight);
+		float rate = EncounterLogic.EncounterRate(gm.EffectiveStats.Luck, gm.IsNight)
+				   * SettingsLogic.EncounterRateMultiplier(
+						SettingsManager.Instance?.Current.EncounterRateMode ?? EncounterRateMode.Normal);
 		if (GD.Randf() >= rate) return;
 
 		var chosen = enc[(int)GD.RandRange(0, enc.Count - 1)];

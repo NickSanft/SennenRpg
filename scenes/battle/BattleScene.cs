@@ -26,6 +26,7 @@ public partial class BattleScene : Node2D
 	private int         _enemyCurrentHp;
 	private SubMenuMode _subMenuMode;
 	private bool        _playerGoesFirst;
+	private float       _difficultyMultiplier = 1f;
 
 	// ── Node references ───────────────────────────────────────────────
 	private Node2D          _enemyArea      = null!;
@@ -124,7 +125,9 @@ public partial class BattleScene : Node2D
 		else
 			GD.PushWarning("[BattleScene] No pending encounter — using placeholder enemy.");
 
-		_enemyCurrentHp = _enemy?.Stats?.MaxHp ?? 10;
+		_difficultyMultiplier = SettingsLogic.EnemyDifficultyMultiplier(
+			SettingsManager.Instance?.Current.BattleDifficulty ?? BattleDifficulty.Normal);
+		_enemyCurrentHp = Math.Max(1, (int)((_enemy?.Stats?.MaxHp ?? 10) * _difficultyMultiplier));
 
 		_playerGoesFirst = BattleFormulas.PlayerGoesFirst(
 			GameManager.Instance.EffectiveStats.Speed,
@@ -679,9 +682,10 @@ public partial class BattleScene : Node2D
 
 	private void OnPlayerHurt(int damage)
 	{
-		GameManager.Instance.HurtPlayer(damage);
+		int scaledDamage = Math.Max(1, (int)(damage * _difficultyMultiplier));
+		GameManager.Instance.HurtPlayer(scaledDamage);
 		int hp = GameManager.Instance.PlayerStats.CurrentHp;
-		GD.Print($"[BattleScene] Player hurt for {damage}. HP: {hp}");
+		GD.Print($"[BattleScene] Player hurt for {scaledDamage} (raw {damage}, diff ×{_difficultyMultiplier:F2}). HP: {hp}");
 
 		if (hp <= 0)
 		{
