@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://world_map_main"]
+
+[ext_resource type="Script" path="res://scenes/overworld/WorldMap.cs" id="1_wm"]
+[ext_resource type="Script" path="res://scenes/overworld/objects/WorldMapEntrance.cs" id="2_wme"]
+
+[node name="WorldMap" type="Node2D"]
+script = ExtResource("1_wm")
+
+[node name="Ground" type="TileMapLayer" parent="."]
+
+[node name="Collision" type="TileMapLayer" parent="."]
+
+[node name="Entrances" type="Node2D" parent="."]
+
+[node name="MAPPEntrance" type="Area2D" parent="Entrances"]
+script = ExtResource("2_wme")
+position = Vector2(168, 136)
+TargetScenePath = "res://scenes/overworld/MAPP.tscn"
+ReturnTile = Vector2i(10, 8)
+EntranceName = "MAPP Tavern"

@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://world_map_entrance"]
+
+[ext_resource type="Script" path="res://scenes/overworld/objects/WorldMapEntrance.cs" id="1_wme"]
+
+[node name="WorldMapEntrance" type="Area2D"]
+script = ExtResource("1_wme")

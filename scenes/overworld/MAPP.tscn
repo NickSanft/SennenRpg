@@ -302,7 +302,7 @@ Lines = PackedStringArray("The rooms upstairs are currently occupied.", "", "(Co
 
 [node name="Exit" parent="." index="14" unique_id=1845096565 instance=ExtResource("18_exit")]
 position = Vector2(0, 348)
-TargetMapPath = "res://scenes/overworld/TestRoom.tscn"
+TargetMapPath = "res://scenes/overworld/WorldMap.tscn"
 TargetSpawnId = "from_mapp"
 AutoTrigger = true
 
