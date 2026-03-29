@@ -387,9 +387,15 @@ public partial class SettingsMenu : CanvasLayer
 			else
 			{
 				var events = InputMap.ActionGetEvents(action);
-				keyLabel.Text = (events.Count > 0 && events[0] is InputEventKey iek)
-					? OS.GetKeycodeString(iek.Keycode)
-					: "—";
+				if (events.Count > 0 && events[0] is InputEventKey iek)
+				{
+					Key k = SettingsLogic.EffectiveKey(iek.Keycode, iek.PhysicalKeycode);
+					keyLabel.Text = k != Key.None ? OS.GetKeycodeString(k) : "—";
+				}
+				else
+				{
+					keyLabel.Text = "—";
+				}
 			}
 		}
 	}
@@ -462,8 +468,11 @@ public partial class SettingsMenu : CanvasLayer
 			return OS.GetKeycodeString((Key)pending);
 
 		var events = InputMap.ActionGetEvents(action);
-		return (events.Count > 0 && events[0] is InputEventKey iek)
-			? OS.GetKeycodeString(iek.Keycode)
-			: "—";
+		if (events.Count > 0 && events[0] is InputEventKey iek)
+		{
+			Key k = SettingsLogic.EffectiveKey(iek.Keycode, iek.PhysicalKeycode);
+			return k != Key.None ? OS.GetKeycodeString(k) : "—";
+		}
+		return "—";
 	}
 }

@@ -1,7 +1,9 @@
+using Godot;
+
 namespace SennenRpg.Core.Data;
 
 /// <summary>
-/// Pure-static settings formulas — no Godot dependency, fully NUnit-testable.
+/// Pure-static settings formulas — fully NUnit-testable (GodotSharp types are fine in tests).
 /// </summary>
 public static class SettingsLogic
 {
@@ -99,4 +101,40 @@ public static class SettingsLogic
         BattleTextSpeed.Instant => 0f,
         _                       => 40f,
     };
+
+    // ── High contrast ──────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Returns the label outline pixel size for the given high-contrast state.
+    /// 0 when disabled (no outline), 2 when enabled.
+    /// </summary>
+    public static int HighContrastOutlineSize(bool enabled) => enabled ? 2 : 0;
+
+    // ── Colorblind palette ─────────────────────────────────────────────────
+
+    /// <summary>Returns the HP-bar fill colour for the chosen colorblind mode.</summary>
+    public static Color HpBarColor(ColorblindMode mode) => mode switch
+    {
+        ColorblindMode.Protanopia   => new Color(0.00f, 0.81f, 0.81f), // Cyan
+        ColorblindMode.Deuteranopia => new Color(0.90f, 0.62f, 0.00f), // Orange
+        ColorblindMode.Tritanopia   => new Color(0.80f, 0.00f, 0.00f), // Red
+        _                           => new Color(1.00f, 1.00f, 0.00f), // Yellow (Normal)
+    };
+
+    /// <summary>Returns the MP-bar fill colour for the chosen colorblind mode.</summary>
+    public static Color MpBarColor(ColorblindMode mode) => mode switch
+    {
+        ColorblindMode.Tritanopia => new Color(0.00f, 0.70f, 0.00f), // Green
+        _                          => new Color(0.25f, 0.45f, 1.00f), // Blue (Normal)
+    };
+
+    // ── Input key display ──────────────────────────────────────────────────
+
+    /// <summary>
+    /// Returns the effective <see cref="Key"/> for display purposes.
+    /// Project actions defined with physical_keycode have <paramref name="keycode"/> = Key.None;
+    /// in that case we fall back to <paramref name="physicalKeycode"/>.
+    /// </summary>
+    public static Key EffectiveKey(Key keycode, Key physicalKeycode)
+        => keycode != Key.None ? keycode : physicalKeycode;
 }

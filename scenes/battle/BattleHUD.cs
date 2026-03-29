@@ -1,5 +1,6 @@
 using Godot;
 using SennenRpg.Autoloads;
+using SennenRpg.Core.Data;
 
 namespace SennenRpg.Scenes.Battle;
 
@@ -33,6 +34,11 @@ public partial class BattleHUD : CanvasLayer
 		_mpBarBg    = GetNode<ColorRect>(row + "MpBarBg");
 		_mpBar      = GetNode<ColorRect>(row + "MpBarBg/MpBar");
 		_statsLabel = GetNode<Label>("HudPanel/VBoxContainer/StatsLabel");
+
+		// Apply colorblind palette — HUD loads after SettingsManager.ApplyAll(), so we apply again here.
+		var mode = SettingsManager.Instance?.Current.ColorblindMode ?? ColorblindMode.Normal;
+		_hpBar.Color = SettingsLogic.HpBarColor(mode);
+		_mpBar.Color = SettingsLogic.MpBarColor(mode);
 
 		GameManager.Instance.PlayerStatsChanged += UpdateHud;
 		Callable.From(UpdateHud).CallDeferred();

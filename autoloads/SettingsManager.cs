@@ -124,18 +124,8 @@ public partial class SettingsManager : Node
 
     private void ApplyColorblind(SettingsData s)
     {
-        Color hpColor = s.ColorblindMode switch
-        {
-            ColorblindMode.Protanopia   => new Color(0.00f, 0.81f, 0.81f), // Cyan
-            ColorblindMode.Deuteranopia => new Color(0.90f, 0.62f, 0.00f), // Orange
-            ColorblindMode.Tritanopia   => new Color(0.80f, 0.00f, 0.00f), // Red
-            _                           => new Color(1.00f, 1.00f, 0.00f), // Yellow (normal)
-        };
-        Color mpColor = s.ColorblindMode switch
-        {
-            ColorblindMode.Tritanopia => new Color(0.00f, 0.70f, 0.00f),   // Green
-            _                         => new Color(0.25f, 0.45f, 1.00f),   // Blue (normal)
-        };
+        Color hpColor = SettingsLogic.HpBarColor(s.ColorblindMode);
+        Color mpColor = SettingsLogic.MpBarColor(s.ColorblindMode);
 
         WalkNodes(GetTree().Root, node =>
         {
@@ -149,11 +139,17 @@ public partial class SettingsManager : Node
 
     private void ApplyHighContrast(SettingsData s)
     {
-        int outlineSize = s.HighContrastMode ? 4 : 2;
+        int    outlineSize  = SettingsLogic.HighContrastOutlineSize(s.HighContrastMode);
+        Color  outlineColor = Colors.Black;
+
         WalkNodes(GetTree().Root, node =>
         {
-            if (node is Label { LabelSettings: { } ls })
-                ls.OutlineSize = outlineSize;
+            if (node is not Label label) return;
+            // Create a LabelSettings if the label doesn't have one so the outline is visible.
+            // A default LabelSettings with font/font_size = null/0 leaves all other styling intact.
+            label.LabelSettings          ??= new LabelSettings();
+            label.LabelSettings.OutlineSize  = outlineSize;
+            label.LabelSettings.OutlineColor = outlineColor;
         });
     }
 

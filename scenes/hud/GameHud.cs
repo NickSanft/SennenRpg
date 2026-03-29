@@ -1,5 +1,6 @@
 using Godot;
 using SennenRpg.Autoloads;
+using SennenRpg.Core.Data;
 
 namespace SennenRpg.Scenes.Hud;
 
@@ -27,6 +28,10 @@ public partial class GameHud : CanvasLayer
 		_goldLabel.AddThemeFontSizeOverride("font_size", 10);
 		_goldLabel.AddThemeColorOverride("font_color", new Color(1f, 0.9f, 0.3f));
 		GetNode<VBoxContainer>("Panel/VBox").AddChild(_goldLabel);
+
+		// Apply colorblind palette on load — SettingsManager.ApplyAll() runs before this HUD loads.
+		var mode = SettingsManager.Instance?.Current.ColorblindMode ?? ColorblindMode.Normal;
+		_hpBar.Color = SettingsLogic.HpBarColor(mode);
 
 		GameManager.Instance.PlayerStatsChanged += UpdateDisplay;
 		UpdateDisplay();

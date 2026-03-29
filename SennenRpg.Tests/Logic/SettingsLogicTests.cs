@@ -1,3 +1,4 @@
+using Godot;
 using NUnit.Framework;
 using SennenRpg.Core.Data;
 
@@ -166,4 +167,114 @@ public class SettingsLogicTests
         // Use 0.09s which is Good at normal but Miss at tight (0.120 * 0.55 = 0.066)
         Assert.That(RhythmConstants.GradeDeviationScaled(0.09f, 0.55f), Is.EqualTo(HitGrade.Miss));
     }
+
+    // ── HighContrastOutlineSize ───────────────────────────────────────────
+
+    [Test]
+    public void HighContrastOutlineSize_Enabled_Returns2()
+        => Assert.That(SettingsLogic.HighContrastOutlineSize(true), Is.EqualTo(2));
+
+    [Test]
+    public void HighContrastOutlineSize_Disabled_Returns0()
+        => Assert.That(SettingsLogic.HighContrastOutlineSize(false), Is.EqualTo(0));
+
+    // ── HpBarColor ────────────────────────────────────────────────────────
+
+    [Test]
+    public void HpBarColor_Normal_ReturnsYellow()
+    {
+        var c = SettingsLogic.HpBarColor(ColorblindMode.Normal);
+        Assert.That(c.R, Is.EqualTo(1.00f).Within(0.01f));
+        Assert.That(c.G, Is.EqualTo(1.00f).Within(0.01f));
+        Assert.That(c.B, Is.EqualTo(0.00f).Within(0.01f));
+    }
+
+    [Test]
+    public void HpBarColor_Protanopia_ReturnsCyan()
+    {
+        var c = SettingsLogic.HpBarColor(ColorblindMode.Protanopia);
+        Assert.That(c.R, Is.EqualTo(0.00f).Within(0.01f));
+        Assert.That(c.G, Is.GreaterThan(0.5f));
+        Assert.That(c.B, Is.GreaterThan(0.5f)); // cyan: high G and B
+    }
+
+    [Test]
+    public void HpBarColor_Deuteranopia_ReturnsOrange()
+    {
+        var c = SettingsLogic.HpBarColor(ColorblindMode.Deuteranopia);
+        Assert.That(c.R, Is.GreaterThan(0.5f));
+        Assert.That(c.G, Is.GreaterThan(0.3f));
+        Assert.That(c.B, Is.EqualTo(0.00f).Within(0.01f)); // orange: high R, mid G, zero B
+    }
+
+    [Test]
+    public void HpBarColor_Tritanopia_ReturnsRed()
+    {
+        var c = SettingsLogic.HpBarColor(ColorblindMode.Tritanopia);
+        Assert.That(c.R, Is.GreaterThan(0.5f));
+        Assert.That(c.G, Is.EqualTo(0.00f).Within(0.01f));
+        Assert.That(c.B, Is.EqualTo(0.00f).Within(0.01f));
+    }
+
+    [Test]
+    public void HpBarColor_AllModesDistinct()
+    {
+        var colors = new[]
+        {
+            SettingsLogic.HpBarColor(ColorblindMode.Normal),
+            SettingsLogic.HpBarColor(ColorblindMode.Protanopia),
+            SettingsLogic.HpBarColor(ColorblindMode.Deuteranopia),
+            SettingsLogic.HpBarColor(ColorblindMode.Tritanopia),
+        };
+        for (int i = 0; i < colors.Length; i++)
+        for (int j = i + 1; j < colors.Length; j++)
+            Assert.That(colors[i], Is.Not.EqualTo(colors[j]),
+                $"Modes {i} and {j} returned the same color");
+    }
+
+    // ── MpBarColor ────────────────────────────────────────────────────────
+
+    [Test]
+    public void MpBarColor_Normal_ReturnsBlue()
+    {
+        var c = SettingsLogic.MpBarColor(ColorblindMode.Normal);
+        Assert.That(c.B, Is.GreaterThan(c.R)); // more blue than red
+        Assert.That(c.B, Is.GreaterThan(c.G)); // more blue than green
+    }
+
+    [Test]
+    public void MpBarColor_Tritanopia_ReturnsGreen()
+    {
+        var c = SettingsLogic.MpBarColor(ColorblindMode.Tritanopia);
+        Assert.That(c.G, Is.GreaterThan(c.R));
+        Assert.That(c.G, Is.GreaterThan(c.B));
+        Assert.That(c.R, Is.EqualTo(0.00f).Within(0.01f));
+    }
+
+    [Test]
+    public void MpBarColor_NonTritanopia_AllReturnSameBlue()
+    {
+        // Protanopia and Deuteranopia both fall through to the default blue
+        var blue = SettingsLogic.MpBarColor(ColorblindMode.Normal);
+        Assert.That(SettingsLogic.MpBarColor(ColorblindMode.Protanopia),   Is.EqualTo(blue));
+        Assert.That(SettingsLogic.MpBarColor(ColorblindMode.Deuteranopia), Is.EqualTo(blue));
+    }
+
+    // ── EffectiveKey ──────────────────────────────────────────────────────
+
+    [Test]
+    public void EffectiveKey_KeycodeSet_ReturnsKeycode()
+        => Assert.That(SettingsLogic.EffectiveKey(Key.W, Key.None), Is.EqualTo(Key.W));
+
+    [Test]
+    public void EffectiveKey_KeycodeNone_ReturnsPhysical()
+        => Assert.That(SettingsLogic.EffectiveKey(Key.None, Key.W), Is.EqualTo(Key.W));
+
+    [Test]
+    public void EffectiveKey_BothNone_ReturnsNone()
+        => Assert.That(SettingsLogic.EffectiveKey(Key.None, Key.None), Is.EqualTo(Key.None));
+
+    [Test]
+    public void EffectiveKey_BothSet_PrefersKeycode()
+        => Assert.That(SettingsLogic.EffectiveKey(Key.A, Key.B), Is.EqualTo(Key.A));
 }
