@@ -12,6 +12,7 @@ public partial class PauseMenu : CanvasLayer
 {
 	private Button _resumeButton    = null!;
 	private Button _saveButton      = null!;
+	private Button _settingsButton  = null!;
 	private Button _itemsButton     = null!;
 	private Button _equipmentButton = null!;
 	private Button _statsButton     = null!;
@@ -21,6 +22,7 @@ public partial class PauseMenu : CanvasLayer
 	private InventoryMenu?  _inventoryMenu;
 	private EquipmentMenu?  _equipmentMenu;
 	private StatsMenu?      _statsMenu;
+	private SettingsMenu?   _settingsMenu;
 
 	public override void _Ready()
 	{
@@ -29,6 +31,7 @@ public partial class PauseMenu : CanvasLayer
 
 		_resumeButton    = GetNode<Button>("Overlay/Panel/VBox/ResumeButton");
 		_saveButton      = GetNode<Button>("Overlay/Panel/VBox/SaveButton");
+		_settingsButton  = GetNode<Button>("Overlay/Panel/VBox/SettingsButton");
 		_itemsButton     = GetNode<Button>("Overlay/Panel/VBox/ItemsButton");
 		_equipmentButton = GetNode<Button>("Overlay/Panel/VBox/EquipmentButton");
 		_statsButton     = GetNode<Button>("Overlay/Panel/VBox/StatsButton");
@@ -36,6 +39,7 @@ public partial class PauseMenu : CanvasLayer
 
 		_resumeButton.Pressed    += Resume;
 		_saveButton.Pressed      += OnSavePressed;
+		_settingsButton.Pressed  += OnSettingsPressed;
 		_itemsButton.Pressed     += OnItemsPressed;
 		_equipmentButton.Pressed += OnEquipmentPressed;
 		_statsButton.Pressed     += OnStatsPressed;
@@ -79,6 +83,19 @@ public partial class PauseMenu : CanvasLayer
 		{
 			GD.PushWarning("[PauseMenu] StatsMenu.tscn not found — STATS button will be disabled.");
 			_statsButton.Disabled = true;
+		}
+
+		const string settingsPath = "res://scenes/menus/SettingsMenu.tscn";
+		if (ResourceLoader.Exists(settingsPath))
+		{
+			_settingsMenu = GD.Load<PackedScene>(settingsPath).Instantiate<SettingsMenu>();
+			_settingsMenu.Closed += OnSettingsClosed;
+			AddSibling(_settingsMenu);
+		}
+		else
+		{
+			GD.PushWarning("[PauseMenu] SettingsMenu.tscn not found — SETTINGS button will be disabled.");
+			_settingsButton.Disabled = true;
 		}
 	}
 
@@ -124,6 +141,21 @@ public partial class PauseMenu : CanvasLayer
 				_saveButton.Disabled = false;
 			}
 		};
+	}
+
+	private void OnSettingsPressed()
+	{
+		if (_settingsMenu == null) return;
+		Visible = false;
+		_settingsMenu.Open();
+		GD.Print("[PauseMenu] Settings menu opened.");
+	}
+
+	private void OnSettingsClosed()
+	{
+		Visible = true;
+		_settingsButton.GrabFocus();
+		GD.Print("[PauseMenu] Settings menu closed, PauseMenu restored.");
 	}
 
 	private void OnItemsPressed()
