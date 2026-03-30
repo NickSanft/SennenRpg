@@ -24,4 +24,7 @@ public partial class CharacterStats : Resource
     [Export] public int MaxMp { get; set; } = 0;
     /// <summary>Current mana points.</summary>
     [Export] public int CurrentMp { get; set; } = 0;
+    /// <summary>Class archetype selected during character creation.</summary>
+    [Export] public PlayerClass Class     { get; set; } = PlayerClass.Bard;
+    [Export] public string      ClassName { get; set; } = "Bard";
 }

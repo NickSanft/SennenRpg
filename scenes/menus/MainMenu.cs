@@ -1,5 +1,6 @@
 using Godot;
 using SennenRpg.Autoloads;
+using SennenRpg.Core.Data;
 
 namespace SennenRpg.Scenes.Menus;
 
@@ -32,7 +33,12 @@ public partial class MainMenu : Node2D
 		if (_transitioning) return;
 		_transitioning = true;
 		GameManager.Instance.ResetForNewGame();
-		_ = SceneTransition.Instance.GoToAsync("res://scenes/overworld/MAPP.tscn");
+
+		string nextScene = GameManager.Instance.GetFlag(Flags.IntroCutsceneSeen)
+			? "res://scenes/menus/CharacterCustomization.tscn"
+			: "res://scenes/cutscenes/IntroCutscene.tscn";
+
+		_ = SceneTransition.Instance.GoToAsync(nextScene);
 	}
 
 	private void OnContinuePressed()

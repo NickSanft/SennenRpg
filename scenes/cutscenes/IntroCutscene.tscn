@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://intro_cutscene_01"]
+
+[ext_resource type="Script" path="res://scenes/cutscenes/IntroCutscene.cs" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/cutscene/bg_black.png" id="2_black"]
+
+[node name="IntroCutscene" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="BgColor" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 1)
+
+[node name="Bg" type="TextureRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("2_black")
+expand_mode = 1
+stretch_mode = 6

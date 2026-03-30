@@ -70,6 +70,7 @@ directories/dtl_directory={
 "battle_strike_prompt": "res://dialog/timelines/battle_strike_prompt.dtl",
 "battle_victory": "res://dialog/timelines/battle_victory.dtl",
 "cutscene_lily_effect": "res://dialog/timelines/cutscene_lily_effect.dtl",
+"intro_cutscene": "res://dialog/timelines/intro_cutscene.dtl",
 "npc_barkeep": "res://dialog/timelines/npc_barkeep.dtl",
 "npc_barkeep_alldone": "res://dialog/timelines/npc_barkeep_alldone.dtl",
 "npc_barkeep_frog": "res://dialog/timelines/npc_barkeep_frog.dtl",
