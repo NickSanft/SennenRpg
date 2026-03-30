@@ -61,6 +61,9 @@ public partial class GameManager : Node
 	// Kill tracking: keyed by EnemyData.EnemyId
 	public System.Collections.Generic.Dictionary<string, int> KillCounts { get; } = new();
 
+	/// <summary>Colour scheme chosen during character creation. Null = use sprite defaults.</summary>
+	public ColorScheme? PlayerColorScheme { get; set; }
+
 	public override void _Ready()
 	{
 		Instance = this;
@@ -310,11 +313,35 @@ public partial class GameManager : Node
 		IsNight               = false;
 		TilesWalkedOnWorldMap = 0;
 		KillCounts.Clear();
+		PlayerColorScheme     = null;
 
 		const string statsPath = "res://resources/characters/player_stats.tres";
 		if (ResourceLoader.Exists(statsPath))
 			PlayerStats = (CharacterStats)GD.Load<CharacterStats>(statsPath).Duplicate();
 		GD.Print("[GameManager] Reset for new game.");
+	}
+
+	/// <summary>
+	/// Applies the result of the character-customization screen.
+	/// Copies all stat fields into the existing <see cref="PlayerStats"/> object rather than
+	/// replacing it, to avoid creating a new GodotObject that could race the C# GC finaliser.
+	/// </summary>
+	public void ApplyCharacterCustomization(CharacterStats stats, ColorScheme? scheme)
+	{
+		PlayerStats.MaxHp      = stats.MaxHp;
+		PlayerStats.CurrentHp  = stats.MaxHp;
+		PlayerStats.Attack     = stats.Attack;
+		PlayerStats.Defense    = stats.Defense;
+		PlayerStats.Speed      = stats.Speed;
+		PlayerStats.Magic      = stats.Magic;
+		PlayerStats.Resistance = stats.Resistance;
+		PlayerStats.Luck       = stats.Luck;
+		PlayerStats.MaxMp      = stats.MaxMp;
+		PlayerStats.CurrentMp  = stats.MaxMp;
+		PlayerStats.Class      = stats.Class;
+		PlayerStats.ClassName  = stats.ClassName;
+		PlayerColorScheme      = scheme;
+		EmitSignal(SignalName.PlayerStatsChanged);
 	}
 
 	public void ApplySaveData(SaveData data)
@@ -362,5 +389,9 @@ public partial class GameManager : Node
 		TilesWalkedOnWorldMap = data.TilesWalkedOnWorldMap;
 		KillCounts.Clear();
 		foreach (var kv in data.KillCounts) KillCounts[kv.Key] = kv.Value;
+
+		PlayerColorScheme = null;
+		if (!string.IsNullOrEmpty(data.PlayerColorSchemePath) && ResourceLoader.Exists(data.PlayerColorSchemePath))
+			PlayerColorScheme = GD.Load<ColorScheme>(data.PlayerColorSchemePath);
 	}
 }

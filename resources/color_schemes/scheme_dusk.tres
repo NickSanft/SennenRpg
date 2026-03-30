@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ColorScheme" format=3 uid="uid://scheme_dusk_01"]
+
+[ext_resource type="Script" uid="uid://bh6pddshqdqci" path="res://core/data/ColorScheme.cs" id="1_cs"]
+
+[resource]
+script = ExtResource("1_cs")
+SchemeName = "Dusk"
+Tint = Color(0.72, 0.55, 0.85, 1)

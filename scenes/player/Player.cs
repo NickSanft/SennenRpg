@@ -31,6 +31,10 @@ public partial class Player : CharacterBody2D
 		_interactRange.AreaEntered += area => { if (area is IInteractable i) _candidates.Add(i); };
 		_interactRange.AreaExited  += area => { if (area is IInteractable i) _candidates.Remove(i); };
 
+		var scheme = GameManager.Instance.PlayerColorScheme;
+		if (scheme != null)
+			_sprite.Modulate = scheme.Tint;
+
 		// Placeholder visual — visible until real sprites are assigned
 		if (_sprite.SpriteFrames == null)
 		{

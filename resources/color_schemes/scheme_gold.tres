@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ColorScheme" format=3 uid="uid://scheme_gold_01"]
+
+[ext_resource type="Script" uid="uid://bh6pddshqdqci" path="res://core/data/ColorScheme.cs" id="1_cs"]
+
+[resource]
+script = ExtResource("1_cs")
+SchemeName = "Gold"
+Tint = Color(1.0, 0.85, 0.2, 1)

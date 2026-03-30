@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CharacterStats" format=3 uid="uid://class_fighter_01"]
+
+[ext_resource type="Script" uid="uid://dqonjuygth0gq" path="res://core/data/CharacterStats.cs" id="1_cs"]
+
+[resource]
+script = ExtResource("1_cs")
+MaxHp = 28
+CurrentHp = 28
+Attack = 14
+Defense = 8
+Speed = 8
+Magic = 2
+Resistance = 2
+Luck = 4
+MaxMp = 8
+CurrentMp = 8
+Class = 1
+ClassName = "Fighter"

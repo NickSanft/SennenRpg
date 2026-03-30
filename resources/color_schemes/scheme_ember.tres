@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ColorScheme" format=3 uid="uid://scheme_ember_01"]
+
+[ext_resource type="Script" uid="uid://bh6pddshqdqci" path="res://core/data/ColorScheme.cs" id="1_cs"]
+
+[resource]
+script = ExtResource("1_cs")
+SchemeName = "Ember"
+Tint = Color(1.0, 0.45, 0.1, 1)

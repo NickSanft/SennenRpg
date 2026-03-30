@@ -36,6 +36,10 @@ public record SaveData
 	public Dictionary<string, int>  KillCounts        { get; init; } = new();
 	public List<string>             ActiveQuestIds    { get; init; } = new();
 	public List<string>             CompletedQuestIds { get; init; } = new();
+	/// <summary>Enum name of the class chosen at character creation (e.g. "Bard").</summary>
+	public string? PlayerClassName       { get; init; }
+	/// <summary>res:// path to the chosen ColorScheme .tres, or null for default.</summary>
+	public string? PlayerColorSchemePath { get; init; }
 }
 
 public partial class SaveManager : Node
@@ -83,8 +87,10 @@ public partial class SaveManager : Node
 			IsNight               = gm.IsNight,
 			TilesWalkedOnWorldMap = gm.TilesWalkedOnWorldMap,
 			KillCounts            = new Dictionary<string, int>(gm.KillCounts),
-			ActiveQuestIds    = QuestManager.Instance.GetActiveQuestIds(),
-			CompletedQuestIds = QuestManager.Instance.GetCompletedQuestIds(),
+			ActiveQuestIds       = QuestManager.Instance.GetActiveQuestIds(),
+			CompletedQuestIds    = QuestManager.Instance.GetCompletedQuestIds(),
+			PlayerClassName      = gm.PlayerStats.ClassName,
+			PlayerColorSchemePath = gm.PlayerColorScheme?.ResourcePath,
 		};
 
 		string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });

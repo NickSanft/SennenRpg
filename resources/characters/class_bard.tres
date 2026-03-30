@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CharacterStats" format=3 uid="uid://class_bard_01"]
+
+[ext_resource type="Script" uid="uid://dqonjuygth0gq" path="res://core/data/CharacterStats.cs" id="1_cs"]
+
+[resource]
+script = ExtResource("1_cs")
+MaxHp = 20
+CurrentHp = 20
+Attack = 8
+Defense = 4
+Speed = 10
+Magic = 6
+Resistance = 0
+Luck = 6
+MaxMp = 20
+CurrentMp = 20
+Class = 0
+ClassName = "Bard"

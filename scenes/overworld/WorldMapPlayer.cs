@@ -38,6 +38,10 @@ public partial class WorldMapPlayer : CharacterBody2D
 		if (Engine.IsEditorHint()) return;
 
 		_sprite   = GetNodeOrNull<AnimatedSprite2D>("AnimatedSprite2D");
+
+		var scheme = GameManager.Instance.PlayerColorScheme;
+		if (scheme != null && _sprite != null)
+			_sprite.Modulate = scheme.Tint;
 		_worldMap = GetParent<WorldMap>();
 
 		// Snap to nearest tile centre on load

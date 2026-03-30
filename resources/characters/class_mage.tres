@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CharacterStats" format=3 uid="uid://class_mage_01"]
+
+[ext_resource type="Script" uid="uid://dqonjuygth0gq" path="res://core/data/CharacterStats.cs" id="1_cs"]
+
+[resource]
+script = ExtResource("1_cs")
+MaxHp = 16
+CurrentHp = 16
+Attack = 5
+Defense = 2
+Speed = 10
+Magic = 14
+Resistance = 4
+Luck = 4
+MaxMp = 30
+CurrentMp = 30
+Class = 3
+ClassName = "Mage"

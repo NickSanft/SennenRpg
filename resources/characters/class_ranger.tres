@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CharacterStats" format=3 uid="uid://class_ranger_01"]
+
+[ext_resource type="Script" uid="uid://dqonjuygth0gq" path="res://core/data/CharacterStats.cs" id="1_cs"]
+
+[resource]
+script = ExtResource("1_cs")
+MaxHp = 22
+CurrentHp = 22
+Attack = 10
+Defense = 4
+Speed = 12
+Magic = 4
+Resistance = 0
+Luck = 8
+MaxMp = 14
+CurrentMp = 14
+Class = 2
+ClassName = "Ranger"

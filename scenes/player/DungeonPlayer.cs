@@ -41,6 +41,10 @@ public partial class DungeonPlayer : CharacterBody2D
         AddToGroup("player");
         _sprite = GetNodeOrNull<AnimatedSprite2D>("Sprite");
 
+        var scheme = GameManager.Instance.PlayerColorScheme;
+        if (scheme != null && _sprite != null)
+            _sprite.Modulate = scheme.Tint;
+
         _interactRange = GetNode<Area2D>("InteractRange");
         var collShape = _interactRange.GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
         if (collShape?.Shape is CircleShape2D circle)

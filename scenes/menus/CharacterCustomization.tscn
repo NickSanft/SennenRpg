@@ -6,17 +6,51 @@
 script = ExtResource("1_script")
 
 [node name="UI" type="CanvasLayer" parent="."]
+layer = 5
 
-[node name="Center" type="CenterContainer" parent="UI"]
+[node name="BgColor" type="ColorRect" parent="UI"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+color = Color(0.08, 0.08, 0.12, 1)
 
-[node name="VBox" type="VBoxContainer" parent="UI/Center"]
+[node name="Margin" type="MarginContainer" parent="UI"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 20
 
-[node name="Label" type="Label" parent="UI/Center/VBox"]
-text = "Character Customization
-(Coming soon — press Continue to start)"
+[node name="VBox" type="VBoxContainer" parent="UI/Margin"]
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="UI/Margin/VBox"]
+text = "Character Setup"
 horizontal_alignment = 1
+theme_override_font_sizes/font_size = 22
 
-[node name="ContinueButton" type="Button" parent="UI/Center/VBox"]
-text = "Continue"
+[node name="Tabs" type="TabContainer" parent="UI/Margin/VBox"]
+size_flags_vertical = 3
+
+[node name="Class" type="VBoxContainer" parent="UI/Margin/VBox/Tabs"]
+theme_override_constants/separation = 8
+
+[node name="Stats" type="VBoxContainer" parent="UI/Margin/VBox/Tabs"]
+theme_override_constants/separation = 6
+
+[node name="Appearance" type="VBoxContainer" parent="UI/Margin/VBox/Tabs"]
+theme_override_constants/separation = 8
+
+[node name="BottomBar" type="HBoxContainer" parent="UI/Margin/VBox"]
+theme_override_constants/separation = 12
+
+[node name="Spacer" type="Control" parent="UI/Margin/VBox/BottomBar"]
+size_flags_horizontal = 3
+
+[node name="SkipButton" type="Button" parent="UI/Margin/VBox/BottomBar"]
+text = "Skip"
+custom_minimum_size = Vector2(100, 0)
+
+[node name="ConfirmButton" type="Button" parent="UI/Margin/VBox/BottomBar"]
+text = "Begin Adventure"
+custom_minimum_size = Vector2(160, 0)
