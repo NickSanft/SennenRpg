@@ -34,4 +34,20 @@ public static class BattleFormulas
     /// </summary>
     public static bool PlayerGoesFirst(int playerSpeed, int enemySpeed)
         => playerSpeed >= enemySpeed;
+
+    /// <summary>
+    /// Flee chance as a percentage clamped to [10, 95].
+    /// Formula: 50 + (playerSpeed − enemySpeed) × 3.
+    /// A faster player flees more reliably; a slower player risks being blocked.
+    /// </summary>
+    public static int FleeChance(int playerSpeed, int enemySpeed)
+        => Math.Clamp(50 + (playerSpeed - enemySpeed) * 3, 10, 95);
+
+    /// <summary>
+    /// Returns true if the flee attempt succeeds.
+    /// Pass <see cref="Godot.GD.Randf()"/> for <paramref name="randomValue"/> in production;
+    /// pass a fixed value in tests.
+    /// </summary>
+    public static bool AttemptFlee(int playerSpeed, int enemySpeed, float randomValue)
+        => randomValue < FleeChance(playerSpeed, enemySpeed) / 100f;
 }

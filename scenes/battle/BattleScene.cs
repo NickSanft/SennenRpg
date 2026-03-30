@@ -47,6 +47,10 @@ public partial class BattleScene : Node2D
 	private List<SpellData>    _knownSpells        = new();
 	private PerformanceScore   _performance        = new();
 
+	// Status effects: keyed by effect, value = turns remaining
+	private readonly Dictionary<StatusEffect, int> _playerStatuses = new();
+	private readonly Dictionary<StatusEffect, int> _enemyStatuses  = new();
+
 	private static readonly string[] DefaultBardSkillNames =
 		{ "Bardic Inspiration", "Lullaby", "War Cry", "Serenade", "Dissonance" };
 
@@ -74,6 +78,9 @@ public partial class BattleScene : Node2D
 		_actionMenu.PerformSelected += OnPerformSelected;
 		_actionMenu.ItemSelected    += OnItemSelected;
 		_actionMenu.FleeSelected    += OnFleeSelected;
+
+		// Wire Dialogic status signals (e.g. "status:poison:3" applies Poison for 3 turns)
+		DialogicBridge.Instance.DialogicSignalReceived += OnDialogicSignalReceived;
 
 		_subMenu.OptionSelected += OnSubMenuOptionSelected;
 		_subMenu.Cancelled      += OnSubMenuCancelled;
@@ -205,6 +212,12 @@ public partial class BattleScene : Node2D
 			 .SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Sine);
 	}
 
+	public override void _ExitTree()
+	{
+		if (DialogicBridge.Instance != null)
+			DialogicBridge.Instance.DialogicSignalReceived -= OnDialogicSignalReceived;
+	}
+
 	// ── State machine ─────────────────────────────────────────────────
 
 	private void SetState(BattleState newState)
@@ -224,7 +237,13 @@ public partial class BattleScene : Node2D
 		GD.Print($"[BattleScene] State → {newState}");
 
 		if (newState == BattleState.PlayerTurn)
+		{
+			int chance = BattleFormulas.FleeChance(
+				GameManager.Instance.EffectiveStats.Speed,
+				_enemy?.Stats?.Speed ?? 0);
+			_actionMenu.SetFleeLabel($"Flee ({chance}%)");
 			_actionMenu.FocusFirst();
+		}
 	}
 
 	private T InstantiateFullRect<T>(string path) where T : Control
@@ -282,7 +301,7 @@ public partial class BattleScene : Node2D
 		await RunBattleTimeline("res://dialog/timelines/battle_intro.dtl");
 
 		if (_playerGoesFirst)
-			SetState(BattleState.PlayerTurn);
+			await BeginPlayerTurn();
 		else
 			await RunEnemyTurn();
 	}
@@ -394,7 +413,10 @@ public partial class BattleScene : Node2D
 	{
 		GD.Print("[BattleScene] Flee selected");
 		_actionMenu.Visible = false;
-		bool escaped = GD.Randf() < 0.5f;
+		bool escaped = BattleFormulas.AttemptFlee(
+			GameManager.Instance.EffectiveStats.Speed,
+			_enemy?.Stats?.Speed ?? 0,
+			GD.Randf());
 		if (escaped)
 		{
 			await HandleFlee();
@@ -595,6 +617,18 @@ public partial class BattleScene : Node2D
 		}
 
 		GameManager.Instance.RemoveItem(path);
+
+		// Repel item: grants world-map encounter immunity for several steps
+		if (item.RepelSteps > 0)
+		{
+			GameManager.Instance.RepelStepsRemaining += item.RepelSteps;
+			SetBattleVar("item_name",   item.DisplayName);
+			SetBattleVar("heal_amount", item.RepelSteps.ToString());
+			await RunBattleTimeline("res://dialog/timelines/battle_item_repel.dtl");
+			await RunEnemyTurn();
+			return;
+		}
+
 		GameManager.Instance.HealPlayer(item.HealAmount);
 
 		SetBattleVar("item_name",   item.DisplayName);
@@ -609,10 +643,66 @@ public partial class BattleScene : Node2D
 		SetState(BattleState.PlayerTurn);
 	}
 
+	// ── BeginPlayerTurn — ticks statuses before showing the action menu ─
+
+	private async Task BeginPlayerTurn()
+	{
+		// Tick all statuses (both sides) at the top of each round
+		StatusLogic.TickAll(_playerStatuses);
+		StatusLogic.TickAll(_enemyStatuses);
+		UpdateStatusHud();
+
+		// Apply player Poison
+		if (StatusLogic.HasStatus(_playerStatuses, StatusEffect.Poison))
+		{
+			int dmg = StatusLogic.PoisonDamage(GameManager.Instance.PlayerStats.MaxHp);
+			GameManager.Instance.HurtPlayer(dmg);
+			SetBattleVar("damage", dmg.ToString());
+			await RunBattleTimeline("res://dialog/timelines/battle_poison_player.dtl");
+			if (GameManager.Instance.PlayerStats.CurrentHp <= 0)
+			{
+				await HandleDefeat();
+				return;
+			}
+		}
+
+		// Apply enemy Poison
+		if (StatusLogic.HasStatus(_enemyStatuses, StatusEffect.Poison))
+		{
+			int dmg = StatusLogic.PoisonDamage(_enemy?.Stats?.MaxHp ?? 10);
+			_enemyCurrentHp = Math.Max(0, _enemyCurrentHp - dmg);
+			SetBattleVar("damage", dmg.ToString());
+			await RunBattleTimeline("res://dialog/timelines/battle_poison_enemy.dtl");
+			if (_enemyCurrentHp <= 0)
+			{
+				await HandleVictory();
+				return;
+			}
+		}
+
+		// Player Stun: skip this turn
+		if (StatusLogic.HasStatus(_playerStatuses, StatusEffect.Stun))
+		{
+			await RunBattleTimeline("res://dialog/timelines/battle_stun_player.dtl");
+			await RunEnemyTurn();
+			return;
+		}
+
+		SetState(BattleState.PlayerTurn);
+	}
+
 	// ── Enemy turn ────────────────────────────────────────────────────
 
 	private async Task RunEnemyTurn()
 	{
+		// Enemy Stun: skip the rhythm phase this turn
+		if (StatusLogic.HasStatus(_enemyStatuses, StatusEffect.Stun))
+		{
+			await RunBattleTimeline("res://dialog/timelines/battle_stun_enemy.dtl");
+			await BeginPlayerTurn();
+			return;
+		}
+
 		SetState(BattleState.EnemyTurn);
 
 		string battlePath = _enemy?.BattleTimelinePath ?? "";
@@ -677,7 +767,7 @@ public partial class BattleScene : Node2D
 	{
 		if (_state != BattleState.RhythmPhase) return;
 		GD.Print($"[BattleScene] Rhythm phase ended. Max combo: {_rhythmArena.MaxStreak}");
-		SetState(BattleState.PlayerTurn);
+		_ = BeginPlayerTurn();
 	}
 
 	private void OnPlayerHurt(int damage)
@@ -752,5 +842,32 @@ public partial class BattleScene : Node2D
 		if (string.IsNullOrEmpty(map))
 			map = "res://scenes/overworld/TestRoom.tscn";
 		await SceneTransition.Instance.GoToAsync(map);
+	}
+
+	// ── Status effects ────────────────────────────────────────────────
+
+	/// <summary>
+	/// Called by DialogicBridge when a Dialogic signal event fires.
+	/// Handles "status:effect:turns" signals to apply status effects to the player.
+	/// e.g. "status:poison:3" in an enemy timeline → Poison for 3 turns.
+	/// </summary>
+	private void OnDialogicSignalReceived(Variant argument)
+	{
+		string sig = argument.AsString();
+		var (type, arg) = DialogicSignalParser.Parse(sig);
+		if (type != DialogicSignalParser.TypeStatus) return;
+
+		if (StatusLogic.TryParseStatusSignal(arg, out StatusEffect effect, out int turns))
+		{
+			StatusLogic.Apply(_playerStatuses, effect, turns);
+			UpdateStatusHud();
+			GD.Print($"[BattleScene] Status applied to player: {effect} for {turns} turns");
+		}
+	}
+
+	private void UpdateStatusHud()
+	{
+		_battleHud.UpdateStatuses(_playerStatuses);
+		_enemyNameplate.UpdateStatuses(_enemyStatuses);
 	}
 }

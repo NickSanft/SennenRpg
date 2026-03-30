@@ -62,6 +62,9 @@ public partial class GameManager : Node
 	// Kill tracking: keyed by EnemyData.EnemyId
 	public System.Collections.Generic.Dictionary<string, int> KillCounts { get; } = new();
 
+	/// <summary>World-map steps remaining before encounters can trigger again (Repel effect).</summary>
+	public int RepelStepsRemaining { get; set; } = 0;
+
 	/// <summary>Original palette colours extracted from the sprite at character creation.</summary>
 	public Color[] PaletteSourceColors { get; set; } = [];
 	/// <summary>Replacement colours chosen by the player, parallel to PaletteSourceColors.</summary>

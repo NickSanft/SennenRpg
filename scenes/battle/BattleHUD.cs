@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
 
@@ -10,15 +11,16 @@ namespace SennenRpg.Scenes.Battle;
 /// </summary>
 public partial class BattleHUD : CanvasLayer
 {
-	private Label     _nameLabel  = null!;
-	private Label     _lvLabel    = null!;
-	private Label     _hpLabel    = null!;
-	private Label     _mpLabel    = null!;
-	private Label     _statsLabel = null!;
-	private ColorRect _hpBarBg    = null!;
-	private ColorRect _hpBar      = null!;
-	private ColorRect _mpBarBg    = null!;
-	private ColorRect _mpBar      = null!;
+	private Label     _nameLabel   = null!;
+	private Label     _lvLabel     = null!;
+	private Label     _hpLabel     = null!;
+	private Label     _mpLabel     = null!;
+	private Label     _statsLabel  = null!;
+	private Label     _statusLabel = null!;
+	private ColorRect _hpBarBg     = null!;
+	private ColorRect _hpBar       = null!;
+	private ColorRect _mpBarBg     = null!;
+	private ColorRect _mpBar       = null!;
 
 	public override void _Ready()
 	{
@@ -34,6 +36,10 @@ public partial class BattleHUD : CanvasLayer
 		_mpBarBg    = GetNode<ColorRect>(row + "MpBarBg");
 		_mpBar      = GetNode<ColorRect>(row + "MpBarBg/MpBar");
 		_statsLabel = GetNode<Label>("HudPanel/VBoxContainer/StatsLabel");
+
+		// Status label is created dynamically so the .tscn doesn't need editing.
+		_statusLabel = new Label { Text = "" };
+		GetNode<VBoxContainer>("HudPanel/VBoxContainer").AddChild(_statusLabel);
 
 		// Apply colorblind palette — HUD loads after SettingsManager.ApplyAll(), so we apply again here.
 		var mode = SettingsManager.Instance?.Current.ColorblindMode ?? ColorblindMode.Normal;
@@ -68,5 +74,19 @@ public partial class BattleHUD : CanvasLayer
 		_statsLabel.Text =
 			$"ATK:{stats.Attack}  DEF:{stats.Defense}  SPD:{stats.Speed}" +
 			$"  MAG:{stats.Magic}  RES:{stats.Resistance}  LCK:{stats.Luck}";
+	}
+
+	/// <summary>Updates the status icon row beneath the stat line.</summary>
+	public void UpdateStatuses(Dictionary<StatusEffect, int> statuses)
+	{
+		if (statuses.Count == 0)
+		{
+			_statusLabel.Text = "";
+			return;
+		}
+		var parts = new System.Collections.Generic.List<string>();
+		foreach (var (effect, turns) in statuses)
+			parts.Add($"{StatusLogic.IconText(effect)}({turns})");
+		_statusLabel.Text = string.Join(" ", parts);
 	}
 }

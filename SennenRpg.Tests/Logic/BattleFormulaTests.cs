@@ -115,4 +115,61 @@ public class BattleFormulaTests
     [Test]
     public void PlayerGoesFirst_LowerSpeed_ReturnsFalse()
         => Assert.That(BattleFormulas.PlayerGoesFirst(playerSpeed: 10, enemySpeed: 18), Is.False);
+
+    // ── FleeChance ────────────────────────────────────────────────────────────
+
+    [Test]
+    public void FleeChance_EqualSpeed_Returns50Percent()
+        => Assert.That(BattleFormulas.FleeChance(playerSpeed: 10, enemySpeed: 10), Is.EqualTo(50));
+
+    [Test]
+    public void FleeChance_FasterPlayer_IncreasesChance()
+    {
+        // +5 speed → 50 + 5×3 = 65
+        Assert.That(BattleFormulas.FleeChance(playerSpeed: 15, enemySpeed: 10), Is.EqualTo(65));
+    }
+
+    [Test]
+    public void FleeChance_SlowerPlayer_DecreasesChance()
+    {
+        // −5 speed → 50 − 5×3 = 35
+        Assert.That(BattleFormulas.FleeChance(playerSpeed: 5, enemySpeed: 10), Is.EqualTo(35));
+    }
+
+    [Test]
+    public void FleeChance_ClampsAtMinimum10()
+    {
+        // Extreme speed disadvantage should floor at 10
+        Assert.That(BattleFormulas.FleeChance(playerSpeed: 0, enemySpeed: 99), Is.EqualTo(10));
+    }
+
+    [Test]
+    public void FleeChance_ClampsAtMaximum95()
+    {
+        // Extreme speed advantage should cap at 95
+        Assert.That(BattleFormulas.FleeChance(playerSpeed: 99, enemySpeed: 0), Is.EqualTo(95));
+    }
+
+    // ── AttemptFlee ───────────────────────────────────────────────────────────
+
+    [Test]
+    public void AttemptFlee_LowRoll_Succeeds()
+    {
+        // 50% chance at equal speed; roll 0.01 is well below threshold
+        Assert.That(BattleFormulas.AttemptFlee(playerSpeed: 10, enemySpeed: 10, randomValue: 0.01f), Is.True);
+    }
+
+    [Test]
+    public void AttemptFlee_HighRoll_Fails()
+    {
+        // 50% chance at equal speed; roll 0.99 is above threshold
+        Assert.That(BattleFormulas.AttemptFlee(playerSpeed: 10, enemySpeed: 10, randomValue: 0.99f), Is.False);
+    }
+
+    [Test]
+    public void AttemptFlee_RollEqualsThreshold_Fails()
+    {
+        // Threshold is exclusive: roll == 0.50 should fail (chance = 50 → 0.50f, not < 0.50f)
+        Assert.That(BattleFormulas.AttemptFlee(playerSpeed: 10, enemySpeed: 10, randomValue: 0.50f), Is.False);
+    }
 }

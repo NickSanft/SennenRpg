@@ -31,4 +31,7 @@ public partial class ActionMenu : Control
     }
 
     public void FocusFirst() => _fightButton.GrabFocus();
+
+    /// <summary>Overrides the Flee button label text (e.g. "Flee (72%)").</summary>
+    public void SetFleeLabel(string text) => _fleeButton.Text = text;
 }

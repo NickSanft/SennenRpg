@@ -16,11 +16,13 @@ public static class DialogicSignalParser
 	public const string TypeFlag       = "flag";
 	public const string TypeGiveItem   = "give_item";
 	public const string TypeRemoveGold = "remove_gold";
+	public const string TypeStatus     = "status";
 	public const string TypeCustom     = "custom";
 
 	private const string FlagPrefix       = "flag:";
 	private const string GiveItemPrefix   = "give_item:";
 	private const string RemoveGoldPrefix = "remove_gold:";
+	private const string StatusPrefix     = "status:";
 
 	/// <summary>
 	/// Parses a raw Dialogic signal string into a (type, argument) pair.
@@ -36,6 +38,9 @@ public static class DialogicSignalParser
 
 		if (signal.StartsWith(RemoveGoldPrefix))
 			return (TypeRemoveGold, signal.Substring(RemoveGoldPrefix.Length));
+
+		if (signal.StartsWith(StatusPrefix))
+			return (TypeStatus, signal.Substring(StatusPrefix.Length));
 
 		return (TypeCustom, signal);
 	}

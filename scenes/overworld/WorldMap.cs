@@ -27,6 +27,10 @@ public partial class WorldMap : Node2D
 	private WorldMapPlayer  _player    = null!;
 	private DayNightOverlay _dayNight  = null!;
 
+	// Step counter: encounters are gated by a minimum step count between rolls.
+	private int _stepsSinceLastEncounter = 0;
+	private int _nextEncounterThreshold  = 0; // initialised in _Ready
+
 	public override void _Ready()
 	{
 		_collision = GetNode<TileMapLayer>("Collision");
@@ -66,6 +70,8 @@ public partial class WorldMap : Node2D
 			AddChild(GD.Load<PackedScene>(pausePath).Instantiate());
 
 		ApplyDayNightBgm(animate: false);
+
+		_nextEncounterThreshold = (int)GD.RandRange(8, 14);
 	}
 
 	// ── Step handler ─────────────────────────────────────────────────────────
@@ -114,21 +120,34 @@ public partial class WorldMap : Node2D
 
 	private void TryRollEncounter(Vector2I tile)
 	{
-		var gm  = GameManager.Instance;
+		var gm = GameManager.Instance;
+
+		// Repel: block encounters and consume one step of protection.
+		if (gm.RepelStepsRemaining > 0)
+		{
+			gm.RepelStepsRemaining--;
+			return;
+		}
+
 		var enc = gm.IsNight ? NightEncounters : DayEncounters;
 		if (enc.Count == 0) return;
 
-		float rate = EncounterLogic.EncounterRate(gm.EffectiveStats.Luck, gm.IsNight)
-				   * SettingsLogic.EncounterRateMultiplier(
-						SettingsManager.Instance?.Current.EncounterRateMode ?? EncounterRateMode.Normal);
-		if (GD.Randf() >= rate) return;
+		// Step counter: enforce a minimum gap between encounters.
+		_stepsSinceLastEncounter++;
+		if (_stepsSinceLastEncounter < _nextEncounterThreshold) return;
+
+		// Reset counter now (whether or not an encounter fires).
+		_stepsSinceLastEncounter = 0;
+		_nextEncounterThreshold  = (int)GD.RandRange(8, 14);
+
+		// Encounter-rate multiplier from settings (Low = 30%, Off = 0%).
+		float mult = SettingsLogic.EncounterRateMultiplier(
+			SettingsManager.Instance?.Current.EncounterRateMode ?? EncounterRateMode.Normal);
+		if (mult <= 0f || GD.Randf() >= mult) return;
 
 		var chosen = enc[(int)GD.RandRange(0, enc.Count - 1)];
-		BattleRegistry.Instance.SetPendingEncounter(chosen);
-
-		// Store current tile so we return here after the battle
 		gm.WorldMapReturnTile = tile;
-		_ = SceneTransition.Instance.GoToAsync(BattleScene);
+		_ = SceneTransition.Instance.ToBattleAsync(chosen);
 	}
 
 	// ── Passability ───────────────────────────────────────────────────────────
