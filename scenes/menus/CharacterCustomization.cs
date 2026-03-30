@@ -18,7 +18,7 @@ namespace SennenRpg.Scenes.Menus;
 /// </summary>
 public partial class CharacterCustomization : Node2D
 {
-    private const string NextScene   = "res://scenes/overworld/MAPP.tscn";
+    private const string NextScene   = "res://scenes/overworld/WorldMap.tscn";
     private const int    BonusPoints = 5;
     private const int    PerStatCap  = 5;
 

@@ -25,6 +25,12 @@ public partial class IntroCutscene : Node2D
     {
         _bg = GetNode<TextureRect>("Bg");
 
+        // Explicitly fill the viewport — Control anchors inside a Node2D are not reliable
+        // across all Godot versions, so we set the size directly.
+        var vpSize = GetViewportRect().Size;
+        GetNode<ColorRect>("BgColor").Size = vpSize;
+        _bg.Size = vpSize;
+
         // Pre-load all placeholder backgrounds so swaps are instant.
         // Each [signal arg="bg:name"] event in the timeline calls SwitchBackground("name").
         DialogicBridge.Instance.DialogicSignalReceived += OnDialogicSignal;
