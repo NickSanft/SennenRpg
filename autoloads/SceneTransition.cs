@@ -27,8 +27,18 @@ public partial class SceneTransition : CanvasLayer
 		AddChild(_overlay);
 	}
 
-	public async Task GoToAsync(string scenePath, TransitionType type = TransitionType.Fade)
+	/// <summary>
+	/// Transitions to <paramref name="scenePath"/> with an optional fade.
+	/// When <paramref name="autoSave"/> is true, the current save slot is written
+	/// to disk before the fade begins — call this on dungeon exits and map changes.
+	/// </summary>
+	public async Task GoToAsync(string scenePath,
+								TransitionType type     = TransitionType.Fade,
+								bool           autoSave = false)
 	{
+		if (autoSave)
+			SaveManager.Instance.SaveGame();
+
 		await PlayOut(type);
 		GetTree().ChangeSceneToFile(scenePath);
 		await PlayIn(type);

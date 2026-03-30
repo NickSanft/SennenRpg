@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://save_slot_menu_01"]
+
+[ext_resource type="Script" path="res://scenes/menus/SaveSlotMenu.cs" id="1_script"]
+
+[node name="SaveSlotMenu" type="Node2D"]
+script = ExtResource("1_script")

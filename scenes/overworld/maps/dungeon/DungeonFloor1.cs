@@ -36,6 +36,6 @@ public partial class DungeonFloor1 : OverworldBase
 	{
 		if (!body.IsInGroup("player")) return;
 		GameManager.Instance.WorldMapReturnTile = SurfaceReturnTile;
-		_ = SceneTransition.Instance.GoToAsync("res://scenes/overworld/WorldMap.tscn");
+		_ = SceneTransition.Instance.GoToAsync("res://scenes/overworld/WorldMap.tscn", autoSave: true);
 	}
 }

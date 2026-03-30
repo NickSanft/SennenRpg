@@ -17,6 +17,8 @@ public partial class MapExit : Area2D, IInteractable
 	[Export] public string            TargetMapPath { get; set; } = "";
 	[Export] public string            TargetSpawnId { get; set; } = "default";
 	[Export] public bool              AutoTrigger   { get; set; } = false;
+	/// <summary>When true, SaveManager writes the current slot before the transition begins.</summary>
+	[Export] public bool              AutoSave      { get; set; } = false;
 	[Export] public ExitHintDirection ExitHint      { get; set; } = ExitHintDirection.None;
 
 	private bool                   _triggered = false;
@@ -61,7 +63,7 @@ public partial class MapExit : Area2D, IInteractable
 		_triggered = true;
 
 		GameManager.Instance.SetLastSpawn(TargetSpawnId);
-		_ = SceneTransition.Instance.GoToAsync(TargetMapPath);
+		_ = SceneTransition.Instance.GoToAsync(TargetMapPath, autoSave: AutoSave);
 	}
 
 	private void SpawnArrow(ExitHintDirection dir)

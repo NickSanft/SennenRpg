@@ -42,6 +42,9 @@
         <Compile Include="../core/data/QuestLogic.cs" />
         <Compile Include="../core/data/SettingsData.cs" />
         <Compile Include="../core/data/SettingsLogic.cs" />
+        <!-- Save slot system — pure logic, no Godot runtime -->
+        <Compile Include="../core/data/SaveSlotLogic.cs" />
+        <Compile Include="../autoloads/SaveData.cs" />
     </ItemGroup>
 
 </Project>

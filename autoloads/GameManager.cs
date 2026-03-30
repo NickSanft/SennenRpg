@@ -67,6 +67,10 @@ public partial class GameManager : Node
 	/// <summary>Replacement colours chosen by the player, parallel to PaletteSourceColors.</summary>
 	public Color[] PaletteTargetColors { get; set; } = [];
 
+	/// <summary>Cumulative seconds the player has spent in Overworld or Battle states.</summary>
+	public int PlayTimeSeconds { get; private set; } = 0;
+	private double _playTimeAccumulator = 0.0;
+
 	public override void _Ready()
 	{
 		Instance = this;
@@ -83,6 +87,20 @@ public partial class GameManager : Node
 		const string growthPath = "res://resources/characters/player_growth_rates.tres";
 		if (ResourceLoader.Exists(growthPath))
 			_growthRates = GD.Load<GrowthRates>(growthPath);
+	}
+
+	public override void _Process(double delta)
+	{
+		if (CurrentState is GameState.Overworld or GameState.Battle)
+		{
+			_playTimeAccumulator += delta;
+			if (_playTimeAccumulator >= 1.0)
+			{
+				int whole = (int)_playTimeAccumulator;
+				PlayTimeSeconds      += whole;
+				_playTimeAccumulator -= whole;
+			}
+		}
 	}
 
 	public void SetState(GameState newState)
@@ -318,6 +336,8 @@ public partial class GameManager : Node
 		KillCounts.Clear();
 		PaletteSourceColors   = [];
 		PaletteTargetColors   = [];
+		PlayTimeSeconds        = 0;
+		_playTimeAccumulator   = 0.0;
 
 		const string statsPath = "res://resources/characters/player_stats.tres";
 		if (ResourceLoader.Exists(statsPath))
@@ -396,8 +416,10 @@ public partial class GameManager : Node
 		KillCounts.Clear();
 		foreach (var kv in data.KillCounts) KillCounts[kv.Key] = kv.Value;
 
-		PaletteSourceColors = DeserialiseColors(data.PaletteSourceColors);
-		PaletteTargetColors = DeserialiseColors(data.PaletteTargetColors);
+		PaletteSourceColors  = DeserialiseColors(data.PaletteSourceColors);
+		PaletteTargetColors  = DeserialiseColors(data.PaletteTargetColors);
+		PlayTimeSeconds      = data.PlayTimeSeconds;
+		_playTimeAccumulator = 0.0;
 	}
 
 	private static Color[] DeserialiseColors(string[]? hexArray)
