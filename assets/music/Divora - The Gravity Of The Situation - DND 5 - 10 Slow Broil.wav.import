@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://bf47l30xfsd56"
+path="res://.godot/imported/Divora - The Gravity Of The Situation - DND 5 - 10 Slow Broil.wav-b2d06f2c30202116faf2e5fc295658cb.sample"
+
+[deps]
+
+source_file="res://assets/music/Divora - The Gravity Of The Situation - DND 5 - 10 Slow Broil.wav"
+dest_files=["res://.godot/imported/Divora - The Gravity Of The Situation - DND 5 - 10 Slow Broil.wav-b2d06f2c30202116faf2e5fc295658cb.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

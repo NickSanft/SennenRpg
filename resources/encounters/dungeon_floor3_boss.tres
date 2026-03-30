@@ -10,3 +10,4 @@ Enemies = Array[ExtResource("1_EnemyData")]([ExtResource("2_boss")])
 BackgroundId = "dungeon"
 EncounterChancePerStep = 100.0
 BattleBpm = 110.0
+BattleBgmPath = "res://assets/music/Divora - Ominous Augury - DND 7 - 08 Outpacing.wav"
