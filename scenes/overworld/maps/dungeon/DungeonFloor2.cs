@@ -9,8 +9,8 @@ namespace SennenRpg.Scenes.Overworld;
 /// </summary>
 public partial class DungeonFloor2 : OverworldBase
 {
-    public override void _Ready()
-    {
-        base._Ready();
-    }
+	public override void _Ready()
+	{
+		base._Ready();
+	}
 }
