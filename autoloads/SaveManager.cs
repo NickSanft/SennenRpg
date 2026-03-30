@@ -37,9 +37,11 @@ public record SaveData
 	public List<string>             ActiveQuestIds    { get; init; } = new();
 	public List<string>             CompletedQuestIds { get; init; } = new();
 	/// <summary>Enum name of the class chosen at character creation (e.g. "Bard").</summary>
-	public string? PlayerClassName       { get; init; }
-	/// <summary>res:// path to the chosen ColorScheme .tres, or null for default.</summary>
-	public string? PlayerColorSchemePath { get; init; }
+	public string?   PlayerClassName      { get; init; }
+	/// <summary>Original sprite colours extracted at character creation (hex strings, no #).</summary>
+	public string[]? PaletteSourceColors  { get; init; }
+	/// <summary>Replacement colours chosen by the player, parallel to PaletteSourceColors.</summary>
+	public string[]? PaletteTargetColors  { get; init; }
 }
 
 public partial class SaveManager : Node
@@ -89,8 +91,9 @@ public partial class SaveManager : Node
 			KillCounts            = new Dictionary<string, int>(gm.KillCounts),
 			ActiveQuestIds       = QuestManager.Instance.GetActiveQuestIds(),
 			CompletedQuestIds    = QuestManager.Instance.GetCompletedQuestIds(),
-			PlayerClassName      = gm.PlayerStats.ClassName,
-			PlayerColorSchemePath = gm.PlayerColorScheme?.ResourcePath,
+			PlayerClassName     = gm.PlayerStats.ClassName,
+			PaletteSourceColors = SerialiseColors(gm.PaletteSourceColors),
+			PaletteTargetColors = SerialiseColors(gm.PaletteTargetColors),
 		};
 
 		string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
@@ -113,6 +116,14 @@ public partial class SaveManager : Node
 	{
 		GameManager.Instance.ApplySaveData(data);
 		QuestManager.Instance.ApplySaveData(data.ActiveQuestIds, data.CompletedQuestIds);
+	}
+
+	private static string[] SerialiseColors(Color[] colors)
+	{
+		var result = new string[colors.Length];
+		for (int i = 0; i < colors.Length; i++)
+			result[i] = colors[i].ToHtml(false);
+		return result;
 	}
 
 	private static Dictionary<string, string> SerialiseEquipped(

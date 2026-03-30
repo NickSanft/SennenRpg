@@ -2,6 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using SennenRpg.Autoloads;
+using SennenRpg.Core.Extensions;
 using SennenRpg.Core.Interfaces;
 
 namespace SennenRpg.Scenes.Player;
@@ -41,9 +42,9 @@ public partial class DungeonPlayer : CharacterBody2D
         AddToGroup("player");
         _sprite = GetNodeOrNull<AnimatedSprite2D>("Sprite");
 
-        var scheme = GameManager.Instance.PlayerColorScheme;
-        if (scheme != null && _sprite != null)
-            _sprite.Modulate = scheme.Tint;
+        var gm = GameManager.Instance;
+        if (_sprite != null && gm.PaletteSourceColors.Length > 0)
+            PaletteSwapHelper.ApplyPalette(_sprite, gm.PaletteSourceColors, gm.PaletteTargetColors);
 
         _interactRange = GetNode<Area2D>("InteractRange");
         var collShape = _interactRange.GetNodeOrNull<CollisionShape2D>("CollisionShape2D");

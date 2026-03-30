@@ -2,6 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
+using SennenRpg.Core.Extensions;
 
 namespace SennenRpg.Scenes.Menus;
 
@@ -9,11 +10,11 @@ namespace SennenRpg.Scenes.Menus;
 /// Three-tab character customization screen shown after the intro cutscene.
 ///   Tab 1 — Class:      choose Bard / Fighter / Ranger / Mage
 ///   Tab 2 — Stats:      allocate 5 bonus points across 6 stats
-///   Tab 3 — Appearance: choose 1 of 8 colour-scheme presets
+///   Tab 3 — Appearance: per-colour palette swap of the player sprite
 ///
 /// Confirm applies the result to GameManager via ApplyCharacterCustomization(),
 /// then transitions to MAPP.tscn.
-/// Skip applies Bard defaults and transitions immediately.
+/// Skip applies Bard defaults and transitions immediately with no colour changes.
 /// </summary>
 public partial class CharacterCustomization : Node2D
 {
@@ -29,18 +30,6 @@ public partial class CharacterCustomization : Node2D
         ("res://resources/characters/class_mage.tres",    "Arcane power.\nHigh magic and MP, fragile."),
     ];
 
-    private static readonly string[] SchemePaths =
-    [
-        "res://resources/color_schemes/scheme_default.tres",
-        "res://resources/color_schemes/scheme_shadow.tres",
-        "res://resources/color_schemes/scheme_ember.tres",
-        "res://resources/color_schemes/scheme_frost.tres",
-        "res://resources/color_schemes/scheme_forest.tres",
-        "res://resources/color_schemes/scheme_dusk.tres",
-        "res://resources/color_schemes/scheme_rose.tres",
-        "res://resources/color_schemes/scheme_gold.tres",
-    ];
-
     // (save key, display label, hp-multiplier for one point spend)
     private static readonly (string Key, string Label, int Mult)[] StatDefs =
     [
@@ -52,24 +41,40 @@ public partial class CharacterCustomization : Node2D
         ("luck",    "Luck",    1),
     ];
 
-    // Loaded resources
+    // Colour preset definitions: (name, hue rotation in degrees, saturation multiplier, value multiplier)
+    private static readonly (string Name, float HueDeg, float SatMult, float ValMult)[] PresetDefs =
+    [
+        ("Default",  0f,   1.0f, 1.0f),
+        ("Shadow",   260f, 0.6f, 0.7f),
+        ("Ember",    330f, 1.3f, 1.0f),
+        ("Frost",    190f, 0.9f, 1.1f),
+        ("Forest",   110f, 1.1f, 0.9f),
+        ("Dusk",     250f, 0.7f, 0.8f),
+        ("Rose",     320f, 1.1f, 1.0f),
+        ("Gold",      50f, 1.2f, 1.1f),
+    ];
+
+    // Loaded class resources
     private CharacterStats[] _presets = null!;
-    private ColorScheme[]    _schemes = null!;
 
     // Selection state
-    private int _selectedClassIdx  = 0;
-    private int _selectedSchemeIdx = 0;
-    private int _remainingPoints   = BonusPoints;
+    private int _selectedClassIdx = 0;
+    private int _remainingPoints  = BonusPoints;
     private readonly Dictionary<string, int> _deltas = new();
 
-    // UI refs built in BuildXxxTab()
-    private Button[]     _classSelectBtns = null!;
-    private Label        _pointsLabel     = null!;
+    // UI refs — class tab
+    private Button[] _classSelectBtns = null!;
+
+    // UI refs — stats tab
+    private Label _pointsLabel = null!;
     private readonly Dictionary<string, Label> _statCurrentLabels = new();
     private readonly Dictionary<string, Label> _statBaseLabels    = new();
-    private StyleBoxFlat[] _swatchStyles  = null!;
-    private Button[]       _swatchBtns    = null!;
-    private TextureRect    _previewSprite = null!;
+
+    // UI refs — appearance tab
+    private TextureRect         _previewSprite = null!;
+    private Color[]             _sourceColors  = [];
+    private Color[]             _targetColors  = [];
+    private ColorPickerButton[] _pickers       = [];
 
     private bool _transitioning = false;
 
@@ -81,10 +86,6 @@ public partial class CharacterCustomization : Node2D
         for (int i = 0; i < ClassDefs.Length; i++)
             _presets[i] = GD.Load<CharacterStats>(ClassDefs[i].Path);
 
-        _schemes = new ColorScheme[SchemePaths.Length];
-        for (int i = 0; i < SchemePaths.Length; i++)
-            _schemes[i] = GD.Load<ColorScheme>(SchemePaths[i]);
-
         GetNode<Button>("UI/Margin/VBox/BottomBar/ConfirmButton").Pressed += OnConfirmPressed;
         GetNode<Button>("UI/Margin/VBox/BottomBar/SkipButton").Pressed    += OnSkipPressed;
 
@@ -93,7 +94,6 @@ public partial class CharacterCustomization : Node2D
         BuildAppearanceTab();
 
         SelectClass(0);
-        SelectScheme(0);
     }
 
     // ── Tab 1 — Class ─────────────────────────────────────────────────────────
@@ -265,10 +265,16 @@ public partial class CharacterCustomization : Node2D
     {
         var tab = GetNode<VBoxContainer>("UI/Margin/VBox/Tabs/Appearance");
 
-        var header = new Label { Text = "Choose a colour scheme", HorizontalAlignment = HorizontalAlignment.Center };
+        // Extract unique colours from the player sprite (sorted by frequency)
+        _sourceColors = SpriteColorExtractor.ExtractUniqueColors(
+            "res://assets/sprites/player/Sen_Overworld.png");
+        _targetColors = (Color[])_sourceColors.Clone();
+
+        var header = new Label { Text = "Customise Colours", HorizontalAlignment = HorizontalAlignment.Center };
+        header.AddThemeFontSizeOverride("font_size", 16);
         tab.AddChild(header);
 
-        // Preview sprite (centred)
+        // Live preview
         var previewRow = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter };
         _previewSprite = new TextureRect
         {
@@ -280,70 +286,115 @@ public partial class CharacterCustomization : Node2D
         previewRow.AddChild(_previewSprite);
         tab.AddChild(previewRow);
 
-        // Swatch grid
-        var flow = new HFlowContainer();
-        flow.AddThemeConstantOverride("h_separation", 10);
-        flow.AddThemeConstantOverride("v_separation", 8);
-        tab.AddChild(flow);
+        // Preset buttons
+        var presetLabel = new Label { Text = "Presets:", HorizontalAlignment = HorizontalAlignment.Center };
+        tab.AddChild(presetLabel);
 
-        _swatchBtns   = new Button[_schemes.Length];
-        _swatchStyles = new StyleBoxFlat[_schemes.Length];
+        var presetFlow = new HFlowContainer();
+        presetFlow.AddThemeConstantOverride("h_separation", 6);
+        presetFlow.AddThemeConstantOverride("v_separation", 4);
+        tab.AddChild(presetFlow);
 
-        for (int i = 0; i < _schemes.Length; i++)
+        foreach (var (name, hue, sat, val) in PresetDefs)
         {
-            int        idx    = i;
-            ColorScheme scheme = _schemes[i];
-
-            var swatchBox = new VBoxContainer();
-            swatchBox.AddThemeConstantOverride("separation", 2);
-
-            var style = new StyleBoxFlat
-            {
-                BgColor          = scheme.Tint,
-                BorderColor      = Colors.DimGray,
-                BorderWidthLeft  = 2, BorderWidthRight  = 2,
-                BorderWidthTop   = 2, BorderWidthBottom = 2,
-            };
-            _swatchStyles[i] = style;
-
-            var hoverStyle   = new StyleBoxFlat { BgColor = scheme.Tint.Lightened(0.15f) };
-            var pressedStyle = new StyleBoxFlat { BgColor = scheme.Tint.Darkened(0.15f) };
-
-            var btn = new Button { CustomMinimumSize = new Vector2(48, 48), FocusMode = Control.FocusModeEnum.Click };
-            btn.AddThemeStyleboxOverride("normal",  style);
-            btn.AddThemeStyleboxOverride("hover",   hoverStyle);
-            btn.AddThemeStyleboxOverride("pressed", pressedStyle);
-            btn.AddThemeStyleboxOverride("focus",   style);
-            btn.Pressed += () => SelectScheme(idx);
-            _swatchBtns[i] = btn;
-
-            var nameLabel = new Label
-            {
-                Text                = scheme.SchemeName,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                CustomMinimumSize   = new Vector2(48, 0),
-            };
-
-            swatchBox.AddChild(btn);
-            swatchBox.AddChild(nameLabel);
-            flow.AddChild(swatchBox);
+            float h = hue, s = sat, v = val;
+            var btn = new Button { Text = name, CustomMinimumSize = new Vector2(68, 0) };
+            btn.Pressed += () => ApplyPreset(h, s, v);
+            presetFlow.AddChild(btn);
         }
+
+        if (_sourceColors.Length == 0)
+        {
+            tab.AddChild(new Label { Text = "(No sprite colours found)", HorizontalAlignment = HorizontalAlignment.Center });
+            _pickers = [];
+            return;
+        }
+
+        // Scroll container for per-colour rows
+        var pickerLabel = new Label { Text = "Per-colour adjustments:", HorizontalAlignment = HorizontalAlignment.Center };
+        tab.AddChild(pickerLabel);
+
+        var scroll = new ScrollContainer();
+        scroll.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
+        var colorList = new VBoxContainer();
+        colorList.AddThemeConstantOverride("separation", 4);
+        scroll.AddChild(colorList);
+        tab.AddChild(scroll);
+
+        _pickers = new ColorPickerButton[_sourceColors.Length];
+        for (int i = 0; i < _sourceColors.Length; i++)
+        {
+            int idx = i;
+            var row = new HBoxContainer();
+            row.AddThemeConstantOverride("separation", 6);
+
+            var origSwatch = new ColorRect
+            {
+                Color             = _sourceColors[i],
+                CustomMinimumSize = new Vector2(28, 22),
+            };
+
+            var arrow = new Label { Text = "→", VerticalAlignment = VerticalAlignment.Center };
+
+            var picker = new ColorPickerButton
+            {
+                Color             = _targetColors[i],
+                CustomMinimumSize = new Vector2(60, 22),
+            };
+            picker.ColorChanged += color =>
+            {
+                _targetColors[idx] = color;
+                RefreshPreview();
+            };
+            _pickers[i] = picker;
+
+            row.AddChild(origSwatch);
+            row.AddChild(arrow);
+            row.AddChild(picker);
+            colorList.AddChild(row);
+        }
+
+        // Reset
+        var resetBtn = new Button { Text = "Reset to Original", SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter };
+        resetBtn.Pressed += ResetToOriginal;
+        tab.AddChild(resetBtn);
+
+        RefreshPreview();
     }
 
-    private void SelectScheme(int idx)
+    private void RefreshPreview()
     {
-        _selectedSchemeIdx = idx;
-        _previewSprite.Modulate = _schemes[idx].Tint;
+        if (_sourceColors.Length == 0) return;
+        PaletteSwapHelper.ApplyPalette(_previewSprite, _sourceColors, _targetColors);
+    }
 
-        for (int i = 0; i < _swatchStyles.Length; i++)
+    private void ApplyPreset(float hueDeg, float satMult, float valMult)
+    {
+        for (int i = 0; i < _sourceColors.Length; i++)
         {
-            bool selected = i == idx;
-            _swatchStyles[i].BorderColor      = selected ? Colors.White : Colors.DimGray;
-            _swatchStyles[i].BorderWidthLeft  = selected ? 3 : 2;
-            _swatchStyles[i].BorderWidthRight = selected ? 3 : 2;
-            _swatchStyles[i].BorderWidthTop   = selected ? 3 : 2;
-            _swatchStyles[i].BorderWidthBottom = selected ? 3 : 2;
+            _targetColors[i] = ShiftColor(_sourceColors[i], hueDeg, satMult, valMult);
+            if (i < _pickers.Length) _pickers[i].Color = _targetColors[i];
         }
+        RefreshPreview();
+    }
+
+    private void ResetToOriginal()
+    {
+        for (int i = 0; i < _sourceColors.Length; i++)
+        {
+            _targetColors[i] = _sourceColors[i];
+            if (i < _pickers.Length) _pickers[i].Color = _targetColors[i];
+        }
+        RefreshPreview();
+    }
+
+    private static Color ShiftColor(Color src, float hueDeg, float satMult, float valMult)
+    {
+        src.ToHsv(out float h, out float s, out float v);
+        h = ((h + hueDeg / 360f) % 1f + 1f) % 1f;
+        s = Mathf.Clamp(s * satMult, 0f, 1f);
+        v = Mathf.Clamp(v * valMult, 0f, 1f);
+        return Color.FromHsv(h, s, v);
     }
 
     // ── Confirm / Skip ────────────────────────────────────────────────────────
@@ -360,8 +411,7 @@ public partial class CharacterCustomization : Node2D
     {
         if (_transitioning) return;
         _transitioning = true;
-        _selectedClassIdx  = 0;
-        _selectedSchemeIdx = 0;
+        _selectedClassIdx = 0;
         _deltas.Clear();
         ApplyToGameManager();
         _ = SceneTransition.Instance.GoToAsync(NextScene);
@@ -371,7 +421,6 @@ public partial class CharacterCustomization : Node2D
     {
         var preset = _presets[_selectedClassIdx];
 
-        // Build final stats: class preset + point deltas
         var stats = new CharacterStats
         {
             MaxHp      = preset.MaxHp    + _deltas.GetValueOrDefault("hp")      * 4,
@@ -390,6 +439,6 @@ public partial class CharacterCustomization : Node2D
         stats.CurrentHp = stats.MaxHp;
         stats.CurrentMp = stats.MaxMp;
 
-        GameManager.Instance.ApplyCharacterCustomization(stats, _schemes[_selectedSchemeIdx]);
+        GameManager.Instance.ApplyCharacterCustomization(stats, _sourceColors, _targetColors);
     }
 }

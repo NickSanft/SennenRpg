@@ -1,6 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 using SennenRpg.Autoloads;
+using SennenRpg.Core.Extensions;
 using SennenRpg.Core.Interfaces;
 
 namespace SennenRpg.Scenes.Player;
@@ -31,9 +32,9 @@ public partial class Player : CharacterBody2D
 		_interactRange.AreaEntered += area => { if (area is IInteractable i) _candidates.Add(i); };
 		_interactRange.AreaExited  += area => { if (area is IInteractable i) _candidates.Remove(i); };
 
-		var scheme = GameManager.Instance.PlayerColorScheme;
-		if (scheme != null)
-			_sprite.Modulate = scheme.Tint;
+		var gm = GameManager.Instance;
+		if (gm.PaletteSourceColors.Length > 0)
+			PaletteSwapHelper.ApplyPalette(_sprite, gm.PaletteSourceColors, gm.PaletteTargetColors);
 
 		// Placeholder visual — visible until real sprites are assigned
 		if (_sprite.SpriteFrames == null)

@@ -2,6 +2,7 @@ using Godot;
 using Godot.Collections;
 using System.Collections.Generic;
 using SennenRpg.Core.Data;
+using SennenRpg.Core.Extensions;
 using EquipDict = System.Collections.Generic.Dictionary<SennenRpg.Core.Data.EquipmentSlot, string>;
 
 namespace SennenRpg.Autoloads;
@@ -61,8 +62,10 @@ public partial class GameManager : Node
 	// Kill tracking: keyed by EnemyData.EnemyId
 	public System.Collections.Generic.Dictionary<string, int> KillCounts { get; } = new();
 
-	/// <summary>Colour scheme chosen during character creation. Null = use sprite defaults.</summary>
-	public ColorScheme? PlayerColorScheme { get; set; }
+	/// <summary>Original palette colours extracted from the sprite at character creation.</summary>
+	public Color[] PaletteSourceColors { get; set; } = [];
+	/// <summary>Replacement colours chosen by the player, parallel to PaletteSourceColors.</summary>
+	public Color[] PaletteTargetColors { get; set; } = [];
 
 	public override void _Ready()
 	{
@@ -313,7 +316,8 @@ public partial class GameManager : Node
 		IsNight               = false;
 		TilesWalkedOnWorldMap = 0;
 		KillCounts.Clear();
-		PlayerColorScheme     = null;
+		PaletteSourceColors   = [];
+		PaletteTargetColors   = [];
 
 		const string statsPath = "res://resources/characters/player_stats.tres";
 		if (ResourceLoader.Exists(statsPath))
@@ -325,8 +329,9 @@ public partial class GameManager : Node
 	/// Applies the result of the character-customization screen.
 	/// Copies all stat fields into the existing <see cref="PlayerStats"/> object rather than
 	/// replacing it, to avoid creating a new GodotObject that could race the C# GC finaliser.
+	/// Pass empty arrays for sourceColors/targetColors to use the default sprite appearance.
 	/// </summary>
-	public void ApplyCharacterCustomization(CharacterStats stats, ColorScheme? scheme)
+	public void ApplyCharacterCustomization(CharacterStats stats, Color[] sourceColors, Color[] targetColors)
 	{
 		PlayerStats.MaxHp      = stats.MaxHp;
 		PlayerStats.CurrentHp  = stats.MaxHp;
@@ -340,7 +345,8 @@ public partial class GameManager : Node
 		PlayerStats.CurrentMp  = stats.MaxMp;
 		PlayerStats.Class      = stats.Class;
 		PlayerStats.ClassName  = stats.ClassName;
-		PlayerColorScheme      = scheme;
+		PaletteSourceColors    = sourceColors;
+		PaletteTargetColors    = targetColors;
 		EmitSignal(SignalName.PlayerStatsChanged);
 	}
 
@@ -390,8 +396,16 @@ public partial class GameManager : Node
 		KillCounts.Clear();
 		foreach (var kv in data.KillCounts) KillCounts[kv.Key] = kv.Value;
 
-		PlayerColorScheme = null;
-		if (!string.IsNullOrEmpty(data.PlayerColorSchemePath) && ResourceLoader.Exists(data.PlayerColorSchemePath))
-			PlayerColorScheme = GD.Load<ColorScheme>(data.PlayerColorSchemePath);
+		PaletteSourceColors = DeserialiseColors(data.PaletteSourceColors);
+		PaletteTargetColors = DeserialiseColors(data.PaletteTargetColors);
+	}
+
+	private static Color[] DeserialiseColors(string[]? hexArray)
+	{
+		if (hexArray == null || hexArray.Length == 0) return [];
+		var result = new Color[hexArray.Length];
+		for (int i = 0; i < hexArray.Length; i++)
+			result[i] = new Color(hexArray[i]);
+		return result;
 	}
 }
