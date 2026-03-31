@@ -2,6 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
+using SennenRpg.Core.Extensions;
 
 namespace SennenRpg.Scenes.Battle;
 
@@ -11,12 +12,14 @@ namespace SennenRpg.Scenes.Battle;
 /// </summary>
 public partial class BattleHUD : CanvasLayer
 {
-	private Label     _nameLabel   = null!;
-	private Label     _lvLabel     = null!;
-	private Label     _hpLabel     = null!;
-	private Label     _mpLabel     = null!;
-	private Label     _statsLabel  = null!;
-	private Label     _statusLabel = null!;
+	private Label     _nameLabel    = null!;
+	private Label     _lvLabel      = null!;
+	private Label     _hpLabel      = null!;
+	private Label     _mpLabel      = null!;
+	private Label     _statsLabel   = null!;
+	private Label     _statusLabel  = null!;
+	private Label?    _summaryLabel;
+	private Label?    _hintLabel;
 	private ColorRect _hpBarBg     = null!;
 	private ColorRect _hpBar       = null!;
 	private ColorRect _mpBarBg     = null!;
@@ -40,6 +43,16 @@ public partial class BattleHUD : CanvasLayer
 		// Status label is created dynamically so the .tscn doesn't need editing.
 		_statusLabel = new Label { Text = "" };
 		GetNode<VBoxContainer>("HudPanel/VBoxContainer").AddChild(_statusLabel);
+
+		// Hint bar — thin label at the bottom of the panel, pre-populated with common bindings.
+		_hintLabel = new Label
+		{
+			HorizontalAlignment = HorizontalAlignment.Center,
+			Modulate = new Color(1f, 1f, 1f, 0.55f),
+		};
+		_hintLabel.AddThemeFontSizeOverride("font_size", 10);
+		GetNode<VBoxContainer>("HudPanel/VBoxContainer").AddChild(_hintLabel);
+		SetHints(BattleHints.PlayerTurn);
 
 		// Apply colorblind palette — HUD loads after SettingsManager.ApplyAll(), so we apply again here.
 		var mode = SettingsManager.Instance?.Current.ColorblindMode ?? ColorblindMode.Normal;
@@ -76,6 +89,37 @@ public partial class BattleHUD : CanvasLayer
 			$"  MAG:{stats.Magic}  RES:{stats.Resistance}  LCK:{stats.Luck}";
 	}
 
+	/// <summary>
+	/// Shows a brief performance summary ("PERFECT×5 GOOD×3 …") that auto-hides after 3 s.
+	/// </summary>
+	public void ShowPerformanceSummary(PerformanceScore score)
+	{
+		if (_summaryLabel == null)
+		{
+			_summaryLabel = new Label
+			{
+				HorizontalAlignment = HorizontalAlignment.Center,
+				Modulate = Colors.Transparent,
+			};
+			_summaryLabel.AddThemeFontSizeOverride("font_size", 11);
+			GetNode<VBoxContainer>("HudPanel/VBoxContainer").AddChild(_summaryLabel);
+		}
+
+		_summaryLabel.Text = score.GetSummaryText();
+
+		var tween = CreateTween().SetParallel(true);
+		tween.TweenProperty(_summaryLabel, "modulate:a", 1f, 0.3f);
+		tween.Chain().TweenInterval(2.5f);
+		tween.Chain().TweenProperty(_summaryLabel, "modulate:a", 0f, 0.5f);
+	}
+
+	/// <summary>Updates the contextual hint bar at the bottom of the HUD panel.</summary>
+	public void SetHints(string text)
+	{
+		if (_hintLabel != null)
+			_hintLabel.Text = text;
+	}
+
 	/// <summary>Updates the status icon row beneath the stat line.</summary>
 	public void UpdateStatuses(Dictionary<StatusEffect, int> statuses)
 	{
@@ -89,4 +133,38 @@ public partial class BattleHUD : CanvasLayer
 			parts.Add($"{StatusLogic.IconText(effect)}({turns})");
 		_statusLabel.Text = string.Join(" ", parts);
 	}
+}
+
+/// <summary>
+/// Pre-built hint strings for each battle phase.
+/// Uses <see cref="InputMapExtensions.HintFor"/> so hints reflect player key remaps.
+/// </summary>
+public static class BattleHints
+{
+    public static string PlayerTurn =>
+        $"{InputMapExtensions.HintFor("interact",   "Confirm")}  " +
+        $"{InputMapExtensions.HintFor("ui_cancel",  "Back")}  " +
+        $"{InputMapExtensions.HintFor("ui_up",      "↑")} " +
+        $"{InputMapExtensions.HintFor("ui_down",    "↓")} Navigate";
+
+    public static string RhythmPhase =>
+        $"{InputMapExtensions.HintFor("lane_0", "Lane 1", "1")}  " +
+        $"{InputMapExtensions.HintFor("lane_1", "Lane 2", "2")}  " +
+        $"{InputMapExtensions.HintFor("lane_2", "Lane 3", "3")}  " +
+        $"{InputMapExtensions.HintFor("lane_3", "Lane 4", "4")}";
+
+    public static string FighterTiming =>
+        $"{InputMapExtensions.HintFor("interact", "Lock In")}  — hit the sweet spot for max damage";
+
+    public static string RangerAim =>
+		$"{InputMapExtensions.HintFor("interact", "Fire")}  — aim for the bull's-eye to crit";
+
+    public static string MageRunes =>
+		$"{InputMapExtensions.HintFor("ui_up",    "↑")} " +
+		$"{InputMapExtensions.HintFor("ui_down",  "↓")} " +
+		$"{InputMapExtensions.HintFor("ui_left",  "←")} " +
+		$"{InputMapExtensions.HintFor("ui_right", "→")}  — trace the rune sequence";
+
+    public static string Flee(int pct) =>
+		$"{InputMapExtensions.HintFor("interact", "Flee")}  — {pct}% escape chance";
 }

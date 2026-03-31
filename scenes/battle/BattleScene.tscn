@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://cwp9xtb3hm6qe"]
+[gd_scene load_steps=12 format=3 uid="uid://cwp9xtb3hm6qe"]
 
 [ext_resource type="Script" path="res://scenes/battle/BattleScene.cs" uid="uid://cht04ieerben2" id="1_script"]
 [ext_resource type="PackedScene" uid="uid://dxc3n8mp1oqv5" path="res://scenes/battle/ActionMenu.tscn" id="2_actionmenu"]
@@ -7,6 +7,9 @@
 [ext_resource type="PackedScene" path="res://scenes/battle/rhythm/RhythmArena.tscn" id="5_rhythmarena"]
 [ext_resource type="PackedScene" path="res://scenes/battle/rhythm/RhythmStrike.tscn" id="6_rhythmstrike"]
 [ext_resource type="PackedScene" uid="uid://enmplt5k6j7s8" path="res://scenes/battle/ui/EnemyNameplate.tscn" id="7_nameplate"]
+[ext_resource type="PackedScene" uid="uid://bpv3wqt8nxhk4" path="res://scenes/battle/FightBar.tscn" id="8_fightbar"]
+[ext_resource type="PackedScene" uid="uid://ranger_aim_scene" path="res://scenes/battle/RangerAim.tscn" id="9_rangeraim"]
+[ext_resource type="PackedScene" uid="uid://mage_rune_input_scene" path="res://scenes/battle/MageRuneInput.tscn" id="10_mageruneinput"]
 
 [node name="BattleScene" type="Node2D"]
 script = ExtResource("1_script")
@@ -70,5 +73,32 @@ offset_left = 496.0
 offset_top = 155.0
 offset_right = 656.0
 offset_bottom = 195.0
+
+[node name="FightBar" parent="." instance=ExtResource("8_fightbar")]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 376.0
+offset_top = 366.0
+offset_right = 776.0
+offset_bottom = 394.0
+visible = false
+
+[node name="RangerAim" parent="." instance=ExtResource("9_rangeraim")]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 456.0
+offset_top = 240.0
+offset_right = 696.0
+offset_bottom = 400.0
+visible = false
+
+[node name="MageRuneInput" parent="." instance=ExtResource("10_mageruneinput")]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 426.0
+offset_top = 310.0
+offset_right = 726.0
+offset_bottom = 410.0
+visible = false
 
 [node name="BattleHUD" parent="." instance=ExtResource("4_battlehud")]

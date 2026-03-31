@@ -55,7 +55,6 @@ public partial class RhythmArena : Node2D
     // ── State ─────────────────────────────────────────────────────────
     private bool               _running;
     private RhythmPatternBase? _activePattern;
-    private Label?             _feedbackLabel;
     private Label?             _comboLabel;
     private Label?             _breakLabel;
 
@@ -84,15 +83,6 @@ public partial class RhythmArena : Node2D
 
         ObstacleContainer      = new Node2D { Name = "ObstacleContainer" };
         AddChild(ObstacleContainer);
-
-        _feedbackLabel = new Label
-        {
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Position            = new Vector2(-40f, -ArenaHalfH - 24f),
-            Visible             = false,
-        };
-        _feedbackLabel.AddThemeFontSizeOverride("font_size", 14);
-        AddChild(_feedbackLabel);
 
         _comboLabel = new Label
         {
@@ -399,19 +389,15 @@ public partial class RhythmArena : Node2D
 
     private void ShowFeedback(HitGrade grade, int lane)
     {
-        if (_feedbackLabel == null) return;
-
-        (_feedbackLabel.Text, _feedbackLabel.Modulate) = grade switch
+        (string text, Color color) = grade switch
         {
             HitGrade.Perfect => ("PERFECT!", Colors.Yellow),
             HitGrade.Good    => ("GOOD",     Colors.White),
             _                => ("MISS",     Colors.Red),
         };
-        _feedbackLabel.Position = new Vector2(-30f, LaneCenterY[lane] - 20f);
-        _feedbackLabel.Visible  = true;
-
-        GetTree().CreateTimer(0.4f).Timeout +=
-            () => { if (_feedbackLabel != null) _feedbackLabel.Visible = false; };
+        var lbl = new HitFeedbackLabel();
+        AddChild(lbl);
+        lbl.Play(text, color, new Vector2(HitZoneX - 30f, LaneCenterY[Mathf.Clamp(lane, 0, 3)] - 10f));
     }
 
     private void OnPatternFinished()

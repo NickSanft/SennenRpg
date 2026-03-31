@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://mage_rune_input_scene"]
+
+[ext_resource type="Script" path="res://scenes/battle/MageRuneInput.cs" id="1_script"]
+
+[node name="MageRuneInput" type="Control"]
+custom_minimum_size = Vector2(240, 80)
+visible = false
+script = ExtResource("1_script")

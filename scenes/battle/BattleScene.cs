@@ -12,7 +12,7 @@ public enum BattleState { Intro, PlayerTurn, EnemyTurn, RhythmPhase, StrikePhase
 
 /// <summary>
 /// Root battle scene state machine — rhythm RPG version.
-/// Fight uses RhythmStrike (single-beat timing).
+/// Fight is routed by class: Bard→RhythmStrike, Fighter→FightBar, Ranger→RangerAim, Mage→MageRuneInput.
 /// Enemy turn uses RhythmArena (4-lane note highway).
 /// PERFORM opens the Bard skills sub-menu (skills implemented in Phase 5).
 /// All dialog is displayed through Dialogic timelines in dialog/timelines/battle_*.dtl.
@@ -42,6 +42,9 @@ public partial class BattleScene : Node2D
 	private CharmMinigame      _charmMinigame      = null!;
 	private BardMinigameBase[] _bardSkills         = null!;
 	private ShadowBoltMinigame _shadowBoltMinigame = null!;
+	private FightBar           _fightBar           = null!;
+	private RangerAim          _rangerAim          = null!;
+	private MageRuneInput      _mageRuneInput      = null!;
 	private int                _currentSkillIndex;
 	private SpellData?         _currentSpell;
 	private List<SpellData>    _knownSpells        = new();
@@ -89,6 +92,14 @@ public partial class BattleScene : Node2D
 		_rhythmStrike.StrikeResolved += OnStrikeResolved;
 		_rhythmArena.PhaseEnded      += OnRhythmPhaseEnded;
 		_rhythmArena.PlayerHurt      += OnPlayerHurt;
+
+		// Wire class-specific Fight minigames
+		_fightBar      = GetNode<FightBar>("FightBar");
+		_rangerAim     = GetNode<RangerAim>("RangerAim");
+		_mageRuneInput = GetNode<MageRuneInput>("MageRuneInput");
+		_fightBar.Confirmed      += OnFighterConfirmed;
+		_rangerAim.Confirmed     += OnRangerConfirmed;
+		_mageRuneInput.Completed += OnMageCompleted;
 
 		// Instantiate Charm and Bard skills programmatically
 		_charmMinigame = InstantiateFullRect<CharmMinigame>("res://scenes/battle/rhythm/CharmMinigame.tscn");
@@ -234,6 +245,11 @@ public partial class BattleScene : Node2D
 		foreach (var skill in _bardSkills)
 			skill.Visible = false;
 
+		// Hide class minigames (visible set individually when activated)
+		_fightBar.Visible      = false;
+		_rangerAim.Visible     = false;
+		_mageRuneInput.Visible = false;
+
 		GD.Print($"[BattleScene] State → {newState}");
 
 		if (newState == BattleState.PlayerTurn)
@@ -243,6 +259,11 @@ public partial class BattleScene : Node2D
 				_enemy?.Stats?.Speed ?? 0);
 			_actionMenu.SetFleeLabel($"Flee ({chance}%)");
 			_actionMenu.FocusFirst();
+			_battleHud.SetHints(BattleHints.PlayerTurn);
+		}
+		else if (newState == BattleState.RhythmPhase)
+		{
+			_battleHud.SetHints(BattleHints.RhythmPhase);
 		}
 	}
 
@@ -306,18 +327,107 @@ public partial class BattleScene : Node2D
 			await RunEnemyTurn();
 	}
 
-	// ── Fight — RhythmStrike ──────────────────────────────────────────
+	// ── Fight — routed by player class ───────────────────────────────
 
 	private void OnFightSelected() => _ = DoFightSelected();
 
 	private async Task DoFightSelected()
 	{
-		GD.Print("[BattleScene] STRIKE selected.");
 		_actionMenu.Visible = false;
 		SetState(BattleState.StrikePhase);
 		await RunBattleTimeline("res://dialog/timelines/battle_strike_prompt.dtl");
-		_rhythmStrike.Visible = true;
-		_rhythmStrike.Activate();
+
+		var playerClass = GameManager.Instance.PlayerStats.Class;
+		GD.Print($"[BattleScene] FIGHT selected. Class={playerClass}");
+
+		switch (playerClass)
+		{
+			case PlayerClass.Fighter:
+				_battleHud.SetHints(BattleHints.FighterTiming);
+				_fightBar.Visible = true;
+				_fightBar.Activate();
+				break;
+
+			case PlayerClass.Ranger:
+				_battleHud.SetHints(BattleHints.RangerAim);
+				_rangerAim.Visible = true;
+				_rangerAim.Activate();
+				break;
+
+			case PlayerClass.Mage:
+				_battleHud.SetHints(BattleHints.MageRunes);
+				_mageRuneInput.Visible = true;
+				_mageRuneInput.Activate();
+				break;
+
+			default: // Bard + fallback
+				_rhythmStrike.Visible = true;
+				_rhythmStrike.Activate();
+				break;
+		}
+	}
+
+	// ── Fighter — timing bar result ───────────────────────────────────
+
+	private void OnFighterConfirmed(float accuracy)
+	{
+		_fightBar.Visible = false;
+		var grade = accuracy switch
+		{
+			>= 0.85f => HitGrade.Perfect,
+			>= 0.40f => HitGrade.Good,
+			_        => HitGrade.Miss,
+		};
+		_ = DoStrikeResolved((int)grade);
+	}
+
+	// ── Ranger — aim reticle result ───────────────────────────────────
+
+	private void OnRangerConfirmed(float accuracy, bool isCrit)
+	{
+		_rangerAim.Visible = false;
+		// Bull's-eye: crit ignores Defence entirely
+		if (isCrit)
+		{
+			_ = DoRangerCrit();
+			return;
+		}
+		var grade = accuracy switch
+		{
+			>= 0.75f => HitGrade.Perfect,
+			>= 0.35f => HitGrade.Good,
+			_        => HitGrade.Miss,
+		};
+		_ = DoStrikeResolved((int)grade);
+	}
+
+	private async Task DoRangerCrit()
+	{
+		int damage = GameManager.Instance.EffectiveStats.Attack; // bypasses Defence
+		_enemyCurrentHp -= damage;
+		SpawnDamageNumber(damage, isCrit: true);
+		SetBattleVar("hit_label",  "Bull's-eye!");
+		SetBattleVar("enemy_name", _enemy?.DisplayName ?? "???");
+		SetBattleVar("damage",     damage.ToString());
+		await RunBattleTimeline("res://dialog/timelines/battle_hit.dtl");
+		if (_enemyCurrentHp <= 0)
+			await HandleVictory();
+		else
+			await RunEnemyTurn();
+	}
+
+	// ── Mage — rune sequence result ───────────────────────────────────
+
+	private void OnMageCompleted(int correctCount)
+	{
+		_mageRuneInput.Visible = false;
+		var grade = correctCount switch
+		{
+			3 => HitGrade.Perfect,
+			2 => HitGrade.Good,
+			_ => HitGrade.Miss,
+		};
+		_ = DoStrikeResolved((int)grade);
 	}
 
 	private void OnStrikeResolved(int gradeInt) => _ = DoStrikeResolved(gradeInt);
@@ -767,6 +877,7 @@ public partial class BattleScene : Node2D
 	{
 		if (_state != BattleState.RhythmPhase) return;
 		GD.Print($"[BattleScene] Rhythm phase ended. Max combo: {_rhythmArena.MaxStreak}");
+		_battleHud.ShowPerformanceSummary(_performance);
 		_ = BeginPlayerTurn();
 	}
 
