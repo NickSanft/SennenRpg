@@ -34,6 +34,13 @@ public partial class Npc : CharacterBody2D, IInteractable
 	/// </summary>
 	[Export] public string CharacterPath { get; set; } = "";
 
+	/// <summary>
+	/// When true (default), the NPC automatically routes to the "_again" timeline variant
+	/// after the player has spoken to them at least once — no manual AltRequiredFlags setup needed.
+	/// The revisit path is derived by inserting "_again" before ".dtl" in TimelinePath.
+	/// </summary>
+	[Export] public bool AutoRevisit { get; set; } = true;
+
 	/// <summary>Body colour used when no sprite sheet is assigned.</summary>
 	[Export] public Color PlaceholderColor { get; set; } = new Color(1f, 0.75f, 0.3f);
 
@@ -288,7 +295,20 @@ public partial class Npc : CharacterBody2D, IInteractable
 			if (!string.IsNullOrEmpty(questOverride))
 				return questOverride;
 		}
-		return SelectTimeline(TimelinePath, AltRequiredFlags, AltTimelinePaths, GameManager.Instance.GetFlag);
+
+		string path = SelectTimeline(TimelinePath, AltRequiredFlags, AltTimelinePaths, GameManager.Instance.GetFlag);
+
+		// AutoRevisit: if no explicit alt matched and the player has already spoken to this
+		// NPC, try routing to the "_again" variant automatically.
+		if (AutoRevisit && path == TimelinePath && !string.IsNullOrEmpty(NpcId))
+		{
+			bool talked = GameManager.Instance.GetFlag(Flags.TalkedTo(NpcId));
+			string revisit = NpcLogic.GetRevisitPath(TimelinePath, talked);
+			if (revisit != TimelinePath && ResourceLoader.Exists(revisit))
+				path = revisit;
+		}
+
+		return path;
 	}
 
 	/// <summary>Delegates to <see cref="NpcLogic.SelectTimeline"/>.</summary>

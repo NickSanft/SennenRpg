@@ -182,3 +182,54 @@ public sealed class NpcLogicTests
 		Assert.That(receivedKey, Is.EqualTo("my_flag"));
 	}
 }
+
+[TestFixture]
+public sealed class NpcLogicRevisitTests
+{
+    // ── GetRevisitPath ────────────────────────────────────────────────────────
+
+    [Test]
+    public void GetRevisitPath_NotTalked_ReturnsBasePath()
+    {
+        const string path = "res://dialog/timelines/npc_gus.dtl";
+        Assert.That(NpcLogic.GetRevisitPath(path, talkFlag: false), Is.EqualTo(path));
+    }
+
+    [Test]
+    public void GetRevisitPath_Talked_InsertsAgainSuffix()
+    {
+        const string path    = "res://dialog/timelines/npc_gus.dtl";
+        const string expected = "res://dialog/timelines/npc_gus_again.dtl";
+        Assert.That(NpcLogic.GetRevisitPath(path, talkFlag: true), Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void GetRevisitPath_AlreadyAgainPath_StillAppends()
+    {
+        // Edge case: base path itself contains "_again" — should still work cleanly
+        const string path     = "res://dialog/timelines/npc_gus_again.dtl";
+        const string expected = "res://dialog/timelines/npc_gus_again_again.dtl";
+        Assert.That(NpcLogic.GetRevisitPath(path, talkFlag: true), Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void GetRevisitPath_NoDtlExtension_ReturnsUnchanged()
+    {
+        const string path = "res://dialog/timelines/npc_gus";
+        Assert.That(NpcLogic.GetRevisitPath(path, talkFlag: true), Is.EqualTo(path));
+    }
+
+    [Test]
+    public void GetRevisitPath_EmptyPath_ReturnsEmpty()
+    {
+        Assert.That(NpcLogic.GetRevisitPath("", talkFlag: true), Is.EqualTo(""));
+    }
+
+    [Test]
+    public void GetRevisitPath_CaseInsensitiveExtension()
+    {
+        const string path     = "res://dialog/timelines/NPC_GUS.DTL";
+        const string expected = "res://dialog/timelines/NPC_GUS_again.DTL";
+        Assert.That(NpcLogic.GetRevisitPath(path, talkFlag: true), Is.EqualTo(expected));
+    }
+}
