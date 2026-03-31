@@ -31,4 +31,18 @@ public static class NpcLogic
 		}
 		return defaultPath;
 	}
+
+	/// <summary>
+	/// Derives the "revisit" timeline path by inserting "_again" before the ".dtl" extension.
+	/// Returns <paramref name="basePath"/> unchanged when <paramref name="talkFlag"/> is false
+	/// or when the path does not contain ".dtl".
+	/// </summary>
+	/// <example>"res://…/npc_gus.dtl" → "res://…/npc_gus_again.dtl"</example>
+	public static string GetRevisitPath(string basePath, bool talkFlag)
+	{
+		if (!talkFlag) return basePath;
+		int ext = basePath.LastIndexOf(".dtl", StringComparison.OrdinalIgnoreCase);
+		if (ext < 0) return basePath;
+		return basePath.Substring(0, ext) + "_again.dtl";
+	}
 }

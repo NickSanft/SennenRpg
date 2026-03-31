@@ -48,6 +48,8 @@
         <!-- Status effects — pure logic, no Godot runtime -->
         <Compile Include="../core/data/StatusEffect.cs" />
         <Compile Include="../core/data/StatusLogic.cs" />
+        <!-- Loot system — pure logic, no Godot runtime -->
+        <Compile Include="../core/data/LootLogic.cs" />
     </ItemGroup>
 
 </Project>

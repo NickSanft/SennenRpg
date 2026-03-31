@@ -67,6 +67,12 @@ public static class Flags
     /// <summary>Set the first time the player enters the dungeon from the world map.</summary>
     public const string DungeonDiscovered = "dungeon_discovered";
 
+    /// <summary>Set when the player first exits dungeon floor 1 (reached floor 2).</summary>
+    public const string DungeonFloor1Cleared = "dungeon_floor1_cleared";
+
+    /// <summary>Set when the player first exits dungeon floor 2 (reached floor 3).</summary>
+    public const string DungeonFloor2Cleared = "dungeon_floor2_cleared";
+
     /// <summary>Set when the dungeon boss on floor 3 is defeated.</summary>
     public const string DungeonBossDefeated = "dungeon_boss_defeated";
 
