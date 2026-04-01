@@ -76,6 +76,14 @@ public static class Flags
     /// <summary>Set when the dungeon boss on floor 3 is defeated.</summary>
     public const string DungeonBossDefeated = "dungeon_boss_defeated";
 
+    // ── Mellyr Outpost ───────────────────────────────────────────────────
+
+    /// <summary>Set when Rain's residency slot is purchased from Rork in Mellyr Outpost.</summary>
+    public const string NpcRainPurchased = "npc_rain_purchased";
+
+    /// <summary>Set when Lily's residency slot is purchased from Rork in Mellyr Outpost.</summary>
+    public const string NpcLilyPurchased = "npc_lily_purchased";
+
     // ── Meta / flow flags ─────────────────────────────────────────────────
 
     /// <summary>Set after the introductory cutscene plays on a new game. Prevents it replaying.</summary>

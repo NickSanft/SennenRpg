@@ -100,6 +100,12 @@ public partial class SaveManager : Node
 			PlayerName      = gm.PlayerName,
 			PlayTimeSeconds = gm.PlayTimeSeconds,
 			Timestamp       = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+			// Mellyr Outpost
+			TownStepCounter          = gm.TownStepCounter,
+			PendingRainGold          = gm.PendingRainGold,
+			PendingLilyRecipes       = new System.Collections.Generic.List<string>(gm.PendingLilyRecipes),
+			DynamicEquipmentInventory = new System.Collections.Generic.List<SennenRpg.Core.Data.DynamicEquipmentSave>(gm.DynamicEquipmentInventory),
+			EquippedDynamicItemIds   = SerialiseDynamicEquipped(gm.EquippedDynamicItemIds),
 		};
 
 		string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
@@ -135,6 +141,15 @@ public partial class SaveManager : Node
 	}
 
 	private static System.Collections.Generic.Dictionary<string, string> SerialiseEquipped(
+		System.Collections.Generic.Dictionary<SennenRpg.Core.Data.EquipmentSlot, string> equipped)
+	{
+		var result = new System.Collections.Generic.Dictionary<string, string>();
+		foreach (var kv in equipped)
+			result[kv.Key.ToString()] = kv.Value;
+		return result;
+	}
+
+	private static System.Collections.Generic.Dictionary<string, string> SerialiseDynamicEquipped(
 		System.Collections.Generic.Dictionary<SennenRpg.Core.Data.EquipmentSlot, string> equipped)
 	{
 		var result = new System.Collections.Generic.Dictionary<string, string>();

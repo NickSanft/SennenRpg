@@ -1,6 +1,7 @@
 using Godot;
 using Godot.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using SennenRpg.Core.Data;
 using SennenRpg.Core.Extensions;
 using EquipDict = System.Collections.Generic.Dictionary<SennenRpg.Core.Data.EquipmentSlot, string>;
@@ -64,6 +65,23 @@ public partial class GameManager : Node
 
 	/// <summary>World-map steps remaining before encounters can trigger again (Repel effect).</summary>
 	public int RepelStepsRemaining { get; set; } = 0;
+
+	// ── Mellyr Outpost passive rewards ────────────────────────────────────────
+
+	/// <summary>Steps taken on 16×16 maps since the last passive reward tick (resets at 10).</summary>
+	public int TownStepCounter { get; set; } = 0;
+
+	/// <summary>Gold earned by Rain but not yet collected. Hard cap: 200 g.</summary>
+	public int PendingRainGold { get; set; } = 0;
+
+	/// <summary>Lily forge recipe strings pending collection. Hard cap: 5 items.</summary>
+	public System.Collections.Generic.List<string> PendingLilyRecipes { get; } = new();
+
+	/// <summary>Lily-generated equipment in the player's unequipped pool.</summary>
+	public System.Collections.Generic.List<DynamicEquipmentSave> DynamicEquipmentInventory { get; } = new();
+
+	/// <summary>Dynamic equipment slot → item ID (for Lily-generated items that are equipped).</summary>
+	public System.Collections.Generic.Dictionary<EquipmentSlot, string> EquippedDynamicItemIds { get; } = new();
 
 	/// <summary>Original palette colours extracted from the sprite at character creation.</summary>
 	public Color[] PaletteSourceColors { get; set; } = [];
@@ -269,8 +287,20 @@ public partial class GameManager : Node
 			var bonusList = new List<EquipmentBonuses>();
 			foreach (var kv in EquippedItemPaths)
 			{
-				if (ResourceLoader.Exists(kv.Value))
-					bonusList.Add(GD.Load<EquipmentData>(kv.Value).Bonuses);
+				if (!ResourceLoader.Exists(kv.Value)) continue;
+				var equipment = GD.Load<EquipmentData>(kv.Value);
+				if (equipment == null) continue;
+				bonusList.Add(equipment.Bonuses);
+			}
+			// Also include equipped Lily-generated dynamic items.
+			// DynamicEquipmentInventory holds ALL dynamic items; EquippedDynamicItemIds
+			// maps slots to the IDs of those that are currently active.
+			foreach (var equippedId in EquippedDynamicItemIds.Values)
+			{
+				var dynItem = DynamicEquipmentInventory.Find(e => e.Id == equippedId);
+				if (dynItem != null)
+					bonusList.Add(new EquipmentBonuses(dynItem.BonusMaxHp, dynItem.BonusAttack,
+						dynItem.BonusDefense, dynItem.BonusMagic, 0, dynItem.BonusSpeed, dynItem.BonusLuck));
 			}
 			var bonus = EquipmentLogic.SumBonuses(bonusList);
 			var s = PlayerStats;
@@ -288,6 +318,55 @@ public partial class GameManager : Node
 			_effectiveStatsCache.InvincibilityDuration = s.InvincibilityDuration;
 			return _effectiveStatsCache;
 		}
+	}
+
+	// ── Mellyr Outpost reward collection ─────────────────────────────────────
+
+	/// <summary>
+	/// Transfers all pending Rain gold to the player wallet.
+	/// Returns the amount collected (0 if nothing was pending).
+	/// </summary>
+	public int CollectRainRewards()
+	{
+		int amount = PendingRainGold;
+		PendingRainGold = 0;
+		if (amount > 0) AddGold(amount);
+		return amount;
+	}
+
+	/// <summary>
+	/// Resolves all pending Lily recipes into equipment and moves them to
+	/// <see cref="DynamicEquipmentInventory"/>. Returns the count added.
+	/// </summary>
+	public List<DynamicEquipmentSave> CollectLilyRewards()
+	{
+		var items = PendingLilyRecipes.Select(LilyForgeLogic.Resolve).ToList();
+		foreach (var item in items)
+			DynamicEquipmentInventory.Add(item);
+		PendingLilyRecipes.Clear();
+		return items;
+	}
+
+	/// <summary>Collects all pending Rain and Lily rewards at once.</summary>
+	public (int gold, List<DynamicEquipmentSave> items) CollectAllTownRewards()
+		=> (CollectRainRewards(), CollectLilyRewards());
+
+	/// <summary>
+	/// Equip a Lily-generated dynamic item into a slot.
+	/// The item must exist in <see cref="DynamicEquipmentInventory"/> (it stays there;
+	/// <see cref="EquippedDynamicItemIds"/> just records which one is active per slot).
+	/// </summary>
+	public void EquipDynamic(EquipmentSlot slot, string itemId)
+	{
+		EquippedDynamicItemIds[slot] = itemId;
+		EmitSignal(SignalName.PlayerStatsChanged);
+	}
+
+	/// <summary>Unequip the dynamic item from a slot (it remains in DynamicEquipmentInventory).</summary>
+	public void UnequipDynamic(EquipmentSlot slot)
+	{
+		EquippedDynamicItemIds.Remove(slot);
+		EmitSignal(SignalName.PlayerStatsChanged);
 	}
 
 	public bool GetFlag(string key) => Flags.TryGetValue(key, out bool val) && val;
@@ -309,7 +388,7 @@ public partial class GameManager : Node
 	/// <summary>Resets all runtime state for a fresh new game.</summary>
 	public void ResetForNewGame()
 	{
-		Gold        = 100;
+		Gold        = 500;
 		Exp         = 0;
 		PlayerLevel = 1;
 		LastMapPath = "";
@@ -341,6 +420,11 @@ public partial class GameManager : Node
 		PaletteTargetColors   = [];
 		PlayTimeSeconds        = 0;
 		_playTimeAccumulator   = 0.0;
+		TownStepCounter       = 0;
+		PendingRainGold       = 0;
+		PendingLilyRecipes.Clear();
+		DynamicEquipmentInventory.Clear();
+		EquippedDynamicItemIds.Clear();
 
 		const string statsPath = "res://resources/characters/player_stats.tres";
 		if (ResourceLoader.Exists(statsPath))
@@ -423,6 +507,19 @@ public partial class GameManager : Node
 		PaletteTargetColors  = DeserialiseColors(data.PaletteTargetColors);
 		PlayTimeSeconds      = data.PlayTimeSeconds;
 		_playTimeAccumulator = 0.0;
+
+		TownStepCounter = data.TownStepCounter;
+		PendingRainGold = data.PendingRainGold;
+		PendingLilyRecipes.Clear();
+		PendingLilyRecipes.AddRange(data.PendingLilyRecipes);
+		DynamicEquipmentInventory.Clear();
+		DynamicEquipmentInventory.AddRange(data.DynamicEquipmentInventory);
+		EquippedDynamicItemIds.Clear();
+		foreach (var kv in data.EquippedDynamicItemIds)
+		{
+			if (System.Enum.TryParse<EquipmentSlot>(kv.Key, out var slot))
+				EquippedDynamicItemIds[slot] = kv.Value;
+		}
 	}
 
 	private static Color[] DeserialiseColors(string[]? hexArray)
