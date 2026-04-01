@@ -1,0 +1,5 @@
+join Lily center
+Lily: Oh, perfect timing! I just finished working on something.
+Lily: Take a look - I think you'll like it!
+leave Lily
+[signal arg="collect:lily"]

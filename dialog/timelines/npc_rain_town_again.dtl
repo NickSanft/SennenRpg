@@ -1,0 +1,5 @@
+join Rain center
+Rain: Welcome back, I managed to get some gold for you.
+Rain: How did I get the money? I was playing the stock market.... yes...
+leave Rain
+[signal arg="collect:rain"]
