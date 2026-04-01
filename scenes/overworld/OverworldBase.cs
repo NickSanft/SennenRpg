@@ -25,6 +25,12 @@ public partial class OverworldBase : Node2D
 	/// </summary>
 	[Export] public Array<EncounterData> RandomEncounterTable { get; set; } = [];
 
+	/// <summary>
+	/// When true, each step on this map ticks the Mellyr Outpost passive reward counters
+	/// (Rain gold, Lily forge items). Set to true on 16×16 dungeon floor maps.
+	/// </summary>
+	public virtual bool CountsForTownRewards => false;
+
 	protected Node2D YSort = null!;
 	protected TileMapLayer? GroundLayer;
 	protected TileMapLayer? WallsLayer;
@@ -108,7 +114,7 @@ public partial class OverworldBase : Node2D
 
 	public override void _Process(double delta)
 	{
-		if (_player == null || RandomEncounterTable.Count == 0 || _encounterLocked) return;
+		if (_player == null) return;
 		if (GameManager.Instance.CurrentState != GameState.Overworld) return;
 
 		float moved = _player.GlobalPosition.DistanceTo(_lastPlayerPos);
@@ -121,8 +127,30 @@ public partial class OverworldBase : Node2D
 		while (_stepAccumulator >= StepDistance)
 		{
 			_stepAccumulator -= StepDistance;
-			if (TryRandomEncounter()) return; // battle started — stop rolling
+
+			if (CountsForTownRewards)
+				TickTownRewards();
+
+			if (RandomEncounterTable.Count > 0 && !_encounterLocked)
+				if (TryRandomEncounter()) return; // battle started — stop rolling
 		}
+	}
+
+	private void TickTownRewards()
+	{
+		var gm = GameManager.Instance;
+		var result = TownRewardLogic.TryTick(
+			gm.TownStepCounter,
+			gm.GetFlag(Flags.NpcRainPurchased),
+			gm.PendingRainGold,
+			gm.GetFlag(Flags.NpcLilyPurchased),
+			gm.PendingLilyRecipes.Count,
+			gm.PlayerLevel);
+
+		gm.TownStepCounter = result.NewCounter;
+		gm.PendingRainGold = result.NewPendingRainGold;
+		if (result.LilyRecipe != null)
+			gm.PendingLilyRecipes.Add(result.LilyRecipe);
 	}
 
 	// ── Helpers ───────────────────────────────────────────────────────

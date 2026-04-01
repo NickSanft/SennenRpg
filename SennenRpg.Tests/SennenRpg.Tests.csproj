@@ -50,6 +50,10 @@
         <Compile Include="../core/data/StatusLogic.cs" />
         <!-- Loot system — pure logic, no Godot runtime -->
         <Compile Include="../core/data/LootLogic.cs" />
+        <!-- Mellyr Outpost — pure logic, no Godot runtime -->
+        <Compile Include="../core/data/DynamicEquipmentSave.cs" />
+        <Compile Include="../core/data/TownRewardLogic.cs" />
+        <Compile Include="../core/data/LilyForgeLogic.cs" />
     </ItemGroup>
 
 </Project>

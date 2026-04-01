@@ -1,0 +1,34 @@
+[gd_scene format=4 uid="uid://mellyr_outpost01"]
+
+[ext_resource type="PackedScene" uid="uid://bs06dan353qo1" path="res://scenes/overworld/overworld_base.tscn" id="1_mellyr01"]
+[ext_resource type="Script" path="res://scenes/overworld/maps/mellyr/MellyrOutpost.cs" id="2_mellyr02"]
+[ext_resource type="PackedScene" uid="uid://rork_town_npc01" path="res://scenes/overworld/objects/RorkTownNpc.tscn" id="3_rork_town"]
+[ext_resource type="PackedScene" uid="uid://evwjjqormcym" path="res://scenes/overworld/objects/MapExit.tscn" id="4_exit"]
+[ext_resource type="Script" path="res://core/data/NpcResidencyEntry.cs" id="5_residency_entry"]
+
+[sub_resource type="Resource" id="ResidencyEntry_Rain"]
+script = ExtResource("5_residency_entry")
+DisplayName = "Rain"
+Description = "Passively earns gold while you adventure."
+FlagKey = "npc_rain_purchased"
+Price = 150
+
+[sub_resource type="Resource" id="ResidencyEntry_Lily"]
+script = ExtResource("5_residency_entry")
+DisplayName = "Lily"
+Description = "Forges equipment while you adventure."
+FlagKey = "npc_lily_purchased"
+Price = 200
+
+[node name="MellyrOutpost" instance=ExtResource("1_mellyr01")]
+script = ExtResource("2_mellyr02")
+
+[node name="RorkTown" parent="YSort" instance=ExtResource("3_rork_town")]
+position = Vector2(160, 128)
+ResidencyStock = [SubResource("ResidencyEntry_Rain"), SubResource("ResidencyEntry_Lily")]
+
+[node name="Exit" parent="." instance=ExtResource("4_exit")]
+position = Vector2(160, 200)
+TargetMapPath = "res://scenes/overworld/WorldMap.tscn"
+AutoTrigger = true
+ExitHint = 2

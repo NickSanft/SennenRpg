@@ -9,6 +9,8 @@ namespace SennenRpg.Scenes.Overworld;
 /// </summary>
 public partial class DungeonFloor2 : OverworldBase
 {
+	public override bool CountsForTownRewards => true;
+
 	public override void _Ready()
 	{
 		base._Ready();

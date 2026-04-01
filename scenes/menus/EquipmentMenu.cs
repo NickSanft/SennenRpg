@@ -246,59 +246,89 @@ public partial class EquipmentMenu : CanvasLayer
     private void OnSlotPressed(EquipmentSlot slot)
     {
         _activeSlot = slot;
-        bool isEquipped = GameManager.Instance.EquippedItemPaths.ContainsKey(slot)
-                       && !string.IsNullOrEmpty(GameManager.Instance.EquippedItemPaths[slot]);
+        var gm = GameManager.Instance;
 
-        _itemPickerTitle.Text = isEquipped ? $"Slot: {slot}" : $"Equip {slot}";
+        bool hasStaticEquipped  = gm.EquippedItemPaths.ContainsKey(slot)
+                                && !string.IsNullOrEmpty(gm.EquippedItemPaths[slot]);
+        bool hasDynamicEquipped = gm.EquippedDynamicItemIds.ContainsKey(slot);
+        bool isEquipped         = hasStaticEquipped || hasDynamicEquipped;
+
+        _itemPickerTitle.Text = $"{slot}";
 
         // Clear previous list
         foreach (var child in _itemPickerList.GetChildren())
             child.QueueFree();
 
-        if (isEquipped)
+        // Unequip option — always shown when something is equipped
+        if (hasStaticEquipped)
         {
-            // Offer to unequip current item
-            string path    = GameManager.Instance.EquippedItemPaths[slot];
-            var    data    = ResourceLoader.Exists(path) ? GD.Load<EquipmentData>(path) : null;
-            string name    = data?.DisplayName ?? "???";
+            string path     = gm.EquippedItemPaths[slot];
+            var    data     = ResourceLoader.Exists(path) ? GD.Load<EquipmentData>(path) : null;
             string bonusStr = FormatBonuses(data);
-
-            AddPickerOption($"Unequip: {name}{bonusStr}", () =>
+            AddPickerOption($"[Unequip] {data?.DisplayName ?? "???"}{bonusStr}", () =>
             {
-                GameManager.Instance.Unequip(slot);
+                gm.Unequip(slot);
                 CloseItemPicker();
             });
         }
-        else
+        else if (hasDynamicEquipped)
         {
-            // List owned equipment compatible with this slot
-            bool any = false;
-            foreach (string path in GameManager.Instance.OwnedEquipmentPaths)
+            string dynId    = gm.EquippedDynamicItemIds[slot];
+            var    dynItem  = gm.DynamicEquipmentInventory.Find(e => e.Id == dynId);
+            string bonusStr = FormatDynamicBonuses(dynItem);
+            AddPickerOption($"[Unequip] {dynItem?.DisplayName ?? "???"}{bonusStr}", () =>
             {
-                if (!ResourceLoader.Exists(path)) continue;
-                var data = GD.Load<EquipmentData>(path);
-                if (data.Slot != slot) continue;
+                gm.UnequipDynamic(slot);
+                CloseItemPicker();
+            });
+        }
 
-                var captured = path;
-                string bonusStr = FormatBonuses(data);
-                AddPickerOption($"{data.DisplayName}{bonusStr}", () =>
-                {
-                    GameManager.Instance.Equip(slot, captured);
-                    CloseItemPicker();
-                });
-                any = true;
-            }
+        // Static .tres equipment available for this slot
+        bool any = false;
+        foreach (string path in gm.OwnedEquipmentPaths)
+        {
+            if (!ResourceLoader.Exists(path)) continue;
+            var data = GD.Load<EquipmentData>(path);
+            if (data == null || data.Slot != slot) continue;
 
-            if (!any)
+            var captured = path;
+            string bonusStr = FormatBonuses(data);
+            AddPickerOption($"{data.DisplayName}{bonusStr}", () =>
             {
-                var none = new Label
-                {
-                    Text     = "No compatible items",
-                    Modulate = SubtleGrey,
-                };
-                none.AddThemeFontSizeOverride("font_size", 10);
-                _itemPickerList.AddChild(none);
-            }
+                if (hasDynamicEquipped) gm.UnequipDynamic(slot);
+                gm.Equip(slot, captured);
+                CloseItemPicker();
+            });
+            any = true;
+        }
+
+        // Lily-forged dynamic equipment available for this slot
+        foreach (var dynItem in gm.DynamicEquipmentInventory)
+        {
+            if (dynItem.Slot != slot) continue;
+            // Skip if this item is already equipped in this or another slot
+            if (gm.EquippedDynamicItemIds.ContainsValue(dynItem.Id)) continue;
+
+            var captured = dynItem.Id;
+            string bonusStr = FormatDynamicBonuses(dynItem);
+            AddPickerOption($"{dynItem.DisplayName}{bonusStr}", () =>
+            {
+                if (hasStaticEquipped) gm.Unequip(slot);
+                gm.EquipDynamic(slot, captured);
+                CloseItemPicker();
+            });
+            any = true;
+        }
+
+        if (!isEquipped && !any)
+        {
+            var none = new Label
+            {
+                Text     = "No compatible items",
+                Modulate = SubtleGrey,
+            };
+            none.AddThemeFontSizeOverride("font_size", 10);
+            _itemPickerList.AddChild(none);
         }
 
         // Cancel option
@@ -343,14 +373,19 @@ public partial class EquipmentMenu : CanvasLayer
 
     private void RefreshAll()
     {
+        var gm = GameManager.Instance;
         foreach (var (slot, btn) in _slotButtons)
         {
             string? name = null;
-            if (GameManager.Instance.EquippedItemPaths.TryGetValue(slot, out string? path)
+            if (gm.EquippedItemPaths.TryGetValue(slot, out string? path)
                 && !string.IsNullOrEmpty(path)
                 && ResourceLoader.Exists(path))
             {
                 name = GD.Load<EquipmentData>(path).DisplayName;
+            }
+            else if (gm.EquippedDynamicItemIds.TryGetValue(slot, out string? dynId))
+            {
+                name = gm.DynamicEquipmentInventory.Find(e => e.Id == dynId)?.DisplayName;
             }
             btn.Refresh(name);
         }
@@ -391,6 +426,19 @@ public partial class EquipmentMenu : CanvasLayer
         if (data.BonusResistance != 0) parts.Add($"RES+{data.BonusResistance}");
         if (data.BonusSpeed      != 0) parts.Add($"SPD+{data.BonusSpeed}");
         if (data.BonusLuck       != 0) parts.Add($"LCK+{data.BonusLuck}");
+        return parts.Count > 0 ? $"  [{string.Join(", ", parts)}]" : "";
+    }
+
+    private static string FormatDynamicBonuses(DynamicEquipmentSave? data)
+    {
+        if (data == null) return "";
+        var parts = new System.Collections.Generic.List<string>();
+        if (data.BonusMaxHp   != 0) parts.Add($"HP+{data.BonusMaxHp}");
+        if (data.BonusAttack  != 0) parts.Add($"ATK+{data.BonusAttack}");
+        if (data.BonusDefense != 0) parts.Add($"DEF+{data.BonusDefense}");
+        if (data.BonusMagic   != 0) parts.Add($"MAG+{data.BonusMagic}");
+        if (data.BonusSpeed   != 0) parts.Add($"SPD+{data.BonusSpeed}");
+        if (data.BonusLuck    != 0) parts.Add($"LCK+{data.BonusLuck}");
         return parts.Count > 0 ? $"  [{string.Join(", ", parts)}]" : "";
     }
 }

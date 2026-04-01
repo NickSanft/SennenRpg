@@ -1,0 +1,79 @@
+[gd_scene format=4 uid="uid://rork_town_npc01"]
+
+[ext_resource type="Script" path="res://scenes/overworld/objects/RorkTownNpc.cs" id="1_rktownnpc"]
+[ext_resource type="Texture2D" path="res://assets/sprites/npcs/Rork.png" id="2_rork_tex"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rkt_d1"]
+atlas = ExtResource("2_rork_tex")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rkt_d2"]
+atlas = ExtResource("2_rork_tex")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rkt_s1"]
+atlas = ExtResource("2_rork_tex")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rkt_s2"]
+atlas = ExtResource("2_rork_tex")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rkt_u1"]
+atlas = ExtResource("2_rork_tex")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rkt_u2"]
+atlas = ExtResource("2_rork_tex")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_rktownnpc"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rkt_d1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rkt_d2")
+}],
+"loop": true,
+"name": &"idle_down",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rkt_s1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rkt_s2")
+}],
+"loop": true,
+"name": &"idle_side",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rkt_u1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rkt_u2")
+}],
+"loop": true,
+"name": &"idle_up",
+"speed": 5.0
+}]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_rktownnpc"]
+
+[node name="RorkTownNpc" type="CharacterBody2D"]
+script = ExtResource("1_rktownnpc")
+DisplayName = "Rork"
+NpcId = "rork_town"
+TimelinePath = "res://dialog/timelines/npc_rork_town.dtl"
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_rktownnpc")
+animation = &"idle_down"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CapsuleShape2D_rktownnpc")

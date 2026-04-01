@@ -1,3 +1,4 @@
+using System.Linq;
 using Godot;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
@@ -77,8 +78,11 @@ public partial class InventoryMenu : CanvasLayer
 		_feedbackLabel.Text = "";
 		_descLabel.Text     = "";
 
-		var paths = GameManager.Instance.InventoryItemPaths;
-		_emptyLabel.Visible = paths.Count == 0;
+		var gm    = GameManager.Instance;
+		var paths = gm.InventoryItemPaths;
+		var dynItems = gm.DynamicEquipmentInventory;
+
+		_emptyLabel.Visible = paths.Count == 0 && dynItems.Count == 0;
 
 		bool focusGrabbed = false;
 		foreach (var path in paths)
@@ -92,9 +96,33 @@ public partial class InventoryMenu : CanvasLayer
 
 			if (!focusGrabbed)
 			{
-				// Focus the first USE button so keyboard/controller works immediately
 				row.GetNodeOrNull<Button>("UseButton")?.GrabFocus();
 				focusGrabbed = true;
+			}
+		}
+
+		if (dynItems.Count > 0)
+		{
+			if (paths.Count > 0)
+				_itemRows.AddChild(new HSeparator());
+
+			var header = new Label { Text = "— EQUIPMENT (Lily's Forge) —" };
+			header.HorizontalAlignment = HorizontalAlignment.Center;
+			header.AddThemeFontSizeOverride("font_size", 9);
+			header.AddThemeColorOverride("font_color", new Color(0.8f, 0.7f, 0.3f));
+			_itemRows.AddChild(header);
+
+			foreach (var dynItem in dynItems)
+			{
+				bool equipped = gm.EquippedDynamicItemIds.ContainsValue(dynItem.Id);
+				var row = BuildDynEquipRow(dynItem, equipped);
+				_itemRows.AddChild(row);
+
+				if (!focusGrabbed)
+				{
+					row.GetNodeOrNull<Button>("EquipHint")?.GrabFocus();
+					focusGrabbed = true;
+				}
 			}
 		}
 
@@ -126,6 +154,33 @@ public partial class InventoryMenu : CanvasLayer
 		row.AddChild(nameLabel);
 		row.AddChild(hpLabel);
 		row.AddChild(useButton);
+		return row;
+	}
+
+	private HBoxContainer BuildDynEquipRow(DynamicEquipmentSave dynItem, bool equipped)
+	{
+		var row = new HBoxContainer();
+
+		var nameLabel = new Label { Text = dynItem.DisplayName };
+		nameLabel.SizeFlagsHorizontal = Control.SizeFlags.Expand | Control.SizeFlags.Fill;
+		nameLabel.AddThemeFontSizeOverride("font_size", 10);
+
+		var slotLabel = new Label { Text = dynItem.Slot.ToString() };
+		slotLabel.AddThemeFontSizeOverride("font_size", 9);
+		slotLabel.AddThemeColorOverride("font_color", new Color(0.6f, 0.6f, 0.6f));
+
+		var hint = new Button
+		{
+			Text     = equipped ? "EQUIPPED" : "Equip in Equipment menu",
+			Name     = "EquipHint",
+			Disabled = true,
+		};
+		hint.AddThemeFontSizeOverride("font_size", 9);
+		hint.FocusEntered += () => _descLabel.Text = dynItem.Description;
+
+		row.AddChild(nameLabel);
+		row.AddChild(slotLabel);
+		row.AddChild(hint);
 		return row;
 	}
 

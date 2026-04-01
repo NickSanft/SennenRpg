@@ -18,6 +18,8 @@ public partial class DungeonFloor1 : OverworldBase
 	/// </summary>
 	[Export] public Vector2I SurfaceReturnTile { get; set; } = new Vector2I(8, 12);
 
+	public override bool CountsForTownRewards => true;
+
 	private Area2D _stairsUp = null!;
 
 	public override void _Ready()

@@ -93,7 +93,20 @@ public partial class WorldMap : Node2D
 		// 2. Increment persistent tile counter
 		gm.TilesWalkedOnWorldMap++;
 
-		// 3. Day/Night flip
+		// 3. Tick Mellyr Outpost passive rewards
+		var tick = TownRewardLogic.TryTick(
+			gm.TownStepCounter,
+			gm.GetFlag(Flags.NpcRainPurchased),
+			gm.PendingRainGold,
+			gm.GetFlag(Flags.NpcLilyPurchased),
+			gm.PendingLilyRecipes.Count,
+			gm.PlayerLevel);
+		gm.TownStepCounter = tick.NewCounter;
+		gm.PendingRainGold = tick.NewPendingRainGold;
+		if (tick.LilyRecipe != null)
+			gm.PendingLilyRecipes.Add(tick.LilyRecipe);
+
+		// 4. Day/Night flip
 		if (DayNightLogic.ShouldFlip(gm.TilesWalkedOnWorldMap))
 		{
 			gm.IsNight = DayNightLogic.ApplyFlip(gm.IsNight);
@@ -101,7 +114,7 @@ public partial class WorldMap : Node2D
 			ApplyDayNightBgm(animate: true);
 		}
 
-		// 4. Random encounter roll
+		// 5. Random encounter roll
 		TryRollEncounter(newTile);
 	}
 

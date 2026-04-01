@@ -15,6 +15,8 @@ namespace SennenRpg.Scenes.Overworld;
 /// </summary>
 public partial class DungeonFloor3 : OverworldBase
 {
+    public override bool CountsForTownRewards => true;
+
     [Export] public EncounterData? BossEncounterData { get; set; }
 
     /// <summary>
