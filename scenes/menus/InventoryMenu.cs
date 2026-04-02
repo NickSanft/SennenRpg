@@ -88,8 +88,8 @@ public partial class InventoryMenu : CanvasLayer
 		foreach (var path in paths)
 		{
 			if (!ResourceLoader.Exists(path)) continue;
-			var item = GD.Load<ItemData>(path);
-			if (item == null) continue;
+			var resource = GD.Load<Resource>(path);
+			if (resource is not ItemData item) continue;
 
 			var row = BuildItemRow(item, path);
 			_itemRows.AddChild(row);

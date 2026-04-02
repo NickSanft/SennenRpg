@@ -32,7 +32,7 @@ public partial class EquipmentMenu : CanvasLayer
         { EquipmentSlot.Weapon, EquipmentSlot.Shield, EquipmentSlot.Gloves, EquipmentSlot.Accessory };
 
     // ── Node references ───────────────────────────────────────────────────────
-    private Label   _statsLabel  = null!;
+    private RichTextLabel _statsLabel = null!;
 
     // Item picker (visible when choosing what to equip / unequip)
     private Control        _itemPickerPanel = null!;
@@ -160,31 +160,45 @@ public partial class EquipmentMenu : CanvasLayer
 
     private void BuildStatPanel(VBoxContainer parent)
     {
-        // Portrait placeholder
-        var portrait = new ColorRect
+        // Player portrait — first frame of the Sen sprite sheet
+        var portraitContainer = new ColorRect
         {
             Color             = new Color(0.18f, 0.18f, 0.28f),
             CustomMinimumSize = new Vector2(0f, 56f),
         };
-        parent.AddChild(portrait);
+        parent.AddChild(portraitContainer);
 
-        var portraitLabel = new Label
+        const string spritePath = "res://assets/sprites/player/player_sen.png";
+        if (ResourceLoader.Exists(spritePath))
         {
-            Text                = "(portrait)",
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment   = VerticalAlignment.Center,
-            AnchorRight  = 1f, AnchorBottom = 1f,
-            Modulate     = SubtleGrey,
-        };
-        portraitLabel.AddThemeFontSizeOverride("font_size", 8);
-        portrait.AddChild(portraitLabel);
+            var atlas = new AtlasTexture
+            {
+                Atlas  = GD.Load<Texture2D>(spritePath),
+                Region = new Rect2(0, 0, 32, 32),
+            };
+            var portraitRect = new TextureRect
+            {
+                Texture              = atlas,
+                ExpandMode           = TextureRect.ExpandModeEnum.FitWidthProportional,
+                StretchMode          = TextureRect.StretchModeEnum.KeepAspectCentered,
+                TextureFilter        = CanvasItem.TextureFilterEnum.Nearest,
+                CustomMinimumSize    = new Vector2(48f, 48f),
+                AnchorLeft           = 0.5f, AnchorRight = 0.5f,
+                AnchorTop            = 0.5f, AnchorBottom = 0.5f,
+                OffsetLeft           = -24f, OffsetRight = 24f,
+                OffsetTop            = -24f, OffsetBottom = 24f,
+            };
+            portraitContainer.AddChild(portraitRect);
+        }
 
-        // Stats text
-        _statsLabel = new Label
+        // Stats text — RichTextLabel for BBCode colour support
+        _statsLabel = new RichTextLabel
         {
-            AutowrapMode = TextServer.AutowrapMode.Off,
+            BbcodeEnabled = true,
+            FitContent    = true,
+            ScrollActive  = false,
         };
-        _statsLabel.AddThemeFontSizeOverride("font_size", 11);
+        _statsLabel.AddThemeFontSizeOverride("normal_font_size", 11);
         parent.AddChild(_statsLabel);
 
         RefreshStatsLabel();
