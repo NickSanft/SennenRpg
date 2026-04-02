@@ -91,6 +91,7 @@ public partial class SaveManager : Node
 			IsNight               = gm.IsNight,
 			TilesWalkedOnWorldMap = gm.TilesWalkedOnWorldMap,
 			KillCounts            = new System.Collections.Generic.Dictionary<string, int>(gm.KillCounts),
+			RhythmMemory          = new System.Collections.Generic.Dictionary<string, SennenRpg.Core.Data.EnemyRhythmHistory>(gm.RhythmMemory),
 			ActiveQuestIds        = QuestManager.Instance.GetActiveQuestIds(),
 			CompletedQuestIds     = QuestManager.Instance.GetCompletedQuestIds(),
 			PlayerClassName       = gm.PlayerStats.ClassName,

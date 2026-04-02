@@ -39,6 +39,9 @@ public partial class GameManager : Node
 	// Kill tracking: keyed by EnemyData.EnemyId
 	public System.Collections.Generic.Dictionary<string, int> KillCounts { get; } = new();
 
+	/// <summary>Per-enemy rhythm performance history for the Rhythm Memory adaptation system.</summary>
+	public System.Collections.Generic.Dictionary<string, EnemyRhythmHistory> RhythmMemory { get; } = new();
+
 	/// <summary>Original palette colours extracted from the sprite at character creation.</summary>
 	public Color[] PaletteSourceColors { get; set; } = [];
 	/// <summary>Replacement colours chosen by the player, parallel to PaletteSourceColors.</summary>
@@ -247,6 +250,16 @@ public partial class GameManager : Node
 		QuestManager.Instance?.NotifyKill(enemyId);
 	}
 
+	/// <summary>Records post-battle rhythm performance for the Rhythm Memory adaptation system.</summary>
+	public void RecordRhythmPerformance(string enemyId, PerformanceScore score)
+	{
+		RhythmMemory.TryGetValue(enemyId, out var existing);
+		var updated = RhythmMemoryLogic.RecordEncounter(existing, score);
+		RhythmMemory[enemyId] = updated;
+		GD.Print($"[GameManager] Rhythm Memory recorded: {enemyId} → " +
+			$"{updated.TotalEncounters} encounters (P:{updated.TotalPerfects} G:{updated.TotalGoods} M:{updated.TotalMisses}, best streak:{updated.BestMaxStreak})");
+	}
+
 	// ── Character customization ───────────────────────────────────────────────
 
 	public void ApplyCharacterCustomization(CharacterStats stats, Color[] sourceColors, Color[] targetColors)
@@ -269,6 +282,7 @@ public partial class GameManager : Node
 
 		Flags.Clear();
 		KillCounts.Clear();
+		RhythmMemory.Clear();
 		PaletteSourceColors = [];
 		PaletteTargetColors = [];
 
@@ -286,6 +300,9 @@ public partial class GameManager : Node
 		Flags = new Godot.Collections.Dictionary<string, bool>(data.Flags);
 		KillCounts.Clear();
 		foreach (var kv in data.KillCounts) KillCounts[kv.Key] = kv.Value;
+
+		RhythmMemory.Clear();
+		foreach (var kv in data.RhythmMemory) RhythmMemory[kv.Key] = kv.Value;
 
 		PaletteSourceColors = DeserialiseColors(data.PaletteSourceColors);
 		PaletteTargetColors = DeserialiseColors(data.PaletteTargetColors);

@@ -49,6 +49,9 @@ public abstract partial class RhythmPatternBase : Node
         RhythmClock.Instance.Beat -= OnBeatInternal;
     }
 
+    /// <summary>Obstacle density multiplier from the arena's Rhythm Memory adaptation.</summary>
+    protected float DensityMult => Arena.ObstacleDensityMult;
+
     private void OnBeatInternal(int absoluteBeat)
     {
         if (_finished) return;
@@ -62,9 +65,27 @@ public abstract partial class RhythmPatternBase : Node
         }
 
         int beatInMeasure = _beatsSinceStart % RhythmConstants.BeatsPerMeasure;
-        SpawnOnBeat(beatInMeasure, _beatsSinceStart);
-        _beatsSinceStart++;
 
+        // Cocky enemies skip some beats entirely (density < 1.0)
+        if (DensityMult < 1.0f && GD.Randf() > DensityMult)
+        {
+            _beatsSinceStart++;
+            FinishIfDone();
+            return;
+        }
+
+        SpawnOnBeat(beatInMeasure, _beatsSinceStart);
+
+        // Adapted enemies spawn extra obstacles (density > 1.0)
+        if (DensityMult > 1.0f && GD.Randf() < (DensityMult - 1.0f))
+            Arena.CreateObstacle((int)GD.RandRange(0, 3), RhythmArena.BeatsUntilArrival, 1);
+
+        _beatsSinceStart++;
+        FinishIfDone();
+    }
+
+    private void FinishIfDone()
+    {
         if (_beatsSinceStart >= TotalMeasures * RhythmConstants.BeatsPerMeasure)
         {
             _finished = true;

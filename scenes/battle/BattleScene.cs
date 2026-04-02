@@ -26,7 +26,9 @@ public partial class BattleScene : Node2D
 	private int         _enemyCurrentHp;
 	private SubMenuMode _subMenuMode;
 	private bool        _playerGoesFirst;
-	private float       _difficultyMultiplier = 1f;
+	private float           _difficultyMultiplier = 1f;
+	private AdaptationResult _adaptation = RhythmMemoryLogic.ComputeAdaptation(null);
+	private bool            _adaptedDialogShown;
 
 	// ── Node references ───────────────────────────────────────────────
 	private Node2D          _enemyArea      = null!;
@@ -145,6 +147,15 @@ public partial class BattleScene : Node2D
 		_difficultyMultiplier = SettingsLogic.EnemyDifficultyMultiplier(
 			SettingsManager.Instance?.Current.BattleDifficulty ?? BattleDifficulty.Normal);
 		_enemyCurrentHp = Math.Max(1, (int)((_enemy?.Stats?.MaxHp ?? 10) * _difficultyMultiplier));
+
+		// Rhythm Memory: look up how this enemy has adapted to the player
+		string enemyId = _enemy?.EnemyId ?? "";
+		GameManager.Instance.RhythmMemory.TryGetValue(enemyId, out var rhythmHistory);
+		_adaptation = RhythmMemoryLogic.ComputeAdaptation(rhythmHistory);
+		GD.Print($"[BattleScene] Rhythm Memory lookup: enemy={enemyId}, " +
+			$"history={rhythmHistory?.TotalEncounters ?? 0} encounters " +
+			$"(P:{rhythmHistory?.TotalPerfects ?? 0} G:{rhythmHistory?.TotalGoods ?? 0} M:{rhythmHistory?.TotalMisses ?? 0}), " +
+			$"tier={_adaptation.Tier}, density=×{_adaptation.ObstacleDensityMult:F2}, measures=+{_adaptation.ExtraMeasures}");
 
 		_playerGoesFirst = BattleFormulas.PlayerGoesFirst(
 			GameManager.Instance.EffectiveStats.Speed,
@@ -782,6 +793,32 @@ public partial class BattleScene : Node2D
 
 		SetState(BattleState.EnemyTurn);
 
+		// Rhythm Memory: adapted enemies acknowledge the player on first enemy turn
+		if (!_adaptedDialogShown && _adaptation.Tier != AdaptationTier.None)
+		{
+			_adaptedDialogShown = true;
+			string adaptMsg = _adaptation.Tier switch
+			{
+				AdaptationTier.Rival    => $"{_enemy?.DisplayName ?? "???"} locks eyes with you. It won't hold back!",
+				AdaptationTier.Hardened => $"{_enemy?.DisplayName ?? "???"} remembers your rhythm!",
+				AdaptationTier.Wary     => $"{_enemy?.DisplayName ?? "???"} seems more cautious...",
+				AdaptationTier.Cocky    => $"{_enemy?.DisplayName ?? "???"} yawns lazily at you.",
+				_                       => "",
+			};
+			if (!string.IsNullOrEmpty(adaptMsg))
+			{
+				var adaptColor = _adaptation.Tier switch
+				{
+					AdaptationTier.Rival    => new Color(1f, 0.2f, 0.2f),
+					AdaptationTier.Hardened => new Color(1f, 0.5f, 0.1f),
+					AdaptationTier.Wary     => new Color(1f, 0.9f, 0.3f),
+					AdaptationTier.Cocky    => new Color(0.5f, 0.8f, 1f),
+					_                       => Colors.White,
+				};
+				await ShowPhaseCard(adaptMsg, adaptColor);
+			}
+		}
+
 		string battlePath = _enemy?.BattleTimelinePath ?? "";
 		if (!string.IsNullOrEmpty(battlePath) && ResourceLoader.Exists(battlePath))
 		{
@@ -810,12 +847,20 @@ public partial class BattleScene : Node2D
 	private async Task DoBeginRhythmPhase()
 	{
 		SetState(BattleState.RhythmPhase);
-		await ShowPhaseCard("⚠  DODGE!  ⚠", new Color(1f, 0.3f, 0.3f));
+
+		if (_adaptation.Tier >= AdaptationTier.Hardened)
+			await ShowPhaseCard("⚠  DODGE!  ⚠  (INTENSIFIED)", new Color(1f, 0.15f, 0.15f));
+		else if (_adaptation.Tier == AdaptationTier.Cocky)
+			await ShowPhaseCard("⚠  DODGE!  ⚠  (WEAKENED)", new Color(0.5f, 0.8f, 1f));
+		else
+			await ShowPhaseCard("⚠  DODGE!  ⚠", new Color(1f, 0.3f, 0.3f));
 
 		PackedScene? patternScene = _enemy?.AttackPatternScene;
-		_rhythmArena.StartPhase(patternScene, totalMeasures: 2);
+		int totalMeasures = Math.Max(1, 2 + _adaptation.ExtraMeasures);
+		_rhythmArena.ObstacleDensityMult = _adaptation.ObstacleDensityMult;
+		_rhythmArena.StartPhase(patternScene, totalMeasures: totalMeasures);
 
-		GD.Print($"[BattleScene] RhythmPhase started. Pattern: {patternScene?.ResourcePath ?? "none"}");
+		GD.Print($"[BattleScene] RhythmPhase started. Pattern: {patternScene?.ResourcePath ?? "none"}, measures: {totalMeasures}, density: {_adaptation.ObstacleDensityMult:F2}");
 	}
 
 	private async Task ShowPhaseCard(string text, Color color)
@@ -870,14 +915,34 @@ public partial class BattleScene : Node2D
 		RhythmClock.Instance.Stop();
 		AudioManager.Instance.StopBgm(fadeTime: 0.5f);
 
-		// Record kill for quest tracking
+		// Record kill and rhythm performance for quest/adaptation tracking
 		if (!string.IsNullOrEmpty(_enemy?.EnemyId))
+		{
 			GameManager.Instance.RecordKill(_enemy.EnemyId);
+			GameManager.Instance.RecordRhythmPerformance(_enemy.EnemyId, _performance);
+		}
 
-		int gold = _enemy?.GoldDrop ?? 0;
-		int exp  = _enemy?.ExpDrop  ?? 0;
+		// Apply Rhythm Memory bonus rewards
+		int baseGold = _enemy?.GoldDrop ?? 0;
+		int baseExp  = _enemy?.ExpDrop  ?? 0;
+		int gold = (int)(baseGold * (1f + _adaptation.BonusGoldPercent));
+		int exp  = (int)(baseExp  * (1f + _adaptation.BonusExpPercent));
 		GameManager.Instance.AddGold(gold);
-		GameManager.Instance.AddExp(exp); // may populate PendingLevelUps
+		GameManager.Instance.AddExp(exp);
+
+		if (_adaptation.BonusGoldPercent > 0f || _adaptation.BonusExpPercent > 0f)
+			GD.Print($"[BattleScene] Rhythm Memory bonus: gold {baseGold}→{gold} (+{_adaptation.BonusGoldPercent:P0}), exp {baseExp}→{exp} (+{_adaptation.BonusExpPercent:P0})");
+
+		// Bonus loot roll
+		if (_adaptation.BonusLootChance > 0f && GD.Randf() < _adaptation.BonusLootChance)
+		{
+			string lootPath = _enemy?.BonusLootItemPath ?? "";
+			if (!string.IsNullOrEmpty(lootPath) && ResourceLoader.Exists(lootPath))
+			{
+				GameManager.Instance.AddItem(lootPath);
+				GD.Print($"[BattleScene] Rhythm Memory bonus loot: {lootPath}");
+			}
+		}
 
 		// Show level-up screen for each level gained before the victory dialog
 		if (GameManager.Instance.PendingLevelUps.Count > 0)

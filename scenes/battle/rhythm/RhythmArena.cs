@@ -72,6 +72,12 @@ public partial class RhythmArena : Node2D
     /// <summary>Maximum consecutive hit streak this phase — read by BattleScene after phase ends.</summary>
     public int MaxStreak => _maxStreak;
 
+    /// <summary>
+    /// Multiplier for obstacle spawn density. Set by BattleScene before StartPhase.
+    /// Values > 1.0 add extra obstacles; values &lt; 1.0 skip beats (cocky enemies).
+    /// </summary>
+    public float ObstacleDensityMult { get; set; } = 1.0f;
+
     // ── Setup ─────────────────────────────────────────────────────────
 
     public override void _Ready()

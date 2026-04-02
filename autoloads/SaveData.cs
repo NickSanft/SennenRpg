@@ -71,6 +71,10 @@ public record SaveData
 	/// <summary>Slot name → dynamic equipment ID for currently equipped Lily items.</summary>
 	public Dictionary<string, string> EquippedDynamicItemIds { get; init; } = new();
 
+	// ── Rhythm Memory — per-enemy adaptation history ─────────────────────────
+	/// <summary>Per-enemy performance history for the Rhythm Memory system.</summary>
+	public Dictionary<string, SennenRpg.Core.Data.EnemyRhythmHistory> RhythmMemory { get; init; } = new();
+
 	// ── Slot metadata ─────────────────────────────────────────────────────────
 	/// <summary>Player's chosen name (displayed on the slot card).</summary>
 	public string PlayerName      { get; init; } = "Sen";

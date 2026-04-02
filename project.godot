@@ -56,6 +56,7 @@ directories/dch_directory={
 }
 directories/dtl_directory={
 "battle_charm_result": "res://dialog/timelines/battle_charm_result.dtl",
+"battle_enemy_adapted": "res://dialog/timelines/battle_enemy_adapted.dtl",
 "battle_enemy_dialog": "res://dialog/timelines/battle_enemy_dialog.dtl",
 "battle_fled": "res://dialog/timelines/battle_fled.dtl",
 "battle_flee_blocked": "res://dialog/timelines/battle_flee_blocked.dtl",

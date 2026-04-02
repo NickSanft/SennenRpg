@@ -33,4 +33,7 @@ public partial class EnemyData : Resource
 	[Export] public int GoldDrop { get; set; } = 0;
 	[Export] public int ExpDrop { get; set; } = 0;
 	[Export] public PackedScene? AttackPatternScene { get; set; }
+
+	/// <summary>Item awarded as bonus loot when the Rhythm Memory adaptation roll succeeds. Leave empty for no bonus loot.</summary>
+	[Export] public string BonusLootItemPath { get; set; } = "";
 }

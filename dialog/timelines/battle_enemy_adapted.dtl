@@ -1,0 +1,10 @@
+[style name=""]
+
+if {adaptation_tier} == "Rival":
+	* {enemy_name} locks eyes with you. "You again... I've studied your every move. This time, I won't hold back."
+elif {adaptation_tier} == "Hardened":
+	* {enemy_name} braces itself. "I remember your rhythm. Don't expect the same tricks to work."
+elif {adaptation_tier} == "Wary":
+	* {enemy_name} narrows its eyes. "Hmm... you seem familiar. I'll be more careful this time."
+elif {adaptation_tier} == "Cocky":
+	* {enemy_name} yawns lazily. "Oh, it's you again. This should be easy."
