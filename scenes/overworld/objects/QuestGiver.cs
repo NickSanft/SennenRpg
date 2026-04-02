@@ -14,11 +14,17 @@ namespace SennenRpg.Scenes.Overworld;
 [Tool]
 public partial class QuestGiver : Node
 {
-	[Export] public QuestData? QuestResource                 { get; set; }
+	/// <summary>
+	/// Typed as Resource so Godot's C++ serialiser doesn't cast-fail on external .tres files;
+	/// use the <see cref="Quest"/> accessor for typed access at runtime.
+	/// </summary>
+	[Export] public Resource?  QuestResource                 { get; set; }
 	[Export] public string     OfferTimelinePath             { get; set; } = "";
 	[Export] public string     ActiveReminderTimelinePath    { get; set; } = "";
 	[Export] public string     TurnInTimelinePath            { get; set; } = "";
 	[Export] public string     RewardedTimelinePath          { get; set; } = "";
+
+	private QuestData? Quest => QuestResource as QuestData;
 
 	/// <summary>Quest state that was active when the player started talking.</summary>
 	public QuestState StateAtTalkStart { get; private set; } = QuestState.Inactive;
@@ -26,8 +32,8 @@ public partial class QuestGiver : Node
 	public override void _Ready()
 	{
 		if (Engine.IsEditorHint()) return;
-		if (QuestResource != null)
-			QuestManager.Instance.RegisterQuest(QuestResource);
+		if (Quest != null)
+			QuestManager.Instance.RegisterQuest(Quest);
 	}
 
 	/// <summary>
@@ -37,8 +43,8 @@ public partial class QuestGiver : Node
 	/// </summary>
 	public string GetQuestTimelineOverride()
 	{
-		if (QuestResource == null) return "";
-		StateAtTalkStart = QuestManager.Instance.GetState(QuestResource.QuestId);
+		if (Quest == null) return "";
+		StateAtTalkStart = QuestManager.Instance.GetState(Quest.QuestId);
 		return StateAtTalkStart switch
 		{
 			QuestState.Inactive          => OfferTimelinePath,
@@ -55,8 +61,8 @@ public partial class QuestGiver : Node
 	/// </summary>
 	public async Task HandlePostDialog(Node sceneRoot)
 	{
-		if (QuestResource == null) return;
-		string id = QuestResource.QuestId;
+		if (Quest == null) return;
+		string id = Quest.QuestId;
 
 		switch (StateAtTalkStart)
 		{
@@ -68,8 +74,8 @@ public partial class QuestGiver : Node
 				QuestManager.Instance.CompleteQuest(id);
 				var screen = new QuestRewardScreen();
 				sceneRoot.AddChild(screen);
-				var rewards = QuestResource.GetRewards();
-				int chosen  = await screen.ShowRewards(QuestResource.Title, QuestResource.BaseExpReward, rewards);
+				var rewards = Quest.GetRewards();
+				int chosen  = await screen.ShowRewards(Quest.Title, Quest.BaseExpReward, rewards);
 				ApplyReward(chosen, rewards);
 				QuestManager.Instance.MarkRewarded(id);
 				screen.QueueFree();
@@ -80,7 +86,7 @@ public partial class QuestGiver : Node
 	private void ApplyReward(int index, IReadOnlyList<QuestRewardOption> rewards)
 	{
 		var gm = GameManager.Instance;
-		gm.AddExp(QuestResource!.BaseExpReward);
+		gm.AddExp(Quest!.BaseExpReward);
 		if (index < 0 || index >= rewards.Count) return;
 		var r = rewards[index];
 		if (r.ExpBonus  > 0) gm.AddExp(r.ExpBonus);
