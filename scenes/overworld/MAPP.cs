@@ -49,7 +49,7 @@ public partial class MAPP : OverworldBase
 		if (GameManager.Instance.GetFlag(Flags.ShizuMusicAuraActive))
 			BgmPath = ShizuBgmPath;
 
-		// Player returns to TestRoom through the south door
+		// Player returns to the overworld through the south door
 		SpawnPoints["from_mapp_exit"] = new Vector2(0, 120);
 		// Player returns from the garden through the east-wall back door
 		SpawnPoints["from_garden"]    = new Vector2(134f, 70f);

@@ -186,7 +186,7 @@ public partial class SaveSlotMenu : Node2D
         _transitioning = true;
         SaveManager.Instance.ApplyLoadedData(data);
         string map = string.IsNullOrEmpty(data.LastMapPath)
-            ? "res://scenes/overworld/TestRoom.tscn"
+            ? "res://scenes/overworld/MAPP.tscn"
             : data.LastMapPath;
         _ = SceneTransition.Instance.GoToAsync(map);
     }

@@ -146,9 +146,9 @@ public partial class Player : CharacterBody2D
 	{
 		if (_sprite.SpriteFrames == null) return;
 
-		string current = _sprite.Animation;
-		if (current.StartsWith("walk_"))
-			PlayIfExists(current.Replace("walk_", "idle_"));
+		// Keep the walk animation playing at reduced speed for a subtle idle breathing effect
+		// instead of switching to a static idle frame.
+		_sprite.SpeedScale = 0.4f;
 	}
 
 	private void PlayIfExists(string animationName)

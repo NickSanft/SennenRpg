@@ -101,17 +101,41 @@ public partial class InventoryMenu : CanvasLayer
 			}
 		}
 
-		if (dynItems.Count > 0)
+		// Static equipment (owned + equipped)
+		var ownedEquip = gm.OwnedEquipmentPaths;
+		var equippedPaths = gm.EquippedItemPaths;
+		bool hasAnyEquip = ownedEquip.Count > 0 || equippedPaths.Count > 0 || dynItems.Count > 0;
+
+		if (hasAnyEquip)
 		{
 			if (paths.Count > 0)
 				_itemRows.AddChild(new HSeparator());
 
-			var header = new Label { Text = "— EQUIPMENT (Lily's Forge) —" };
-			header.HorizontalAlignment = HorizontalAlignment.Center;
-			header.AddThemeFontSizeOverride("font_size", 9);
-			header.AddThemeColorOverride("font_color", new Color(0.8f, 0.7f, 0.3f));
-			_itemRows.AddChild(header);
+			var eqHeader = new Label { Text = "— EQUIPMENT —" };
+			eqHeader.HorizontalAlignment = HorizontalAlignment.Center;
+			eqHeader.AddThemeFontSizeOverride("font_size", 9);
+			eqHeader.AddThemeColorOverride("font_color", new Color(0.6f, 0.7f, 1f));
+			_itemRows.AddChild(eqHeader);
 
+			// Currently equipped static items
+			foreach (var kv in equippedPaths)
+			{
+				if (string.IsNullOrEmpty(kv.Value) || !ResourceLoader.Exists(kv.Value)) continue;
+				var eq = GD.Load<EquipmentData>(kv.Value);
+				if (eq == null) continue;
+				_itemRows.AddChild(BuildStaticEquipRow(eq, kv.Key.ToString(), equipped: true));
+			}
+
+			// Unequipped static items
+			foreach (var eqPath in ownedEquip)
+			{
+				if (!ResourceLoader.Exists(eqPath)) continue;
+				var eq = GD.Load<EquipmentData>(eqPath);
+				if (eq == null) continue;
+				_itemRows.AddChild(BuildStaticEquipRow(eq, eq.Slot.ToString(), equipped: false));
+			}
+
+			// Lily-forged dynamic equipment
 			foreach (var dynItem in dynItems)
 			{
 				bool equipped = gm.EquippedDynamicItemIds.ContainsValue(dynItem.Id);
@@ -154,6 +178,31 @@ public partial class InventoryMenu : CanvasLayer
 		row.AddChild(nameLabel);
 		row.AddChild(hpLabel);
 		row.AddChild(useButton);
+		return row;
+	}
+
+	private HBoxContainer BuildStaticEquipRow(EquipmentData eq, string slotText, bool equipped)
+	{
+		var row = new HBoxContainer();
+
+		var nameLabel = new Label { Text = eq.DisplayName };
+		nameLabel.SizeFlagsHorizontal = Control.SizeFlags.Expand | Control.SizeFlags.Fill;
+		nameLabel.AddThemeFontSizeOverride("font_size", 10);
+
+		var slotLabel = new Label { Text = slotText };
+		slotLabel.AddThemeFontSizeOverride("font_size", 9);
+		slotLabel.AddThemeColorOverride("font_color", new Color(0.6f, 0.6f, 0.6f));
+
+		var hint = new Button
+		{
+			Text     = equipped ? "EQUIPPED" : "—",
+			Disabled = true,
+		};
+		hint.AddThemeFontSizeOverride("font_size", 9);
+
+		row.AddChild(nameLabel);
+		row.AddChild(slotLabel);
+		row.AddChild(hint);
 		return row;
 	}
 

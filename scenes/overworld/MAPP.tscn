@@ -10,7 +10,6 @@
 [ext_resource type="PackedScene" uid="uid://djjgkkxqyp83y" path="res://scenes/overworld/objects/npcs/NpcBrix.tscn" id="7_brix"]
 [ext_resource type="PackedScene" uid="uid://df13wf3777wpt" path="res://scenes/overworld/objects/npcs/NpcBhata.tscn" id="8_bhata"]
 [ext_resource type="PackedScene" uid="uid://bo2ok2ivtbl18" path="res://scenes/overworld/objects/npcs/NpcRain.tscn" id="9_rain"]
-[ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcPetWitchCat.tscn" id="10_petwcat"]
 [ext_resource type="PackedScene" uid="uid://dsn3066repcyy" path="res://scenes/overworld/objects/furniture/TableFurniture.tscn" id="11_table"]
 [ext_resource type="PackedScene" uid="uid://chairfurnit01" path="res://scenes/overworld/objects/furniture/ChairFurniture.tscn" id="12_chair"]
 [ext_resource type="PackedScene" uid="uid://barstoolfurn1" path="res://scenes/overworld/objects/furniture/BarStoolFurniture.tscn" id="13_stool"]
@@ -22,8 +21,6 @@
 [ext_resource type="PackedScene" uid="uid://dartboardtscn" path="res://scenes/overworld/objects/DartboardProp.tscn" id="20_dartboard"]
 [ext_resource type="PackedScene" uid="uid://bardrinkptscn" path="res://scenes/overworld/objects/BarDrinkProp.tscn" id="21_drinkprop"]
 [ext_resource type="Script" uid="uid://drkqrxhkmk75h" path="res://core/data/ShopItemEntry.cs" id="22_shopentry"]
-[ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcPetDragon.tscn" id="23_dragon"]
-[ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcPetFairy.tscn" id="24_fairy"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcRork.tscn" id="29_rork"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dlxv3"]
@@ -182,13 +179,6 @@ PlaceholderColor = Color(0.35, 0.55, 0.95, 1)
 PatrolPoints = PackedVector2Array(60, 90, 40, 100, 50, 100)
 PatrolSpeed = 18.0
 
-[node name="PetWitchCat" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="10" unique_id=911490980 instance=ExtResource("10_petwcat")]
-position = Vector2(396, -44)
-NpcId = "pet_witch_cat"
-TimelinePath = "res://dialog/timelines/npc_pet_witch_cat.dtl"
-DisplayName = "WitchCat"
-DefaultFacing = 2
-CharacterPath = "res://dialog/characters/PetWitchCat.dch"
 
 [node name="Rork" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="11" unique_id=914373453 instance=ExtResource("29_rork")]
 position = Vector2(0, -64)
@@ -254,23 +244,6 @@ position = Vector2(54, -40)
 [node name="BarStool6" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="28" unique_id=1527521584 instance=ExtResource("13_stool")]
 position = Vector2(90, -40)
 
-[node name="PetDragon" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="29" unique_id=-1994967295 instance=ExtResource("23_dragon")]
-position = Vector2(345, -41)
-NpcId = "pet_dragon"
-TimelinePath = "res://dialog/timelines/npc_pet_dragon.dtl"
-DisplayName = "Dragon"
-DefaultFacing = 2
-CharacterPath = "res://dialog/characters/PetDragon.dch"
-
-[node name="PetFairy" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="30" unique_id=-1994967294 instance=ExtResource("24_fairy")]
-position = Vector2(369, -43)
-NpcId = "pet_fairy"
-TimelinePath = "res://dialog/timelines/npc_pet_fairy.dtl"
-DisplayName = "Fairy"
-DefaultFacing = 2
-CharacterPath = "res://dialog/characters/PetFairy.dch"
-PatrolPoints = PackedVector2Array(50, -15, 30, 10, -15, -35, 10, 30)
-PatrolSpeed = 50.0
 
 [node name="Journal" parent="." index="7" unique_id=2050191186 instance=ExtResource("19_journal")]
 position = Vector2(-60, 35)
