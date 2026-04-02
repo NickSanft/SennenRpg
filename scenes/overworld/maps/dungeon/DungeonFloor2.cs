@@ -1,4 +1,5 @@
 using Godot;
+using SennenRpg.Core.Data;
 
 namespace SennenRpg.Scenes.Overworld;
 
@@ -13,6 +14,10 @@ public partial class DungeonFloor2 : OverworldBase
 
 	public override void _Ready()
 	{
+		const string enc = "res://resources/encounters/encounter_003.tres";
+		if (ResourceLoader.Exists(enc))
+			RandomEncounterTable.Add(GD.Load<EncounterData>(enc));
+
 		base._Ready();
 	}
 }

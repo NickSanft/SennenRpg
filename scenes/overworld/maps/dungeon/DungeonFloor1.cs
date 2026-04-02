@@ -24,6 +24,11 @@ public partial class DungeonFloor1 : OverworldBase
 
 	public override void _Ready()
 	{
+		// Populate random encounters before base._Ready() connects the step handler
+		const string enc = "res://resources/encounters/encounter_001.tres";
+		if (ResourceLoader.Exists(enc))
+			RandomEncounterTable.Add(GD.Load<EncounterData>(enc));
+
 		base._Ready();
 		if (Engine.IsEditorHint()) return;
 
