@@ -41,35 +41,47 @@ res://
 │   ├── dialogic/                 # Dialogic 2 — dialog management
 │   └── phantom_camera/           # PhantomCamera 2D — smooth camera follow
 ├── autoloads/
-│   ├── GameManager.cs            # Master state: flags, kills, route, player stats
+│   ├── GameManager.cs            # Facade: delegates to domain data classes below
 │   ├── SaveManager.cs            # Save/load JSON to user://save.json
 │   ├── AudioManager.cs           # BGM crossfade, SFX pooling
 │   ├── SceneTransition.cs        # Scene switching with transition animations
 │   ├── DialogicBridge.cs         # C# wrapper for Dialogic 2 GDScript API
 │   ├── BattleRegistry.cs         # Loads all EnemyData resources; lookup by ID
 │   ├── DialogRegistry.cs         # Optional short-name → full-path timeline map
-│   └── RhythmClock.cs            # Master beat clock for rhythm minigames
+│   ├── RhythmClock.cs            # Master beat clock for rhythm minigames
+│   ├── QuestManager.cs           # Quest state machine, condition tracking
+│   ├── SettingsManager.cs        # User preferences, difficulty, volume
+│   └── AccessibilityOverlay.cs   # Accessibility features
 ├── core/
-│   ├── data/                     # Pure-logic + Resource subclasses
+│   ├── data/                     # Pure-logic + Resource subclasses + domain data
 │   │   ├── CharacterStats.cs, EnemyData.cs, EncounterData.cs, ItemData.cs
-│   │   ├── ShopItemEntry.cs      # Vendor stock line item
+│   │   ├── ShopItemEntry.cs, NpcResidencyEntry.cs, QuestData.cs
 │   │   ├── RhythmConstants.cs, PerformanceScore.cs
 │   │   ├── Flags.cs              # Flag name constants + helpers
 │   │   ├── ItemLogic.cs, ShopLogic.cs, NpcLogic.cs   # pure/testable logic
+│   │   ├── TownRewardLogic.cs, LilyForgeLogic.cs     # Mellyr Outpost pure logic
 │   │   ├── DialogicSignalParser.cs
-│   │   └── JournalData.cs
+│   │   ├── JournalData.cs
+│   │   ├── PlayerProgressionData.cs   # Gold, exp, level (owned by GameManager)
+│   │   ├── PlayerCombatData.cs        # HP, MP, stats, growth (owned by GameManager)
+│   │   ├── InventoryData.cs           # Items, spells, equipment (owned by GameManager)
+│   │   ├── WorldStateData.cs          # Map state, spawn points (owned by GameManager)
+│   │   └── MellyrRewardData.cs        # Rain gold, Lily recipes (owned by GameManager)
 │   ├── interfaces/               # IInteractable, IDamageable
 │   └── extensions/               # NodeExtensions.cs utility helpers
 ├── scenes/
 │   ├── boot/                     # Boot.tscn — first scene loaded
-│   ├── menus/                    # MainMenu, PauseMenu, GameOver, InventoryMenu, ShopMenu
+│   ├── menus/                    # MainMenu, PauseMenu, GameOver, InventoryMenu, ShopMenu, EquipmentMenu, ResidencyShopMenu
 │   ├── overworld/
 │   │   ├── OverworldBase.tscn    # Inherited by all maps
-│   │   ├── MAPP.tscn             # The Mapp Tavern (fully procedural, [Tool]-visible)
-│   │   ├── maps/                 # Individual map scenes
+│   │   ├── MAPP.tscn / .cs / .Events.cs   # Mapp Tavern (partial class split)
+│   │   ├── maps/                 # Individual map scenes (MappGarden uses .Builders.cs partial)
+│   │   │   └── mellyr/           # MellyrOutpost.tscn/.cs — resident hiring town
 │   │   └── objects/
 │   │       ├── Npc.cs            # NPC base (patrol, dialog, emote, [Tool])
 │   │       ├── VendorNpc.cs      # Extends Npc — opens ShopMenu ([Tool])
+│       ├── RorkTownNpc.cs   # Extends Npc — opens ResidencyShopMenu ([Tool])
+│       ├── QuestGiver.cs    # Child node for NPCs offering quests
 │   │       ├── InteractSign.cs   # Readable sign — opens SignReaderPopup ([Tool])
 │   │       ├── Chest.cs          # One-time treasure chest ([Tool])
 │   │       ├── JournalProp.cs    # Opens journal entry list ([Tool])
@@ -79,9 +91,11 @@ res://
 │   │       ├── JournalEntryPopup.cs # CanvasLayer 56
 │   │       ├── NpcInteractMenu.cs, JournalMenuPopup.cs
 │   │       └── furniture/        # TableFurniture, ChairFurniture, BarStoolFurniture ([Tool])
-│   ├── player/                   # Player.tscn + Player.cs
+│   ├── player/                   # Player.tscn + Player.cs, DungeonPlayer.cs (both emit Moved signal)
 │   ├── battle/
 │   │   ├── BattleScene.tscn      # Root battle scene
+│   │   ├── BattleAttackResolver.cs  # Static: minigame results → damage (extracted helper)
+│   │   ├── BattleStatusEffects.cs   # Status effect state & Dialogic signal handling
 │   │   ├── ui/                   # BattleHud, ActionMenu, EnemyNameplate, DamageNumber
 │   │   ├── dodge/                # DodgeBox, Soul, BulletBase + bullet variants
 │   │   ├── patterns/             # Pattern001–006, PatternRandom
@@ -109,14 +123,16 @@ Access via `GetNode<T>("/root/AutoloadName")` or via static `Instance` property.
 
 | Autoload Name | Script | Purpose |
 |---|---|---|
-| `GameManager` | `autoloads/GameManager.cs` | Global game state, flags, kill count, route |
+| `GameManager` | `autoloads/GameManager.cs` | Facade: flags, kills, delegates to domain data classes |
 | `SaveManager` | `autoloads/SaveManager.cs` | File I/O for save data |
-| `AudioManager` | `autoloads/AudioManager.cs` | BGM/SFX management |
+| `AudioManager` | `autoloads/AudioManager.cs` | BGM crossfade, SFX pooling |
 | `SceneTransition` | `autoloads/SceneTransition.cs` | Async scene swapping with animations |
 | `DialogicBridge` | `autoloads/DialogicBridge.cs` | Dialogic 2 interop only |
 | `BattleRegistry` | `autoloads/BattleRegistry.cs` | Enemy/encounter data lookup by ID |
 | `DialogRegistry` | `autoloads/DialogRegistry.cs` | Optional short-name → full-path timeline map |
 | `RhythmClock` | `autoloads/RhythmClock.cs` | Master beat clock for rhythm minigames |
+| `QuestManager` | `autoloads/QuestManager.cs` | Quest state machine, condition tracking |
+| `SettingsManager` | `autoloads/SettingsManager.cs` | User preferences, difficulty, volume |
 
 ## CanvasLayer Draw Order
 | Layer | Node |
@@ -173,7 +189,7 @@ Victory → EXP/Gold display → GameManager.AddGold/AddExp → SceneTransition 
 
 ## Testing
 - **NUnit** (pure logic, no Godot): `dotnet test SennenRpg.Tests/SennenRpg.Tests.csproj`
-  - Covers: `DialogicSignalParser`, `Flags`, `ItemLogic`, `ShopLogic`, `NpcLogic`, `JournalData`, `PerformanceScore`, `RhythmConstants`
+  - Covers: `DialogicSignalParser`, `Flags`, `ItemLogic`, `ShopLogic`, `NpcLogic`, `JournalData`, `PerformanceScore`, `RhythmConstants`, `TownRewardLogic`, `LilyForgeLogic`
   - Uses selective `<Compile Include="...">` — never reference the full game project from tests
   - Add new testable logic to `core/data/` as a standalone static class, then add it to the csproj
 - **GdUnit4** (Godot runtime): run from editor or `godot --headless -s addons/gdUnit4/bin/GdUnitCmdTool.gd`
@@ -189,6 +205,7 @@ Victory → EXP/Gold display → GameManager.AddGold/AddExp → SceneTransition 
 - **`Engine.IsEditorHint()` guards required in `[Tool]` scripts** — guard all autoload access, group registration, and physics processing.
 - **`GetChildCount()` guard with pre-baked .tscn children** — objects like `InteractSign` and `Chest` have a `CollisionShape2D` child pre-baked in the `.tscn`. Use `if (GetChildCount() > 1) return;` not `> 0`.
 - **`Resource[]` for Godot4 C# sub-resource exports** — use `Resource[]` (not `ShopItemEntry[]`) when exporting arrays of custom Resource subclasses. Cast with `OfType<T>()` at runtime. Using a concrete type causes a cast exception in `[Tool]` mode because the C++ serializer produces plain `Resource` objects.
+- **`Resource` for single typed exports of external .tres** — use `[Export] public Resource? MyProp` (not `QuestData?`) when loading external `.tres` files into a typed export. Cast with `as QuestData` at runtime. Same root cause as the array case above.
 - **`.tres` type attribute** — use `type="Resource"` + `script = ExtResource(...)` in `.tscn` files, never `type="ClassName"`. Godot's C++ ClassDB cannot instantiate C# types by name.
 - **`GrabFocus()` before tree** — call after `AddChild()`, wrapped in `CallDeferred`, or it throws.
 - **DialogicBridge safety net** — only fires when `_dialogicOwnsDialog == true` (set in `StartTimeline()`, cleared in `OnTimelineEndedInternal()`). Non-Dialogic UI that uses `GameState.Dialog` for player-blocking (signs, journal, shop) does not trigger it.

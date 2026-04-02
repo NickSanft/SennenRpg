@@ -104,11 +104,11 @@ Reference these when creating new game content to ensure consistency.
    - Set `ItemId` (snake_case), `DisplayName`, `Description`, `Icon` (Texture2D)
    - Set `HealAmount` for healing items, or `EffectType` + `EffectValue` for other effects
 2. Add sprite to `res://assets/sprites/ui/items/`
-3. To give the player this item at game start, add to `GameManager._Ready()`:
+3. To give the player this item at game start, add the path to `InventoryData.Reset()` (called from `GameManager.ResetForNewGame()`):
    ```csharp
-   Inventory.Add(GD.Load<ItemData>("res://resources/items/{id}.tres"));
+   InventoryItemPaths.Add("res://resources/items/{id}.tres");
    ```
-4. Item appears automatically in battle **Item** submenu — no additional wiring needed
+4. Item appears automatically in battle **Item** submenu and the pause-menu inventory — no additional wiring needed
 
 ---
 

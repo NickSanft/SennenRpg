@@ -68,6 +68,16 @@ A fully hand-crafted map scene (`scenes/overworld/MAPP.tscn`) demonstrating all 
 - Interactive sign, dartboard, bar drinks, and journal prop
 - All scene objects render in the Godot editor via `[Tool]` attributes
 
+### Mellyr Outpost
+A small town west of the MAPP Tavern. Players can hire NPC residents (Rain and Lily) via Rork's residency shop. Hired residents generate passive rewards while the player explores dungeons:
+- **Rain** — passively earns gold every 10 steps on qualifying maps (hard cap: 200g).
+- **Lily** — forges randomized equipment (deterministic from seed + player level) every 10 steps (hard cap: 5 items).
+- Rewards are collected by talking to the residents in the outpost. Lily-forged items appear in both the inventory and equipment menus.
+- Residents are spawned dynamically in code (not baked into the .tscn) to avoid Godot inherited-scene issues.
+
+### Quest System
+NPCs can offer quests via the `QuestGiver` child node. Quests have typed conditions (e.g., kill count) and reward choices shown on a reward screen. Quest state is tracked by `QuestManager` and persisted via save data.
+
 ### Battle System
 
 Battles are a turn-based state machine: **Intro → PlayerTurn ↔ EnemyTurn/RhythmPhase → Victory or Defeat**.
@@ -129,9 +139,14 @@ All dialog runs through **Dialogic 2**, accessed exclusively via `DialogicBridge
 Saves to `user://save.json` using `System.Text.Json`. The saved data includes:
 
 ```
-PlayerHp, PlayerMaxHp, Gold, Exp,
+PlayerHp, PlayerMaxHp, Gold, Exp, PlayerLevel,
 LastMapPath, LastSavePointId, LastSpawnId,
-Flags (dictionary), InventoryItemPaths (list)
+Flags (dictionary), InventoryItemPaths (list),
+OwnedEquipmentPaths, EquippedItemPaths,
+KillCounts, ActiveQuestIds, CompletedQuestIds,
+TownStepCounter, PendingRainGold, PendingLilyRecipes,
+DynamicEquipmentInventory, EquippedDynamicItemIds,
+PlayTimeSeconds
 ```
 
 ---
@@ -141,27 +156,36 @@ Flags (dictionary), InventoryItemPaths (list)
 ```
 SennenRpg/
 ├── autoloads/              # Global singletons (registered in project.godot)
-│   ├── GameManager.cs      # Master game state
+│   ├── GameManager.cs      # Facade: delegates to domain data classes in core/data/
 │   ├── SaveManager.cs      # Save/load JSON
 │   ├── AudioManager.cs     # BGM crossfade + SFX pool
 │   ├── SceneTransition.cs  # Async scene changes with fade/flash
 │   ├── DialogicBridge.cs   # Dialogic 2 C# wrapper
 │   ├── BattleRegistry.cs   # Passes encounter data across scene transitions
 │   ├── DialogRegistry.cs   # Optional short-name → full-path timeline map
-│   └── RhythmClock.cs      # Master beat clock for rhythm minigames
+│   ├── RhythmClock.cs      # Master beat clock for rhythm minigames
+│   ├── QuestManager.cs     # Quest state machine, condition tracking
+│   └── SettingsManager.cs  # User preferences, difficulty, volume
 │
 ├── core/
-│   ├── data/               # Pure-logic + Resource subclasses
+│   ├── data/               # Pure-logic + Resource subclasses + domain data
 │   │   ├── CharacterStats.cs, EnemyData.cs, EncounterData.cs, ItemData.cs
-│   │   ├── ShopItemEntry.cs        # Line item for vendor shop stock
+│   │   ├── ShopItemEntry.cs, NpcResidencyEntry.cs, QuestData.cs
 │   │   ├── RhythmConstants.cs      # Beat timing, grade windows, multipliers
 │   │   ├── PerformanceScore.cs     # Hit/miss/perfect accumulator
 │   │   ├── Flags.cs                # Flag name constants + helpers
 │   │   ├── ItemLogic.cs            # CanUse / Apply logic (pure)
 │   │   ├── ShopLogic.cs            # CanAfford / Buy logic (pure)
 │   │   ├── NpcLogic.cs             # SelectTimeline (pure, testable)
+│   │   ├── TownRewardLogic.cs      # Mellyr Outpost passive reward ticking
+│   │   ├── LilyForgeLogic.cs       # Deterministic equipment generation
 │   │   ├── DialogicSignalParser.cs # Parses "flag:x", "give_item:y" strings
-│   │   └── JournalData.cs          # Journal entry list helpers
+│   │   ├── JournalData.cs          # Journal entry list helpers
+│   │   ├── PlayerProgressionData.cs  # Gold, exp, level (GameManager domain)
+│   │   ├── PlayerCombatData.cs       # HP, MP, stats, growth (GameManager domain)
+│   │   ├── InventoryData.cs          # Items, spells, equipment (GameManager domain)
+│   │   ├── WorldStateData.cs         # Map state, spawn points (GameManager domain)
+│   │   └── MellyrRewardData.cs       # Rain gold, Lily recipes (GameManager domain)
 │   ├── interfaces/
 │   │   ├── IInteractable.cs
 │   │   └── IDamageable.cs
@@ -175,11 +199,14 @@ SennenRpg/
 │   ├── player/             # Player.tscn + Player.cs
 │   ├── overworld/
 │   │   ├── OverworldBase.tscn / .cs   # Base class for all maps
-│   │   ├── MAPP.tscn / .cs            # The Mapp Tavern (fully procedural)
-│   │   ├── maps/                      # Other map scenes
+│   │   ├── MAPP.tscn / .cs / .Events.cs  # Mapp Tavern (partial class split)
+│   │   ├── maps/                      # Other maps (MappGarden uses .Builders.cs partial)
+│   │   │   └── mellyr/               # MellyrOutpost — resident hiring town
 │   │   └── objects/
 │   │       ├── Npc.cs                 # NPC base (patrol, dialog, emote)
 │   │       ├── VendorNpc.cs           # Extends Npc — opens ShopMenu
+│   │       ├── RorkTownNpc.cs        # Extends Npc — opens ResidencyShopMenu
+│   │       ├── QuestGiver.cs         # Child node for NPCs offering quests
 │   │       ├── SavePoint.cs
 │   │       ├── EncounterTrigger.cs
 │   │       ├── MapExit.cs
@@ -202,6 +229,8 @@ SennenRpg/
 │   │           └── BarStoolFurniture.cs
 │   └── battle/
 │       ├── BattleScene.tscn / .cs     # Root state machine
+│       ├── BattleAttackResolver.cs    # Static: minigame results → damage
+│       ├── BattleStatusEffects.cs     # Status effect state & Dialogic signal handling
 │       ├── BattleHUD.cs               # CanvasLayer 10
 │       ├── ActionMenu.cs, SubMenu.cs
 │       ├── ui/                        # DamageNumber, EnemyNameplate
@@ -264,7 +293,7 @@ All autoloads are accessible via their static `Instance` property.
 
 ### `GameManager`
 
-Central state store. Everything that must survive a scene transition lives here.
+Thin facade over domain data classes. All public properties and methods are unchanged — callers use `GameManager.Instance.X` as before. Internally delegates to `PlayerProgressionData`, `PlayerCombatData`, `InventoryData`, `WorldStateData`, and `MellyrRewardData` (all in `core/data/`). Everything that must survive a scene transition lives here.
 
 ```csharp
 GameManager.Instance.CurrentState        // GameState enum
@@ -453,7 +482,7 @@ Objects that build their visuals in `_Ready()` (NPCs, furniture, signs, chests, 
 Godot destroys the current scene tree on every scene change. Cross-scene data lives in autoloads:
 - **Battle encounter** — `BattleRegistry.SetPendingEncounter()` before transitioning; `GetPendingEncounter()` consumes it once in `BattleScene._Ready()`.
 - **Spawn position** — `GameManager.LastSpawnId` is set by `MapExit` and consumed once by `OverworldBase.GetSpawnPosition()`.
-- **Persistent state** — everything else lives in `GameManager` (flags, stats, gold).
+- **Persistent state** — everything else lives in `GameManager` (flags, stats, gold). Internally, GameManager delegates to domain data classes (`PlayerProgressionData`, `PlayerCombatData`, `InventoryData`, `WorldStateData`, `MellyrRewardData`) for separation of concerns.
 
 ### Resource mutability
 `CharacterStats` is a `Resource` — it is shared by default. Always call `.Duplicate()` before modifying if you need a local copy. `GameManager` holds the live player stats copy.
@@ -505,7 +534,7 @@ Godot destroys the current scene tree on every scene change. Cross-scene data li
 - **Dialogic `timeline_ended`** — this is a GDScript signal. Always connect via `DialogicBridge.ConnectTimelineEnded()`, never directly.
 - **`CharacterStats` sharing** — it is a `Resource`; call `.Duplicate()` before mutating if you need a local copy.
 - **`SceneTransition.GoToAsync` is async** — always `await` it or the code after it runs before the transition finishes.
-- **`.tres` C# resource types** — use `type="Resource"` with a `script=` reference in the `.tscn`, not `type="ClassName"`. Godot's C++ parser cannot instantiate C# types by name. Export the property as `Resource[]` and cast with `OfType<T>()` at runtime.
+- **`.tres` C# resource types** — use `type="Resource"` with a `script=` reference in the `.tscn`, not `type="ClassName"`. Godot's C++ parser cannot instantiate C# types by name. Export arrays as `Resource[]` and cast with `OfType<T>()` at runtime. For single typed exports of external `.tres` files, export as `Resource?` and cast with `as T` at runtime.
 - **`[Tool]` not inherited** — Godot 4 C# does not propagate `[Tool]` to subclasses. Add it explicitly on every class that needs editor `_Ready()` execution.
 - **`GetChildCount()` guard with pre-baked children** — if a `.tscn` pre-bakes a `CollisionShape2D`, `GetChildCount()` is already 1 when `_Ready()` first runs. Use `> 1` instead of `> 0` for the duplicate-build guard.
 - **`GrabFocus()` before `AddChild()`** — calling `GrabFocus()` before the node is in the scene tree throws an error. Call it after `AddChild()`, wrapped in `CallDeferred` for safety.
