@@ -278,33 +278,119 @@ public partial class SettingsMenu : CanvasLayer
 		{
 			string actionStr = action.ToString();
 			if (actionStr.StartsWith("ui_")) continue;
+			// Skip internal Dialogic and GdUnit actions
+			if (actionStr.StartsWith("dialogic_")) continue;
+			if (actionStr.StartsWith("gdunit_")) continue;
 
 			var row = new HBoxContainer();
+			row.AddThemeConstantOverride("separation", 8);
 
 			var actionLabel = new Label
 			{
-				Text              = actionStr,
-				CustomMinimumSize = new Vector2(160f, 0f),
+				Text              = FormatActionName(actionStr),
+				CustomMinimumSize = new Vector2(100f, 0f),
 			};
+			actionLabel.AddThemeFontSizeOverride("font_size", 10);
 
+			// Keyboard binding
 			var keyLabel = new Label
 			{
+				Text                = GetKeyboardText(actionStr),
 				HorizontalAlignment = HorizontalAlignment.Center,
-				CustomMinimumSize   = new Vector2(120f, 0f),
+				CustomMinimumSize   = new Vector2(80f, 0f),
 				Name                = "Key_" + actionStr,
 			};
+			keyLabel.AddThemeFontSizeOverride("font_size", 10);
 
-			var rebindBtn = new Button { Text = "Rebind" };
-			// Capture action/label/button in a closure to avoid loop variable capture issues
+			var rebindKeyBtn = new Button { Text = "Key" };
+			rebindKeyBtn.AddThemeFontSizeOverride("font_size", 9);
 			string capturedAction = actionStr;
-			rebindBtn.Pressed += () => StartRebind(capturedAction, keyLabel, rebindBtn);
+			rebindKeyBtn.Pressed += () => StartRebind(capturedAction, keyLabel, rebindKeyBtn);
+
+			// Controller binding
+			var padLabel = new Label
+			{
+				Text                = GetControllerText(actionStr),
+				HorizontalAlignment = HorizontalAlignment.Center,
+				CustomMinimumSize   = new Vector2(60f, 0f),
+				Name                = "Pad_" + actionStr,
+			};
+			padLabel.AddThemeFontSizeOverride("font_size", 10);
+
+			var rebindPadBtn = new Button { Text = "Pad" };
+			rebindPadBtn.AddThemeFontSizeOverride("font_size", 9);
+			rebindPadBtn.Pressed += () => StartRebind(capturedAction, padLabel, rebindPadBtn);
 
 			row.AddChild(actionLabel);
 			row.AddChild(keyLabel);
-			row.AddChild(rebindBtn);
+			row.AddChild(rebindKeyBtn);
+			row.AddChild(padLabel);
+			row.AddChild(rebindPadBtn);
 			_controlsRows.AddChild(row);
 		}
 	}
+
+	private static string FormatActionName(string action) => action switch
+	{
+		"move_up"    => "Move Up",
+		"move_down"  => "Move Down",
+		"move_left"  => "Move Left",
+		"move_right" => "Move Right",
+		"interact"   => "Interact",
+		"cancel"     => "Cancel",
+		"menu"       => "Menu",
+		"run"        => "Run",
+		"lane_0"     => "Lane 1",
+		"lane_1"     => "Lane 2",
+		"lane_2"     => "Lane 3",
+		"lane_3"     => "Lane 4",
+		"dialog_log" => "Dialog Log",
+		_            => action,
+	};
+
+	private static string GetKeyboardText(string action)
+	{
+		var events = InputMap.ActionGetEvents(action);
+		foreach (var ev in events)
+		{
+			if (ev is InputEventKey iek)
+			{
+				Key k = SettingsLogic.EffectiveKey(iek.Keycode, iek.PhysicalKeycode);
+				if (k != Key.None) return OS.GetKeycodeString(k);
+			}
+		}
+		return "—";
+	}
+
+	private static string GetControllerText(string action)
+	{
+		var events = InputMap.ActionGetEvents(action);
+		foreach (var ev in events)
+		{
+			if (ev is InputEventJoypadButton jb)
+				return GetJoyButtonName(jb.ButtonIndex);
+		}
+		return "—";
+	}
+
+	private static string GetJoyButtonName(JoyButton btn) => btn switch
+	{
+		JoyButton.A          => "A / Cross",
+		JoyButton.B          => "B / Circle",
+		JoyButton.X          => "X / Square",
+		JoyButton.Y          => "Y / Triangle",
+		JoyButton.Back       => "Select",
+		JoyButton.Start      => "Start",
+		JoyButton.LeftStick  => "L3",
+		JoyButton.RightStick => "R3",
+		JoyButton.LeftShoulder  => "LB",
+		JoyButton.RightShoulder => "RB",
+		JoyButton.DpadUp     => "D-Up",
+		JoyButton.DpadDown   => "D-Down",
+		JoyButton.DpadLeft   => "D-Left",
+		JoyButton.DpadRight  => "D-Right",
+		_                    => $"Btn {(int)btn}",
+	};
 
 	// ── Public API ────────────────────────────────────────────────────────────
 
@@ -321,13 +407,29 @@ public partial class SettingsMenu : CanvasLayer
 	{
 		if (!Visible) return;
 
-		// Capture the next keypress for rebinding
+		// Capture the next key or joypad button for rebinding
 		if (_rebindingAction != null)
 		{
-			if (@event is not InputEventKey { Pressed: true } rebindKey) return;
-			_pendingBindings[_rebindingAction] = (int)rebindKey.Keycode;
+			string? displayName = null;
+			int bindingCode = 0;
+
+			if (@event is InputEventKey { Pressed: true } rebindKey)
+			{
+				bindingCode = (int)rebindKey.Keycode;
+				displayName = OS.GetKeycodeString(rebindKey.Keycode);
+			}
+			else if (@event is InputEventJoypadButton { Pressed: true } joyBtn)
+			{
+				// Store joypad buttons as negative values to distinguish from keycodes
+				bindingCode = -((int)joyBtn.ButtonIndex + 1);
+				displayName = $"Pad {(int)joyBtn.ButtonIndex}";
+			}
+
+			if (displayName == null) return;
+
+			_pendingBindings[_rebindingAction] = bindingCode;
 			if (_rebindingButton != null) _rebindingButton.Text = "Rebind";
-			if (_rebindingLabel  != null) _rebindingLabel.Text  = OS.GetKeycodeString(rebindKey.Keycode);
+			if (_rebindingLabel  != null) _rebindingLabel.Text  = displayName;
 			_rebindingAction = null;
 			_rebindingButton = null;
 			_rebindingLabel  = null;
@@ -380,22 +482,13 @@ public partial class SettingsMenu : CanvasLayer
 			var keyLabel = _controlsRows.FindChild("Key_" + actionStr, true, false) as Label;
 			if (keyLabel == null) continue;
 
-			if (s.KeyBindings.TryGetValue(actionStr, out int savedKeycode))
+			if (s.KeyBindings.TryGetValue(actionStr, out int savedCode))
 			{
-				keyLabel.Text = OS.GetKeycodeString((Key)savedKeycode);
+				keyLabel.Text = savedCode < 0 ? $"Pad {-(savedCode + 1)}" : OS.GetKeycodeString((Key)savedCode);
 			}
 			else
 			{
-				var events = InputMap.ActionGetEvents(action);
-				if (events.Count > 0 && events[0] is InputEventKey iek)
-				{
-					Key k = SettingsLogic.EffectiveKey(iek.Keycode, iek.PhysicalKeycode);
-					keyLabel.Text = k != Key.None ? OS.GetKeycodeString(k) : "—";
-				}
-				else
-				{
-					keyLabel.Text = "—";
-				}
+				keyLabel.Text = GetCurrentKeyText(actionStr);
 			}
 		}
 	}
@@ -465,13 +558,20 @@ public partial class SettingsMenu : CanvasLayer
 	private string GetCurrentKeyText(string action)
 	{
 		if (_pendingBindings.TryGetValue(action, out int pending))
-			return OS.GetKeycodeString((Key)pending);
+			return pending < 0 ? $"Pad {-(pending + 1)}" : OS.GetKeycodeString((Key)pending);
 
 		var events = InputMap.ActionGetEvents(action);
-		if (events.Count > 0 && events[0] is InputEventKey iek)
+		foreach (var ev in events)
 		{
-			Key k = SettingsLogic.EffectiveKey(iek.Keycode, iek.PhysicalKeycode);
-			return k != Key.None ? OS.GetKeycodeString(k) : "—";
+			if (ev is InputEventKey iek)
+			{
+				Key k = SettingsLogic.EffectiveKey(iek.Keycode, iek.PhysicalKeycode);
+				if (k != Key.None) return OS.GetKeycodeString(k);
+			}
+			else if (ev is InputEventJoypadButton jb)
+			{
+				return $"Pad {jb.ButtonIndex}";
+			}
 		}
 		return "—";
 	}

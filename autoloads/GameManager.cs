@@ -78,6 +78,7 @@ public partial class GameManager : Node
 	public bool     IsNight                      { get => _world.IsNight;               set => _world.IsNight = value; }
 	public int      TilesWalkedOnWorldMap        { get => _world.TilesWalkedOnWorldMap; set => _world.TilesWalkedOnWorldMap = value; }
 	public int      RepelStepsRemaining          { get => _world.RepelStepsRemaining;   set => _world.RepelStepsRemaining = value; }
+	public Vector2? BattleReturnPosition         { get => _world.BattleReturnPosition;  set => _world.BattleReturnPosition = value; }
 
 	// ── Mellyr reward pass-through ────────────────────────────────────────────
 

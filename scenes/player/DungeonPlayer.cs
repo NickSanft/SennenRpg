@@ -72,7 +72,10 @@ public partial class DungeonPlayer : CharacterBody2D
         }
 
         if (GameManager.Instance.CurrentState is GameState.Dialog or GameState.Battle or GameState.Paused)
+        {
+            PlayIdleSway();
             return;
+        }
 
         UpdateNearbyInteractable();
 
@@ -82,6 +85,7 @@ public partial class DungeonPlayer : CharacterBody2D
         {
             _heldDir   = Vector2I.Zero;
             _holdTimer = 0f;
+            PlayIdleSway();
             return;
         }
 
@@ -127,6 +131,7 @@ public partial class DungeonPlayer : CharacterBody2D
     private async Task DoMove(Vector2 targetPos)
     {
         _moving = true;
+        if (_sprite != null) _sprite.SpeedScale = 1.0f;
         PlayAnim(WalkAnim());
 
         var tween = CreateTween()
@@ -201,6 +206,15 @@ public partial class DungeonPlayer : CharacterBody2D
         { Y: > 0 } => "walk_down",
         _           => "walk_side",
     };
+
+    private void PlayIdleSway()
+    {
+        if (_sprite == null) return;
+        string anim = WalkAnim();
+        if (_sprite.Animation != anim)
+            PlayAnim(anim);
+        _sprite.SpeedScale = 0.6f;
+    }
 
     private string IdleAnim() => _facingDir switch
     {

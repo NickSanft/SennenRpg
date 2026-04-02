@@ -1,7 +1,31 @@
-[gd_scene format=3 uid="uid://world_map_player"]
+[gd_scene format=3 uid="uid://bhwjbas63hv36"]
 
-[ext_resource type="Script" path="res://scenes/overworld/WorldMapPlayer.cs" id="1_wmp"]
-[ext_resource type="Texture2D" path="res://assets/sprites/player/Sen_Overworld.png" id="2_tex"]
+[ext_resource type="Script" uid="uid://bvrn3mrmhmwio" path="res://scenes/overworld/WorldMapPlayer.cs" id="1_wmp"]
+[ext_resource type="Texture2D" uid="uid://d3h4b8r8x21j8" path="res://assets/sprites/player/Sen_Overworld.png" id="2_tex"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8unqb"]
+atlas = ExtResource("2_tex")
+region = Rect2(0, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bemwx"]
+atlas = ExtResource("2_tex")
+region = Rect2(16, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sf7j0"]
+atlas = ExtResource("2_tex")
+region = Rect2(0, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3k43b"]
+atlas = ExtResource("2_tex")
+region = Rect2(16, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_a02ul"]
+atlas = ExtResource("2_tex")
+region = Rect2(0, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_py358"]
+atlas = ExtResource("2_tex")
+region = Rect2(16, 0, 16, 16)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_f0"]
 atlas = ExtResource("2_tex")
@@ -13,32 +37,68 @@ region = Rect2(16, 0, 16, 16)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_wmp"]
 animations = [{
-"frames": [{"duration": 1.0, "texture": SubResource("AtlasTexture_f0")}],
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8unqb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bemwx")
+}],
 "loop": true,
 "name": &"idle_down",
 "speed": 5.0
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("AtlasTexture_f0")}],
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sf7j0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3k43b")
+}],
 "loop": true,
 "name": &"idle_side",
 "speed": 5.0
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("AtlasTexture_f0")}],
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a02ul")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_py358")
+}],
 "loop": true,
 "name": &"idle_up",
 "speed": 5.0
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("AtlasTexture_f0")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_f1")}],
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_f0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_f1")
+}],
 "loop": true,
 "name": &"walk_down",
 "speed": 8.0
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("AtlasTexture_f0")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_f1")}],
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_f0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_f1")
+}],
 "loop": true,
 "name": &"walk_side",
 "speed": 8.0
 }, {
-"frames": [{"duration": 1.0, "texture": SubResource("AtlasTexture_f0")}, {"duration": 1.0, "texture": SubResource("AtlasTexture_f1")}],
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_f0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_f1")
+}],
 "loop": true,
 "name": &"walk_up",
 "speed": 8.0
@@ -47,15 +107,15 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wmp"]
 size = Vector2(12, 12)
 
-[node name="WorldMapPlayer" type="CharacterBody2D"]
+[node name="WorldMapPlayer" type="CharacterBody2D" unique_id=1290015122]
 script = ExtResource("1_wmp")
 
-[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1940458750]
 sprite_frames = SubResource("SpriteFrames_wmp")
-animation = &"idle_down"
+animation = &"walk_down"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=869635876]
 shape = SubResource("RectangleShape2D_wmp")
 
-[node name="Camera2D" type="Camera2D" parent="."]
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1221458862]
 zoom = Vector2(3, 3)

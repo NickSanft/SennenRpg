@@ -58,6 +58,19 @@ public partial class OverworldBase : Node2D
 		GameManager.Instance.SetLastMap(SceneFilePath);
 		GameManager.Instance.SetState(GameState.Overworld);
 
+		// Register SpawnPoint nodes from the scene BEFORE spawning the player,
+		// so GetSpawnPosition() can find them.
+		foreach (var node in GetTree().GetNodesInGroup("spawn_points"))
+		{
+			if (node is SpawnPoint sp)
+			{
+				SpawnPoints[sp.SpawnId] = sp.GlobalPosition;
+				if (sp.SpawnId == "default")
+					DefaultSpawnPosition = sp.GlobalPosition;
+				GD.Print($"[OverworldBase] SpawnPoint registered: '{sp.SpawnId}' @ {sp.GlobalPosition}");
+			}
+		}
+
 		// Spawn player into YSort so it Y-sorts with NPCs
 		string playerPath = UseSmallPlayer
 			? "res://scenes/player/DungeonPlayer.tscn"
@@ -72,19 +85,6 @@ public partial class OverworldBase : Node2D
 			p.Moved += OnPlayerMoved;
 		else if (_player is Player.DungeonPlayer dp)
 			dp.Moved += OnPlayerMoved;
-
-		// Register SpawnPoint nodes placed in the scene editor.
-		// These override any positions registered in code with the same ID.
-		foreach (var node in GetTree().GetNodesInGroup("spawn_points"))
-		{
-			if (node is SpawnPoint sp)
-			{
-				SpawnPoints[sp.SpawnId] = sp.GlobalPosition;
-				if (sp.SpawnId == "default")
-					DefaultSpawnPosition = sp.GlobalPosition;
-				GD.Print($"[OverworldBase] SpawnPoint registered: '{sp.SpawnId}' @ {sp.GlobalPosition}");
-			}
-		}
 
 		if (!string.IsNullOrEmpty(BgmPath))
 			AudioManager.Instance.PlayBgm(BgmPath);
@@ -168,6 +168,9 @@ public partial class OverworldBase : Node2D
 		if (roll >= enc.EncounterChancePerStep) return false;
 
 		_encounterLocked = true;
+		// Save player position so they return here after battle, not at the map's default spawn
+		if (_player != null)
+			GameManager.Instance.BattleReturnPosition = _player.GlobalPosition;
 		GD.Print($"[OverworldBase] Random encounter triggered (roll {roll:F1} < {enc.EncounterChancePerStep}).");
 		_ = SceneTransition.Instance.ToBattleAsync(enc);
 		return true;
@@ -244,6 +247,13 @@ public partial class OverworldBase : Node2D
 	/// </summary>
 	protected virtual Vector2 GetSpawnPosition()
 	{
+		// Return to exact position after battle (consumed on use)
+		if (GameManager.Instance.BattleReturnPosition is { } battlePos)
+		{
+			GameManager.Instance.BattleReturnPosition = null;
+			return battlePos;
+		}
+
 		string spawnId = GameManager.Instance.LastSpawnId;
 		if (!string.IsNullOrEmpty(spawnId) && SpawnPoints.TryGetValue(spawnId, out var pos))
 		{

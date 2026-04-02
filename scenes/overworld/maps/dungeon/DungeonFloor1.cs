@@ -27,7 +27,11 @@ public partial class DungeonFloor1 : OverworldBase
 		// Populate random encounters before base._Ready() connects the step handler
 		const string enc = "res://resources/encounters/encounter_001.tres";
 		if (ResourceLoader.Exists(enc))
-			RandomEncounterTable.Add(GD.Load<EncounterData>(enc));
+		{
+			var encounter = GD.Load<EncounterData>(enc);
+			encounter.EncounterChancePerStep = 12f; // 12% per step on floor 1
+			RandomEncounterTable.Add(encounter);
+		}
 
 		base._Ready();
 		if (Engine.IsEditorHint()) return;

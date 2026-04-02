@@ -20,6 +20,7 @@ public partial class Player : CharacterBody2D
 	private readonly HashSet<IInteractable> _candidates = new();
 	private IInteractable? _nearbyInteractable;
 	private Vector2 _lastPosition;
+	private string _lastFacingDir = "down";
 
 	public override void _Ready()
 	{
@@ -61,6 +62,7 @@ public partial class Player : CharacterBody2D
 		if (GameManager.Instance.CurrentState is GameState.Dialog or GameState.Battle or GameState.Paused)
 		{
 			Velocity = Vector2.Zero;
+			PlayIdleAnimation();
 			return;
 		}
 
@@ -77,8 +79,6 @@ public partial class Player : CharacterBody2D
 		else
 		{
 			PlayIdleAnimation();
-			if (_sprite.SpriteFrames != null)
-				_sprite.SpeedScale = 1.0f;
 		}
 
 		MoveAndSlide();
@@ -130,14 +130,17 @@ public partial class Player : CharacterBody2D
 		if (Mathf.Abs(direction.X) > Mathf.Abs(direction.Y))
 		{
 			_sprite.FlipH = direction.X < 0;
+			_lastFacingDir = "side";
 			PlayIfExists("walk_side");
 		}
 		else if (direction.Y < 0)
 		{
+			_lastFacingDir = "up";
 			PlayIfExists("walk_up");
 		}
 		else
 		{
+			_lastFacingDir = "down";
 			PlayIfExists("walk_down");
 		}
 	}
@@ -146,9 +149,12 @@ public partial class Player : CharacterBody2D
 	{
 		if (_sprite.SpriteFrames == null) return;
 
-		// Keep the walk animation playing at reduced speed for a subtle idle breathing effect
-		// instead of switching to a static idle frame.
-		_sprite.SpeedScale = 0.4f;
+		// Use the walk animation at a slow speed for a visible idle sway effect,
+		// since idle_* and walk_* share the same sprite frames.
+		string target = $"walk_{_lastFacingDir}";
+		if (_sprite.Animation != target)
+			PlayIfExists(target);
+		_sprite.SpeedScale = 0.6f;
 	}
 
 	private void PlayIfExists(string animationName)

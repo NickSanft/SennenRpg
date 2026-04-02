@@ -18,6 +18,9 @@ public class WorldStateData
 	public int      TilesWalkedOnWorldMap { get; set; } = 0;
 	public int      RepelStepsRemaining { get; set; } = 0;
 
+	/// <summary>Player position saved before a battle, restored on return. Reset to null after use.</summary>
+	public Vector2? BattleReturnPosition { get; set; } = null;
+
 	// ── Lifecycle ─────────────────────────────────────────────────────────────
 
 	public void Reset()

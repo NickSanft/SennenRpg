@@ -16,7 +16,11 @@ public partial class DungeonFloor2 : OverworldBase
 	{
 		const string enc = "res://resources/encounters/encounter_003.tres";
 		if (ResourceLoader.Exists(enc))
-			RandomEncounterTable.Add(GD.Load<EncounterData>(enc));
+		{
+			var encounter = GD.Load<EncounterData>(enc);
+			encounter.EncounterChancePerStep = 15f; // 15% per step on floor 2
+			RandomEncounterTable.Add(encounter);
+		}
 
 		base._Ready();
 	}

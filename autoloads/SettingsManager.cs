@@ -160,11 +160,33 @@ public partial class SettingsManager : Node
 
     private static void ApplyKeyBindings(SettingsData s)
     {
-        foreach (var (action, keycode) in s.KeyBindings)
+        foreach (var (action, code) in s.KeyBindings)
         {
             if (!InputMap.HasAction(action)) continue;
+
+            // Preserve existing events that aren't the same type we're replacing
+            var existing = InputMap.ActionGetEvents(action);
             InputMap.ActionEraseEvents(action);
-            InputMap.ActionAddEvent(action, new InputEventKey { Keycode = (Key)keycode });
+
+            if (code < 0)
+            {
+                // Negative code = joypad button (stored as -(buttonIndex + 1))
+                int buttonIndex = -(code + 1);
+                // Re-add all non-joypad events, then add the new joypad button
+                foreach (var ev in existing)
+                    if (ev is not InputEventJoypadButton)
+                        InputMap.ActionAddEvent(action, ev);
+                InputMap.ActionAddEvent(action, new InputEventJoypadButton { ButtonIndex = (JoyButton)buttonIndex });
+            }
+            else
+            {
+                // Positive code = keyboard keycode
+                // Re-add all non-keyboard events, then add the new key
+                foreach (var ev in existing)
+                    if (ev is not InputEventKey)
+                        InputMap.ActionAddEvent(action, ev);
+                InputMap.ActionAddEvent(action, new InputEventKey { Keycode = (Key)code });
+            }
         }
     }
 
