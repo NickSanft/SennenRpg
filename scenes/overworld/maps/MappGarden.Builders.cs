@@ -365,7 +365,7 @@ public partial class MappGarden
 			System.Action scheduleWalk = null!;
 			scheduleWalk = () =>
 			{
-				if (!IsInsideTree() || !IsInstanceValid(capturedFirefly)) return;
+				if (!IsInstanceValid(this) || !IsInsideTree() || !IsInstanceValid(capturedFirefly)) return;
 				var cur = capturedFirefly.GlobalPosition;
 				float tx = Mathf.Clamp(cur.X + rng.RandfRange(-40f, 40f), -90f, 90f);
 				float ty = Mathf.Clamp(cur.Y + rng.RandfRange(-30f, 30f), -70f, 50f);
@@ -374,7 +374,7 @@ public partial class MappGarden
 				GetTree().CreateTimer(rng.RandfRange(1.5f, 3.5f))
 					.Connect("timeout", Callable.From(() =>
 				{
-					if (!IsInsideTree() || !IsInstanceValid(capturedFirefly)) return;
+					if (!IsInstanceValid(this) || !IsInsideTree() || !IsInstanceValid(capturedFirefly)) return;
 					var walk = CreateTween();
 					walk.TweenProperty(capturedFirefly, "global_position", target,
 						rng.RandfRange(1.5f, 3.0f))
