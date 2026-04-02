@@ -186,6 +186,15 @@ public partial class DialogicBridge : Node
 			Callable.From(() => GD.Print($"[DialogicBridge] IsRunning 0.1s later = {IsRunning()}")));
 	}
 
+	/// <summary>Force-ends any running Dialogic timeline. Safe to call when nothing is running.</summary>
+	public void EndTimeline()
+	{
+		if (_dialogic == null || !IsRunning()) return;
+		_dialogic.Call("end_timeline");
+		_dialogicOwnsDialog = false;
+		GD.Print("[DialogicBridge] Timeline force-ended.");
+	}
+
 	/// <summary>Returns true if a dialog timeline is currently running.</summary>
 	public bool IsRunning()
 	{

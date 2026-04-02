@@ -981,9 +981,13 @@ public partial class BattleScene : Node2D
 
 	private async Task ReturnToOverworld()
 	{
+		// Force-close any lingering Dialogic dialog (e.g., if safety timeout fired)
+		if (DialogicBridge.Instance.IsRunning())
+			DialogicBridge.Instance.EndTimeline();
+
 		string map = GameManager.Instance.LastMapPath;
 		if (string.IsNullOrEmpty(map))
-			map = "res://scenes/overworld/TestRoom.tscn";
+			map = "res://scenes/overworld/MAPP.tscn";
 		await SceneTransition.Instance.GoToAsync(map);
 	}
 
