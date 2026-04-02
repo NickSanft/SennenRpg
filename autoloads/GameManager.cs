@@ -19,110 +19,85 @@ public partial class GameManager : Node
 	/// <summary>Fired after level-up stat rolls are applied. Read PendingLevelUps for results.</summary>
 	[Signal] public delegate void PlayerLeveledUpEventHandler();
 
+	// ── Internal domains ──────────────────────────────────────────────────────
+
+	private readonly PlayerProgressionData _progression = new();
+	private readonly PlayerCombatData      _combat      = new();
+	private readonly InventoryData         _inventory   = new();
+	private readonly WorldStateData        _world       = new();
+	private readonly MellyrRewardData      _mellyr      = new();
+
+	// ── State ─────────────────────────────────────────────────────────────────
+
 	public GameState CurrentState { get; private set; } = GameState.Boot;
 
 	public string PlayerName { get; private set; } = "Sen";
-	public int Gold        { get; private set; }
-	public int Exp         { get; private set; }
-	public int PlayerLevel { get; private set; } = 1;
-
-	/// <summary>Results from the most recent level-up batch. Read and clear after showing the screen.</summary>
-	public List<LevelUpResult> PendingLevelUps { get; } = new();
-
-	private GrowthRates? _growthRates;
-	public string LastMapPath { get; private set; } = "";
-	public string LastSavePointId { get; private set; } = "";
-	/// <summary>Spawn point ID to use when the next map loads. Set by MapExit before transitioning.</summary>
-	public string LastSpawnId { get; private set; } = "";
-
-	// Player stats — loaded from resources/characters/player_stats.tres on boot
-	public CharacterStats PlayerStats { get; private set; } = new CharacterStats();
 
 	// Story flags: keyed by string, all booleans
 	public Godot.Collections.Dictionary<string, bool> Flags { get; private set; } = new();
 
-	// Inventory: list of item resource paths (stored as strings for save/load simplicity)
-	public Array<string> InventoryItemPaths { get; private set; } = new();
-
-	// Known spells: list of SpellData resource paths
-	public Array<string> KnownSpellPaths { get; private set; } = new();
-
-	// Equipment: owned (picked up) and equipped (one per slot)
-	public Array<string> OwnedEquipmentPaths { get; private set; } = new();
-	public EquipDict EquippedItemPaths { get; private set; } = new();
-
-	// Single cached CharacterStats for EffectiveStats — never recreated to avoid GodotObject GCHandle races
-	private CharacterStats _effectiveStatsCache = new CharacterStats();
-
-	// World map state
-	public Vector2I WorldMapSpawnTile     { get; set; } = new Vector2I(10, 8);
-	public Vector2I WorldMapReturnTile    { get; set; } = Vector2I.Zero;
-	public bool     IsNight               { get; set; } = false;
-	public int      TilesWalkedOnWorldMap { get; set; } = 0;
-
 	// Kill tracking: keyed by EnemyData.EnemyId
 	public System.Collections.Generic.Dictionary<string, int> KillCounts { get; } = new();
-
-	/// <summary>World-map steps remaining before encounters can trigger again (Repel effect).</summary>
-	public int RepelStepsRemaining { get; set; } = 0;
-
-	// ── Mellyr Outpost passive rewards ────────────────────────────────────────
-
-	/// <summary>Steps taken on 16×16 maps since the last passive reward tick (resets at 10).</summary>
-	public int TownStepCounter { get; set; } = 0;
-
-	/// <summary>Gold earned by Rain but not yet collected. Hard cap: 200 g.</summary>
-	public int PendingRainGold { get; set; } = 0;
-
-	/// <summary>Lily forge recipe strings pending collection. Hard cap: 5 items.</summary>
-	public System.Collections.Generic.List<string> PendingLilyRecipes { get; } = new();
-
-	/// <summary>Lily-generated equipment in the player's unequipped pool.</summary>
-	public System.Collections.Generic.List<DynamicEquipmentSave> DynamicEquipmentInventory { get; } = new();
-
-	/// <summary>Dynamic equipment slot → item ID (for Lily-generated items that are equipped).</summary>
-	public System.Collections.Generic.Dictionary<EquipmentSlot, string> EquippedDynamicItemIds { get; } = new();
 
 	/// <summary>Original palette colours extracted from the sprite at character creation.</summary>
 	public Color[] PaletteSourceColors { get; set; } = [];
 	/// <summary>Replacement colours chosen by the player, parallel to PaletteSourceColors.</summary>
 	public Color[] PaletteTargetColors { get; set; } = [];
 
-	/// <summary>Cumulative seconds the player has spent in Overworld or Battle states.</summary>
-	public int PlayTimeSeconds { get; private set; } = 0;
-	private double _playTimeAccumulator = 0.0;
+	// ── Progression pass-through ──────────────────────────────────────────────
+
+	public int Gold                              => _progression.Gold;
+	public int Exp                               => _progression.Exp;
+	public int PlayerLevel                       => _progression.PlayerLevel;
+	public int PlayTimeSeconds                   => _progression.PlayTimeSeconds;
+	public List<LevelUpResult> PendingLevelUps   => _progression.PendingLevelUps;
+
+	// ── Combat pass-through ───────────────────────────────────────────────────
+
+	public CharacterStats PlayerStats            => _combat.PlayerStats;
+
+	// ── Inventory pass-through ────────────────────────────────────────────────
+
+	public Array<string> InventoryItemPaths      => _inventory.InventoryItemPaths;
+	public Array<string> KnownSpellPaths         => _inventory.KnownSpellPaths;
+	public Array<string> OwnedEquipmentPaths     => _inventory.OwnedEquipmentPaths;
+	public EquipDict     EquippedItemPaths       => _inventory.EquippedItemPaths;
+	public List<DynamicEquipmentSave>                                   DynamicEquipmentInventory => _inventory.DynamicEquipmentInventory;
+	public System.Collections.Generic.Dictionary<EquipmentSlot, string> EquippedDynamicItemIds    => _inventory.EquippedDynamicItemIds;
+
+	// ── World state pass-through ──────────────────────────────────────────────
+
+	public string   LastMapPath                  { get => _world.LastMapPath;           private set => _world.LastMapPath = value; }
+	public string   LastSavePointId              { get => _world.LastSavePointId;       private set => _world.LastSavePointId = value; }
+	public string   LastSpawnId                  { get => _world.LastSpawnId;           private set => _world.LastSpawnId = value; }
+	public Vector2I WorldMapSpawnTile            { get => _world.WorldMapSpawnTile;     set => _world.WorldMapSpawnTile = value; }
+	public Vector2I WorldMapReturnTile           { get => _world.WorldMapReturnTile;    set => _world.WorldMapReturnTile = value; }
+	public bool     IsNight                      { get => _world.IsNight;               set => _world.IsNight = value; }
+	public int      TilesWalkedOnWorldMap        { get => _world.TilesWalkedOnWorldMap; set => _world.TilesWalkedOnWorldMap = value; }
+	public int      RepelStepsRemaining          { get => _world.RepelStepsRemaining;   set => _world.RepelStepsRemaining = value; }
+
+	// ── Mellyr reward pass-through ────────────────────────────────────────────
+
+	public int          TownStepCounter          { get => _mellyr.TownStepCounter;      set => _mellyr.TownStepCounter = value; }
+	public int          PendingRainGold          { get => _mellyr.PendingRainGold;      set => _mellyr.PendingRainGold = value; }
+	public List<string> PendingLilyRecipes       => _mellyr.PendingLilyRecipes;
+
+	// ── Lifecycle ─────────────────────────────────────────────────────────────
 
 	public override void _Ready()
 	{
 		Instance = this;
-		ProcessMode = ProcessModeEnum.Always; // Survive scene changes
-
-		// Load default player stats if the resource exists
-		const string statsPath = "res://resources/characters/player_stats.tres";
-		if (ResourceLoader.Exists(statsPath))
-		{
-			var loaded = GD.Load<CharacterStats>(statsPath);
-			PlayerStats = (CharacterStats)loaded.Duplicate(); // Local copy so we can modify HP
-		}
-
-		const string growthPath = "res://resources/characters/player_growth_rates.tres";
-		if (ResourceLoader.Exists(growthPath))
-			_growthRates = GD.Load<GrowthRates>(growthPath);
+		ProcessMode = ProcessModeEnum.Always;
+		_combat.LoadDefaults();
 	}
 
 	public override void _Process(double delta)
 	{
 		if (CurrentState is GameState.Overworld or GameState.Battle)
-		{
-			_playTimeAccumulator += delta;
-			if (_playTimeAccumulator >= 1.0)
-			{
-				int whole = (int)_playTimeAccumulator;
-				PlayTimeSeconds      += whole;
-				_playTimeAccumulator -= whole;
-			}
-		}
+			_progression.Tick(delta);
 	}
+
+	// ── State management ──────────────────────────────────────────────────────
 
 	public void SetState(GameState newState)
 	{
@@ -130,24 +105,27 @@ public partial class GameManager : Node
 		EmitSignal(SignalName.GameStateChanged, (int)newState);
 	}
 
-	public void SetLastMap(string scenePath) => LastMapPath = scenePath;
-	public void SetLastSavePoint(string savePointId) => LastSavePointId = savePointId;
-	public void SetLastSpawn(string spawnId) => LastSpawnId = spawnId;
+	public void SetLastMap(string scenePath)       => _world.LastMapPath     = scenePath;
+	public void SetLastSavePoint(string savePointId) => _world.LastSavePointId = savePointId;
+	public void SetLastSpawn(string spawnId)       => _world.LastSpawnId     = spawnId;
+
+	// ── Economy ───────────────────────────────────────────────────────────────
 
 	public void AddGold(int amount)
 	{
-		Gold += amount;
+		_progression.AddGold(amount);
 		EmitSignal(SignalName.PlayerStatsChanged);
 	}
 
 	public void RemoveGold(int amount)
 	{
-		Gold = Mathf.Max(0, Gold - amount);
+		_progression.RemoveGold(amount);
 		EmitSignal(SignalName.PlayerStatsChanged);
 	}
+
 	public void AddExp(int amount)
 	{
-		Exp += amount;
+		_progression.AddExp(amount);
 		CheckAndApplyLevelUp();
 	}
 
@@ -159,215 +137,100 @@ public partial class GameManager : Node
 		PendingLevelUps.Clear();
 		for (int i = 0; i < gained; i++)
 		{
-			PlayerLevel++;
-			PendingLevelUps.Add(RollGrowth(PlayerLevel));
+			_progression.IncrementLevel();
+			PendingLevelUps.Add(_combat.RollGrowth(PlayerLevel));
 		}
 
 		EmitSignal(SignalName.PlayerLeveledUp);
 		EmitSignal(SignalName.PlayerStatsChanged);
 	}
 
-	private LevelUpResult RollGrowth(int newLevel)
-	{
-		var s = PlayerStats;
-		int oldHp  = s.MaxHp,      oldAtk = s.Attack,  oldDef = s.Defense,
-			oldSpd = s.Speed,       oldMag = s.Magic,   oldRes = s.Resistance,
-			oldLck = s.Luck;
+	// ── Inventory & items ─────────────────────────────────────────────────────
 
-		if (_growthRates != null)
-		{
-			if (GD.RandRange(0, 99) < _growthRates.MaxHp)
-				{ s.MaxHp++; s.CurrentHp++; }                   // HP up heals too
-			if (GD.RandRange(0, 99) < _growthRates.Attack)     s.Attack++;
-			if (GD.RandRange(0, 99) < _growthRates.Defense)    s.Defense++;
-			if (GD.RandRange(0, 99) < _growthRates.Speed)      s.Speed++;
-			if (GD.RandRange(0, 99) < _growthRates.Magic)      s.Magic++;
-			if (GD.RandRange(0, 99) < _growthRates.Resistance) s.Resistance++;
-			if (GD.RandRange(0, 99) < _growthRates.Luck)       s.Luck++;
-		}
+	public void AddItem(string resourcePath)    => _inventory.AddItem(resourcePath);
+	public bool RemoveItem(string resourcePath) => _inventory.RemoveItem(resourcePath);
 
-		return new LevelUpResult
-		{
-			NewLevel      = newLevel,
-			OldMaxHp      = oldHp,  NewMaxHp      = s.MaxHp,
-			OldAttack     = oldAtk, NewAttack     = s.Attack,
-			OldDefense    = oldDef, NewDefense    = s.Defense,
-			OldSpeed      = oldSpd, NewSpeed      = s.Speed,
-			OldMagic      = oldMag, NewMagic      = s.Magic,
-			OldResistance = oldRes, NewResistance = s.Resistance,
-			OldLuck       = oldLck, NewLuck       = s.Luck,
-		};
-	}
+	// ── Combat ────────────────────────────────────────────────────────────────
 
-	public void AddItem(string resourcePath)    => InventoryItemPaths.Add(resourcePath);
-	public bool RemoveItem(string resourcePath)
-	{
-		int idx = InventoryItemPaths.IndexOf(resourcePath);
-		if (idx < 0) return false;
-		InventoryItemPaths.RemoveAt(idx);
-		return true;
-	}
-
-	/// <summary>Reduce player HP and emit PlayerStatsChanged so the HUD updates.</summary>
 	public void HurtPlayer(int amount)
 	{
-		PlayerStats.CurrentHp = Mathf.Max(0, PlayerStats.CurrentHp - amount);
+		_combat.HurtPlayer(amount);
 		EmitSignal(SignalName.PlayerStatsChanged);
 	}
 
-	/// <summary>Restore player HP (capped at MaxHp) and emit PlayerStatsChanged.</summary>
 	public void HealPlayer(int amount)
 	{
-		PlayerStats.CurrentHp = Mathf.Min(PlayerStats.MaxHp, PlayerStats.CurrentHp + amount);
+		_combat.HealPlayer(amount);
 		EmitSignal(SignalName.PlayerStatsChanged);
 	}
 
-	/// <summary>
-	/// Deducts <paramref name="cost"/> MP. Returns false without deducting if insufficient.
-	/// </summary>
 	public bool UseMp(int cost)
 	{
-		if (PlayerStats.CurrentMp < cost) return false;
-		PlayerStats.CurrentMp -= cost;
+		if (!_combat.UseMp(cost)) return false;
 		EmitSignal(SignalName.PlayerStatsChanged);
 		return true;
 	}
 
-	/// <summary>Restores MP up to MaxMp and emits PlayerStatsChanged.</summary>
 	public void RestoreMp(int amount)
 	{
-		PlayerStats.CurrentMp = Mathf.Min(PlayerStats.MaxMp, PlayerStats.CurrentMp + amount);
+		_combat.RestoreMp(amount);
 		EmitSignal(SignalName.PlayerStatsChanged);
 	}
 
 	// ── Equipment ─────────────────────────────────────────────────────────────
 
-	/// <summary>Add a piece of equipment to the player's owned pool (e.g. from a chest).</summary>
-	public void AddEquipment(string resourcePath) => OwnedEquipmentPaths.Add(resourcePath);
+	public void AddEquipment(string resourcePath) => _inventory.AddEquipment(resourcePath);
 
-	/// <summary>Returns the equipped EquipmentData for a slot, or null if empty.</summary>
-	public EquipmentData? GetEquipped(EquipmentSlot slot)
-	{
-		if (!EquippedItemPaths.TryGetValue(slot, out string? path) || string.IsNullOrEmpty(path))
-			return null;
-		return ResourceLoader.Exists(path) ? GD.Load<EquipmentData>(path) : null;
-	}
+	public EquipmentData? GetEquipped(EquipmentSlot slot) => _inventory.GetEquipped(slot);
 
-	/// <summary>Equip an item from OwnedEquipmentPaths into the given slot.</summary>
 	public void Equip(EquipmentSlot slot, string path)
 	{
-		// If something was already equipped in that slot, return it to the owned pool
-		if (EquippedItemPaths.TryGetValue(slot, out string? current) && !string.IsNullOrEmpty(current))
-			OwnedEquipmentPaths.Add(current);
-
-		EquippedItemPaths[slot] = path;
-		OwnedEquipmentPaths.Remove(path);
+		_inventory.Equip(slot, path);
 		EmitSignal(SignalName.PlayerStatsChanged);
 	}
 
-	/// <summary>Unequip the item in a slot, returning it to OwnedEquipmentPaths.</summary>
 	public void Unequip(EquipmentSlot slot)
 	{
-		if (!EquippedItemPaths.TryGetValue(slot, out string? path) || string.IsNullOrEmpty(path))
-			return;
-		OwnedEquipmentPaths.Add(path);
-		EquippedItemPaths.Remove(slot);
+		if (_inventory.Unequip(slot))
+			EmitSignal(SignalName.PlayerStatsChanged);
+	}
+
+	public CharacterStats EffectiveStats
+		=> _combat.ComputeEffectiveStats(
+			_inventory.EquippedItemPaths,
+			_inventory.EquippedDynamicItemIds,
+			_inventory.DynamicEquipmentInventory);
+
+	// ── Dynamic equipment ─────────────────────────────────────────────────────
+
+	public void EquipDynamic(EquipmentSlot slot, string itemId)
+	{
+		_inventory.EquipDynamic(slot, itemId);
 		EmitSignal(SignalName.PlayerStatsChanged);
 	}
 
-	/// <summary>
-	/// Effective combat stats: PlayerStats + all equipped item bonuses.
-	/// Mutates and returns a single cached CharacterStats held by GameManager to avoid
-	/// creating throwaway GodotObject instances that race against the C# GC finalizer.
-	/// </summary>
-	public CharacterStats EffectiveStats
+	public void UnequipDynamic(EquipmentSlot slot)
 	{
-		get
-		{
-			var bonusList = new List<EquipmentBonuses>();
-			foreach (var kv in EquippedItemPaths)
-			{
-				if (!ResourceLoader.Exists(kv.Value)) continue;
-				var equipment = GD.Load<EquipmentData>(kv.Value);
-				if (equipment == null) continue;
-				bonusList.Add(equipment.Bonuses);
-			}
-			// Also include equipped Lily-generated dynamic items.
-			// DynamicEquipmentInventory holds ALL dynamic items; EquippedDynamicItemIds
-			// maps slots to the IDs of those that are currently active.
-			foreach (var equippedId in EquippedDynamicItemIds.Values)
-			{
-				var dynItem = DynamicEquipmentInventory.Find(e => e.Id == equippedId);
-				if (dynItem != null)
-					bonusList.Add(new EquipmentBonuses(dynItem.BonusMaxHp, dynItem.BonusAttack,
-						dynItem.BonusDefense, dynItem.BonusMagic, 0, dynItem.BonusSpeed, dynItem.BonusLuck));
-			}
-			var bonus = EquipmentLogic.SumBonuses(bonusList);
-			var s = PlayerStats;
-			_effectiveStatsCache.MaxHp               = s.MaxHp      + bonus.MaxHp;
-			_effectiveStatsCache.CurrentHp           = s.CurrentHp;
-			_effectiveStatsCache.Attack              = s.Attack     + bonus.Attack;
-			_effectiveStatsCache.Defense             = s.Defense    + bonus.Defense;
-			_effectiveStatsCache.Speed               = s.Speed      + bonus.Speed;
-			_effectiveStatsCache.Magic               = s.Magic      + bonus.Magic;
-			_effectiveStatsCache.Resistance          = s.Resistance + bonus.Resistance;
-			_effectiveStatsCache.Luck                = s.Luck       + bonus.Luck;
-			_effectiveStatsCache.MoveSpeed           = s.MoveSpeed;
-			_effectiveStatsCache.MaxMp               = s.MaxMp;
-			_effectiveStatsCache.CurrentMp           = s.CurrentMp;
-			_effectiveStatsCache.InvincibilityDuration = s.InvincibilityDuration;
-			return _effectiveStatsCache;
-		}
+		_inventory.UnequipDynamic(slot);
+		EmitSignal(SignalName.PlayerStatsChanged);
 	}
 
 	// ── Mellyr Outpost reward collection ─────────────────────────────────────
 
-	/// <summary>
-	/// Transfers all pending Rain gold to the player wallet.
-	/// Returns the amount collected (0 if nothing was pending).
-	/// </summary>
 	public int CollectRainRewards()
 	{
-		int amount = PendingRainGold;
-		PendingRainGold = 0;
+		int amount = _mellyr.CollectRainRewards();
 		if (amount > 0) AddGold(amount);
 		return amount;
 	}
 
-	/// <summary>
-	/// Resolves all pending Lily recipes into equipment and moves them to
-	/// <see cref="DynamicEquipmentInventory"/>. Returns the count added.
-	/// </summary>
 	public List<DynamicEquipmentSave> CollectLilyRewards()
-	{
-		var items = PendingLilyRecipes.Select(LilyForgeLogic.Resolve).ToList();
-		foreach (var item in items)
-			DynamicEquipmentInventory.Add(item);
-		PendingLilyRecipes.Clear();
-		return items;
-	}
+		=> _inventory.CollectLilyRewards(_mellyr.PendingLilyRecipes);
 
-	/// <summary>Collects all pending Rain and Lily rewards at once.</summary>
 	public (int gold, List<DynamicEquipmentSave> items) CollectAllTownRewards()
 		=> (CollectRainRewards(), CollectLilyRewards());
 
-	/// <summary>
-	/// Equip a Lily-generated dynamic item into a slot.
-	/// The item must exist in <see cref="DynamicEquipmentInventory"/> (it stays there;
-	/// <see cref="EquippedDynamicItemIds"/> just records which one is active per slot).
-	/// </summary>
-	public void EquipDynamic(EquipmentSlot slot, string itemId)
-	{
-		EquippedDynamicItemIds[slot] = itemId;
-		EmitSignal(SignalName.PlayerStatsChanged);
-	}
-
-	/// <summary>Unequip the dynamic item from a slot (it remains in DynamicEquipmentInventory).</summary>
-	public void UnequipDynamic(EquipmentSlot slot)
-	{
-		EquippedDynamicItemIds.Remove(slot);
-		EmitSignal(SignalName.PlayerStatsChanged);
-	}
+	// ── Flags & kill tracking ─────────────────────────────────────────────────
 
 	public bool GetFlag(string key) => Flags.TryGetValue(key, out bool val) && val;
 
@@ -377,7 +240,6 @@ public partial class GameManager : Node
 		QuestManager.Instance?.NotifyFlagChanged(key);
 	}
 
-	/// <summary>Increments the kill counter for the given enemy ID and notifies QuestManager.</summary>
 	public void RecordKill(string enemyId)
 	{
 		KillCounts[enemyId] = KillCounts.GetValueOrDefault(enemyId, 0) + 1;
@@ -385,141 +247,48 @@ public partial class GameManager : Node
 		QuestManager.Instance?.NotifyKill(enemyId);
 	}
 
-	/// <summary>Resets all runtime state for a fresh new game.</summary>
-	public void ResetForNewGame()
-	{
-		Gold        = 500;
-		Exp         = 0;
-		PlayerLevel = 1;
-		LastMapPath = "";
-		LastSavePointId = "";
-		LastSpawnId = "";
-		Flags.Clear();
-		InventoryItemPaths.Clear();
-		InventoryItemPaths.Add("res://resources/items/item_001.tres"); // starting Bandage
-		KnownSpellPaths.Clear();
-		KnownSpellPaths.Add("res://resources/spells/shadow_bolt.tres");
+	// ── Character customization ───────────────────────────────────────────────
 
-		OwnedEquipmentPaths.Clear();
-		OwnedEquipmentPaths.Add("res://resources/equipment/iron_sword.tres");
-		OwnedEquipmentPaths.Add("res://resources/equipment/leather_cap.tres");
-		OwnedEquipmentPaths.Add("res://resources/equipment/leather_body.tres");
-		OwnedEquipmentPaths.Add("res://resources/equipment/leather_legs.tres");
-		OwnedEquipmentPaths.Add("res://resources/equipment/leather_boots.tres");
-		OwnedEquipmentPaths.Add("res://resources/equipment/wooden_shield.tres");
-		OwnedEquipmentPaths.Add("res://resources/equipment/work_gloves.tres");
-		OwnedEquipmentPaths.Add("res://resources/equipment/lucky_charm.tres");
-		EquippedItemPaths.Clear();
-
-		WorldMapSpawnTile     = new Vector2I(10, 8);
-		WorldMapReturnTile    = Vector2I.Zero;
-		IsNight               = false;
-		TilesWalkedOnWorldMap = 0;
-		KillCounts.Clear();
-		PaletteSourceColors   = [];
-		PaletteTargetColors   = [];
-		PlayTimeSeconds        = 0;
-		_playTimeAccumulator   = 0.0;
-		TownStepCounter       = 0;
-		PendingRainGold       = 0;
-		PendingLilyRecipes.Clear();
-		DynamicEquipmentInventory.Clear();
-		EquippedDynamicItemIds.Clear();
-
-		const string statsPath = "res://resources/characters/player_stats.tres";
-		if (ResourceLoader.Exists(statsPath))
-			PlayerStats = (CharacterStats)GD.Load<CharacterStats>(statsPath).Duplicate();
-		GD.Print("[GameManager] Reset for new game.");
-	}
-
-	/// <summary>
-	/// Applies the result of the character-customization screen.
-	/// Copies all stat fields into the existing <see cref="PlayerStats"/> object rather than
-	/// replacing it, to avoid creating a new GodotObject that could race the C# GC finaliser.
-	/// Pass empty arrays for sourceColors/targetColors to use the default sprite appearance.
-	/// </summary>
 	public void ApplyCharacterCustomization(CharacterStats stats, Color[] sourceColors, Color[] targetColors)
 	{
-		PlayerStats.MaxHp      = stats.MaxHp;
-		PlayerStats.CurrentHp  = stats.MaxHp;
-		PlayerStats.Attack     = stats.Attack;
-		PlayerStats.Defense    = stats.Defense;
-		PlayerStats.Speed      = stats.Speed;
-		PlayerStats.Magic      = stats.Magic;
-		PlayerStats.Resistance = stats.Resistance;
-		PlayerStats.Luck       = stats.Luck;
-		PlayerStats.MaxMp      = stats.MaxMp;
-		PlayerStats.CurrentMp  = stats.MaxMp;
-		PlayerStats.Class      = stats.Class;
-		PlayerStats.ClassName  = stats.ClassName;
-		PaletteSourceColors    = sourceColors;
-		PaletteTargetColors    = targetColors;
+		_combat.ApplyCustomization(stats);
+		PaletteSourceColors = sourceColors;
+		PaletteTargetColors = targetColors;
 		EmitSignal(SignalName.PlayerStatsChanged);
+	}
+
+	// ── New-game / save-load ──────────────────────────────────────────────────
+
+	public void ResetForNewGame()
+	{
+		_progression.Reset();
+		_combat.Reset();
+		_inventory.Reset();
+		_world.Reset();
+		_mellyr.Reset();
+
+		Flags.Clear();
+		KillCounts.Clear();
+		PaletteSourceColors = [];
+		PaletteTargetColors = [];
+
+		GD.Print("[GameManager] Reset for new game.");
 	}
 
 	public void ApplySaveData(SaveData data)
 	{
-		Gold        = data.Gold;
-		Exp         = data.Exp;
-		PlayerLevel = data.PlayerLevel > 0 ? data.PlayerLevel : 1;
-		LastMapPath = data.LastMapPath;
-		LastSavePointId = data.LastSavePointId;
-		LastSpawnId = data.LastSpawnId;
+		_progression.ApplyFromSave(data.Gold, data.Exp, data.PlayerLevel, data.PlayTimeSeconds);
+		_combat.ApplyFromSave(data);
+		_inventory.ApplyFromSave(data);
+		_world.ApplyFromSave(data);
+		_mellyr.ApplyFromSave(data);
+
 		Flags = new Godot.Collections.Dictionary<string, bool>(data.Flags);
-
-		PlayerStats.CurrentHp   = data.PlayerHp;
-		PlayerStats.MaxHp       = data.PlayerMaxHp;
-		PlayerStats.Attack      = data.PlayerAttack;
-		PlayerStats.Defense     = data.PlayerDefense;
-		PlayerStats.Speed       = data.PlayerSpeed;
-		PlayerStats.Magic       = data.PlayerMagic;
-		PlayerStats.Resistance  = data.PlayerResistance;
-		PlayerStats.Luck        = data.PlayerLuck;
-		PlayerStats.MaxMp       = data.PlayerMaxMp;
-		PlayerStats.CurrentMp   = data.PlayerMp;
-
-		InventoryItemPaths.Clear();
-		foreach (var path in data.InventoryItemPaths)
-			InventoryItemPaths.Add(path);
-
-		KnownSpellPaths.Clear();
-		foreach (var path in data.KnownSpellPaths)
-			KnownSpellPaths.Add(path);
-
-		OwnedEquipmentPaths.Clear();
-		foreach (var path in data.OwnedEquipmentPaths)
-			OwnedEquipmentPaths.Add(path);
-
-		EquippedItemPaths.Clear();
-		foreach (var kv in data.EquippedItemPaths)
-		{
-			if (System.Enum.TryParse<EquipmentSlot>(kv.Key, out var slot))
-				EquippedItemPaths[slot] = kv.Value;
-		}
-
-		WorldMapSpawnTile     = new Vector2I(data.WorldMapSpawnTileX, data.WorldMapSpawnTileY);
-		IsNight               = data.IsNight;
-		TilesWalkedOnWorldMap = data.TilesWalkedOnWorldMap;
 		KillCounts.Clear();
 		foreach (var kv in data.KillCounts) KillCounts[kv.Key] = kv.Value;
 
-		PaletteSourceColors  = DeserialiseColors(data.PaletteSourceColors);
-		PaletteTargetColors  = DeserialiseColors(data.PaletteTargetColors);
-		PlayTimeSeconds      = data.PlayTimeSeconds;
-		_playTimeAccumulator = 0.0;
-
-		TownStepCounter = data.TownStepCounter;
-		PendingRainGold = data.PendingRainGold;
-		PendingLilyRecipes.Clear();
-		PendingLilyRecipes.AddRange(data.PendingLilyRecipes);
-		DynamicEquipmentInventory.Clear();
-		DynamicEquipmentInventory.AddRange(data.DynamicEquipmentInventory);
-		EquippedDynamicItemIds.Clear();
-		foreach (var kv in data.EquippedDynamicItemIds)
-		{
-			if (System.Enum.TryParse<EquipmentSlot>(kv.Key, out var slot))
-				EquippedDynamicItemIds[slot] = kv.Value;
-		}
+		PaletteSourceColors = DeserialiseColors(data.PaletteSourceColors);
+		PaletteTargetColors = DeserialiseColors(data.PaletteTargetColors);
 	}
 
 	private static Color[] DeserialiseColors(string[]? hexArray)

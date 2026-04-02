@@ -161,12 +161,12 @@ public class SaveDataJsonTests
 	{
 		// Simulates loading a save from an older/newer version that has extra fields.
 		const string json = """
-            {
+			{
 				"PlayerHp": 10,
 				"PlayerMaxHp": 20,
 				"FutureField": "ignored",
 				"PlayerLevel": 2
-            }
+			}
 			""";
 
 		var opts   = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
 using SennenRpg.Scenes.Hud;
+using SennenRpg.Scenes.Player;
 
 namespace SennenRpg.Scenes.Overworld;
 
@@ -39,7 +40,6 @@ public partial class OverworldBase : Node2D
 	protected Vector2 DefaultSpawnPosition { get; set; } = Vector2.Zero;
 
 	private CharacterBody2D? _player;
-	private Vector2          _lastPlayerPos;
 	private float            _stepAccumulator;
 	private bool             _encounterLocked; // prevents overlapping battle transitions
 	private Rect2            _worldBounds;
@@ -66,7 +66,12 @@ public partial class OverworldBase : Node2D
 		_player = playerScene.Instantiate<CharacterBody2D>();
 		YSort.AddChild(_player);
 		_player.GlobalPosition = GetSpawnPosition();
-		_lastPlayerPos = _player.GlobalPosition;
+
+		// Connect Moved signal — works for both Player and DungeonPlayer
+		if (_player is Player.Player p)
+			p.Moved += OnPlayerMoved;
+		else if (_player is Player.DungeonPlayer dp)
+			dp.Moved += OnPlayerMoved;
 
 		// Register SpawnPoint nodes placed in the scene editor.
 		// These override any positions registered in code with the same ID.
@@ -112,17 +117,15 @@ public partial class OverworldBase : Node2D
 		GD.Print($"[OverworldBase] Ready. Map: {MapId}, Player spawned at {_player.GlobalPosition}");
 	}
 
-	public override void _Process(double delta)
+	/// <summary>
+	/// Signal-driven step accumulation. Called by Player.Moved / DungeonPlayer.Moved
+	/// whenever the character moves, replacing per-frame position polling.
+	/// </summary>
+	private void OnPlayerMoved(float distance)
 	{
-		if (_player == null) return;
 		if (GameManager.Instance.CurrentState != GameState.Overworld) return;
 
-		float moved = _player.GlobalPosition.DistanceTo(_lastPlayerPos);
-		if (moved > 0.5f)
-		{
-			_stepAccumulator += moved;
-			_lastPlayerPos = _player.GlobalPosition;
-		}
+		_stepAccumulator += distance;
 
 		while (_stepAccumulator >= StepDistance)
 		{
@@ -132,7 +135,7 @@ public partial class OverworldBase : Node2D
 				TickTownRewards();
 
 			if (RandomEncounterTable.Count > 0 && !_encounterLocked)
-				if (TryRandomEncounter()) return; // battle started — stop rolling
+				if (TryRandomEncounter()) return;
 		}
 	}
 

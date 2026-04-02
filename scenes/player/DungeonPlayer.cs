@@ -20,6 +20,9 @@ namespace SennenRpg.Scenes.Player;
 /// </summary>
 public partial class DungeonPlayer : CharacterBody2D
 {
+    /// <summary>Emitted after each successful grid step.</summary>
+    [Signal] public delegate void MovedEventHandler(float distance);
+
     public const int TileSize = 16;
 
     [Export] public float MoveTime     { get; set; } = 0.15f;
@@ -134,6 +137,7 @@ public partial class DungeonPlayer : CharacterBody2D
 
         PlayAnim(IdleAnim());
         _moving = false;
+        EmitSignal(SignalName.Moved, (float)TileSize);
     }
 
     // ── Interaction ───────────────────────────────────────────────────────────

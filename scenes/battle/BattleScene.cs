@@ -50,9 +50,8 @@ public partial class BattleScene : Node2D
 	private List<SpellData>    _knownSpells        = new();
 	private PerformanceScore   _performance        = new();
 
-	// Status effects: keyed by effect, value = turns remaining
-	private readonly Dictionary<StatusEffect, int> _playerStatuses = new();
-	private readonly Dictionary<StatusEffect, int> _enemyStatuses  = new();
+	// Extracted helpers
+	private readonly BattleStatusEffects _statuses = new();
 
 	private static readonly string[] DefaultBardSkillNames =
 		{ "Bardic Inspiration", "Lullaby", "War Cry", "Serenade", "Dissonance" };
@@ -372,13 +371,7 @@ public partial class BattleScene : Node2D
 	private void OnFighterConfirmed(float accuracy)
 	{
 		_fightBar.Visible = false;
-		var grade = accuracy switch
-		{
-			>= 0.85f => HitGrade.Perfect,
-			>= 0.40f => HitGrade.Good,
-			_        => HitGrade.Miss,
-		};
-		_ = DoStrikeResolved((int)grade);
+		_ = DoStrikeResolved((int)BattleAttackResolver.ResolveFighterGrade(accuracy));
 	}
 
 	// ── Ranger — aim reticle result ───────────────────────────────────
@@ -386,24 +379,17 @@ public partial class BattleScene : Node2D
 	private void OnRangerConfirmed(float accuracy, bool isCrit)
 	{
 		_rangerAim.Visible = false;
-		// Bull's-eye: crit ignores Defence entirely
 		if (isCrit)
 		{
 			_ = DoRangerCrit();
 			return;
 		}
-		var grade = accuracy switch
-		{
-			>= 0.75f => HitGrade.Perfect,
-			>= 0.35f => HitGrade.Good,
-			_        => HitGrade.Miss,
-		};
-		_ = DoStrikeResolved((int)grade);
+		_ = DoStrikeResolved((int)BattleAttackResolver.ResolveRangerGrade(accuracy));
 	}
 
 	private async Task DoRangerCrit()
 	{
-		int damage = GameManager.Instance.EffectiveStats.Attack; // bypasses Defence
+		int damage = BattleAttackResolver.ResolveRangerCrit(GameManager.Instance.EffectiveStats.Attack);
 		_enemyCurrentHp -= damage;
 		SpawnDamageNumber(damage, isCrit: true);
 		SetBattleVar("hit_label",  "Bull's-eye!");
@@ -421,13 +407,7 @@ public partial class BattleScene : Node2D
 	private void OnMageCompleted(int correctCount)
 	{
 		_mageRuneInput.Visible = false;
-		var grade = correctCount switch
-		{
-			3 => HitGrade.Perfect,
-			2 => HitGrade.Good,
-			_ => HitGrade.Miss,
-		};
-		_ = DoStrikeResolved((int)grade);
+		_ = DoStrikeResolved((int)BattleAttackResolver.ResolveMageGrade(correctCount));
 	}
 
 	private void OnStrikeResolved(int gradeInt) => _ = DoStrikeResolved(gradeInt);
@@ -437,23 +417,14 @@ public partial class BattleScene : Node2D
 		var grade = (HitGrade)gradeInt;
 		_rhythmStrike.Visible = false;
 
-		int   atk    = GameManager.Instance.EffectiveStats.Attack;
-		int   def    = _enemy?.Stats?.Defense ?? 0;
-		int   luck   = GameManager.Instance.EffectiveStats.Luck;
-		float mult   = RhythmConstants.GradeMultiplier(grade);
-		bool  isCrit = BattleFormulas.IsCrit(grade == HitGrade.Perfect, luck, GD.Randf());
-		int   damage = BattleFormulas.PhysicalDamage(atk, def, mult);
-		if (isCrit) damage *= 2;
+		var (damage, isCrit, hitLabel) = BattleAttackResolver.ResolveStrike(
+			grade,
+			GameManager.Instance.EffectiveStats.Attack,
+			_enemy?.Stats?.Defense ?? 0,
+			GameManager.Instance.EffectiveStats.Luck);
 		_enemyCurrentHp -= damage;
 
-		string hitLabel = grade switch
-		{
-			HitGrade.Perfect => "Perfect hit!",
-			HitGrade.Good    => "Hit!",
-			_                => "Weak hit."
-		};
-
-		GD.Print($"[BattleScene] {hitLabel} grade={grade}, mult={mult:F2}, damage={damage}. Enemy HP: {_enemyCurrentHp}");
+		GD.Print($"[BattleScene] {hitLabel} grade={grade}, damage={damage}. Enemy HP: {_enemyCurrentHp}");
 		SpawnDamageNumber(damage, isCrit);
 
 		SetBattleVar("hit_label",   hitLabel);
@@ -682,13 +653,10 @@ public partial class BattleScene : Node2D
 		}
 		else
 		{
-			int   magic      = GameManager.Instance.EffectiveStats.Magic;
-			int   resistance = _enemy?.Stats?.Resistance ?? 0;
-			float mult       = RhythmConstants.GradeMultiplier(grade);
-			int   damage     = BattleFormulas.MagicDamage(spell.BasePower, magic, resistance, mult);
-			bool  isCrit     = grade == HitGrade.Perfect;
-			if (isCrit) damage *= 2;
-
+			var (damage, isCrit) = BattleAttackResolver.ResolveSpell(
+				grade, spell.BasePower,
+				GameManager.Instance.EffectiveStats.Magic,
+				_enemy?.Stats?.Resistance ?? 0);
 			_enemyCurrentHp -= damage;
 			SpawnDamageNumber(damage, isCrit);
 
@@ -758,14 +726,13 @@ public partial class BattleScene : Node2D
 	private async Task BeginPlayerTurn()
 	{
 		// Tick all statuses (both sides) at the top of each round
-		StatusLogic.TickAll(_playerStatuses);
-		StatusLogic.TickAll(_enemyStatuses);
+		_statuses.TickAll();
 		UpdateStatusHud();
 
 		// Apply player Poison
-		if (StatusLogic.HasStatus(_playerStatuses, StatusEffect.Poison))
+		if (_statuses.PlayerHasStatus(StatusEffect.Poison))
 		{
-			int dmg = StatusLogic.PoisonDamage(GameManager.Instance.PlayerStats.MaxHp);
+			int dmg = _statuses.PlayerPoisonDamage(GameManager.Instance.PlayerStats.MaxHp);
 			GameManager.Instance.HurtPlayer(dmg);
 			SetBattleVar("damage", dmg.ToString());
 			await RunBattleTimeline("res://dialog/timelines/battle_poison_player.dtl");
@@ -777,9 +744,9 @@ public partial class BattleScene : Node2D
 		}
 
 		// Apply enemy Poison
-		if (StatusLogic.HasStatus(_enemyStatuses, StatusEffect.Poison))
+		if (_statuses.EnemyHasStatus(StatusEffect.Poison))
 		{
-			int dmg = StatusLogic.PoisonDamage(_enemy?.Stats?.MaxHp ?? 10);
+			int dmg = _statuses.EnemyPoisonDamage(_enemy?.Stats?.MaxHp ?? 10);
 			_enemyCurrentHp = Math.Max(0, _enemyCurrentHp - dmg);
 			SetBattleVar("damage", dmg.ToString());
 			await RunBattleTimeline("res://dialog/timelines/battle_poison_enemy.dtl");
@@ -791,7 +758,7 @@ public partial class BattleScene : Node2D
 		}
 
 		// Player Stun: skip this turn
-		if (StatusLogic.HasStatus(_playerStatuses, StatusEffect.Stun))
+		if (_statuses.PlayerHasStatus(StatusEffect.Stun))
 		{
 			await RunBattleTimeline("res://dialog/timelines/battle_stun_player.dtl");
 			await RunEnemyTurn();
@@ -806,7 +773,7 @@ public partial class BattleScene : Node2D
 	private async Task RunEnemyTurn()
 	{
 		// Enemy Stun: skip the rhythm phase this turn
-		if (StatusLogic.HasStatus(_enemyStatuses, StatusEffect.Stun))
+		if (_statuses.EnemyHasStatus(StatusEffect.Stun))
 		{
 			await RunBattleTimeline("res://dialog/timelines/battle_stun_enemy.dtl");
 			await BeginPlayerTurn();
@@ -957,28 +924,15 @@ public partial class BattleScene : Node2D
 
 	// ── Status effects ────────────────────────────────────────────────
 
-	/// <summary>
-	/// Called by DialogicBridge when a Dialogic signal event fires.
-	/// Handles "status:effect:turns" signals to apply status effects to the player.
-	/// e.g. "status:poison:3" in an enemy timeline → Poison for 3 turns.
-	/// </summary>
 	private void OnDialogicSignalReceived(Variant argument)
 	{
-		string sig = argument.AsString();
-		var (type, arg) = DialogicSignalParser.Parse(sig);
-		if (type != DialogicSignalParser.TypeStatus) return;
-
-		if (StatusLogic.TryParseStatusSignal(arg, out StatusEffect effect, out int turns))
-		{
-			StatusLogic.Apply(_playerStatuses, effect, turns);
+		if (_statuses.TryHandleDialogicSignal(argument.AsString()))
 			UpdateStatusHud();
-			GD.Print($"[BattleScene] Status applied to player: {effect} for {turns} turns");
-		}
 	}
 
 	private void UpdateStatusHud()
 	{
-		_battleHud.UpdateStatuses(_playerStatuses);
-		_enemyNameplate.UpdateStatuses(_enemyStatuses);
+		_battleHud.UpdateStatuses(_statuses.PlayerStatuses);
+		_enemyNameplate.UpdateStatuses(_statuses.EnemyStatuses);
 	}
 }

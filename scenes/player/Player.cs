@@ -8,6 +8,9 @@ namespace SennenRpg.Scenes.Player;
 
 public partial class Player : CharacterBody2D
 {
+	/// <summary>Emitted after each physics frame in which the player actually moved.</summary>
+	[Signal] public delegate void MovedEventHandler(float distance);
+
 	[Export] public float MoveSpeed      { get; set; } = 80f;
 	[Export] public float RunSpeed       { get; set; } = 140f;
 	[Export] public float InteractRadius { get; set; } = 32f;
@@ -16,6 +19,7 @@ public partial class Player : CharacterBody2D
 	private Area2D _interactRange = null!;
 	private readonly HashSet<IInteractable> _candidates = new();
 	private IInteractable? _nearbyInteractable;
+	private Vector2 _lastPosition;
 
 	public override void _Ready()
 	{
@@ -47,6 +51,8 @@ public partial class Player : CharacterBody2D
 			placeholder.Color = new Color(0.2f, 0.8f, 1f);
 			AddChild(placeholder);
 		}
+
+		_lastPosition = GlobalPosition;
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -76,6 +82,13 @@ public partial class Player : CharacterBody2D
 		}
 
 		MoveAndSlide();
+
+		float moved = GlobalPosition.DistanceTo(_lastPosition);
+		if (moved > 0.5f)
+		{
+			EmitSignal(SignalName.Moved, moved);
+			_lastPosition = GlobalPosition;
+		}
 
 		// Pick the closest candidate within the InteractRange Area2D
 		IInteractable? previous = _nearbyInteractable;
