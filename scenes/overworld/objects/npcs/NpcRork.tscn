@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/npcs/Rork.png" id="2_rork_tex"]
 [ext_resource type="Script" path="res://scenes/overworld/objects/QuestGiver.cs" id="3_questgiver"]
 [ext_resource type="Resource" path="res://resources/quests/rork_wisplet_hunt.tres" id="4_quest"]
+[ext_resource type="Script" path="res://scenes/overworld/objects/BarkeepNpc.cs" id="5_barkeep"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_rk_d1"]
 atlas = ExtResource("2_rork_tex")
@@ -66,6 +67,7 @@ animations = [{
 }]
 
 [node name="NpcRork" instance=ExtResource("1_nrork")]
+script = ExtResource("5_barkeep")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="." index="1"]
 sprite_frames = SubResource("SpriteFrames_rork")

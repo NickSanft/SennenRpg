@@ -12,12 +12,14 @@ public partial class NpcInteractMenu : CanvasLayer
 {
 	[Signal] public delegate void TalkSelectedEventHandler();
 	[Signal] public delegate void ShopSelectedEventHandler();
+	[Signal] public delegate void RestSelectedEventHandler();
 	[Signal] public delegate void CancelledEventHandler();
 
 	private Panel         _panel         = null!;
 	private VBoxContainer _vbox          = null!;
 	private Button        _talkButton    = null!;
 	private Button        _shopButton    = null!;
+	private Button        _restButton    = null!;
 	private Button        _examineButton = null!;
 	private Button        _cancelButton  = null!;
 	private Label         _descLabel     = null!;
@@ -26,6 +28,7 @@ public partial class NpcInteractMenu : CanvasLayer
 	private string _description = "";
 	private bool   _showingDesc;
 	private bool   _showShop;
+	private bool   _showRest;
 
 	public override void _Ready()
 	{
@@ -68,6 +71,10 @@ public partial class NpcInteractMenu : CanvasLayer
 		_shopButton.Pressed += OnShop;
 		_vbox.AddChild(_shopButton);
 
+		_restButton = new Button { Text = "Rest (10G)", Visible = false };
+		_restButton.Pressed += OnRest;
+		_vbox.AddChild(_restButton);
+
 		_examineButton = new Button { Text = "Examine" };
 		_examineButton.Pressed += OnExamine;
 		_vbox.AddChild(_examineButton);
@@ -107,10 +114,12 @@ public partial class NpcInteractMenu : CanvasLayer
 	/// <summary>Populate and display the menu. Call after adding to the scene tree.</summary>
 	/// <param name="description">Character description shown by Examine, or empty to hide Examine.</param>
 	/// <param name="showShop">When true, shows a Shop button that emits ShopSelected.</param>
-	public void Open(string description, bool showShop = false)
+	/// <param name="showRest">When true, shows a Rest button that emits RestSelected.</param>
+	public void Open(string description, bool showShop = false, bool showRest = false)
 	{
 		_description = description;
 		_showShop    = showShop;
+		_showRest    = showRest;
 		ShowMainButtons();
 	}
 
@@ -121,6 +130,7 @@ public partial class NpcInteractMenu : CanvasLayer
 		_showingDesc = false;
 		_talkButton.Visible    = true;
 		_shopButton.Visible    = _showShop;
+		_restButton.Visible    = _showRest;
 		_examineButton.Visible = !string.IsNullOrEmpty(_description);
 		_cancelButton.Visible  = true;
 		_descLabel.Visible     = false;
@@ -155,6 +165,12 @@ public partial class NpcInteractMenu : CanvasLayer
 	{
 		QueueFree();
 		EmitSignal(SignalName.ShopSelected);
+	}
+
+	private void OnRest()
+	{
+		QueueFree();
+		EmitSignal(SignalName.RestSelected);
 	}
 
 	private void OnExamine() => ShowDescView();
