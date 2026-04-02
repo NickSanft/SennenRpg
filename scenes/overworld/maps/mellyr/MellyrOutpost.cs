@@ -103,7 +103,7 @@ public partial class MellyrOutpost : OverworldBase
 		lbl.Text                = message;
 		lbl.HorizontalAlignment = HorizontalAlignment.Center;
 		lbl.AutowrapMode        = TextServer.AutowrapMode.Word;
-		lbl.AddThemeFontSizeOverride("font_size", 9);
+		lbl.AddThemeFontSizeOverride("font_size", 16);
 
 		var canvas = new CanvasLayer { Layer = 60 };
 		canvas.AddChild(lbl);

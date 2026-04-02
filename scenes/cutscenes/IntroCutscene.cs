@@ -26,10 +26,11 @@ public partial class IntroCutscene : Node2D
         _bg = GetNode<TextureRect>("Bg");
 
         // Explicitly fill the viewport — Control anchors inside a Node2D are not reliable
-        // across all Godot versions, so we set the size directly.
+        // across all Godot versions, so we use SetDeferred to avoid the
+        // "non-equal opposite anchors" warning during _Ready.
         var vpSize = GetViewportRect().Size;
-        GetNode<ColorRect>("BgColor").Size = vpSize;
-        _bg.Size = vpSize;
+        GetNode<ColorRect>("BgColor").SetDeferred(Control.PropertyName.Size, vpSize);
+        _bg.SetDeferred(Control.PropertyName.Size, vpSize);
 
         // Pre-load all placeholder backgrounds so swaps are instant.
         // Each [signal arg="bg:name"] event in the timeline calls SwitchBackground("name").

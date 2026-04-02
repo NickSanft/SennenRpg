@@ -23,6 +23,9 @@ public partial class AudioManager : Node
 	private float _bgmLinear    = 0.8f;
 	private float _sfxLinear    = 1f;
 
+	// Active crossfade/stop tween — killed before starting a new one to prevent races
+	private Tween? _bgmTween;
+
 	private float BgmTargetDb => SettingsLogic.LinearToDb(_masterLinear * _bgmLinear);
 	private float SfxTargetDb => SettingsLogic.LinearToDb(_masterLinear * _sfxLinear);
 
@@ -59,6 +62,10 @@ public partial class AudioManager : Node
 		var outgoing = _usingPlayerA ? _bgmPlayer  : _bgmPlayerB;
 		_usingPlayerA = !_usingPlayerA;
 
+		// Kill any in-progress crossfade to prevent overlapping tweens from
+		// silencing the wrong player when two PlayBgm calls happen close together.
+		_bgmTween?.Kill();
+
 		incoming.Stream    = GD.Load<AudioStream>(path);
 		incoming.VolumeDb  = -80f;
 		incoming.Play();
@@ -68,10 +75,10 @@ public partial class AudioManager : Node
 		float effectiveBpm = bpm > 0f ? bpm : RhythmConstants.DefaultBpm;
 		RhythmClock.Instance.AttachPlayer(incoming, effectiveBpm, beatOffsetSec);
 
-		var tween = CreateTween();
-		tween.TweenProperty(outgoing, "volume_db", -80f, fadeTime);
-		tween.Parallel().TweenProperty(incoming, "volume_db", BgmTargetDb, fadeTime);
-		tween.TweenCallback(Callable.From(outgoing.Stop));
+		_bgmTween = CreateTween();
+		_bgmTween.TweenProperty(outgoing, "volume_db", -80f, fadeTime);
+		_bgmTween.Parallel().TweenProperty(incoming, "volume_db", BgmTargetDb, fadeTime);
+		_bgmTween.TweenCallback(Callable.From(outgoing.Stop));
 	}
 
 	/// <summary>
@@ -97,10 +104,12 @@ public partial class AudioManager : Node
 	public void StopBgm(float fadeTime = 1.0f)
 	{
 		RhythmClock.Instance.Stop();
+		_bgmTween?.Kill();
+
 		var active = _usingPlayerA ? _bgmPlayer : _bgmPlayerB;
-		var tween  = CreateTween();
-		tween.TweenProperty(active, "volume_db", -80f, fadeTime);
-		tween.TweenCallback(Callable.From(active.Stop));
+		_bgmTween = CreateTween();
+		_bgmTween.TweenProperty(active, "volume_db", -80f, fadeTime);
+		_bgmTween.TweenCallback(Callable.From(active.Stop));
 	}
 
 	/// <summary>
