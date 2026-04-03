@@ -54,7 +54,8 @@ public partial class SaveManager : Node
 			data.PlayerLevel,
 			data.PlayerName,
 			data.PlayTimeSeconds,
-			data.Timestamp
+			data.Timestamp,
+			data.ActiveClassName ?? data.PlayerClassName ?? "Bard"
 		);
 	}
 
@@ -107,6 +108,9 @@ public partial class SaveManager : Node
 			PendingLilyRecipes       = new System.Collections.Generic.List<string>(gm.PendingLilyRecipes),
 			DynamicEquipmentInventory = new System.Collections.Generic.List<SennenRpg.Core.Data.DynamicEquipmentSave>(gm.DynamicEquipmentInventory),
 			EquippedDynamicItemIds   = SerialiseDynamicEquipped(gm.EquippedDynamicItemIds),
+			// Multi-class progression
+			ClassProgressionEntries  = new System.Collections.Generic.List<SennenRpg.Core.Data.ClassProgressionEntry>(gm.ClassEntries.Values),
+			ActiveClassName          = gm.ActiveClass.ToString(),
 		};
 
 		string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });

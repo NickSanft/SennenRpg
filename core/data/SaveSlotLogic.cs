@@ -39,5 +39,6 @@ public record SaveSlotInfo(
     int    Level,
     string PlayerName,
     int    PlayTimeSeconds,
-    string Timestamp
+    string Timestamp,
+    string ClassName = "Bard"
 );

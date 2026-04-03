@@ -85,6 +85,8 @@ directories/dtl_directory={
 "npc_biscuit_post_arisen": "res://dialog/timelines/npc_biscuit_post_arisen.dtl",
 "npc_brix": "res://dialog/timelines/npc_brix.dtl",
 "npc_brix_again": "res://dialog/timelines/npc_brix_again.dtl",
+"npc_class_change": "res://dialog/timelines/npc_class_change.dtl",
+"npc_class_change_again": "res://dialog/timelines/npc_class_change_again.dtl",
 "npc_falafel": "res://dialog/timelines/npc_falafel.dtl",
 "npc_foran": "res://dialog/timelines/npc_foran.dtl",
 "npc_gus": "res://dialog/timelines/npc_gus.dtl",

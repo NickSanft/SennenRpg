@@ -1,4 +1,6 @@
 using Godot;
+using System.Collections.Generic;
+using System.Linq;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
 
@@ -21,10 +23,12 @@ public partial class StatsMenu : CanvasLayer
     private static readonly Color SubtleGrey = new(0.55f, 0.55f, 0.55f);
     private static readonly Color BgColour   = new(0.07f, 0.07f, 0.12f, 1f);
 
-    private Label     _headerLabel = null!;
-    private Label     _xpLabel     = null!;
-    private ColorRect _xpBar       = null!;
-    private Label     _statsLabel  = null!;
+    private Label     _headerLabel   = null!;
+    private Label     _xpLabel       = null!;
+    private ColorRect _xpBar         = null!;
+    private Label     _statsLabel    = null!;
+    private Label     _classLabel    = null!;
+    private Label     _bonusLabel    = null!;
 
     // ── Setup ─────────────────────────────────────────────────────────────────
 
@@ -137,6 +141,29 @@ public partial class StatsMenu : CanvasLayer
 
         outer.AddChild(new HSeparator());
 
+        // Class levels section
+        _classLabel = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        _classLabel.AddThemeFontSizeOverride("font_size", 10);
+        outer.AddChild(_classLabel);
+
+        outer.AddChild(new HSeparator());
+
+        // Cross-class bonuses section
+        var bonusHeader = new Label
+        {
+            Text                = "Cross-Class Bonuses",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Modulate            = Gold,
+        };
+        bonusHeader.AddThemeFontSizeOverride("font_size", 11);
+        outer.AddChild(bonusHeader);
+
+        _bonusLabel = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        _bonusLabel.AddThemeFontSizeOverride("font_size", 10);
+        outer.AddChild(_bonusLabel);
+
+        outer.AddChild(new HSeparator());
+
         var hint = new Label
         {
             Text                = "[Esc] Close",
@@ -227,6 +254,43 @@ public partial class StatsMenu : CanvasLayer
             + StatRow("RES", base_.Resistance, eff.Resistance)
             + StatRow("LCK", base_.Luck,       eff.Luck)
             + StatRow("MP",  base_.MaxMp,      eff.MaxMp);
+
+        // Class levels
+        RefreshClassInfo(gm);
+
+        // Cross-class bonuses
+        RefreshBonuses(gm);
+    }
+
+    private void RefreshClassInfo(GameManager gm)
+    {
+        var lines = new List<string>();
+        lines.Add($"Class: {gm.ActiveClass}");
+        foreach (var cls in System.Enum.GetValues<PlayerClass>())
+        {
+            if (gm.ClassEntries.TryGetValue(cls, out var entry))
+            {
+                string marker = cls == gm.ActiveClass ? " *" : "";
+                lines.Add($"  {cls,-10} Lv {entry.Level}{marker}");
+            }
+        }
+        _classLabel.Text = string.Join("\n", lines);
+    }
+
+    private void RefreshBonuses(GameManager gm)
+    {
+        var classLevels = gm.ClassEntries.ToDictionary(kv => kv.Key, kv => kv.Value.Level);
+        var lines = new List<string>();
+
+        foreach (var bonus in CrossClassBonusRegistry.All)
+        {
+            bool earned = classLevels.TryGetValue(bonus.SourceClass, out int lv)
+                       && lv >= bonus.RequiredLevel;
+            string mark = earned ? "[Y]" : "[ ]";
+            lines.Add($"{mark} {bonus.Description}");
+        }
+
+        _bonusLabel.Text = lines.Count > 0 ? string.Join("\n", lines) : "None yet.";
     }
 
     private static string StatRow(string name, int baseVal, int effVal)

@@ -102,7 +102,7 @@ public partial class SaveSlotMenu : Node2D
 
         if (info != null)
         {
-            var nameLabel = new Label { Text = $"Slot {slot} — {info.PlayerName}  (Lv {info.Level})" };
+            var nameLabel = new Label { Text = $"Slot {slot} — {info.PlayerName}  (Lv {info.Level} {info.ClassName})" };
             nameLabel.AddThemeFontSizeOverride("font_size", 16);
 
             var timeLabel = new Label

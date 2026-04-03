@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
@@ -19,6 +20,7 @@ public partial class LevelUpScreen : CanvasLayer
     // ── Node references (built in _Ready) ─────────────────────────────────────
     private Label      _titleLabel = null!;
     private Label      _levelLabel = null!;
+    private Label      _bonusLabel = null!;
 
     // One row per stat: (container, nameLabel, valueLabel, deltaLabel)
     private record StatRow(Control Root, Label Name, Label Value, Label Delta);
@@ -165,6 +167,17 @@ public partial class LevelUpScreen : CanvasLayer
             _rows[i] = new StatRow(hbox, nameL, valL, deltaL);
         }
 
+        // Cross-class bonus unlock (hidden until triggered)
+        _bonusLabel = new Label
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            AutowrapMode        = TextServer.AutowrapMode.WordSmart,
+            Modulate            = ColourGold,
+            Visible             = false,
+        };
+        _bonusLabel.AddThemeFontSizeOverride("font_size", 11);
+        vbox.AddChild(_bonusLabel);
+
         vbox.AddChild(new HSeparator());
 
         // Dismiss hint
@@ -230,7 +243,8 @@ public partial class LevelUpScreen : CanvasLayer
     {
         // Update header
         _titleLabel.Text = "★  LEVEL UP!  ★";
-        _levelLabel.Text = $"Level {result.NewLevel - 1} → Level {result.NewLevel}";
+        string className = GameManager.Instance.ActiveClass.ToString();
+        _levelLabel.Text = $"{className}   Level {result.NewLevel - 1} → Level {result.NewLevel}";
         _titleLabel.Modulate = ColourGold;
 
         // Reset all rows to dim grey (values filled in, just not yet revealed)
@@ -242,6 +256,9 @@ public partial class LevelUpScreen : CanvasLayer
             _rows[i].Value.Modulate = ColourGrey;
             _rows[i].Delta.Text     = "";
         }
+
+        // Hide bonus label at start of each level-up
+        _bonusLabel.Visible = false;
 
         UpdateHint("…");
 
@@ -272,6 +289,25 @@ public partial class LevelUpScreen : CanvasLayer
             }
 
             await Wait(0.28f);
+        }
+
+        // Check for newly unlocked cross-class bonuses at this level
+        var activeClass = GameManager.Instance.ActiveClass;
+        var unlocked = CrossClassBonusRegistry.All
+            .Where(b => b.SourceClass == activeClass && b.RequiredLevel == result.NewLevel)
+            .ToList();
+
+        if (unlocked.Count > 0)
+        {
+            var descriptions = unlocked.Select(b => b.Description);
+            _bonusLabel.Text = "★ " + string.Join("\n★ ", descriptions);
+            _bonusLabel.Visible = true;
+            _bonusLabel.Modulate = ColourGold;
+
+            // Flash the bonus label in
+            var tween = CreateTween();
+            tween.TweenProperty(_bonusLabel, "modulate", ColourGold, 0.3f)
+                .From(new Color(1f, 1f, 1f, 0f));
         }
 
         // Hold on the final screen briefly before allowing dismiss

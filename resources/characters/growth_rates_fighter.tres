@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="GrowthRates" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/data/GrowthRates.cs" id="1_GrowthRates"]
+
+[resource]
+script = ExtResource("1_GrowthRates")
+MaxHp = 75
+Attack = 60
+Defense = 55
+Speed = 35
+Magic = 15
+Resistance = 25
+Luck = 40

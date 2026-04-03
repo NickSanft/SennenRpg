@@ -32,6 +32,35 @@ public class PlayerCombatData
 			_growthRates = GD.Load<GrowthRates>(growthPath);
 	}
 
+	/// <summary>
+	/// Load class-specific growth rates. Falls back to default if not found.
+	/// </summary>
+	public void LoadGrowthRatesForClass(PlayerClass cls)
+	{
+		string path = $"res://resources/characters/growth_rates_{cls.ToString().ToLower()}.tres";
+		if (ResourceLoader.Exists(path))
+			_growthRates = GD.Load<GrowthRates>(path);
+	}
+
+	/// <summary>
+	/// Apply base stats from a class progression entry (used when switching classes).
+	/// </summary>
+	public void ApplyFromClassEntry(ClassProgressionEntry entry)
+	{
+		PlayerStats.MaxHp      = entry.MaxHp;
+		PlayerStats.CurrentHp  = entry.MaxHp;
+		PlayerStats.Attack     = entry.Attack;
+		PlayerStats.Defense    = entry.Defense;
+		PlayerStats.Speed      = entry.Speed;
+		PlayerStats.Magic      = entry.Magic;
+		PlayerStats.Resistance = entry.Resistance;
+		PlayerStats.Luck       = entry.Luck;
+		PlayerStats.MaxMp      = entry.MaxMp;
+		PlayerStats.CurrentMp  = entry.MaxMp;
+		PlayerStats.Class      = entry.Class;
+		PlayerStats.ClassName  = entry.Class.ToString();
+	}
+
 	// ── HP / MP ───────────────────────────────────────────────────────────────
 
 	public void HurtPlayer(int amount)
@@ -89,7 +118,8 @@ public class PlayerCombatData
 	public CharacterStats ComputeEffectiveStats(
 		Dictionary<EquipmentSlot, string> equippedItemPaths,
 		Dictionary<EquipmentSlot, string> equippedDynamicItemIds,
-		List<DynamicEquipmentSave> dynamicEquipmentInventory)
+		List<DynamicEquipmentSave> dynamicEquipmentInventory,
+		EquipmentBonuses crossClassBonuses = default)
 	{
 		var bonusList = new List<EquipmentBonuses>();
 		foreach (var kv in equippedItemPaths)
@@ -106,6 +136,8 @@ public class PlayerCombatData
 				bonusList.Add(new EquipmentBonuses(dynItem.BonusMaxHp, dynItem.BonusAttack,
 					dynItem.BonusDefense, dynItem.BonusMagic, 0, dynItem.BonusSpeed, dynItem.BonusLuck));
 		}
+		if (crossClassBonuses != default)
+			bonusList.Add(crossClassBonuses);
 		var bonus = EquipmentLogic.SumBonuses(bonusList);
 		var s = PlayerStats;
 		_effectiveStatsCache.MaxHp               = s.MaxHp      + bonus.MaxHp;

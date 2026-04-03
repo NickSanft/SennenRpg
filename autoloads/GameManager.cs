@@ -18,6 +18,8 @@ public partial class GameManager : Node
 	[Signal] public delegate void PlayerStatsChangedEventHandler();
 	/// <summary>Fired after level-up stat rolls are applied. Read PendingLevelUps for results.</summary>
 	[Signal] public delegate void PlayerLeveledUpEventHandler();
+	/// <summary>Fired after the player switches to a different class.</summary>
+	[Signal] public delegate void ClassChangedEventHandler();
 
 	// ── Internal domains ──────────────────────────────────────────────────────
 
@@ -26,6 +28,7 @@ public partial class GameManager : Node
 	private readonly InventoryData         _inventory   = new();
 	private readonly WorldStateData        _world       = new();
 	private readonly MellyrRewardData      _mellyr      = new();
+	private readonly MultiClassData        _multiClass  = new();
 
 	// ── State ─────────────────────────────────────────────────────────────────
 
@@ -58,6 +61,11 @@ public partial class GameManager : Node
 	// ── Combat pass-through ───────────────────────────────────────────────────
 
 	public CharacterStats PlayerStats            => _combat.PlayerStats;
+
+	// ── Multi-class pass-through ──────────────────────────────────────────────
+
+	public PlayerClass ActiveClass                                              => _multiClass.ActiveClass;
+	public System.Collections.Generic.Dictionary<PlayerClass, ClassProgressionEntry> ClassEntries => _multiClass.ClassEntries;
 
 	// ── Inventory pass-through ────────────────────────────────────────────────
 
@@ -145,7 +153,50 @@ public partial class GameManager : Node
 			PendingLevelUps.Add(_combat.RollGrowth(PlayerLevel));
 		}
 
+		_multiClass.UpdateActiveClassProgression(PlayerLevel, Exp);
+
 		EmitSignal(SignalName.PlayerLeveledUp);
+		EmitSignal(SignalName.PlayerStatsChanged);
+	}
+
+	// ── Class switching ───────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Switch the player to a different class. Snapshots current state,
+	/// loads the target class's stats/growth, and restores HP/MP to full.
+	/// </summary>
+	public void SwitchClass(PlayerClass newClass)
+	{
+		if (newClass == _multiClass.ActiveClass) return;
+
+		// Snapshot current class state
+		var s = _combat.PlayerStats;
+		_multiClass.SaveActiveClassState(
+			PlayerLevel, Exp,
+			s.MaxHp, s.Attack, s.Defense, s.Speed,
+			s.Magic, s.Resistance, s.Luck, s.MaxMp);
+
+		// Switch to target class (creates defaults from .tres if first time)
+		var entry = _multiClass.SwitchTo(newClass, cls =>
+		{
+			string path = $"res://resources/characters/class_{cls.ToString().ToLower()}.tres";
+			if (ResourceLoader.Exists(path))
+			{
+				var template = GD.Load<CharacterStats>(path);
+				return MultiClassLogic.SnapshotToEntry(
+					cls, level: 1, exp: 0,
+					template.MaxHp, template.Attack, template.Defense, template.Speed,
+					template.Magic, template.Resistance, template.Luck, template.MaxMp);
+			}
+			return new ClassProgressionEntry { Class = cls };
+		});
+
+		// Apply target class stats and progression
+		_combat.ApplyFromClassEntry(entry);
+		_combat.LoadGrowthRatesForClass(newClass);
+		_progression.ApplyFromSave(Gold, entry.Exp, entry.Level, PlayTimeSeconds);
+
+		EmitSignal(SignalName.ClassChanged);
 		EmitSignal(SignalName.PlayerStatsChanged);
 	}
 
@@ -203,7 +254,8 @@ public partial class GameManager : Node
 		=> _combat.ComputeEffectiveStats(
 			_inventory.EquippedItemPaths,
 			_inventory.EquippedDynamicItemIds,
-			_inventory.DynamicEquipmentInventory);
+			_inventory.DynamicEquipmentInventory,
+			MultiClassLogic.SumCrossClassBonuses(_multiClass.GetAllClassLevels()));
 
 	// ── Dynamic equipment ─────────────────────────────────────────────────────
 
@@ -268,6 +320,15 @@ public partial class GameManager : Node
 		_combat.ApplyCustomization(stats);
 		PaletteSourceColors = sourceColors;
 		PaletteTargetColors = targetColors;
+
+		// Initialize multi-class starting entry from the chosen class
+		var startEntry = MultiClassLogic.SnapshotToEntry(
+			stats.Class, level: 1, exp: 0,
+			stats.MaxHp, stats.Attack, stats.Defense, stats.Speed,
+			stats.Magic, stats.Resistance, stats.Luck, stats.MaxMp);
+		_multiClass.InitializeStartingClass(stats.Class, startEntry);
+		_combat.LoadGrowthRatesForClass(stats.Class);
+
 		EmitSignal(SignalName.PlayerStatsChanged);
 	}
 
@@ -280,6 +341,7 @@ public partial class GameManager : Node
 		_inventory.Reset();
 		_world.Reset();
 		_mellyr.Reset();
+		_multiClass.Reset();
 
 		Flags.Clear();
 		KillCounts.Clear();
@@ -297,6 +359,29 @@ public partial class GameManager : Node
 		_inventory.ApplyFromSave(data);
 		_world.ApplyFromSave(data);
 		_mellyr.ApplyFromSave(data);
+
+		// Multi-class: restore from save or migrate legacy single-class save
+		if (data.ClassProgressionEntries.Count > 0)
+		{
+			_multiClass.ApplyFromSave(
+				data.ClassProgressionEntries,
+				data.ActiveClassName ?? data.PlayerClassName ?? "Bard");
+			_combat.LoadGrowthRatesForClass(_multiClass.ActiveClass);
+		}
+		else
+		{
+			// Legacy save migration: create a single entry from the saved stats
+			var legacyClass = PlayerClass.Bard;
+			if (data.PlayerClassName != null)
+				System.Enum.TryParse(data.PlayerClassName, out legacyClass);
+
+			var legacyEntry = MultiClassLogic.SnapshotToEntry(
+				legacyClass, data.PlayerLevel, data.Exp,
+				data.PlayerMaxHp, data.PlayerAttack, data.PlayerDefense, data.PlayerSpeed,
+				data.PlayerMagic, data.PlayerResistance, data.PlayerLuck, data.PlayerMaxMp);
+			_multiClass.InitializeStartingClass(legacyClass, legacyEntry);
+			_combat.LoadGrowthRatesForClass(legacyClass);
+		}
 
 		Flags = new Godot.Collections.Dictionary<string, bool>(data.Flags);
 		KillCounts.Clear();

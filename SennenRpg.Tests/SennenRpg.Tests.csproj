@@ -58,6 +58,13 @@
         <Compile Include="../core/data/RhythmMemoryLogic.cs" />
         <!-- TileMap data parsing — pure logic, no Godot runtime -->
         <Compile Include="../core/data/TileMapDataParser.cs" />
+        <!-- Multi-class system — pure logic, no Godot runtime -->
+        <Compile Include="../core/data/PlayerClass.cs" />
+        <Compile Include="../core/data/ClassProgressionEntry.cs" />
+        <Compile Include="../core/data/CrossClassBonus.cs" />
+        <Compile Include="../core/data/CrossClassBonusRegistry.cs" />
+        <Compile Include="../core/data/MultiClassLogic.cs" />
+        <Compile Include="../core/data/MultiClassData.cs" />
     </ItemGroup>
 
 </Project>

@@ -75,6 +75,12 @@ public record SaveData
 	/// <summary>Per-enemy performance history for the Rhythm Memory system.</summary>
 	public Dictionary<string, SennenRpg.Core.Data.EnemyRhythmHistory> RhythmMemory { get; init; } = new();
 
+	// ── Multi-class progression ─────────────────────────────────────────���─────
+	/// <summary>Per-class progression entries. Empty for legacy saves (auto-migrated on load).</summary>
+	public List<SennenRpg.Core.Data.ClassProgressionEntry> ClassProgressionEntries { get; init; } = new();
+	/// <summary>Active class name. Null for legacy saves (falls back to PlayerClassName).</summary>
+	public string? ActiveClassName { get; init; }
+
 	// ── Slot metadata ─────────────────────────────────────────────────────────
 	/// <summary>Player's chosen name (displayed on the slot card).</summary>
 	public string PlayerName      { get; init; } = "Sen";
