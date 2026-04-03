@@ -30,7 +30,7 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Setup Godot
-        uses: chickensoft-games/setup-godot@v3
+        uses: chickensoft-games/setup-godot@v2
         with:
           version: 4.6.1
           use-dotnet: true
