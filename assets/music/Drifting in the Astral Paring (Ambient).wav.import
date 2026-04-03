@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://c3454r4w6tkr2"
+path="res://.godot/imported/Drifting in the Astral Paring (Ambient).wav-1e27a5aace5569b0f995e0a8422f6fff.sample"
+
+[deps]
+
+source_file="res://assets/music/Drifting in the Astral Paring (Ambient).wav"
+dest_files=["res://.godot/imported/Drifting in the Astral Paring (Ambient).wav-1e27a5aace5569b0f995e0a8422f6fff.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

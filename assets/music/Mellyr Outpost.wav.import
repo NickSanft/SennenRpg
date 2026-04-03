@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://b307nvsy1thnk"
+path="res://.godot/imported/Mellyr Outpost.wav-e50f2f33bf80e7bbb5a7b43183bb4497.sample"
+
+[deps]
+
+source_file="res://assets/music/Mellyr Outpost.wav"
+dest_files=["res://.godot/imported/Mellyr Outpost.wav-e50f2f33bf80e7bbb5a7b43183bb4497.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2
