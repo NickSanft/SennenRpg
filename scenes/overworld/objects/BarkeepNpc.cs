@@ -1,6 +1,7 @@
 using Godot;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
+using SennenRpg.Scenes.Menus;
 
 namespace SennenRpg.Scenes.Overworld;
 
@@ -31,11 +32,12 @@ public partial class BarkeepNpc : VendorNpc
 
 		var menu = new NpcInteractMenu();
 		GetTree().Root.AddChild(menu);
-		menu.Open(_characterDescription, showShop: true, showRest: true);
-		menu.TalkSelected += OnMenuTalkSelected;
-		menu.ShopSelected += OpenShopFromMenu;
-		menu.RestSelected += OnRestSelected;
-		menu.Cancelled    += OnMenuCancelled;
+		menu.Open(_characterDescription, showShop: true, showRest: true, showChangeClass: true);
+		menu.TalkSelected        += OnMenuTalkSelected;
+		menu.ShopSelected        += OpenShopFromMenu;
+		menu.RestSelected        += OnRestSelected;
+		menu.ChangeClassSelected += OnChangeClassSelected;
+		menu.Cancelled           += OnMenuCancelled;
 	}
 
 	private void OpenShopFromMenu()
@@ -75,6 +77,20 @@ public partial class BarkeepNpc : VendorNpc
 		};
 		var entries = System.Linq.Enumerable.OfType<ShopItemEntry>(ShopStock).ToArray();
 		shopMenu.Open(entries);
+	}
+
+	private void OnChangeClassSelected()
+	{
+		var scene = GD.Load<PackedScene>("res://scenes/menus/ClassChangeMenu.tscn");
+		var classMenu = scene.Instantiate<ClassChangeMenu>();
+		GetTree().Root.AddChild(classMenu);
+		classMenu.Closed += () =>
+		{
+			classMenu.QueueFree();
+			PlayFacingIdle(DefaultFacing);
+			GameManager.Instance.SetState(GameState.Overworld);
+		};
+		classMenu.Open();
 	}
 
 	private async void OnRestSelected()

@@ -13,22 +13,25 @@ public partial class NpcInteractMenu : CanvasLayer
 	[Signal] public delegate void TalkSelectedEventHandler();
 	[Signal] public delegate void ShopSelectedEventHandler();
 	[Signal] public delegate void RestSelectedEventHandler();
+	[Signal] public delegate void ChangeClassSelectedEventHandler();
 	[Signal] public delegate void CancelledEventHandler();
 
-	private Panel         _panel         = null!;
-	private VBoxContainer _vbox          = null!;
-	private Button        _talkButton    = null!;
-	private Button        _shopButton    = null!;
-	private Button        _restButton    = null!;
-	private Button        _examineButton = null!;
-	private Button        _cancelButton  = null!;
-	private Label         _descLabel     = null!;
-	private Button        _closeButton   = null!;
+	private Panel         _panel              = null!;
+	private VBoxContainer _vbox               = null!;
+	private Button        _talkButton         = null!;
+	private Button        _shopButton         = null!;
+	private Button        _restButton         = null!;
+	private Button        _changeClassButton  = null!;
+	private Button        _examineButton      = null!;
+	private Button        _cancelButton       = null!;
+	private Label         _descLabel          = null!;
+	private Button        _closeButton        = null!;
 
 	private string _description = "";
 	private bool   _showingDesc;
 	private bool   _showShop;
 	private bool   _showRest;
+	private bool   _showChangeClass;
 
 	public override void _Ready()
 	{
@@ -75,6 +78,10 @@ public partial class NpcInteractMenu : CanvasLayer
 		_restButton.Pressed += OnRest;
 		_vbox.AddChild(_restButton);
 
+		_changeClassButton = new Button { Text = "Change Class", Visible = false };
+		_changeClassButton.Pressed += OnChangeClass;
+		_vbox.AddChild(_changeClassButton);
+
 		_examineButton = new Button { Text = "Examine" };
 		_examineButton.Pressed += OnExamine;
 		_vbox.AddChild(_examineButton);
@@ -115,11 +122,13 @@ public partial class NpcInteractMenu : CanvasLayer
 	/// <param name="description">Character description shown by Examine, or empty to hide Examine.</param>
 	/// <param name="showShop">When true, shows a Shop button that emits ShopSelected.</param>
 	/// <param name="showRest">When true, shows a Rest button that emits RestSelected.</param>
-	public void Open(string description, bool showShop = false, bool showRest = false)
+	/// <param name="showChangeClass">When true, shows a Change Class button that emits ChangeClassSelected.</param>
+	public void Open(string description, bool showShop = false, bool showRest = false, bool showChangeClass = false)
 	{
-		_description = description;
-		_showShop    = showShop;
-		_showRest    = showRest;
+		_description     = description;
+		_showShop        = showShop;
+		_showRest        = showRest;
+		_showChangeClass = showChangeClass;
 		ShowMainButtons();
 	}
 
@@ -128,13 +137,14 @@ public partial class NpcInteractMenu : CanvasLayer
 	private void ShowMainButtons()
 	{
 		_showingDesc = false;
-		_talkButton.Visible    = true;
-		_shopButton.Visible    = _showShop;
-		_restButton.Visible    = _showRest;
-		_examineButton.Visible = !string.IsNullOrEmpty(_description);
-		_cancelButton.Visible  = true;
-		_descLabel.Visible     = false;
-		_closeButton.Visible   = false;
+		_talkButton.Visible         = true;
+		_shopButton.Visible         = _showShop;
+		_restButton.Visible         = _showRest;
+		_changeClassButton.Visible  = _showChangeClass;
+		_examineButton.Visible      = !string.IsNullOrEmpty(_description);
+		_cancelButton.Visible       = true;
+		_descLabel.Visible          = false;
+		_closeButton.Visible        = false;
 		_panel.OffsetLeft   = -80f; _panel.OffsetRight  =  80f;
 		_panel.OffsetTop    = -60f; _panel.OffsetBottom =  60f;
 		_talkButton.GrabFocus();
@@ -143,9 +153,12 @@ public partial class NpcInteractMenu : CanvasLayer
 	private void ShowDescView()
 	{
 		_showingDesc = true;
-		_talkButton.Visible    = false;
-		_examineButton.Visible = false;
-		_cancelButton.Visible  = false;
+		_talkButton.Visible         = false;
+		_shopButton.Visible         = false;
+		_restButton.Visible         = false;
+		_changeClassButton.Visible  = false;
+		_examineButton.Visible      = false;
+		_cancelButton.Visible       = false;
 		_descLabel.Text        = _description;
 		_descLabel.Visible     = true;
 		_closeButton.Visible   = true;
@@ -171,6 +184,12 @@ public partial class NpcInteractMenu : CanvasLayer
 	{
 		QueueFree();
 		EmitSignal(SignalName.RestSelected);
+	}
+
+	private void OnChangeClass()
+	{
+		QueueFree();
+		EmitSignal(SignalName.ChangeClassSelected);
 	}
 
 	private void OnExamine() => ShowDescView();
