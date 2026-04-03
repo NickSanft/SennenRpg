@@ -74,7 +74,7 @@ public partial class TestRunner : Node
                 LastSavePointId = "save_01",
                 LastSpawnId     = "save_01",
                 Flags           = new System.Collections.Generic.Dictionary<string, bool>
-                                  { ["met_npc_foran"] = true, ["bought_item"] = false },
+                                  { ["met_shizu"] = true, ["bought_item"] = false },
                 InventoryItemPaths = new System.Collections.Generic.List<string>
                                      { "res://resources/items/item_001.tres" },
             };
@@ -87,7 +87,7 @@ public partial class TestRunner : Node
                 && loaded.Gold                   == original.Gold
                 && loaded.LastMapPath            == original.LastMapPath
                 && loaded.Flags.Count            == original.Flags.Count
-                && loaded.Flags["met_npc_foran"] == true
+                && loaded.Flags["met_shizu"] == true
                 && loaded.InventoryItemPaths.Count == 1;
         });
 

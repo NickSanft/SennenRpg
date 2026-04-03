@@ -30,7 +30,6 @@ public sealed class FlagsTests
         string[] all =
         [
             Flags.MetShizu,
-            Flags.GotItemFromForan,
             Flags.SeenNorthExitHint,
             Flags.BrixHorseAppeared,
             Flags.BhataFalafelAppeared,
@@ -84,7 +83,6 @@ public sealed class FlagsTests
     // parse them with a simple string.Substring(5) call.
 
     [TestCase(Flags.MetShizu)]
-    [TestCase(Flags.GotItemFromForan)]
     [TestCase(Flags.SeenNorthExitHint)]
     [TestCase(Flags.BrixHorseAppeared)]
     [TestCase(Flags.BhataFalafelAppeared)]

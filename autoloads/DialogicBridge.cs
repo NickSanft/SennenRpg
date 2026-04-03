@@ -52,7 +52,6 @@ public partial class DialogicBridge : Node
 	private static readonly string[] StoryFlagVars =
 	[
 		Flags.MetShizu,
-		Flags.GotItemFromForan,
 		Flags.SeenNorthExitHint,
 	];
 

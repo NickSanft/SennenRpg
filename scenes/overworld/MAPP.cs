@@ -31,7 +31,7 @@ public partial class MAPP : OverworldBase
 
 	private CanvasLayer? _nauseaLayer;
 	private const string FrogTexturePath      = "res://assets/sprites/npcs/GusGiantFrog.png";
-	private const string TilesetPath          = "res://assets/tilesets/mapp_tiles.png";
+	private const string TilesetPath          = "res://assets/tilesets/sennen_tiles.png";
 	private const string AmbiencePath        = "res://assets/audio/sfx/tavern_ambience.ogg";
 
 	public override void _Ready()
