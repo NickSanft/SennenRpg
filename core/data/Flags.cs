@@ -43,17 +43,6 @@ public static class Flags
     /// <summary>Set when all seven MAPP NPCs have completed their alt dialogs.</summary>
     public const string AllAltDialogsDone = "all_alt_dialogs_done";
 
-    // ── Garden flags ─────────────────────────────────────────────────────────
-
-    /// <summary>Set the first time the garden statue turns to face the player.</summary>
-    public const string GardenStatueTurned = "garden_statue_turned";
-
-    /// <summary>Set the first time the player drops a coin in the well.</summary>
-    public const string GardenWellThanked = "garden_well_thanked";
-
-    /// <summary>Set when the player takes honey from the beehive.</summary>
-    public const string GardenHiveTaken = "garden_hive_taken";
-
     // ── Environment flags ─────────────────────────────────────────────────────
 
     /// <summary>Set when the player walks close to the northern exit in the test room.</summary>
