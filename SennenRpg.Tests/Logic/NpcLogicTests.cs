@@ -229,7 +229,7 @@ public sealed class NpcLogicRevisitTests
     public void GetRevisitPath_CaseInsensitiveExtension()
     {
         const string path     = "res://dialog/timelines/NPC_GUS.DTL";
-        const string expected = "res://dialog/timelines/NPC_GUS_again.DTL";
+        const string expected = "res://dialog/timelines/NPC_GUS_again.dtl";
         Assert.That(NpcLogic.GetRevisitPath(path, talkFlag: true), Is.EqualTo(expected));
     }
 }
