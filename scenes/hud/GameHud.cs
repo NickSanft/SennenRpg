@@ -11,11 +11,17 @@ namespace SennenRpg.Scenes.Hud;
 public partial class GameHud : CanvasLayer
 {
 	private const float BarMaxWidth = 160f;
+	private const float BarTweenDuration = 0.3f;
 
 	private Label     _nameLabel = null!;
 	private Label     _hpLabel   = null!;
 	private ColorRect _hpBar     = null!;
+	private Label     _mpLabel   = null!;
+	private Control   _mpBarBg   = null!;
+	private ColorRect _mpBar     = null!;
 	private Label     _goldLabel = null!;
+	private Tween?    _hpTween;
+	private Tween?    _mpTween;
 
 	public override void _Ready()
 	{
@@ -23,15 +29,29 @@ public partial class GameHud : CanvasLayer
 		_hpLabel   = GetNode<Label>("Panel/VBox/HpRow/HpLabel");
 		_hpBar     = GetNode<ColorRect>("Panel/VBox/HpBarBg/HpBar");
 
+		var vbox = GetNode<VBoxContainer>("Panel/VBox");
+
+		// MP row — added in code, only visible when MaxMp > 0
+		_mpLabel = new Label { Text = "" };
+		_mpLabel.AddThemeFontSizeOverride("font_size", 10);
+		vbox.AddChild(_mpLabel);
+
+		_mpBarBg = new Control { CustomMinimumSize = new Vector2(BarMaxWidth, 8f) };
+		vbox.AddChild(_mpBarBg);
+
+		_mpBar = new ColorRect { OffsetRight = 0f, OffsetBottom = 8f };
+		_mpBarBg.AddChild(_mpBar);
+
 		// Gold label added in code so GameHud.tscn doesn't need changing
 		_goldLabel = new Label();
 		_goldLabel.AddThemeFontSizeOverride("font_size", 10);
 		_goldLabel.AddThemeColorOverride("font_color", new Color(1f, 0.9f, 0.3f));
-		GetNode<VBoxContainer>("Panel/VBox").AddChild(_goldLabel);
+		vbox.AddChild(_goldLabel);
 
 		// Apply colorblind palette on load — SettingsManager.ApplyAll() runs before this HUD loads.
 		var mode = SettingsManager.Instance?.Current.ColorblindMode ?? ColorblindMode.Normal;
 		_hpBar.Color = SettingsLogic.HpBarColor(mode);
+		_mpBar.Color = SettingsLogic.MpBarColor(mode);
 
 		GameManager.Instance.PlayerStatsChanged += UpdateDisplay;
 		UpdateDisplay();
@@ -58,7 +78,27 @@ public partial class GameHud : CanvasLayer
 		_nameLabel.Text = " " + GameManager.Instance.PlayerName;
 		_hpLabel.Text   = $"HP  {stats.CurrentHp} / {stats.MaxHp}";
 		_goldLabel.Text = $"G   {GameManager.Instance.Gold}";
-		float ratio = stats.MaxHp > 0 ? (float)stats.CurrentHp / stats.MaxHp : 0f;
-		_hpBar.Size = new Vector2(Mathf.Max(0f, BarMaxWidth * ratio), _hpBar.Size.Y);
+
+		float hpRatio  = stats.MaxHp > 0 ? (float)stats.CurrentHp / stats.MaxHp : 0f;
+		float hpTarget = Mathf.Max(0f, BarMaxWidth * hpRatio);
+		_hpTween?.Kill();
+		_hpTween = CreateTween();
+		_hpTween.TweenProperty(_hpBar, "size:x", hpTarget, BarTweenDuration)
+			.SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
+
+		// MP — hide entirely for classes with 0 MaxMp
+		bool hasMp = stats.MaxMp > 0;
+		_mpLabel.Visible = hasMp;
+		_mpBarBg.Visible = hasMp;
+		if (hasMp)
+		{
+			_mpLabel.Text = $"MP  {stats.CurrentMp} / {stats.MaxMp}";
+			float mpRatio  = (float)stats.CurrentMp / stats.MaxMp;
+			float mpTarget = Mathf.Max(0f, BarMaxWidth * mpRatio);
+			_mpTween?.Kill();
+			_mpTween = CreateTween();
+			_mpTween.TweenProperty(_mpBar, "size:x", mpTarget, BarTweenDuration)
+				.SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
+		}
 	}
 }

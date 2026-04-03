@@ -1,4 +1,5 @@
 using Godot;
+using SennenRpg.Autoloads;
 
 namespace SennenRpg.Scenes.Hud;
 
@@ -9,17 +10,38 @@ namespace SennenRpg.Scenes.Hud;
 /// </summary>
 public partial class AreaNameLabel : CanvasLayer
 {
-	private Label _label = null!;
+	private Label     _label = null!;
+	private ColorRect _bg    = null!;
 
 	private const float FadeInSec  = 0.5f;
 	private const float HoldSec    = 1.5f;
 	private const float FadeOutSec = 1.0f;
+	private const string ChimeSfx  = "res://assets/audio/sfx/area_chime.ogg";
 
 	public override void _Ready()
 	{
 		Layer = 3; // just above GameHud (2)
 		_label = GetNode<Label>("Label");
 		_label.Modulate = Colors.Transparent;
+
+		// Add text outline for readability
+		_label.AddThemeConstantOverride("outline_size", 2);
+		_label.AddThemeColorOverride("font_outline_color", Colors.Black);
+
+		// Semi-transparent background behind text
+		_bg = new ColorRect
+		{
+			Color     = new Color(0f, 0f, 0f, 0.45f),
+			AnchorLeft  = 0.5f, AnchorRight = 0.5f,
+			AnchorTop   = 0.8f, AnchorBottom = 0.8f,
+			OffsetLeft  = -210f, OffsetRight  = 210f,
+			OffsetTop   = -24f,  OffsetBottom = 8f,
+			GrowHorizontal = Control.GrowDirection.Both,
+			Modulate    = Colors.Transparent,
+		};
+		AddChild(_bg);
+		// Move label in front of bg
+		MoveChild(_bg, 0);
 	}
 
 	/// <summary>Displays an arbitrary string and plays the fade sequence.</summary>
@@ -45,11 +67,19 @@ public partial class AreaNameLabel : CanvasLayer
 	private void PlayFade()
 	{
 		_label.Modulate = Colors.Transparent;
+		_bg.Modulate    = Colors.Transparent;
+
+		AudioManager.Instance?.PlaySfx(ChimeSfx);
+
 		var tween = CreateTween();
-		tween.TweenProperty(_label, "modulate", Colors.White, FadeInSec);
+		tween.TweenProperty(_label, "modulate", Colors.White, FadeInSec)
+			.SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
+		tween.Parallel().TweenProperty(_bg, "modulate", Colors.White, FadeInSec)
+			.SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
 		tween.TweenInterval(HoldSec);
 		tween.TweenProperty(_label, "modulate", Colors.Transparent, FadeOutSec);
-		tween.TweenCallback(Callable.From(QueueFree)); // self-destruct when done
+		tween.Parallel().TweenProperty(_bg, "modulate", Colors.Transparent, FadeOutSec);
+		tween.TweenCallback(Callable.From(QueueFree));
 	}
 
 	/// <summary>Converts "test_room" → "Test Room".</summary>

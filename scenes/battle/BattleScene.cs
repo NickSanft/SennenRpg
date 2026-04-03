@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
+using SennenRpg.Core.Extensions;
 using SennenRpg.Scenes.Menus;
 
 namespace SennenRpg.Scenes.Battle;
@@ -39,6 +40,7 @@ public partial class BattleScene : Node2D
 	private RhythmStrike    _rhythmStrike   = null!;
 	private EnemyNameplate  _enemyNameplate = null!;
 	private Node2D          _enemyVisual    = null!;
+	private ShaderMaterial? _hitFlashMat;
 
 	private LevelUpScreen      _levelUpScreen      = null!;
 	private CharmMinigame      _charmMinigame      = null!;
@@ -224,6 +226,14 @@ public partial class BattleScene : Node2D
 			_enemyVisual = poly;
 		}
 
+		// Apply hit flash shader
+		const string flashShaderPath = "res://assets/shaders/hit_flash.gdshader";
+		if (ResourceLoader.Exists(flashShaderPath) && _enemyVisual is CanvasItem ci)
+		{
+			_hitFlashMat = new ShaderMaterial { Shader = GD.Load<Shader>(flashShaderPath) };
+			ci.Material = _hitFlashMat;
+		}
+
 		_enemyArea.AddChild(_enemyVisual);
 
 		var tween = CreateTween().SetLoops();
@@ -293,6 +303,16 @@ public partial class BattleScene : Node2D
 		num.Position = _enemyArea.Position + new Vector2((float)GD.RandRange(-16.0, 16.0), -30f);
 		AddChild(num);
 		num.Play(damage, isCrit);
+	}
+
+	/// <summary>Briefly flashes the enemy sprite white via the hit_flash shader.</summary>
+	private void FlashEnemy()
+	{
+		if (_hitFlashMat == null) return;
+		_hitFlashMat.SetShaderParameter("flash_amount", 1.0f);
+		var t = CreateTween();
+		t.TweenMethod(Callable.From<float>(v => _hitFlashMat.SetShaderParameter("flash_amount", v)),
+			1.0f, 0.0f, 0.08f);
 	}
 
 	// ── Dialogic helpers ──────────────────────────────────────────────
@@ -402,6 +422,8 @@ public partial class BattleScene : Node2D
 	{
 		int damage = BattleAttackResolver.ResolveRangerCrit(GameManager.Instance.EffectiveStats.Attack);
 		_enemyCurrentHp -= damage;
+		CameraShake.ShakeNode(this, intensity: 5f, duration: 0.18f);
+		FlashEnemy();
 		SpawnDamageNumber(damage, isCrit: true);
 		SetBattleVar("hit_label",  "Bull's-eye!");
 		SetBattleVar("enemy_name", _enemy?.DisplayName ?? "???");
@@ -434,6 +456,8 @@ public partial class BattleScene : Node2D
 			_enemy?.Stats?.Defense ?? 0,
 			GameManager.Instance.EffectiveStats.Luck);
 		_enemyCurrentHp -= damage;
+		CameraShake.ShakeNode(this, intensity: isCrit ? 5f : 2f, duration: isCrit ? 0.18f : 0.1f);
+		FlashEnemy();
 
 		GD.Print($"[BattleScene] {hitLabel} grade={grade}, damage={damage}. Enemy HP: {_enemyCurrentHp}");
 		SpawnDamageNumber(damage, isCrit);
@@ -669,6 +693,8 @@ public partial class BattleScene : Node2D
 				GameManager.Instance.EffectiveStats.Magic,
 				_enemy?.Stats?.Resistance ?? 0);
 			_enemyCurrentHp -= damage;
+			CameraShake.ShakeNode(this, intensity: isCrit ? 5f : 2f, duration: isCrit ? 0.18f : 0.1f);
+			FlashEnemy();
 			SpawnDamageNumber(damage, isCrit);
 
 			string result = isCrit
@@ -897,6 +923,7 @@ public partial class BattleScene : Node2D
 	{
 		int scaledDamage = Math.Max(1, (int)(damage * _difficultyMultiplier));
 		GameManager.Instance.HurtPlayer(scaledDamage);
+		CameraShake.ShakeNode(this, intensity: 3f, duration: 0.12f);
 		int hp = GameManager.Instance.PlayerStats.CurrentHp;
 		GD.Print($"[BattleScene] Player hurt for {scaledDamage} (raw {damage}, diff ×{_difficultyMultiplier:F2}). HP: {hp}");
 

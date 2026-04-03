@@ -24,6 +24,9 @@ public partial class BattleHUD : CanvasLayer
 	private ColorRect _hpBar       = null!;
 	private ColorRect _mpBarBg     = null!;
 	private ColorRect _mpBar       = null!;
+	private Tween?    _hpTween;
+	private Tween?    _mpTween;
+	private const float BarTweenDuration = 0.3f;
 
 	public override void _Ready()
 	{
@@ -78,11 +81,19 @@ public partial class BattleHUD : CanvasLayer
 		_hpLabel.Text   = $"{stats.CurrentHp} / {stats.MaxHp} HP";
 		_mpLabel.Text   = $"{stats.CurrentMp} / {stats.MaxMp} MP";
 
-		float hpRatio = stats.MaxHp > 0 ? (float)stats.CurrentHp / stats.MaxHp : 0f;
-		_hpBar.Size = new Vector2(_hpBarBg.Size.X * hpRatio, _hpBarBg.Size.Y);
+		float hpTarget = stats.MaxHp > 0
+			? _hpBarBg.Size.X * ((float)stats.CurrentHp / stats.MaxHp) : 0f;
+		_hpTween?.Kill();
+		_hpTween = CreateTween();
+		_hpTween.TweenProperty(_hpBar, "size:x", hpTarget, BarTweenDuration)
+			.SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
 
-		float mpRatio = stats.MaxMp > 0 ? (float)stats.CurrentMp / stats.MaxMp : 0f;
-		_mpBar.Size = new Vector2(_mpBarBg.Size.X * mpRatio, _mpBarBg.Size.Y);
+		float mpTarget = stats.MaxMp > 0
+			? _mpBarBg.Size.X * ((float)stats.CurrentMp / stats.MaxMp) : 0f;
+		_mpTween?.Kill();
+		_mpTween = CreateTween();
+		_mpTween.TweenProperty(_mpBar, "size:x", mpTarget, BarTweenDuration)
+			.SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
 
 		_statsLabel.Text =
 			$"ATK:{stats.Attack}  DEF:{stats.Defense}  SPD:{stats.Speed}" +

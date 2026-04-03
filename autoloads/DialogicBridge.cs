@@ -177,6 +177,7 @@ public partial class DialogicBridge : Node
 	{
 		if (_dialogic == null) return;
 		_dialogicOwnsDialog = true;
+		AudioManager.Instance?.DuckBgm();
 		GD.Print($"[DialogicBridge] Calling Dialogic.start('{timelinePath}')");
 		_dialogic.Call("start", timelinePath);
 		GD.Print("[DialogicBridge] Dialogic.start() returned.");
@@ -308,6 +309,7 @@ public partial class DialogicBridge : Node
 	private void OnTimelineEndedInternal()
 	{
 		_dialogicOwnsDialog = false;
+		AudioManager.Instance?.RestoreBgm();
 		GD.Print("[DialogicBridge] Timeline ended.");
 	}
 }
