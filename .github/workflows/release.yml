@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Run NUnit tests
+        run: dotnet test SennenRpg.Tests/SennenRpg.Tests.csproj --verbosity normal
+
+  build-and-release:
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v3
+        with:
+          version: 4.6.1
+          use-dotnet: true
+          include-templates: true
+
+      - name: Restore .NET dependencies
+        run: dotnet restore SennenRpg.csproj
+
+      - name: Import Godot project
+        run: godot --headless --import .
+
+      - name: Export Windows build
+        run: |
+          mkdir -p build/windows
+          godot --headless --export-release "Windows Desktop" build/windows/SennenRpg.exe
+
+      - name: Zip release artifacts
+        run: cd build/windows && zip -r ../../SennenRpg-Windows-${{ github.ref_name }}.zip .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: SennenRpg-Windows-${{ github.ref_name }}.zip
+          generate_release_notes: true
