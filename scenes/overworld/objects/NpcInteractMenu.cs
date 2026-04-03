@@ -1,4 +1,6 @@
 using Godot;
+using SennenRpg.Autoloads;
+using SennenRpg.Core.Data;
 
 namespace SennenRpg.Scenes.Overworld;
 
@@ -170,38 +172,48 @@ public partial class NpcInteractMenu : CanvasLayer
 
 	private void OnTalk()
 	{
+		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
 		QueueFree();
 		EmitSignal(SignalName.TalkSelected);
 	}
 
 	private void OnShop()
 	{
+		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
 		QueueFree();
 		EmitSignal(SignalName.ShopSelected);
 	}
 
 	private void OnRest()
 	{
+		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
 		QueueFree();
 		EmitSignal(SignalName.RestSelected);
 	}
 
 	private void OnChangeClass()
 	{
+		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
 		QueueFree();
 		EmitSignal(SignalName.ChangeClassSelected);
 	}
 
-	private void OnExamine() => ShowDescView();
+	private void OnExamine()
+	{
+		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
+		ShowDescView();
+	}
 
 	private void OnCloseDesc()
 	{
+		AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
 		_panel.OffsetLeft   = -80f; _panel.OffsetRight  =  80f;
 		ShowMainButtons();
 	}
 
 	private void OnCancel()
 	{
+		AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
 		QueueFree();
 		EmitSignal(SignalName.Cancelled);
 	}

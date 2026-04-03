@@ -195,7 +195,8 @@ public partial class BattleScene : Node2D
 
 		if (ResourceLoader.Exists(bgmPath))
 		{
-			AudioManager.Instance.PlayBgm(bgmPath, fadeTime: 0.1f, bpm: bpm, beatOffsetSec: beatOffset);
+			AudioManager.Instance.PlayBgm(bgmPath, fadeTime: 0.1f, bpm: bpm,
+			beatOffsetSec: beatOffset, forceRestart: true);
 		}
 		else
 		{
@@ -254,10 +255,8 @@ public partial class BattleScene : Node2D
 	private void SetState(BattleState newState)
 	{
 		_state = newState;
-		_actionMenu.Visible     = newState == BattleState.PlayerTurn;
 		_subMenu.Visible        = false;
 		_rhythmStrike.Visible   = false;
-		_rhythmArena.Visible    = false;
 		_enemyNameplate.Visible = newState is BattleState.PlayerTurn or BattleState.EnemyTurn;
 
 		_charmMinigame.Visible      = false;
@@ -278,12 +277,22 @@ public partial class BattleScene : Node2D
 				GameManager.Instance.EffectiveStats.Speed,
 				_enemy?.Stats?.Speed ?? 0);
 			_actionMenu.SetFleeLabel($"Flee ({chance}%)");
+			_actionMenu.SlideIn();
 			_actionMenu.FocusFirst();
 			_battleHud.SetHints(BattleHints.PlayerTurn);
 		}
-		else if (newState == BattleState.RhythmPhase)
+		else
+		{
+			_actionMenu.Visible = false;
+		}
+
+		if (newState == BattleState.RhythmPhase)
 		{
 			_battleHud.SetHints(BattleHints.RhythmPhase);
+		}
+		else
+		{
+			_rhythmArena.Visible = false;
 		}
 	}
 
@@ -363,7 +372,7 @@ public partial class BattleScene : Node2D
 
 	private async Task DoFightSelected()
 	{
-		_actionMenu.Visible = false;
+		_actionMenu.SlideOut();
 		SetState(BattleState.StrikePhase);
 		await RunBattleTimeline("res://dialog/timelines/battle_strike_prompt.dtl");
 
@@ -479,7 +488,7 @@ public partial class BattleScene : Node2D
 	{
 		GD.Print("[BattleScene] PERFORM selected");
 		_subMenuMode = SubMenuMode.Perform;
-		_actionMenu.Visible = false;
+		_actionMenu.SlideOut();
 
 		string[] bardOptions = _enemy?.BardicActOptions is { Length: > 0 }
 			? _enemy.BardicActOptions
@@ -509,7 +518,7 @@ public partial class BattleScene : Node2D
 		}
 
 		_subMenuMode = SubMenuMode.Items;
-		_actionMenu.Visible = false;
+		_actionMenu.SlideOut();
 
 		var labels = new string[inv.Count];
 		for (int i = 0; i < inv.Count; i++)
@@ -528,7 +537,7 @@ public partial class BattleScene : Node2D
 	private async Task DoFleeSelected()
 	{
 		GD.Print("[BattleScene] Flee selected");
-		_actionMenu.Visible = false;
+		_actionMenu.SlideOut();
 		bool escaped = BattleFormulas.AttemptFlee(
 			GameManager.Instance.EffectiveStats.Speed,
 			_enemy?.Stats?.Speed ?? 0,
@@ -884,6 +893,7 @@ public partial class BattleScene : Node2D
 		PackedScene? patternScene = _enemy?.AttackPatternScene;
 		int totalMeasures = Math.Max(1, 2 + _adaptation.ExtraMeasures);
 		_rhythmArena.ObstacleDensityMult = _adaptation.ObstacleDensityMult;
+		_rhythmArena.SlideIn();
 		_rhythmArena.StartPhase(patternScene, totalMeasures: totalMeasures);
 
 		GD.Print($"[BattleScene] RhythmPhase started. Pattern: {patternScene?.ResourcePath ?? "none"}, measures: {totalMeasures}, density: {_adaptation.ObstacleDensityMult:F2}");

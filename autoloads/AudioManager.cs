@@ -55,13 +55,16 @@ public partial class AudioManager : Node
 	/// Play a new BGM track, crossfading from the current one.
 	/// Pass bpm > 0 to synchronise RhythmClock to this track.
 	/// </summary>
-	public void PlayBgm(string path, float fadeTime = 1.0f, float bpm = 0f, float beatOffsetSec = 0f)
+	public void PlayBgm(string path, float fadeTime = 1.0f, float bpm = 0f,
+		float beatOffsetSec = 0f, bool forceRestart = false)
 	{
 		if (!ResourceLoader.Exists(path)) return;
 
 		// If the same track is already playing, keep it going seamlessly
+		// (e.g. transitioning between dungeon floors with the same BGM).
+		// Battle scenes pass forceRestart=true to always start fresh.
 		var active = _usingPlayerA ? _bgmPlayer : _bgmPlayerB;
-		if (path == _currentBgmPath && active.Playing)
+		if (!forceRestart && path == _currentBgmPath && active.Playing)
 			return;
 		_currentBgmPath = path;
 
@@ -73,6 +76,11 @@ public partial class AudioManager : Node
 		// silencing the wrong player when two PlayBgm calls happen close together.
 		_bgmTween?.Kill();
 
+		// Stop the outgoing player immediately when force-restarting
+		// to prevent stale tween callbacks from killing the new track.
+		if (forceRestart)
+			outgoing.Stop();
+
 		incoming.Stream    = GD.Load<AudioStream>(path);
 		incoming.VolumeDb  = -80f;
 		incoming.Play();
@@ -81,6 +89,8 @@ public partial class AudioManager : Node
 		// so beat tracking is accurate from the first frame.
 		float effectiveBpm = bpm > 0f ? bpm : RhythmConstants.DefaultBpm;
 		RhythmClock.Instance.AttachPlayer(incoming, effectiveBpm, beatOffsetSec);
+
+		GD.Print($"[AudioManager] PlayBgm: {path} (force={forceRestart}, fade={fadeTime}s)");
 
 		_bgmTween = CreateTween();
 		_bgmTween.TweenProperty(outgoing, "volume_db", -80f, fadeTime);
@@ -194,9 +204,11 @@ public partial class AudioManager : Node
 		if (_isDucked) return;
 		_isDucked = true;
 
+		// Use the intended target volume (not current, which may be mid-fade)
+		_preDuckDb = BgmTargetDb;
+
 		var active = _usingPlayerA ? _bgmPlayer : _bgmPlayerB;
 		if (!active.Playing) return;
-		_preDuckDb = active.VolumeDb;
 
 		_duckTween?.Kill();
 		_duckTween = CreateTween();

@@ -36,6 +36,14 @@ public partial class QuestGiver : Node
 			QuestManager.Instance.RegisterQuest(Quest);
 	}
 
+	/// <summary>True when this quest is active or ready to turn in.</summary>
+	public bool HasActiveQuest()
+	{
+		if (Quest == null) return false;
+		var state = QuestManager.Instance.GetState(Quest.QuestId);
+		return state is QuestState.Active or QuestState.ReadyToComplete;
+	}
+
 	/// <summary>
 	/// Returns the timeline path appropriate for the current quest state,
 	/// and records <see cref="StateAtTalkStart"/> for post-dialog handling.

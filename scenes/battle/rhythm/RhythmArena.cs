@@ -69,6 +69,9 @@ public partial class RhythmArena : Node2D
     private int _currentStreak;
     private int _maxStreak;
 
+    // Lane flash overlays for hit/miss feedback
+    private readonly ColorRect[] _laneFlash = new ColorRect[4];
+
     /// <summary>Maximum consecutive hit streak this phase — read by BattleScene after phase ends.</summary>
     public int MaxStreak => _maxStreak;
 
@@ -111,10 +114,36 @@ public partial class RhythmArena : Node2D
         _breakLabel.AddThemeFontSizeOverride("font_size", 14);
         AddChild(_breakLabel);
 
+        // Lane flash overlays
+        for (int i = 0; i < 4; i++)
+        {
+            _laneFlash[i] = new ColorRect
+            {
+                Position = new Vector2(-ArenaHalfW, LaneCenterY[i] - LaneHeight * 0.5f),
+                Size     = new Vector2(ArenaHalfW * 2f, LaneHeight),
+                Color    = Colors.Transparent,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+            };
+            AddChild(_laneFlash[i]);
+        }
+
         Visible = false;
     }
 
     // ── Public API ────────────────────────────────────────────────────
+
+    /// <summary>Slide arena in from the right before starting the phase.</summary>
+    public void SlideIn()
+    {
+        Visible = true;
+        float restX = Position.X;
+        Position = new Vector2(restX + 240f, Position.Y);
+        Modulate = Colors.Transparent;
+        var t = CreateTween().SetParallel();
+        t.TweenProperty(this, "position:x", restX, 0.25f)
+            .SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
+        t.TweenProperty(this, "modulate:a", 1f, 0.18f);
+    }
 
     public void StartPhase(PackedScene? patternScene, int totalMeasures = 2)
     {
@@ -404,6 +433,17 @@ public partial class RhythmArena : Node2D
         var lbl = new HitFeedbackLabel();
         AddChild(lbl);
         lbl.Play(text, color, new Vector2(HitZoneX - 30f, LaneCenterY[Mathf.Clamp(lane, 0, 3)] - 10f));
+
+        // Flash the lane
+        int clampedLane = Mathf.Clamp(lane, 0, 3);
+        Color flashColor = grade == HitGrade.Miss
+            ? new Color(1f, 0.2f, 0.15f, 0.35f)
+            : grade == HitGrade.Perfect
+                ? new Color(1f, 0.95f, 0.3f, 0.35f)
+                : new Color(1f, 1f, 1f, 0.25f);
+        _laneFlash[clampedLane].Color = flashColor;
+        var t = CreateTween();
+        t.TweenProperty(_laneFlash[clampedLane], "color", Colors.Transparent, 0.12f);
     }
 
     private void OnPatternFinished()

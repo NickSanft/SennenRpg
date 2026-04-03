@@ -131,18 +131,56 @@ public partial class BattleHUD : CanvasLayer
 			_hintLabel.Text = text;
 	}
 
-	/// <summary>Updates the status icon row beneath the stat line.</summary>
+	/// <summary>Updates the status icon row beneath the stat line with colored badges.</summary>
 	public void UpdateStatuses(Dictionary<StatusEffect, int> statuses)
 	{
-		if (statuses.Count == 0)
+		// Clear previous badges
+		foreach (var child in _statusLabel.GetParent().GetChildren())
 		{
-			_statusLabel.Text = "";
-			return;
+			if (child is HBoxContainer hb && hb.Name == "StatusBadges")
+				hb.QueueFree();
 		}
-		var parts = new System.Collections.Generic.List<string>();
+
+		_statusLabel.Text = ""; // clear text fallback
+
+		if (statuses.Count == 0) return;
+
+		var row = new HBoxContainer { Name = "StatusBadges" };
+		row.AddThemeConstantOverride("separation", 6);
+
 		foreach (var (effect, turns) in statuses)
-			parts.Add($"{StatusLogic.IconText(effect)}({turns})");
-		_statusLabel.Text = string.Join(" ", parts);
+		{
+			Color badgeColor = effect switch
+			{
+				StatusEffect.Poison  => new Color(0.2f, 0.85f, 0.3f),
+				StatusEffect.Stun    => new Color(1.0f, 0.85f, 0.1f),
+				StatusEffect.Shield  => new Color(0.3f, 0.6f, 1.0f),
+				StatusEffect.Silence => new Color(0.7f, 0.3f, 0.9f),
+				_                    => Colors.Gray,
+			};
+
+			var badge = new PanelContainer();
+			var style = new StyleBoxFlat
+			{
+				BgColor = badgeColor,
+				CornerRadiusTopLeft = 2, CornerRadiusTopRight = 2,
+				CornerRadiusBottomLeft = 2, CornerRadiusBottomRight = 2,
+				ContentMarginLeft = 4, ContentMarginRight = 4,
+				ContentMarginTop = 1, ContentMarginBottom = 1,
+			};
+			badge.AddThemeStyleboxOverride("panel", style);
+
+			var lbl = new Label
+			{
+				Text = $"{StatusLogic.IconText(effect)} {turns}",
+				Modulate = Colors.White,
+			};
+			lbl.AddThemeFontSizeOverride("font_size", 9);
+			badge.AddChild(lbl);
+			row.AddChild(badge);
+		}
+
+		_statusLabel.GetParent().AddChild(row);
 	}
 }
 

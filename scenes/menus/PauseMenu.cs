@@ -1,5 +1,6 @@
 using Godot;
 using SennenRpg.Autoloads;
+using SennenRpg.Core.Data;
 
 namespace SennenRpg.Scenes.Menus;
 
@@ -44,6 +45,11 @@ public partial class PauseMenu : CanvasLayer
 		_equipmentButton.Pressed += OnEquipmentPressed;
 		_statsButton.Pressed     += OnStatsPressed;
 		_mainMenuButton.Pressed  += OnMainMenuPressed;
+
+		// Cursor SFX on focus change
+		foreach (var btn in new[] { _resumeButton, _saveButton, _settingsButton,
+			_itemsButton, _equipmentButton, _statsButton, _mainMenuButton })
+			btn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
 
 		// Instantiate InventoryMenu as a sibling so its visibility is independent of PauseMenu
 		const string invPath = "res://scenes/menus/InventoryMenu.tscn";
@@ -115,6 +121,7 @@ public partial class PauseMenu : CanvasLayer
 
 	private void Open()
 	{
+		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
 		Visible = true;
 		GameManager.Instance.SetState(GameState.Paused);
 		_resumeButton.GrabFocus();
@@ -123,6 +130,7 @@ public partial class PauseMenu : CanvasLayer
 
 	private void Resume()
 	{
+		AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
 		Visible = false;
 		GameManager.Instance.SetState(GameState.Overworld);
 		GD.Print("[PauseMenu] Resumed.");

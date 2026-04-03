@@ -16,6 +16,8 @@ public partial class MinimapCanvas : Control
 	private static readonly Color ExitColour   = Colors.Yellow;
 	private static readonly Color SaveColour   = new(0.3f, 1f, 0.3f);
 	private static readonly Color NpcColour    = new(0.3f, 0.8f, 1f);
+	private static readonly Color QuestColour  = new(1f, 0.4f, 0.2f);
+	private static readonly Color StairsColour = new(1f, 0.7f, 0.3f);
 
 	public override void _Draw()
 	{
@@ -30,15 +32,53 @@ public partial class MinimapCanvas : Control
 		foreach (var node in GetTree().GetNodesInGroup("map_exits"))
 		{
 			if (node is Node2D n)
-				DrawRect(new Rect2(ToMap(n.GlobalPosition, bounds) - Vector2.One * 2f, Vector2.One * 4f), ExitColour);
+			{
+				// Staircases (MapExit nodes with "Stairs" in name) get a distinct marker
+				bool isStairs = n.Name.ToString().Contains("Stairs", System.StringComparison.OrdinalIgnoreCase);
+				var col = isStairs ? StairsColour : ExitColour;
+				var pos = ToMap(n.GlobalPosition, bounds);
+				if (isStairs)
+				{
+					// Small diamond marker for stairs
+					DrawCircle(pos, 3f, col);
+					DrawCircle(pos, 1.5f, BgColour);
+				}
+				else
+				{
+					DrawRect(new Rect2(pos - Vector2.One * 2f, Vector2.One * 4f), col);
+				}
+			}
 		}
 
 		foreach (var node in GetTree().GetNodesInGroup("interactable"))
 		{
 			if (node is SennenRpg.Scenes.Overworld.SavePoint sp)
+			{
 				DrawRect(new Rect2(ToMap(sp.GlobalPosition, bounds) - Vector2.One * 2f, Vector2.One * 4f), SaveColour);
+			}
 			else if (node is SennenRpg.Scenes.Overworld.Npc npc)
-				DrawCircle(ToMap(npc.GlobalPosition, bounds), 2f, NpcColour);
+			{
+				// NPCs with active quests get a quest marker instead
+				bool hasQuest = false;
+				foreach (var child in npc.GetChildren())
+				{
+					if (child is SennenRpg.Scenes.Overworld.QuestGiver qg && qg.HasActiveQuest())
+					{
+						hasQuest = true;
+						break;
+					}
+				}
+
+				var npcPos = ToMap(npc.GlobalPosition, bounds);
+				if (hasQuest)
+				{
+					DrawCircle(npcPos, 3f, QuestColour);
+				}
+				else
+				{
+					DrawCircle(npcPos, 2f, NpcColour);
+				}
+			}
 		}
 
 		foreach (var node in GetTree().GetNodesInGroup("player"))

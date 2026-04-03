@@ -194,5 +194,13 @@ public class PlayerCombatData
 		PlayerStats.Luck        = data.PlayerLuck;
 		PlayerStats.MaxMp       = data.PlayerMaxMp;
 		PlayerStats.CurrentMp   = data.PlayerMp;
+
+		// Restore class identity from save
+		if (!string.IsNullOrEmpty(data.PlayerClassName)
+			&& System.Enum.TryParse<PlayerClass>(data.PlayerClassName, out var cls))
+		{
+			PlayerStats.Class     = cls;
+			PlayerStats.ClassName = cls.ToString();
+		}
 	}
 }

@@ -49,6 +49,7 @@ public partial class ClassChangeMenu : CanvasLayer
 
     private void Close()
     {
+        AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
         Visible = false;
         EmitSignal(SignalName.Closed);
     }
@@ -243,6 +244,7 @@ public partial class ClassChangeMenu : CanvasLayer
 
     private void OnClassSelected(PlayerClass cls)
     {
+        AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
         GameManager.Instance.SwitchClass(cls);
         GD.Print($"[ClassChangeMenu] Switched to {cls}.");
         Close();
