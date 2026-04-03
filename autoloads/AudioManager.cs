@@ -1,5 +1,6 @@
 using Godot;
 using SennenRpg.Core.Data;
+using SennenRpg.Scenes.Hud;
 
 namespace SennenRpg.Autoloads;
 
@@ -91,6 +92,7 @@ public partial class AudioManager : Node
 		RhythmClock.Instance.AttachPlayer(incoming, effectiveBpm, beatOffsetSec);
 
 		GD.Print($"[AudioManager] PlayBgm: {path} (force={forceRestart}, fade={fadeTime}s)");
+		SpawnNowPlayingPopup(path);
 
 		_bgmTween = CreateTween();
 		_bgmTween.TweenProperty(outgoing, "volume_db", -80f, fadeTime);
@@ -227,5 +229,20 @@ public partial class AudioManager : Node
 		_duckTween?.Kill();
 		_duckTween = CreateTween();
 		_duckTween.TweenProperty(active, "volume_db", _preDuckDb, fadeTime);
+	}
+
+	// ── Now-Playing popup ─────────────────────────────────────────────────────
+
+	private static readonly string NowPlayingScene = "res://scenes/hud/NowPlayingPopup.tscn";
+
+	private void SpawnNowPlayingPopup(string path)
+	{
+		var info = MusicMetadata.Lookup(path);
+		if (info == null) return;
+		if (!ResourceLoader.Exists(NowPlayingScene)) return;
+
+		var popup = GD.Load<PackedScene>(NowPlayingScene).Instantiate<NowPlayingPopup>();
+		GetTree().Root.AddChild(popup);
+		popup.Show(info);
 	}
 }

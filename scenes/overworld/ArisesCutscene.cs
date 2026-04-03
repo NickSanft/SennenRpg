@@ -13,7 +13,7 @@ public partial class ArisesCutscene : CanvasLayer
 	[Signal] public delegate void FinishedEventHandler();
 
 	private const string ArisesBgmPath =
-		"res://assets/music/Divora - The Gravity Of The Situation - DND 5 - 07 Sozitek.wav";
+		"res://assets/music/Sozitek.wav";
 
 	private Polygon2D        _overlay       = null!;
 	private CenterContainer  _textContainer = null!;

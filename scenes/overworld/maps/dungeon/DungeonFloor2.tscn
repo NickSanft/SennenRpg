@@ -14,7 +14,7 @@ size = Vector2(16, 16)
 
 [node name="DungeonFloor2" unique_id=1459711505 instance=ExtResource("1_base")]
 script = ExtResource("2_script")
-BgmPath = "res://assets/music/Divora - The Gravity Of The Situation - DND 5 - 10 Slow Broil.wav"
+BgmPath = "res://assets/music/Slow Broil.wav"
 MapId = "Dungeon - Floor 2"
 UseSmallPlayer = true
 

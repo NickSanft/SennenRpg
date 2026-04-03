@@ -177,7 +177,7 @@ public partial class BattleScene : Node2D
 	// ── BGM ───────────────────────────────────────────────────────────
 
 	private const string DefaultBattleBgmPath =
-		"res://assets/music/Divora - Ominous Augury - DND 7 - 10 Corruption Can Be Fun.wav";
+		"res://assets/music/Corruption Can Be Fun.wav";
 
 	private void StartBattleBgm(EncounterData? encounter)
 	{

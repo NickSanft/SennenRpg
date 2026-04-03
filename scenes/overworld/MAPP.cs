@@ -26,7 +26,7 @@ public partial class MAPP : OverworldBase
 	private const string ShizuAuraSignal      = "shizu_music_aura";
 	private const string RainAltSignal        = "rain_alt_ended";
 	private const string LilyCutscenePath     = "res://dialog/timelines/cutscene_lily_effect.dtl";
-	private const string ShizuBgmPath         = "res://assets/music/Divora - Origins Of The Gyre - DND 6 - 01 Origins Of The Gyre - Full.wav";
+	private const string ShizuBgmPath         = "res://assets/music/Origins Of The Gyre.wav";
 	private const int    RainStolenGold       = 10;
 
 	private CanvasLayer? _nauseaLayer;
@@ -43,7 +43,7 @@ public partial class MAPP : OverworldBase
 		}
 
 		MapId   = "mapp_tavern";
-		BgmPath = "res://assets/music/Divora - New Beginnings - DND 4 - 02 Carillion Forest.wav";
+		BgmPath = "res://assets/music/Carillion Forest.wav";
 
 		// If Shizu's aura already fired, switch BGM before base._Ready() plays the track
 		if (GameManager.Instance.GetFlag(Flags.ShizuMusicAuraActive))

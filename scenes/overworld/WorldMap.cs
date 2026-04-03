@@ -16,8 +16,8 @@ public partial class WorldMap : Node2D
 {
 	private const string PlayerScene  = "res://scenes/overworld/WorldMapPlayer.tscn";
 	private const string BattleScene  = "res://scenes/battle/BattleScene.tscn";
-	private const string DayBgmPath   = "res://assets/music/Divora - Ominous Augury - DND 7 - 05 Drifting in the Astral Paring (Ambient).wav";
-	private const string NightBgmPath = "res://assets/music/Divora - Ominous Augury - DND 7 - 06 Drifting in the Astral Paring.wav";
+	private const string DayBgmPath   = "res://assets/music/Drifting in the Astral Paring (Ambient).wav";
+	private const string NightBgmPath = "res://assets/music/Drifting in the Astral Paring.wav";
 
 	[Export] public Array<EncounterData> DayEncounters   { get; set; } = new();
 	[Export] public Array<EncounterData> NightEncounters { get; set; } = new();

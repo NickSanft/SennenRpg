@@ -13,7 +13,7 @@ namespace SennenRpg.Scenes.Overworld;
 /// </summary>
 public partial class MellyrOutpost : OverworldBase
 {
-	private const string BgmTrack     = "res://assets/music/Divora - New Beginnings - DND 4 - 09 Mellyr Outpost.wav";
+	private const string BgmTrack     = "res://assets/music/Mellyr Outpost.wav";
 	private const string RainScene    = "res://scenes/overworld/objects/npcs/NpcRain.tscn";
 	private const string LilyScene    = "res://scenes/overworld/objects/npcs/NpcLily.tscn";
 	private const string RainTimeline = "res://dialog/timelines/npc_rain_town.dtl";

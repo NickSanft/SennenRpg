@@ -41,5 +41,8 @@ text = "NEW GAME"
 [node name="ContinueButton" type="Button" parent="UI/Center/VBox"]
 text = "CONTINUE"
 
+[node name="CreditsButton" type="Button" parent="UI/Center/VBox"]
+text = "CREDITS"
+
 [node name="QuitButton" type="Button" parent="UI/Center/VBox"]
 text = "QUIT"

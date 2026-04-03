@@ -18,8 +18,6 @@
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/Chest.tscn" id="17_chest"]
 [ext_resource type="PackedScene" uid="uid://evwjjqormcym" path="res://scenes/overworld/objects/MapExit.tscn" id="18_exit"]
 [ext_resource type="PackedScene" uid="uid://bx11g5q7nayii" path="res://scenes/overworld/objects/JournalProp.tscn" id="19_journal"]
-[ext_resource type="PackedScene" uid="uid://dartboardtscn" path="res://scenes/overworld/objects/DartboardProp.tscn" id="20_dartboard"]
-[ext_resource type="PackedScene" uid="uid://bardrinkptscn" path="res://scenes/overworld/objects/BarDrinkProp.tscn" id="21_drinkprop"]
 [ext_resource type="Script" uid="uid://drkqrxhkmk75h" path="res://core/data/ShopItemEntry.cs" id="22_shopentry"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/npcs/NpcRork.tscn" id="29_rork"]
 
@@ -179,8 +177,7 @@ PlaceholderColor = Color(0.35, 0.55, 0.95, 1)
 PatrolPoints = PackedVector2Array(60, 90, 40, 100, 50, 100)
 PatrolSpeed = 18.0
 
-
-[node name="Rork" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="11" unique_id=914373453 instance=ExtResource("29_rork")]
+[node name="Rork" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="10" unique_id=914373453 instance=ExtResource("29_rork")]
 position = Vector2(0, -64)
 ShopStock = [SubResource("ShopEntry_ale")]
 NpcId = "barkeep_mapp"
@@ -191,95 +188,78 @@ AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_barkeep_alldone
 CharacterPath = "res://dialog/characters/Rork.dch"
 PlaceholderColor = Color(0.55, 0.38, 0.18, 1)
 
-[node name="Table1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="12" unique_id=1835706404 instance=ExtResource("11_table")]
+[node name="Table1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="11" unique_id=1835706404 instance=ExtResource("11_table")]
 position = Vector2(-60, 40)
 
-[node name="Table2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="13" unique_id=1545523261 instance=ExtResource("11_table")]
+[node name="Table2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="12" unique_id=1545523261 instance=ExtResource("11_table")]
 position = Vector2(60, 40)
 
-[node name="Table3" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="14" unique_id=891817547 instance=ExtResource("11_table")]
+[node name="Table3" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="13" unique_id=891817547 instance=ExtResource("11_table")]
 position = Vector2(0, -10)
 
-[node name="T1ChairN" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="15" unique_id=1993783938 instance=ExtResource("12_chair")]
+[node name="T1ChairN" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="14" unique_id=1993783938 instance=ExtResource("12_chair")]
 position = Vector2(-60, 20)
 NorthFacing = true
 
-[node name="T1ChairS1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="16" unique_id=830595368 instance=ExtResource("12_chair")]
+[node name="T1ChairS1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="15" unique_id=830595368 instance=ExtResource("12_chair")]
 position = Vector2(-69, 58)
 
-[node name="T1ChairS2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="17" unique_id=41374247 instance=ExtResource("12_chair")]
+[node name="T1ChairS2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="16" unique_id=41374247 instance=ExtResource("12_chair")]
 position = Vector2(-51, 58)
 
-[node name="T2ChairN" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="18" unique_id=2066140469 instance=ExtResource("12_chair")]
+[node name="T2ChairN" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="17" unique_id=2066140469 instance=ExtResource("12_chair")]
 position = Vector2(60, 20)
 NorthFacing = true
 
-[node name="T2ChairS1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="19" unique_id=456285440 instance=ExtResource("12_chair")]
+[node name="T2ChairS1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="18" unique_id=456285440 instance=ExtResource("12_chair")]
 position = Vector2(51, 58)
 
-[node name="T2ChairS2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="20" unique_id=930369284 instance=ExtResource("12_chair")]
+[node name="T2ChairS2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="19" unique_id=930369284 instance=ExtResource("12_chair")]
 position = Vector2(69, 58)
 
-[node name="T3ChairS1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="21" unique_id=428870808 instance=ExtResource("12_chair")]
+[node name="T3ChairS1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="20" unique_id=428870808 instance=ExtResource("12_chair")]
 position = Vector2(-9, 8)
 
-[node name="T3ChairS2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="22" unique_id=150816486 instance=ExtResource("12_chair")]
+[node name="T3ChairS2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="21" unique_id=150816486 instance=ExtResource("12_chair")]
 position = Vector2(9, 8)
 
-[node name="BarStool1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="23" unique_id=1705835936 instance=ExtResource("13_stool")]
+[node name="BarStool1" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="22" unique_id=1705835936 instance=ExtResource("13_stool")]
 position = Vector2(-90, -40)
 
-[node name="BarStool2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="24" unique_id=303586501 instance=ExtResource("13_stool")]
+[node name="BarStool2" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="23" unique_id=303586501 instance=ExtResource("13_stool")]
 position = Vector2(-54, -40)
 
-[node name="BarStool3" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="25" unique_id=2056342556 instance=ExtResource("13_stool")]
+[node name="BarStool3" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="24" unique_id=2056342556 instance=ExtResource("13_stool")]
 position = Vector2(-18, -40)
 
-[node name="BarStool4" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="26" unique_id=88113853 instance=ExtResource("13_stool")]
+[node name="BarStool4" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="25" unique_id=88113853 instance=ExtResource("13_stool")]
 position = Vector2(18, -40)
 
-[node name="BarStool5" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="27" unique_id=1938507140 instance=ExtResource("13_stool")]
+[node name="BarStool5" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="26" unique_id=1938507140 instance=ExtResource("13_stool")]
 position = Vector2(54, -40)
 
-[node name="BarStool6" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="28" unique_id=1527521584 instance=ExtResource("13_stool")]
+[node name="BarStool6" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="27" unique_id=1527521584 instance=ExtResource("13_stool")]
 position = Vector2(90, -40)
-
 
 [node name="Journal" parent="." index="7" unique_id=2050191186 instance=ExtResource("19_journal")]
 position = Vector2(-60, 35)
 
-[node name="Dartboard" parent="." index="8" unique_id=1217286306 instance=ExtResource("20_dartboard")]
-position = Vector2(134, 151)
-
-[node name="DrinkProp" parent="." index="9" unique_id=1610892016 instance=ExtResource("21_drinkprop")]
-position = Vector2(75, -42)
-
-[node name="SavePoint" parent="." index="10" unique_id=747126169 instance=ExtResource("16_save")]
+[node name="SavePoint" parent="." index="8" unique_id=747126169 instance=ExtResource("16_save")]
 position = Vector2(-130, 105)
 SavePointId = "mapp_hearth"
 
-[node name="Chest" parent="." index="11" unique_id=2121869652 instance=ExtResource("17_chest")]
+[node name="Chest" parent="." index="9" unique_id=2121869652 instance=ExtResource("17_chest")]
 position = Vector2(152, 185)
 ItemPath = "res://resources/items/item_002.tres"
 FlagId = "chest_mapp_corner"
 
-[node name="NoticeBoard" parent="." index="12" unique_id=14098406 instance=ExtResource("15_sign")]
+[node name="NoticeBoard" parent="." index="10" unique_id=14098406 instance=ExtResource("15_sign")]
 position = Vector2(134, 121)
 SignTitle = "Notice Board"
 Lines = PackedStringArray("The Shiver Me Timber Inn — serving the finest ales since 1150.", "", "REWARD: 50 gold for information regarding the", "  recent explosion of the Laurentius Mansion in Seade. Contact the Sovereign Royal Guard.", "", "LOST: One horse. Brown. Answers to \'Horse\'.", "  Contact Brix (he is right here).", "", "Rooms available upstairs. Ask the barkeep.")
 
-[node name="StaircaseSign" parent="." index="13" unique_id=1272600358 instance=ExtResource("15_sign")]
-position = Vector2(426, -47)
-SignTitle = "Upper Floor"
-Lines = PackedStringArray("The rooms upstairs are currently occupied.", "", "(Coming soon.)")
-
-[node name="Exit" parent="." index="14" unique_id=1845096565 instance=ExtResource("18_exit")]
+[node name="Exit" parent="." index="11" unique_id=1845096565 instance=ExtResource("18_exit")]
 position = Vector2(0, 348)
 TargetMapPath = "res://scenes/overworld/WorldMap.tscn"
 TargetSpawnId = "from_mapp"
 AutoTrigger = true
-
-[node name="BackDoorExit" parent="." index="15" unique_id=-2094967206 instance=ExtResource("18_exit")]
-position = Vector2(272, -39)
-TargetMapPath = "res://scenes/overworld/maps/MappGarden.tscn"
-TargetSpawnId = "from_mapp_backyard"

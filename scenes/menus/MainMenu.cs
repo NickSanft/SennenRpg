@@ -11,6 +11,7 @@ public partial class MainMenu : Node2D
 {
 	private Button _newGameButton  = null!;
 	private Button _continueButton = null!;
+	private Button _creditsButton  = null!;
 	private Button _quitButton     = null!;
 	private bool   _transitioning  = false;
 
@@ -18,12 +19,14 @@ public partial class MainMenu : Node2D
 	{
 		_newGameButton  = GetNode<Button>("UI/Center/VBox/NewGameButton");
 		_continueButton = GetNode<Button>("UI/Center/VBox/ContinueButton");
+		_creditsButton  = GetNode<Button>("UI/Center/VBox/CreditsButton");
 		_quitButton     = GetNode<Button>("UI/Center/VBox/QuitButton");
 
 		_continueButton.Disabled = !SaveManager.Instance.HasAnySave();
 
 		_newGameButton.Pressed  += OnNewGamePressed;
 		_continueButton.Pressed += OnContinuePressed;
+		_creditsButton.Pressed  += OnCreditsPressed;
 		_quitButton.Pressed     += () => GetTree().Quit();
 	}
 
@@ -41,5 +44,12 @@ public partial class MainMenu : Node2D
 		_transitioning = true;
 		SaveSlotMenu.PendingMode = SaveSlotMenu.MenuMode.Continue;
 		_ = SceneTransition.Instance.GoToAsync("res://scenes/menus/SaveSlotMenu.tscn");
+	}
+
+	private void OnCreditsPressed()
+	{
+		if (_transitioning) return;
+		_transitioning = true;
+		_ = SceneTransition.Instance.GoToAsync("res://scenes/menus/CreditsMenu.tscn");
 	}
 }
