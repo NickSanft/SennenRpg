@@ -56,6 +56,8 @@
         <Compile Include="../core/data/LilyForgeLogic.cs" />
         <!-- Rhythm Memory — pure logic, no Godot runtime -->
         <Compile Include="../core/data/RhythmMemoryLogic.cs" />
+        <!-- TileMap data parsing — pure logic, no Godot runtime -->
+        <Compile Include="../core/data/TileMapDataParser.cs" />
     </ItemGroup>
 
 </Project>
