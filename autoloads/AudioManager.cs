@@ -25,6 +25,7 @@ public partial class AudioManager : Node
 
 	// Active crossfade/stop tween — killed before starting a new one to prevent races
 	private Tween? _bgmTween;
+	private string _currentBgmPath = "";
 
 	private float BgmTargetDb => SettingsLogic.LinearToDb(_masterLinear * _bgmLinear);
 	private float SfxTargetDb => SettingsLogic.LinearToDb(_masterLinear * _sfxLinear);
@@ -57,6 +58,12 @@ public partial class AudioManager : Node
 	public void PlayBgm(string path, float fadeTime = 1.0f, float bpm = 0f, float beatOffsetSec = 0f)
 	{
 		if (!ResourceLoader.Exists(path)) return;
+
+		// If the same track is already playing, keep it going seamlessly
+		var active = _usingPlayerA ? _bgmPlayer : _bgmPlayerB;
+		if (path == _currentBgmPath && active.Playing)
+			return;
+		_currentBgmPath = path;
 
 		var incoming = _usingPlayerA ? _bgmPlayerB : _bgmPlayer;
 		var outgoing = _usingPlayerA ? _bgmPlayer  : _bgmPlayerB;
@@ -103,6 +110,7 @@ public partial class AudioManager : Node
 
 	public void StopBgm(float fadeTime = 1.0f)
 	{
+		_currentBgmPath = "";
 		RhythmClock.Instance.Stop();
 		_bgmTween?.Kill();
 
@@ -156,7 +164,56 @@ public partial class AudioManager : Node
 		if (!ResourceLoader.Exists(path)) return;
 		var player = _sfxPool[_sfxPoolIndex % SfxPoolSize];
 		_sfxPoolIndex++;
-		player.Stream = GD.Load<AudioStream>(path);
+		player.Stream   = GD.Load<AudioStream>(path);
+		player.PitchScale = 1f;
 		player.Play();
+	}
+
+	/// <summary>Play a one-shot SFX with random pitch variation for organic feel.</summary>
+	/// <param name="path">Resource path to the audio file.</param>
+	/// <param name="pitchRange">Max deviation from 1.0 (e.g. 0.1 = ±10%).</param>
+	public void PlaySfxVaried(string path, float pitchRange = 0.1f)
+	{
+		if (!ResourceLoader.Exists(path)) return;
+		var player = _sfxPool[_sfxPoolIndex % SfxPoolSize];
+		_sfxPoolIndex++;
+		player.Stream     = GD.Load<AudioStream>(path);
+		player.PitchScale = 1f + (float)GD.RandRange(-pitchRange, pitchRange);
+		player.Play();
+	}
+
+	// ── BGM Ducking ───────────────────────────────────────────────────────────
+
+	private Tween? _duckTween;
+	private float  _preDuckDb;
+	private bool   _isDucked;
+
+	/// <summary>Lower BGM volume for dialog or focus moments.</summary>
+	public void DuckBgm(float duckDb = -6f, float fadeTime = 0.3f)
+	{
+		if (_isDucked) return;
+		_isDucked = true;
+
+		var active = _usingPlayerA ? _bgmPlayer : _bgmPlayerB;
+		if (!active.Playing) return;
+		_preDuckDb = active.VolumeDb;
+
+		_duckTween?.Kill();
+		_duckTween = CreateTween();
+		_duckTween.TweenProperty(active, "volume_db", _preDuckDb + duckDb, fadeTime);
+	}
+
+	/// <summary>Restore BGM volume after ducking.</summary>
+	public void RestoreBgm(float fadeTime = 0.5f)
+	{
+		if (!_isDucked) return;
+		_isDucked = false;
+
+		var active = _usingPlayerA ? _bgmPlayer : _bgmPlayerB;
+		if (!active.Playing) return;
+
+		_duckTween?.Kill();
+		_duckTween = CreateTween();
+		_duckTween.TweenProperty(active, "volume_db", _preDuckDb, fadeTime);
 	}
 }
