@@ -45,7 +45,11 @@ jobs:
       - name: Export Windows build
         run: |
           mkdir -p build/windows
-          godot --headless --export-release "Windows Desktop" build/windows/SennenRpg.exe
+          # Godot 4.6 .NET may segfault during post-export cleanup even after
+          # a successful export. Allow the command to fail, then verify the
+          # output file was actually created.
+          godot --headless --export-release "Windows Desktop" build/windows/SennenRpg.exe || true
+          test -f build/windows/SennenRpg.exe || { echo "Export failed — SennenRpg.exe not found"; exit 1; }
 
       - name: Zip release artifacts
         run: cd build/windows && zip -r ../../SennenRpg-Windows-${{ github.ref_name }}.zip .
