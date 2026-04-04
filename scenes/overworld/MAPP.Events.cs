@@ -1072,10 +1072,10 @@ public partial class MAPP
 
 	// ── Tile map ───────────────────────────────────────────────────────────────
 
-	private static readonly Vector2I TileFloorA  = new Vector2I(0, 0); // dark wood
-	private static readonly Vector2I TileFloorB  = new Vector2I(1, 0); // light wood
-	private static readonly Vector2I TileWall    = new Vector2I(2, 0); // stone brick
-	private static readonly Vector2I TileBar     = new Vector2I(3, 0); // bar counter
+	private static readonly Vector2I TileFloorA  = new Vector2I(0, 6); // floor variant A
+	private static readonly Vector2I TileFloorB  = new Vector2I(1, 6); // floor variant B
+	private static readonly Vector2I TileWall    = new Vector2I(2, 6); // wall (has collision in tileset)
+	private static readonly Vector2I TileBar     = new Vector2I(0, 7); // bar counter / accent tile
 
 	private void BuildTileMap()
 	{

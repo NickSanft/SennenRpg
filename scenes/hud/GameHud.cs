@@ -48,6 +48,12 @@ public partial class GameHud : CanvasLayer
 		_goldLabel.AddThemeColorOverride("font_color", new Color(1f, 0.9f, 0.3f));
 		vbox.AddChild(_goldLabel);
 
+		// Key hints
+		var hintLabel = new Label { Text = "[Tab] Log  [Esc] Menu" };
+		hintLabel.AddThemeFontSizeOverride("font_size", 7);
+		hintLabel.AddThemeColorOverride("font_color", new Color(0.5f, 0.5f, 0.5f));
+		vbox.AddChild(hintLabel);
+
 		// Apply colorblind palette on load — SettingsManager.ApplyAll() runs before this HUD loads.
 		var mode = SettingsManager.Instance?.Current.ColorblindMode ?? ColorblindMode.Normal;
 		_hpBar.Color = SettingsLogic.HpBarColor(mode);

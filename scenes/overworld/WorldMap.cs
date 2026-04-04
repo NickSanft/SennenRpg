@@ -70,6 +70,7 @@ public partial class WorldMap : Node2D
 			AddChild(GD.Load<PackedScene>(pausePath).Instantiate());
 
 		ApplyDayNightBgm(animate: false);
+		SpawnEntranceLabels();
 
 		_nextEncounterThreshold = (int)GD.RandRange(8, 14);
 	}
@@ -186,5 +187,29 @@ public partial class WorldMap : Node2D
 		string path = GameManager.Instance.IsNight ? NightBgmPath : DayBgmPath;
 		if (string.IsNullOrEmpty(path) || !ResourceLoader.Exists(path)) return;
 		AudioManager.Instance.PlayBgm(path, fadeTime: animate ? 2.5f : 0.2f);
+	}
+
+	// ── Landmark labels ───────────────────────────────────────────────────────
+
+	private void SpawnEntranceLabels()
+	{
+		foreach (Node child in _entrances.GetChildren())
+		{
+			if (child is not WorldMapEntrance entrance) continue;
+			if (string.IsNullOrEmpty(entrance.EntranceName)) continue;
+
+			var label = new Label
+			{
+				Text                = entrance.EntranceName,
+				HorizontalAlignment = HorizontalAlignment.Center,
+				Position            = entrance.Position + new Vector2(-40f, -18f),
+			};
+			label.AddThemeFontSizeOverride("font_size", 8);
+			label.AddThemeConstantOverride("outline_size", 1);
+			label.AddThemeColorOverride("font_outline_color", Colors.Black);
+			label.AddThemeColorOverride("font_color", new Color(1f, 0.9f, 0.5f));
+			label.CustomMinimumSize = new Vector2(80f, 0f);
+			AddChild(label);
+		}
 	}
 }

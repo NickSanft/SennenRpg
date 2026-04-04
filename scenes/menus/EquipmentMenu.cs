@@ -441,7 +441,33 @@ public partial class EquipmentMenu : CanvasLayer
         if (data.BonusResistance != 0) parts.Add($"RES+{data.BonusResistance}");
         if (data.BonusSpeed      != 0) parts.Add($"SPD+{data.BonusSpeed}");
         if (data.BonusLuck       != 0) parts.Add($"LCK+{data.BonusLuck}");
-        return parts.Count > 0 ? $"  [{string.Join(", ", parts)}]" : "";
+        if (parts.Count == 0) return "";
+
+        // Class affinity hint based on the item's strongest stat bonus
+        string affinity = GetClassAffinity(data);
+        string affinityStr = !string.IsNullOrEmpty(affinity) ? $" ({affinity})" : "";
+        return $"  [{string.Join(", ", parts)}]{affinityStr}";
+    }
+
+    private static string GetClassAffinity(EquipmentData data)
+    {
+        // Find the dominant bonus stat and map to the class that values it most
+        int maxBonus = 0;
+        string stat = "";
+        if (data.BonusAttack     > maxBonus) { maxBonus = data.BonusAttack;     stat = "ATK"; }
+        if (data.BonusDefense    > maxBonus) { maxBonus = data.BonusDefense;    stat = "DEF"; }
+        if (data.BonusMagic      > maxBonus) { maxBonus = data.BonusMagic;      stat = "MAG"; }
+        if (data.BonusSpeed      > maxBonus) { maxBonus = data.BonusSpeed;      stat = "SPD"; }
+        if (data.BonusResistance > maxBonus) { maxBonus = data.BonusResistance; stat = "RES"; }
+        if (data.BonusLuck       > maxBonus) { maxBonus = data.BonusLuck;       stat = "LCK"; }
+        if (maxBonus == 0) return "";
+        return stat switch
+        {
+            "ATK" or "DEF" => "Fighter",
+            "MAG" or "RES" => "Mage",
+            "SPD" or "LCK" => "Ranger",
+            _ => "",
+        };
     }
 
     private static string FormatDynamicBonuses(DynamicEquipmentSave? data)
