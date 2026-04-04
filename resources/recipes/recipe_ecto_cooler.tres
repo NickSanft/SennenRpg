@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://core/data/RecipeData.cs" id="1_RecipeData"]
+
+[resource]
+script = ExtResource("1_RecipeData")
+RecipeId = "ecto_cooler"
+DisplayName = "Ecto Cooler"
+Description = "A paranormal refreshment with a spectral kick."
+IngredientPaths = PackedStringArray("res://resources/items/ingredient_ecto_essence.tres", "res://resources/items/ingredient_sugar.tres")
+IngredientCounts = PackedInt32Array(1, 1)
+OutputItemPath = "res://resources/items/cooked_ecto_cooler.tres"
+BaseHealAmount = 20
+Difficulty = 8

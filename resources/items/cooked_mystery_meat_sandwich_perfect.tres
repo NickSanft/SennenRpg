@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://core/data/ItemData.cs" id="1_ItemData"]
+
+[resource]
+script = ExtResource("1_ItemData")
+ItemId = "cooked_mystery_meat_sandwich_perfect"
+DisplayName = "Perfect Mystery Meat Sandwich"
+Description = "A masterfully crafted sandwich. The mystery is how it's so good. Restores 45 HP."
+HealAmount = 45

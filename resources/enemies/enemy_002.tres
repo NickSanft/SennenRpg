@@ -27,3 +27,4 @@ BattleDialogLines = PackedStringArray("* Don't come closer...", "* These thorns 
 GoldDrop = 8
 ExpDrop = 5
 AttackPatternScene = ExtResource("3_pattern")
+BonusLootItemPath = "res://resources/items/ingredient_mystery_meat.tres"

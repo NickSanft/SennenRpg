@@ -1,0 +1,294 @@
+using Godot;
+using System.Collections.Generic;
+using System.Linq;
+using SennenRpg.Autoloads;
+using SennenRpg.Core.Data;
+
+namespace SennenRpg.Scenes.Menus;
+
+/// <summary>
+/// Cooking menu opened from the PauseMenu. Lists available recipes,
+/// shows ingredient requirements, launches the cooking minigame,
+/// and produces food items based on performance quality.
+/// </summary>
+public partial class CookingMenu : CanvasLayer
+{
+    [Signal] public delegate void ClosedEventHandler();
+
+    private static readonly Color Gold       = new(1.0f, 0.85f, 0.1f);
+    private static readonly Color HaveGreen  = new(0.3f, 0.9f, 0.4f);
+    private static readonly Color NeedRed    = new(0.9f, 0.3f, 0.3f);
+    private static readonly Color SubtleGrey = new(0.55f, 0.55f, 0.55f);
+    private static readonly Color BgColour   = new(0.07f, 0.07f, 0.12f, 1f);
+
+    private static readonly string[] RecipePaths =
+    [
+        "res://resources/recipes/recipe_mystery_meat_sandwich.tres",
+        "res://resources/recipes/recipe_ecto_cooler.tres",
+    ];
+
+    private RecipeData[]      _recipes = [];
+    private RecipeData?       _activeRecipe;
+    private CookingMinigame?  _minigame;
+    private VBoxContainer     _recipeList = null!;
+    private Label             _feedbackLabel = null!;
+    private Control           _recipePanel = null!;
+
+    public override void _Ready()
+    {
+        Layer   = 51;
+        Visible = false;
+    }
+
+    public void Open()
+    {
+        LoadRecipes();
+        BuildUI();
+        Visible = true;
+    }
+
+    public override void _UnhandledInput(InputEvent e)
+    {
+        if (!Visible) return;
+        if (_minigame is { Visible: true }) return; // don't close during minigame
+        if (!e.IsActionPressed("ui_cancel")) return;
+        GetViewport().SetInputAsHandled();
+        Close();
+    }
+
+    private void Close()
+    {
+        AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
+        Visible = false;
+        EmitSignal(SignalName.Closed);
+    }
+
+    // ── Data loading ──────────────────────────────────────────────────
+
+    private void LoadRecipes()
+    {
+        var list = new List<RecipeData>();
+        foreach (var path in RecipePaths)
+        {
+            if (!ResourceLoader.Exists(path)) continue;
+            var res = GD.Load<RecipeData>(path);
+            if (res != null) list.Add(res);
+        }
+        _recipes = list.ToArray();
+    }
+
+    // ── UI building ───────────────────────────────────────────────────
+
+    private void BuildUI()
+    {
+        // Clear previous UI
+        foreach (var child in GetChildren())
+            if (child is Node n) n.QueueFree();
+
+        // Overlay
+        var overlay = new ColorRect
+        {
+            Color = new Color(0f, 0f, 0f, 0.75f),
+            AnchorRight = 1f, AnchorBottom = 1f,
+        };
+        AddChild(overlay);
+
+        var centerer = new CenterContainer
+        {
+            AnchorRight = 1f, AnchorBottom = 1f,
+        };
+        AddChild(centerer);
+
+        var panel = new PanelContainer { CustomMinimumSize = new Vector2(400f, 0f) };
+        var style = new StyleBoxFlat
+        {
+            BgColor = BgColour,
+            BorderWidthLeft = 1, BorderWidthRight = 1,
+            BorderWidthTop = 1, BorderWidthBottom = 1,
+            BorderColor = new Color(0.25f, 0.25f, 0.35f),
+            CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4,
+            CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
+        };
+        panel.AddThemeStyleboxOverride("panel", style);
+        centerer.AddChild(panel);
+
+        var margin = new MarginContainer();
+        margin.AddThemeConstantOverride("margin_left", 16);
+        margin.AddThemeConstantOverride("margin_right", 16);
+        margin.AddThemeConstantOverride("margin_top", 12);
+        margin.AddThemeConstantOverride("margin_bottom", 12);
+        panel.AddChild(margin);
+
+        _recipePanel = new VBoxContainer();
+        ((VBoxContainer)_recipePanel).AddThemeConstantOverride("separation", 6);
+        margin.AddChild(_recipePanel);
+
+        // Title
+        var title = new Label
+        {
+            Text = "COOKING",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Modulate = Gold,
+        };
+        title.AddThemeFontSizeOverride("font_size", 18);
+        _recipePanel.AddChild(title);
+        _recipePanel.AddChild(new HSeparator());
+
+        // Recipe rows
+        _recipeList = new VBoxContainer();
+        _recipeList.AddThemeConstantOverride("separation", 8);
+        _recipePanel.AddChild(_recipeList);
+        RefreshRecipeList();
+
+        _recipePanel.AddChild(new HSeparator());
+
+        // Feedback label
+        _feedbackLabel = new Label
+        {
+            Text = "",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        _feedbackLabel.AddThemeFontSizeOverride("font_size", 11);
+        _recipePanel.AddChild(_feedbackLabel);
+
+        // Minigame area (added here but hidden)
+        _minigame = new CookingMinigame { Visible = false };
+        _minigame.CookingCompleted += OnCookingCompleted;
+        _recipePanel.AddChild(_minigame);
+
+        // Hint
+        var hint = new Label
+        {
+            Text = "[Esc] Back",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Modulate = SubtleGrey,
+        };
+        hint.AddThemeFontSizeOverride("font_size", 9);
+        _recipePanel.AddChild(hint);
+    }
+
+    private void RefreshRecipeList()
+    {
+        foreach (var child in _recipeList.GetChildren())
+            child.QueueFree();
+
+        var inv = GameManager.Instance.InventoryItemPaths;
+        Button? firstCookable = null;
+
+        foreach (var recipe in _recipes)
+        {
+            var row = new VBoxContainer();
+            row.AddThemeConstantOverride("separation", 2);
+
+            // Recipe name
+            var nameLabel = new Label { Text = recipe.DisplayName };
+            nameLabel.AddThemeFontSizeOverride("font_size", 13);
+            nameLabel.AddThemeColorOverride("font_color", Gold);
+            row.AddChild(nameLabel);
+
+            // Ingredient list
+            var ingredients = recipe.GetIngredients();
+            var ingRow = new HBoxContainer();
+            ingRow.AddThemeConstantOverride("separation", 12);
+            bool canCook = true;
+
+            foreach (var ing in ingredients)
+            {
+                int have = inv.Count(p => p == ing.ItemPath);
+                bool enough = have >= ing.Count;
+                if (!enough) canCook = false;
+
+                string ingName = ing.ItemPath.GetFile().Replace(".tres", "")
+                    .Replace("ingredient_", "").Replace("_", " ");
+                // Capitalize first letter of each word
+                ingName = System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(ingName);
+
+                var ingLabel = new Label
+                {
+                    Text = $"{ingName} {have}/{ing.Count}",
+                    Modulate = enough ? HaveGreen : NeedRed,
+                };
+                ingLabel.AddThemeFontSizeOverride("font_size", 10);
+                ingRow.AddChild(ingLabel);
+            }
+            row.AddChild(ingRow);
+
+            // Cook button
+            var btn = new Button
+            {
+                Text = "COOK",
+                Disabled = !canCook,
+                CustomMinimumSize = new Vector2(80f, 0f),
+                SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd,
+            };
+            var capturedRecipe = recipe;
+            btn.Pressed += () => OnCookPressed(capturedRecipe);
+            row.AddChild(btn);
+
+            if (canCook && firstCookable == null)
+                firstCookable = btn;
+
+            _recipeList.AddChild(row);
+        }
+
+        firstCookable?.CallDeferred(Control.MethodName.GrabFocus);
+    }
+
+    // ── Cooking flow ──────────────────────────────────────────────────
+
+    private void OnCookPressed(RecipeData recipe)
+    {
+        AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
+
+        // Consume ingredients
+        var ingredients = recipe.GetIngredients();
+        foreach (var ing in ingredients)
+        {
+            for (int i = 0; i < ing.Count; i++)
+                GameManager.Instance.RemoveItem(ing.ItemPath);
+        }
+
+        _activeRecipe = recipe;
+        _recipeList.Visible = false;
+        _feedbackLabel.Text = "Cooking...";
+
+        _minigame!.Activate(recipe.Difficulty);
+    }
+
+    private void OnCookingCompleted(int perfects, int goods, int misses, int totalNotes)
+    {
+        var quality = CookingLogic.DetermineQuality(perfects, goods, totalNotes);
+        string outputPath = CookingLogic.QualityItemPath(_activeRecipe!.OutputItemPath, quality);
+
+        // Fall back to normal if quality variant doesn't exist
+        if (!ResourceLoader.Exists(outputPath))
+            outputPath = _activeRecipe.OutputItemPath;
+
+        GameManager.Instance.AddItem(outputPath);
+
+        string qualityLabel = CookingLogic.QualityLabel(quality);
+        Color qualityColor = quality switch
+        {
+            CookingQuality.Perfect => Gold,
+            CookingQuality.Burnt   => NeedRed,
+            _                      => Colors.White,
+        };
+
+        _feedbackLabel.Text = $"Cooked {_activeRecipe.DisplayName}! ({qualityLabel})";
+        _feedbackLabel.Modulate = qualityColor;
+
+        GD.Print($"[CookingMenu] Cooked {_activeRecipe.DisplayName}: {qualityLabel} " +
+            $"(P:{perfects} G:{goods} M:{misses}/{totalNotes}) → {outputPath}");
+
+        // Reset after a moment
+        GetTree().CreateTimer(2.0f).Timeout += () =>
+        {
+            _feedbackLabel.Text = "";
+            _feedbackLabel.Modulate = Colors.White;
+            _recipeList.Visible = true;
+            _activeRecipe = null;
+            RefreshRecipeList();
+        };
+    }
+}

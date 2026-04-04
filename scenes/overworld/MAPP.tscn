@@ -75,6 +75,26 @@ script = ExtResource("22_shopentry")
 ItemDataPath = "res://resources/items/item_004.tres"
 Price = 5
 
+[sub_resource type="Resource" id="ShopEntry_meat"]
+script = ExtResource("22_shopentry")
+ItemDataPath = "res://resources/items/ingredient_mystery_meat.tres"
+Price = 15
+
+[sub_resource type="Resource" id="ShopEntry_bread"]
+script = ExtResource("22_shopentry")
+ItemDataPath = "res://resources/items/ingredient_bread.tres"
+Price = 10
+
+[sub_resource type="Resource" id="ShopEntry_ecto"]
+script = ExtResource("22_shopentry")
+ItemDataPath = "res://resources/items/ingredient_ecto_essence.tres"
+Price = 25
+
+[sub_resource type="Resource" id="ShopEntry_sugar"]
+script = ExtResource("22_shopentry")
+ItemDataPath = "res://resources/items/ingredient_sugar.tres"
+Price = 5
+
 [node name="MAPP" unique_id=1793046433 instance=ExtResource("1_mapp01")]
 script = ExtResource("2_mapp02")
 
@@ -179,7 +199,7 @@ PatrolSpeed = 18.0
 
 [node name="Rork" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="10" unique_id=914373453 instance=ExtResource("29_rork")]
 position = Vector2(0, -64)
-ShopStock = [SubResource("ShopEntry_ale")]
+ShopStock = [SubResource("ShopEntry_ale"), SubResource("ShopEntry_meat"), SubResource("ShopEntry_bread"), SubResource("ShopEntry_ecto"), SubResource("ShopEntry_sugar")]
 NpcId = "barkeep_mapp"
 TimelinePath = "res://dialog/timelines/npc_barkeep.dtl"
 DisplayName = "Rork"

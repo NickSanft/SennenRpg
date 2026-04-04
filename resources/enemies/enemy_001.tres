@@ -25,3 +25,4 @@ BattleDialogLines = PackedStringArray("* ...", "* Hm?", "* What do you want?", "
 GoldDrop = 5
 ExpDrop = 100
 AttackPatternScene = ExtResource("3_pattern")
+BonusLootItemPath = "res://resources/items/ingredient_ecto_essence.tres"

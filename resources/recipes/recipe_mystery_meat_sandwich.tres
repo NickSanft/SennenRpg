@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="RecipeData" format=3]
+
+[ext_resource type="Script" path="res://core/data/RecipeData.cs" id="1_RecipeData"]
+
+[resource]
+script = ExtResource("1_RecipeData")
+RecipeId = "mystery_meat_sandwich"
+DisplayName = "Mystery Meat Sandwich"
+Description = "A hearty sandwich of unknown origin."
+IngredientPaths = PackedStringArray("res://resources/items/ingredient_mystery_meat.tres", "res://resources/items/ingredient_bread.tres")
+IngredientCounts = PackedInt32Array(1, 1)
+OutputItemPath = "res://resources/items/cooked_mystery_meat_sandwich.tres"
+BaseHealAmount = 30
+Difficulty = 6

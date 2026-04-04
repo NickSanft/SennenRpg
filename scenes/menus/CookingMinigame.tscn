@@ -1,0 +1,6 @@
+[gd_scene format=4]
+[ext_resource type="Script" path="res://scenes/menus/CookingMinigame.cs" id="1"]
+[node name="CookingMinigame" type="Control"]
+script = ExtResource("1")
+custom_minimum_size = Vector2(320, 80)
+visible = false

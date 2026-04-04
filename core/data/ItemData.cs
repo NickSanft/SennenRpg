@@ -9,6 +9,7 @@ public partial class ItemData : Resource
     [Export] public string DisplayName { get; set; } = "";
     [Export] public string Description { get; set; } = "";
     [Export] public Texture2D? Icon { get; set; }
+    [Export] public ItemType Type { get; set; } = ItemType.Consumable;
     [Export] public int HealAmount { get; set; } = 0;
     /// <summary>
     /// When > 0 this item is a Repel: using it in battle grants this many

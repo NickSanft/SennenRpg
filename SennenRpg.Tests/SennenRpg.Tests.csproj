@@ -68,6 +68,11 @@
         <!-- Music metadata — pure logic, no Godot runtime -->
         <Compile Include="../core/data/MusicTrackInfo.cs" />
         <Compile Include="../core/data/MusicMetadata.cs" />
+        <!-- Cooking system — pure logic, no Godot runtime -->
+        <Compile Include="../core/data/ItemType.cs" />
+        <Compile Include="../core/data/CookingQuality.cs" />
+        <Compile Include="../core/data/RecipeIngredient.cs" />
+        <Compile Include="../core/data/CookingLogic.cs" />
     </ItemGroup>
 
 </Project>
