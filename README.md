@@ -40,6 +40,7 @@ A 2D RPG built in **Godot 4.6** with **C# (.NET 10)**. The game features a turn-
 ### Main Menu
 - **New Game** — resets all state, seeds the player with a Bandage item, and loads the test map.
 - **Continue** — loads from `user://save.json` and returns to the last visited map. The button is disabled if no save file exists.
+- **Credits** — shows game and music attribution (Nick Sanft, Divora).
 
 ### Overworld
 - **Player movement** — 8-directional movement at 80 px/s. Blocked during dialog, battle, and pause states.
@@ -55,8 +56,11 @@ A 2D RPG built in **Godot 4.6** with **C# (.NET 10)**. The game features a turn-
 - **Map exits** — transition to another map scene with a configurable spawn point ID. Supports walk-off (auto-trigger) and door (interact) modes.
 - **Cutscene triggers** — play a Dialogic timeline automatically when a map loads (fires once per `OnceFlag`).
 - **Random encounters** — each map has a configurable `RandomEncounterTable`. Every 32 pixels of player movement, the game rolls each encounter's `EncounterChancePerStep` (0–100%). Multiple encounters can coexist on one map with independent probabilities.
-- **Pause menu** — ESC overlay with Resume, Save, and Main Menu options.
-- **HUD** — bottom-left HP bar and player name, always visible during overworld.
+- **Pause menu** — ESC overlay with Resume, Save, Settings, Items, Cook, Equipment, Stats, and Main Menu.
+- **HUD** — bottom-left HP/MP bars, player name, and gold. MP bar hidden for classes with 0 MaxMp. Bars animate smoothly on change.
+- **Now-playing popup** — top-left overlay showing current track title and artist when BGM changes.
+- **Area name popup** — bottom-center label with dark background that fades in on map load.
+- **Minimap** — top-right corner showing player, NPCs, exits, save points, staircase markers, and quest objective markers.
 
 ### MAPP (The Mapp Tavern)
 A fully hand-crafted map scene (`scenes/overworld/MAPP.tscn`) demonstrating all overworld objects. Built entirely in code — no external tile sheets required. Features:
@@ -78,6 +82,24 @@ A small town west of the MAPP Tavern. Players can hire NPC residents (Rain and L
 ### Quest System
 NPCs can offer quests via the `QuestGiver` child node. Quests have typed conditions (e.g., kill count) and reward choices shown on a reward screen. Quest state is tracked by `QuestManager` and persisted via save data.
 
+### Multi-Class System
+Players can switch between four classes (Bard, Fighter, Ranger, Mage) at Rork's tavern. Each class has independent progression:
+- **Separate levels and stats** — switching classes preserves all progress; return to a class right where you left off.
+- **Class-specific growth rates** — Fire Emblem-style probabilistic stat growth (e.g., Fighter favors HP/ATK, Mage favors MAG/RES).
+- **Class-specific combat** — Fight action routes to different minigames per class (Bard→RhythmStrike, Fighter→FightBar, Ranger→RangerAim, Mage→MageRuneInput).
+- **Cross-class bonuses** — reaching level thresholds in one class grants permanent stat bonuses or spell unlocks for ALL classes (e.g., Fighter Lv5 → +5 ATK for all classes).
+- **Visible in StatsMenu** — shows all class levels and earned cross-class bonuses.
+- **Level-up screen** — shows class name and announces newly unlocked cross-class bonuses.
+
+### Cooking System
+Players combine ingredients into food items via a rhythm minigame:
+- **Recipes** — Mystery Meat Sandwich (Meat + Bread) and Ecto Cooler (Ecto Essence + Sugar).
+- **Cooking minigame** — single-lane rhythm game with configurable difficulty. Tracks Perfect/Good/Miss separately.
+- **Quality tiers** — Burnt (0.5x heal), Normal (1.0x), Perfect (1.5x). Each tier produces a distinct item with different stats and description.
+- **Ingredient sources** — purchasable from Rork at the MAPP Tavern or dropped by enemies.
+- **Accessible from pause menu** — COOK button between Items and Equipment.
+- **Categorized inventory** — items tagged as Consumable, Ingredient, Equipment, KeyItem, or Repel. Inventory menu has filter tabs and item stacking (e.g., "Bread x3").
+
 ### Battle System
 
 Battles are a turn-based state machine: **Intro → PlayerTurn ↔ EnemyTurn/RhythmPhase → Victory or Defeat**.
@@ -86,7 +108,7 @@ Battles are a turn-based state machine: **Intro → PlayerTurn ↔ EnemyTurn/Rhy
 
 | Action | Behaviour |
 |---|---|
-| **Fight** | Opens the `RhythmStrike` timing minigame. Press confirm on the beat for a Perfect hit; near-perfect for Good. Grade determines damage multiplier. |
+| **Fight** | Routes to class-specific minigame: Bard→RhythmStrike, Fighter→FightBar, Ranger→RangerAim, Mage→MageRuneInput. Grade determines damage multiplier. Screen shake and enemy flash on hit; stronger on crits. |
 | **Perform** | Opens the Bard skills sub-menu. Each skill launches a rhythm minigame (see below). Results are shown via Dialogic timeline. |
 | **Item** | Opens the inventory. Using an item heals the player and passes the turn. |
 | **Flee** | 50% chance to escape. On failure, the enemy's turn proceeds as normal. |
@@ -136,7 +158,7 @@ All dialog runs through **Dialogic 2**, accessed exclusively via `DialogicBridge
 
 ### Save System
 
-Saves to `user://save.json` using `System.Text.Json`. The saved data includes:
+Saves to `user://save_{slot}.json` (3 slots) using `System.Text.Json`. The saved data includes:
 
 ```
 PlayerHp, PlayerMaxHp, Gold, Exp, PlayerLevel,
@@ -146,8 +168,11 @@ OwnedEquipmentPaths, EquippedItemPaths,
 KillCounts, ActiveQuestIds, CompletedQuestIds,
 TownStepCounter, PendingRainGold, PendingLilyRecipes,
 DynamicEquipmentInventory, EquippedDynamicItemIds,
-PlayTimeSeconds
+ClassProgressionEntries, ActiveClassName,
+PlayTimeSeconds, PlayerClassName, PaletteColors
 ```
+
+Save slot cards show player name, level, class, and play time. Legacy saves (pre-multi-class) are auto-migrated on load.
 
 ---
 
@@ -188,7 +213,7 @@ SennenRpg/
 │   │   └── MellyrRewardData.cs       # Rain gold, Lily recipes (GameManager domain)
 │   ├── interfaces/
 │   │   ├── IInteractable.cs
-│   │   └── IDamageable.cs
+│   │   └── IInteractable.cs
 │   └── extensions/
 │       └── NodeExtensions.cs
 │
@@ -422,7 +447,9 @@ InvincibilityDuration  float   (seconds after being hit)
 ```
 ItemId / DisplayName / Description   string
 Icon                                 Texture2D
+Type                                 ItemType (Consumable, Ingredient, Equipment, KeyItem, Repel)
 HealAmount                           int
+RepelSteps                           int
 ```
 
 ---
@@ -492,12 +519,17 @@ Godot destroys the current scene tree on every scene change. Cross-scene data li
 | Layer | Node |
 |---|---|
 | 0 | InteractPromptBubble / NPC name labels |
-| 2 | GameHud (overworld HP) |
+| 2 | GameHud (overworld HP, MP, gold) |
+| 3 | AreaNameLabel, NowPlayingPopup |
+| 4 | MinimapHud |
 | 10 | BattleHUD |
 | 50 | PauseMenu |
+| 51 | InventoryMenu, ShopMenu, EquipmentMenu, CookingMenu |
+| 52 | StatsMenu, ClassChangeMenu, NpcInteractMenu |
 | 55 | SignReaderPopup |
 | 56 | JournalEntryPopup |
 | 60 | SaveConfirmDialog |
+| 70 | LevelUpScreen |
 | 100 | SceneTransition (fade overlay — always on top) |
 
 ---

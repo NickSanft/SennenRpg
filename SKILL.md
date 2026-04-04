@@ -102,7 +102,8 @@ Reference these when creating new game content to ensure consistency.
 ### Steps
 1. Create `res://resources/items/{id}.tres` (type: `ItemData`):
    - Set `ItemId` (snake_case), `DisplayName`, `Description`, `Icon` (Texture2D)
-   - Set `HealAmount` for healing items, or `EffectType` + `EffectValue` for other effects
+   - Set `Type` to the appropriate `ItemType` enum value (0=Consumable, 1=Ingredient, 3=KeyItem, 4=Repel)
+   - Set `HealAmount` for healing items, `RepelSteps` for repel items
 2. Add sprite to `res://assets/sprites/ui/items/`
 3. To give the player this item at game start, add the path to `InventoryData.Reset()` (called from `GameManager.ResetForNewGame()`):
    ```csharp
@@ -176,17 +177,56 @@ Reference these when creating new game content to ensure consistency.
 
 ---
 
+## Skill: add-recipe
+**Adds a new cooking recipe.**
+
+### Steps
+1. Create ingredient items if needed (see **add-item** with `Type = 1` for Ingredient)
+2. Create output food items — 3 quality variants:
+   - `res://resources/items/cooked_{name}.tres` — Normal quality, base HealAmount
+   - `res://resources/items/cooked_{name}_burnt.tres` — Burnt quality, HealAmount = base * 0.5
+   - `res://resources/items/cooked_{name}_perfect.tres` — Perfect quality, HealAmount = base * 1.5
+   - All three should have `Type = 0` (Consumable)
+3. Create recipe resource `res://resources/recipes/recipe_{name}.tres` (type: `RecipeData`):
+   - Set `RecipeId`, `DisplayName`, `Description`
+   - Set `IngredientPaths` (parallel string array of ingredient .tres paths)
+   - Set `IngredientCounts` (parallel int array of quantities needed)
+   - Set `OutputItemPath` to the Normal quality .tres
+   - Set `BaseHealAmount`, `Difficulty` (number of rhythm notes, 6-8 recommended)
+4. Add the recipe path to the `RecipePaths` array in `scenes/menus/CookingMenu.cs`
+5. Optionally add ingredients to shop stock (ShopItemEntry sub-resources on NPC)
+6. Optionally add ingredients to enemy loot (`BonusLootItemPath` on EnemyData .tres)
+
+---
+
+## Skill: add-music-track
+**Registers a new music track with metadata.**
+
+### Steps
+1. Place the audio file in `assets/music/` with a clean title name (e.g., `My Track.wav`)
+2. Add an entry to the registry in `core/data/MusicMetadata.cs`:
+   ```csharp
+   ["res://assets/music/My Track.wav"] = new("Artist", "Album", trackNumber, "My Track", "res://assets/music/My Track.wav"),
+   ```
+3. Reference the track path in map `BgmPath` exports, `BattleBgmPath` on encounters/enemies, etc.
+4. The now-playing popup will automatically display when the track starts playing
+
+---
+
 ## Key Paths Quick Reference
 | What | Path |
 |---|---|
 | Enemy resources | `res://resources/enemies/*.tres` |
 | Encounter resources | `res://resources/encounters/*.tres` |
 | Item resources | `res://resources/items/*.tres` |
+| Recipe resources | `res://resources/recipes/*.tres` |
+| Character stats/growth | `res://resources/characters/*.tres` |
 | Map scenes | `res://scenes/overworld/maps/*.tscn` |
 | Enemy battle scenes | `res://scenes/battle/enemies/specific/*.tscn` |
 | Rhythm patterns | `res://scenes/battle/rhythm/patterns/*.tscn` |
 | Dialog timelines | `res://dialog/timelines/*.dtl` |
 | Dialog characters | `res://dialog/characters/*.dch` |
-| BGM audio | `res://assets/audio/bgm/*.ogg` |
-| SFX audio | `res://assets/audio/sfx/*.ogg` |
-| Sprites | `res://assets/sprites/{player,enemies,overworld,ui}/` |
+| Music tracks | `res://assets/music/*.wav` |
+| SFX audio | `res://assets/audio/sfx/*.wav` |
+| Sprites | `res://assets/sprites/{player,enemies,npcs,overworld,ui}/` |
+| Shaders | `res://assets/shaders/*.gdshader` |
