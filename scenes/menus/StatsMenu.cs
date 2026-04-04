@@ -62,7 +62,7 @@ public partial class StatsMenu : CanvasLayer
         // PanelContainer auto-sizes to content and provides the dark background via StyleBox.
         var panelContainer = new PanelContainer
         {
-            CustomMinimumSize = new Vector2(360f, 0f),
+            CustomMinimumSize = new Vector2(420f, 0f),
         };
         UiTheme.ApplyPanelTheme(panelContainer);
         centerer.AddChild(panelContainer);
@@ -94,12 +94,12 @@ public partial class StatsMenu : CanvasLayer
 
         // Player / level header
         _headerLabel = new Label { HorizontalAlignment = HorizontalAlignment.Center };
-        _headerLabel.AddThemeFontSizeOverride("font_size", 13);
+        _headerLabel.AddThemeFontSizeOverride("font_size", 12);
         outer.AddChild(_headerLabel);
 
         // XP label
         _xpLabel = new Label { HorizontalAlignment = HorizontalAlignment.Center };
-        _xpLabel.AddThemeFontSizeOverride("font_size", 11);
+        _xpLabel.AddThemeFontSizeOverride("font_size", 12);
         outer.AddChild(_xpLabel);
 
         // XP bar: background ColorRect containing the fill bar as a child
@@ -127,14 +127,14 @@ public partial class StatsMenu : CanvasLayer
 
         // Stat rows (one Label; monospace-aligned via fixed-width columns)
         _statsLabel = new Label { AutowrapMode = TextServer.AutowrapMode.Off };
-        _statsLabel.AddThemeFontSizeOverride("font_size", 11);
+        _statsLabel.AddThemeFontSizeOverride("font_size", 12);
         outer.AddChild(_statsLabel);
 
         outer.AddChild(new HSeparator());
 
         // Class levels section
         _classLabel = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
-        _classLabel.AddThemeFontSizeOverride("font_size", 10);
+        _classLabel.AddThemeFontSizeOverride("font_size", 16);
         outer.AddChild(_classLabel);
 
         outer.AddChild(new HSeparator());
@@ -146,11 +146,11 @@ public partial class StatsMenu : CanvasLayer
             HorizontalAlignment = HorizontalAlignment.Center,
             Modulate            = Gold,
         };
-        bonusHeader.AddThemeFontSizeOverride("font_size", 11);
+        bonusHeader.AddThemeFontSizeOverride("font_size", 12);
         outer.AddChild(bonusHeader);
 
         _bonusLabel = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
-        _bonusLabel.AddThemeFontSizeOverride("font_size", 10);
+        _bonusLabel.AddThemeFontSizeOverride("font_size", 16);
         outer.AddChild(_bonusLabel);
 
         outer.AddChild(new HSeparator());
@@ -161,7 +161,7 @@ public partial class StatsMenu : CanvasLayer
             HorizontalAlignment = HorizontalAlignment.Center,
             Modulate            = SubtleGrey,
         };
-        hint.AddThemeFontSizeOverride("font_size", 9);
+        hint.AddThemeFontSizeOverride("font_size", 18);
         outer.AddChild(hint);
     }
 
@@ -184,7 +184,7 @@ public partial class StatsMenu : CanvasLayer
             CustomMinimumSize   = new Vector2(width, 0f),
             Modulate            = new Color(0.55f, 0.55f, 0.55f),
         };
-        lbl.AddThemeFontSizeOverride("font_size", 10);
+        lbl.AddThemeFontSizeOverride("font_size", 16);
         row.AddChild(lbl);
     }
 

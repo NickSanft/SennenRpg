@@ -143,7 +143,7 @@ public partial class EquipmentMenu : CanvasLayer
             HorizontalAlignment = HorizontalAlignment.Center,
             Modulate            = SubtleGrey,
         };
-        hint.AddThemeFontSizeOverride("font_size", 9);
+        hint.AddThemeFontSizeOverride("font_size", 18);
         outer.AddChild(hint);
     }
 
@@ -200,7 +200,7 @@ public partial class EquipmentMenu : CanvasLayer
             FitContent    = true,
             ScrollActive  = false,
         };
-        _statsLabel.AddThemeFontSizeOverride("normal_font_size", 11);
+        _statsLabel.AddThemeFontSizeOverride("normal_font_size", 12);
         parent.AddChild(_statsLabel);
 
         RefreshStatsLabel();
@@ -220,7 +220,7 @@ public partial class EquipmentMenu : CanvasLayer
             HorizontalAlignment = HorizontalAlignment.Center,
             Modulate            = Gold,
         };
-        _itemPickerTitle.AddThemeFontSizeOverride("font_size", 11);
+        _itemPickerTitle.AddThemeFontSizeOverride("font_size", 12);
         _itemPickerPanel.AddChild(_itemPickerTitle);
 
         _itemPickerPanel.AddChild(new HSeparator());
@@ -343,7 +343,7 @@ public partial class EquipmentMenu : CanvasLayer
                 Text     = "No compatible items",
                 Modulate = SubtleGrey,
             };
-            none.AddThemeFontSizeOverride("font_size", 10);
+            none.AddThemeFontSizeOverride("font_size", 16);
             _itemPickerList.AddChild(none);
         }
 
@@ -353,6 +353,8 @@ public partial class EquipmentMenu : CanvasLayer
         // Show picker, hide stat panel
         _statsLabel.Visible      = false;
         _itemPickerPanel.Visible = true;
+        UiTheme.ApplyPixelFontToAll(_itemPickerPanel);
+        UiTheme.ApplyToAllButtons(_itemPickerPanel);
 
         // Focus first picker button
         if (_itemPickerList.GetChildCount() > 0 && _itemPickerList.GetChild(0) is Button first)
@@ -362,7 +364,7 @@ public partial class EquipmentMenu : CanvasLayer
     private void AddPickerOption(string text, System.Action action)
     {
         var btn = new Button { Text = text };
-        btn.AddThemeFontSizeOverride("font_size", 10);
+        btn.AddThemeFontSizeOverride("font_size", 16);
         btn.Pressed += action;
         _itemPickerList.AddChild(btn);
     }
@@ -407,6 +409,8 @@ public partial class EquipmentMenu : CanvasLayer
             btn.Refresh(name);
         }
         RefreshStatsLabel();
+        UiTheme.ApplyPixelFontToAll(this);
+        UiTheme.ApplyToAllButtons(this);
     }
 
     private void RefreshStatsLabel()

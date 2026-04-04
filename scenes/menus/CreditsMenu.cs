@@ -37,7 +37,7 @@ public partial class CreditsMenu : Node2D
 
         var panelContainer = new PanelContainer
         {
-            CustomMinimumSize = new Vector2(380f, 0f),
+            CustomMinimumSize = new Vector2(450f, 0f),
         };
         UiTheme.ApplyPanelTheme(panelContainer);
         centerer.AddChild(panelContainer);

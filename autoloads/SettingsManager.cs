@@ -100,8 +100,36 @@ public partial class SettingsManager : Node
         ApplyTextSize(s);
         ApplyColorblind(s);
         ApplyHighContrast(s);
+        ApplyWindowScale(s);
         // Full-screen shader: affects all sprites, tiles, and HUDs
         AccessibilityOverlay.Instance?.Apply(s.ColorblindMode, s.HighContrastMode);
+    }
+
+    private void ApplyWindowScale(SettingsData s)
+    {
+        var window = GetWindow();
+        if (window == null) return;
+
+        if (s.WindowScale == WindowScale.Fullscreen || s.Fullscreen)
+        {
+            window.Mode = Window.ModeEnum.Fullscreen;
+        }
+        else
+        {
+            window.Mode = Window.ModeEnum.Windowed;
+            window.Borderless = false;
+            var size = SettingsLogic.WindowSize(s.WindowScale);
+            window.Size = size;
+            // Center the window on screen
+            var screenSize = DisplayServer.ScreenGetSize();
+            window.Position = (screenSize - size) / 2;
+        }
+
+        DisplayServer.WindowSetVsyncMode(s.VSync
+            ? DisplayServer.VSyncMode.Enabled
+            : DisplayServer.VSyncMode.Disabled);
+
+        GD.Print($"[SettingsManager] Window scale applied: {s.WindowScale} → {window.Size}");
     }
 
     // ── Audio ─────────────────────────────────────────────────────────────

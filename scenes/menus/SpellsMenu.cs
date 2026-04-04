@@ -60,7 +60,7 @@ public partial class SpellsMenu : CanvasLayer
         var centerer = new CenterContainer { AnchorRight = 1f, AnchorBottom = 1f };
         AddChild(centerer);
 
-        var panel = new PanelContainer { CustomMinimumSize = new Vector2(380f, 0f) };
+        var panel = new PanelContainer { CustomMinimumSize = new Vector2(450f, 0f) };
         UiTheme.ApplyPanelTheme(panel);
         centerer.AddChild(panel);
 
@@ -96,7 +96,7 @@ public partial class SpellsMenu : CanvasLayer
             Text = "",
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
-        _descLabel.AddThemeFontSizeOverride("font_size", 10);
+        _descLabel.AddThemeFontSizeOverride("font_size", 16);
         outer.AddChild(_descLabel);
 
         _feedbackLabel = new Label
@@ -104,7 +104,7 @@ public partial class SpellsMenu : CanvasLayer
             Text = "",
             HorizontalAlignment = HorizontalAlignment.Center,
         };
-        _feedbackLabel.AddThemeFontSizeOverride("font_size", 11);
+        _feedbackLabel.AddThemeFontSizeOverride("font_size", 12);
         outer.AddChild(_feedbackLabel);
 
         var hint = new Label
@@ -113,7 +113,7 @@ public partial class SpellsMenu : CanvasLayer
             HorizontalAlignment = HorizontalAlignment.Center,
             Modulate = SubtleGrey,
         };
-        hint.AddThemeFontSizeOverride("font_size", 9);
+        hint.AddThemeFontSizeOverride("font_size", 18);
         outer.AddChild(hint);
 
         RefreshSpellList();
@@ -147,7 +147,7 @@ public partial class SpellsMenu : CanvasLayer
                 Text = $"{spell.MpCost} MP",
                 Modulate = MpBlue,
             };
-            mpLabel.AddThemeFontSizeOverride("font_size", 10);
+            mpLabel.AddThemeFontSizeOverride("font_size", 16);
             row.AddChild(mpLabel);
 
             if (spell.OverworldUsable)
@@ -176,7 +176,7 @@ public partial class SpellsMenu : CanvasLayer
                     Text = "Battle only",
                     Modulate = SubtleGrey,
                 };
-                infoLabel.AddThemeFontSizeOverride("font_size", 9);
+                infoLabel.AddThemeFontSizeOverride("font_size", 18);
                 row.AddChild(infoLabel);
             }
 
@@ -191,7 +191,7 @@ public partial class SpellsMenu : CanvasLayer
                 Modulate = SubtleGrey,
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
-            empty.AddThemeFontSizeOverride("font_size", 11);
+            empty.AddThemeFontSizeOverride("font_size", 12);
             _spellList.AddChild(empty);
         }
 

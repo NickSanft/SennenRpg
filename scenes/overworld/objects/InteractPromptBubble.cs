@@ -41,17 +41,17 @@ public partial class InteractPromptBubble : Node2D
 
 	public override void _Ready()
 	{
-		_canvas     = new CanvasLayer { Layer = 0 };
+		// With canvas_items stretch mode, world-space nodes scale with the viewport.
+		// No CanvasLayer needed — just add as children of this Node2D.
 		_screenNode = new Node2D { Visible = false };
 		_bobNode    = new Node2D();
+		_canvas     = null!; // unused but kept for field compatibility
 
 		var font = Core.Data.UiTheme.LoadPixelFont();
 		_labelNode = new Label
 		{
 			Text                = Core.Extensions.InputMapExtensions.HintFor(_action, _label),
 			HorizontalAlignment = HorizontalAlignment.Center,
-			CustomMinimumSize   = new Vector2(60, 0),
-			Position            = new Vector2(-30, 0),
 			LabelSettings       = new LabelSettings
 			{
 				Font         = font,
@@ -66,44 +66,27 @@ public partial class InteractPromptBubble : Node2D
 		var panelStyle = new StyleBoxFlat
 		{
 			BgColor = Core.Data.UiTheme.PanelBg with { A = 0.85f },
-			ContentMarginLeft = 6, ContentMarginRight = 6,
-			ContentMarginTop = 2, ContentMarginBottom = 2,
-			CornerRadiusTopLeft = 3, CornerRadiusTopRight = 3,
-			CornerRadiusBottomLeft = 3, CornerRadiusBottomRight = 3,
+			ContentMarginLeft = 4, ContentMarginRight = 4,
+			ContentMarginTop = 1, ContentMarginBottom = 1,
+			CornerRadiusTopLeft = 2, CornerRadiusTopRight = 2,
+			CornerRadiusBottomLeft = 2, CornerRadiusBottomRight = 2,
 			BorderWidthLeft = 1, BorderWidthRight = 1,
 			BorderWidthTop = 1, BorderWidthBottom = 1,
 			BorderColor = Core.Data.UiTheme.PanelBorder,
 		};
 		panel.AddThemeStyleboxOverride("panel", panelStyle);
 		panel.Position = new Vector2(-40, -2);
-		// Reset label position since it's now inside the panel
 		_labelNode.Position = Vector2.Zero;
-		_labelNode.CustomMinimumSize = new Vector2(0, 0);
 		panel.AddChild(_labelNode);
 		_bobNode.AddChild(panel);
 		_screenNode.AddChild(_bobNode);
-		_canvas.AddChild(_screenNode);
-		GetTree().Root.AddChild(_canvas);
-	}
-
-	public override void _Process(double delta)
-	{
-		if (!_screenNode.Visible) return;
-		var raw = GetViewportTransform() * GlobalPosition;
-		_screenNode.Position = new Vector2(Mathf.Round(raw.X), Mathf.Round(raw.Y));
+		AddChild(_screenNode);
 	}
 
 	public override void _ExitTree()
 	{
-		// QueueFree the canvas (which also frees _screenNode and _bobNode as its children).
-		// Null all GodotObject fields immediately so Godot's hot-reload serializer does not
-		// encounter freed native objects when it runs SaveGodotObjectData this frame.
 		_tween?.Kill();
-		_tween      = null;
-		_canvas?.QueueFree();
-		_canvas     = null!;
-		_screenNode = null!;
-		_bobNode    = null!;
+		_tween = null;
 	}
 
 	public void ShowBubble()

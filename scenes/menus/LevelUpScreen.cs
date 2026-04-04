@@ -79,7 +79,7 @@ public partial class LevelUpScreen : CanvasLayer
         // PanelContainer auto-sizes to content; StyleBoxFlat provides the background + border
         var panelContainer = new PanelContainer
         {
-            CustomMinimumSize = new Vector2(340f, 0f),
+            CustomMinimumSize = new Vector2(400f, 0f),
         };
         UiTheme.ApplyPanelTheme(panelContainer);
         centerer.AddChild(panelContainer);
@@ -103,7 +103,7 @@ public partial class LevelUpScreen : CanvasLayer
             HorizontalAlignment = HorizontalAlignment.Center,
             Modulate            = ColourGold,
         };
-        _titleLabel.AddThemeFontSizeOverride("font_size", 20);
+        _titleLabel.AddThemeFontSizeOverride("font_size", 16);
         vbox.AddChild(_titleLabel);
 
         // Level line
@@ -113,7 +113,7 @@ public partial class LevelUpScreen : CanvasLayer
             HorizontalAlignment = HorizontalAlignment.Center,
             Modulate            = ColourWhite,
         };
-        _levelLabel.AddThemeFontSizeOverride("font_size", 13);
+        _levelLabel.AddThemeFontSizeOverride("font_size", 12);
         vbox.AddChild(_levelLabel);
 
         vbox.AddChild(new HSeparator());
@@ -166,7 +166,7 @@ public partial class LevelUpScreen : CanvasLayer
             Modulate            = ColourGold,
             Visible             = false,
         };
-        _bonusLabel.AddThemeFontSizeOverride("font_size", 11);
+        _bonusLabel.AddThemeFontSizeOverride("font_size", 12);
         vbox.AddChild(_bonusLabel);
 
         vbox.AddChild(new HSeparator());
@@ -179,7 +179,7 @@ public partial class LevelUpScreen : CanvasLayer
             HorizontalAlignment = HorizontalAlignment.Center,
             Modulate            = new Color(0.6f, 0.6f, 0.6f),
         };
-        hint.AddThemeFontSizeOverride("font_size", 10);
+        hint.AddThemeFontSizeOverride("font_size", 16);
         vbox.AddChild(hint);
     }
 

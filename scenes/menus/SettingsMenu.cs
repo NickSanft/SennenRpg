@@ -28,6 +28,9 @@ public partial class SettingsMenu : CanvasLayer
 	private CheckButton  _highContrastCheck = null!;
 	private OptionButton _colorblindOption  = null!;
 	private CheckButton  _screenFlashCheck  = null!;
+	private OptionButton _windowScaleOption = null!;
+	private CheckButton  _vsyncCheck        = null!;
+	private CheckButton  _showFpsCheck      = null!;
 
 	// Gameplay
 	private OptionButton _difficultyOption = null!;
@@ -158,10 +161,18 @@ public partial class SettingsMenu : CanvasLayer
 	private VBoxContainer BuildDisplayTab()
 	{
 		var tab = MakeTab("Display");
+		_windowScaleOption = AddOptionRow(tab, "Window Size",
+			SettingsLogic.WindowScaleLabel(WindowScale.Scale1x),
+			SettingsLogic.WindowScaleLabel(WindowScale.Scale2x),
+			SettingsLogic.WindowScaleLabel(WindowScale.Scale3x),
+			SettingsLogic.WindowScaleLabel(WindowScale.Scale4x),
+			SettingsLogic.WindowScaleLabel(WindowScale.Fullscreen));
+		_vsyncCheck        = AddCheckRow(tab,  "VSync");
 		_textSizeOption    = AddOptionRow(tab, "Text Size",       "Small", "Medium", "Large");
 		_highContrastCheck = AddCheckRow(tab,  "High Contrast Mode");
 		_colorblindOption  = AddOptionRow(tab, "Colorblind Mode", "Normal", "Protanopia", "Deuteranopia", "Tritanopia");
 		_screenFlashCheck  = AddCheckRow(tab,  "Screen Flash Effects");
+		_showFpsCheck      = AddCheckRow(tab,  "Show FPS Counter");
 		return tab;
 	}
 
@@ -188,7 +199,7 @@ public partial class SettingsMenu : CanvasLayer
 			AutowrapMode = TextServer.AutowrapMode.WordSmart,
 			Modulate     = SubtleGrey,
 		};
-		hint.AddThemeFontSizeOverride("font_size", 10);
+		hint.AddThemeFontSizeOverride("font_size", 16);
 		tab.AddChild(hint);
 
 		return tab;
@@ -282,7 +293,7 @@ public partial class SettingsMenu : CanvasLayer
 				Text              = FormatActionName(actionStr),
 				CustomMinimumSize = new Vector2(100f, 0f),
 			};
-			actionLabel.AddThemeFontSizeOverride("font_size", 10);
+			actionLabel.AddThemeFontSizeOverride("font_size", 16);
 
 			// Keyboard binding
 			var keyLabel = new Label
@@ -292,10 +303,10 @@ public partial class SettingsMenu : CanvasLayer
 				CustomMinimumSize   = new Vector2(80f, 0f),
 				Name                = "Key_" + actionStr,
 			};
-			keyLabel.AddThemeFontSizeOverride("font_size", 10);
+			keyLabel.AddThemeFontSizeOverride("font_size", 16);
 
 			var rebindKeyBtn = new Button { Text = "Key" };
-			rebindKeyBtn.AddThemeFontSizeOverride("font_size", 9);
+			rebindKeyBtn.AddThemeFontSizeOverride("font_size", 18);
 			string capturedAction = actionStr;
 			rebindKeyBtn.Pressed += () => StartRebind(capturedAction, keyLabel, rebindKeyBtn);
 
@@ -307,10 +318,10 @@ public partial class SettingsMenu : CanvasLayer
 				CustomMinimumSize   = new Vector2(60f, 0f),
 				Name                = "Pad_" + actionStr,
 			};
-			padLabel.AddThemeFontSizeOverride("font_size", 10);
+			padLabel.AddThemeFontSizeOverride("font_size", 16);
 
 			var rebindPadBtn = new Button { Text = "Pad" };
-			rebindPadBtn.AddThemeFontSizeOverride("font_size", 9);
+			rebindPadBtn.AddThemeFontSizeOverride("font_size", 18);
 			rebindPadBtn.Pressed += () => StartRebind(capturedAction, padLabel, rebindPadBtn);
 
 			row.AddChild(actionLabel);
@@ -446,6 +457,9 @@ public partial class SettingsMenu : CanvasLayer
 		_sfxSlider.Value    = s.SfxVolume;
 		_dialogSlider.Value = s.DialogTypingVolume;
 
+		_windowScaleOption.Selected      = (int)s.WindowScale;
+		_vsyncCheck.ButtonPressed        = s.VSync;
+		_showFpsCheck.ButtonPressed      = s.ShowFps;
 		_textSizeOption.Selected         = (int)s.TextSize;
 		_highContrastCheck.ButtonPressed = s.HighContrastMode;
 		_colorblindOption.Selected       = (int)s.ColorblindMode;
@@ -499,6 +513,9 @@ public partial class SettingsMenu : CanvasLayer
 			SfxVolume          = (float)_sfxSlider.Value,
 			DialogTypingVolume = (float)_dialogSlider.Value,
 
+			WindowScale        = (WindowScale)_windowScaleOption.Selected,
+			VSync              = _vsyncCheck.ButtonPressed,
+			ShowFps            = _showFpsCheck.ButtonPressed,
 			TextSize           = (TextSize)_textSizeOption.Selected,
 			HighContrastMode   = _highContrastCheck.ButtonPressed,
 			ColorblindMode     = (ColorblindMode)_colorblindOption.Selected,

@@ -83,7 +83,7 @@ public partial class ClassChangeMenu : CanvasLayer
 
         var panelContainer = new PanelContainer
         {
-            CustomMinimumSize = new Vector2(400f, 0f),
+            CustomMinimumSize = new Vector2(500f, 0f),
         };
         UiTheme.ApplyPanelTheme(panelContainer);
         centerer.AddChild(panelContainer);
@@ -136,7 +136,7 @@ public partial class ClassChangeMenu : CanvasLayer
             if (isActive)
                 btn.Modulate = ActiveGreen;
 
-            btn.AddThemeFontSizeOverride("font_size", 13);
+            btn.AddThemeFontSizeOverride("font_size", 12);
 
             var capturedClass = cls;
             btn.Pressed += () => OnClassSelected(capturedClass);
@@ -156,7 +156,7 @@ public partial class ClassChangeMenu : CanvasLayer
             Text = "Select a class to preview stats.",
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
-        _infoLabel.AddThemeFontSizeOverride("font_size", 10);
+        _infoLabel.AddThemeFontSizeOverride("font_size", 16);
         _outer.AddChild(_infoLabel);
 
         _outer.AddChild(new HSeparator());
@@ -175,7 +175,7 @@ public partial class ClassChangeMenu : CanvasLayer
         {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
-        _bonusLabel.AddThemeFontSizeOverride("font_size", 10);
+        _bonusLabel.AddThemeFontSizeOverride("font_size", 16);
         _outer.AddChild(_bonusLabel);
         RefreshBonusList();
 
@@ -187,7 +187,7 @@ public partial class ClassChangeMenu : CanvasLayer
             HorizontalAlignment = HorizontalAlignment.Center,
             Modulate            = SubtleGrey,
         };
-        hint.AddThemeFontSizeOverride("font_size", 9);
+        hint.AddThemeFontSizeOverride("font_size", 18);
         _outer.AddChild(hint);
 
         // Connect focus signals for stat preview

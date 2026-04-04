@@ -202,6 +202,8 @@ public partial class WorldMap : Node2D
 
 	private void SpawnEntranceLabels()
 	{
+		// With canvas_items stretch mode, world-space labels scale with everything.
+		// No CanvasLayer needed.
 		foreach (Node child in _entrances.GetChildren())
 		{
 			if (child is not WorldMapEntrance entrance) continue;
@@ -211,13 +213,13 @@ public partial class WorldMap : Node2D
 			{
 				Text                = entrance.EntranceName,
 				HorizontalAlignment = HorizontalAlignment.Center,
-				Position            = entrance.Position + new Vector2(-40f, -18f),
+				Position            = entrance.Position + new Vector2(-40f, -14f),
+				CustomMinimumSize   = new Vector2(80f, 0f),
 			};
 			label.AddThemeFontSizeOverride("font_size", 8);
 			label.AddThemeConstantOverride("outline_size", 1);
 			label.AddThemeColorOverride("font_outline_color", Colors.Black);
-			label.AddThemeColorOverride("font_color", new Color(1f, 0.9f, 0.5f));
-			label.CustomMinimumSize = new Vector2(80f, 0f);
+			label.AddThemeColorOverride("font_color", UiTheme.Gold);
 			AddChild(label);
 		}
 	}
@@ -226,10 +228,10 @@ public partial class WorldMap : Node2D
 
 	private void SpawnParallaxBackground()
 	{
-		// Render clouds as a subtle overlay above tiles but below HUD.
-		// Using CanvasLayer 1 (above world tiles at layer 0, below GameHud at 2).
-		var cloudLayer = new CanvasLayer { Layer = 1 };
-		AddChild(cloudLayer);
+		// Render clouds as world-space Node2D children with high ZIndex
+		// so they appear above tiles. With canvas_items stretch they scale correctly.
+		var cloudContainer = new Node2D { ZIndex = 100 };
+		AddChild(cloudContainer);
 
 		var rng = new RandomNumberGenerator();
 		rng.Seed = 42;
@@ -249,7 +251,7 @@ public partial class WorldMap : Node2D
 				Size     = new Vector2(w, h),
 				MouseFilter = Control.MouseFilterEnum.Ignore,
 			};
-			cloudLayer.AddChild(cloud);
+			cloudContainer.AddChild(cloud);
 
 			// Slow drift animation
 			var drift = CreateTween().SetLoops();

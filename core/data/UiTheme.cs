@@ -85,8 +85,8 @@ public static class UiTheme
             CornerRadiusTopRight   = 4,
             CornerRadiusBottomLeft = 4,
             CornerRadiusBottomRight = 4,
-            ContentMarginLeft     = 8,
-            ContentMarginRight    = 8,
+            ContentMarginLeft     = 10,
+            ContentMarginRight    = 10,
             ContentMarginTop      = 4,
             ContentMarginBottom   = 4,
         };
@@ -109,8 +109,8 @@ public static class UiTheme
             CornerRadiusTopRight   = 4,
             CornerRadiusBottomLeft = 4,
             CornerRadiusBottomRight = 4,
-            ContentMarginLeft     = 8,
-            ContentMarginRight    = 8,
+            ContentMarginLeft     = 10,
+            ContentMarginRight    = 10,
             ContentMarginTop      = 4,
             ContentMarginBottom   = 4,
         };
@@ -150,7 +150,7 @@ public static class UiTheme
 
         var theme = new Theme();
         theme.DefaultFont = font;
-        theme.DefaultFontSize = 10;
+        theme.DefaultFontSize = 12;
 
         // Button styling
         theme.SetStylebox("normal",  "Button", CreateButtonStyle());
@@ -162,7 +162,7 @@ public static class UiTheme
         theme.SetColor("font_focus_color", "Button", Gold);
 
         ThemeDB.FallbackFont     = font;
-        ThemeDB.FallbackFontSize = 10;
+        ThemeDB.FallbackFontSize = 12;
     }
 
     /// <summary>

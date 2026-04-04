@@ -73,7 +73,7 @@ public partial class QuestRewardScreen : CanvasLayer
 			Text                = "QUEST COMPLETE  ★",
 			HorizontalAlignment = HorizontalAlignment.Center,
 		};
-		header.AddThemeFontSizeOverride("font_size", 22);
+		header.AddThemeFontSizeOverride("font_size", 16);
 		header.AddThemeColorOverride("font_color", GoldColour);
 		outer.AddChild(header);
 
@@ -82,13 +82,13 @@ public partial class QuestRewardScreen : CanvasLayer
 
 		// Quest title
 		_questTitleLabel = new Label { HorizontalAlignment = HorizontalAlignment.Center };
-		_questTitleLabel.AddThemeFontSizeOverride("font_size", 16);
+		_questTitleLabel.AddThemeFontSizeOverride("font_size", 14);
 		_questTitleLabel.AddThemeColorOverride("font_color", Colors.White);
 		outer.AddChild(_questTitleLabel);
 
 		// EXP display
 		_expLabel = new Label { HorizontalAlignment = HorizontalAlignment.Center };
-		_expLabel.AddThemeFontSizeOverride("font_size", 14);
+		_expLabel.AddThemeFontSizeOverride("font_size", 12);
 		_expLabel.AddThemeColorOverride("font_color", AccentColor);
 		outer.AddChild(_expLabel);
 
@@ -99,7 +99,7 @@ public partial class QuestRewardScreen : CanvasLayer
 			Text                = "Choose your reward:",
 			HorizontalAlignment = HorizontalAlignment.Center,
 		};
-		chooseLabel.AddThemeFontSizeOverride("font_size", 13);
+		chooseLabel.AddThemeFontSizeOverride("font_size", 12);
 		chooseLabel.AddThemeColorOverride("font_color", new Color(0.8f, 0.8f, 0.8f));
 		outer.AddChild(chooseLabel);
 
@@ -135,7 +135,7 @@ public partial class QuestRewardScreen : CanvasLayer
 					Text = rewards[i].Label,
 					CustomMinimumSize = new Vector2(0f, 36f),
 				};
-				btn.AddThemeFontSizeOverride("font_size", 14);
+				btn.AddThemeFontSizeOverride("font_size", 12);
 				btn.Pressed += () => Choose(capturedIndex);
 				_buttonBox.AddChild(btn);
 

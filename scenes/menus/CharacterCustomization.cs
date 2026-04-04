@@ -126,7 +126,7 @@ public partial class CharacterCustomization : Node2D
             vbox.AddThemeConstantOverride("separation", 6);
 
             var nameLabel = new Label { Text = stats.ClassName, HorizontalAlignment = HorizontalAlignment.Center };
-            nameLabel.AddThemeFontSizeOverride("font_size", 16);
+            nameLabel.AddThemeFontSizeOverride("font_size", 14);
 
             var descLabel = new Label
             {
@@ -275,7 +275,7 @@ public partial class CharacterCustomization : Node2D
         _targetColors = (Color[])_sourceColors.Clone();
 
         var header = new Label { Text = "Customise Colours", HorizontalAlignment = HorizontalAlignment.Center };
-        header.AddThemeFontSizeOverride("font_size", 16);
+        header.AddThemeFontSizeOverride("font_size", 14);
         tab.AddChild(header);
 
         // Live preview

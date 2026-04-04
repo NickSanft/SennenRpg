@@ -40,14 +40,14 @@ public partial class SaveSlotMenu : Node2D
             AnchorRight  = 1f,
             AnchorBottom = 1f,
         };
-        margin.AddThemeConstantOverride("margin_left",   60);
-        margin.AddThemeConstantOverride("margin_right",  60);
-        margin.AddThemeConstantOverride("margin_top",    30);
-        margin.AddThemeConstantOverride("margin_bottom", 30);
+        margin.AddThemeConstantOverride("margin_left",   40);
+        margin.AddThemeConstantOverride("margin_right",  40);
+        margin.AddThemeConstantOverride("margin_top",    20);
+        margin.AddThemeConstantOverride("margin_bottom", 20);
         canvas.AddChild(margin);
 
         var root = new VBoxContainer();
-        root.AddThemeConstantOverride("separation", 14);
+        root.AddThemeConstantOverride("separation", 10);
         margin.AddChild(root);
 
         // Title
@@ -59,7 +59,7 @@ public partial class SaveSlotMenu : Node2D
             Text                = title,
             HorizontalAlignment = HorizontalAlignment.Center,
         };
-        titleLabel.AddThemeFontSizeOverride("font_size", 22);
+        titleLabel.AddThemeFontSizeOverride("font_size", 18);
         root.AddChild(titleLabel);
 
         root.AddChild(new HSeparator());
@@ -100,19 +100,19 @@ public partial class SaveSlotMenu : Node2D
         card.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
 
         var hbox = new HBoxContainer();
-        hbox.AddThemeConstantOverride("separation", 12);
+        hbox.AddThemeConstantOverride("separation", 8);
         card.AddChild(hbox);
 
         // Info column
         var infoCol = new VBoxContainer();
         infoCol.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        infoCol.AddThemeConstantOverride("separation", 4);
+        infoCol.AddThemeConstantOverride("separation", 2);
         hbox.AddChild(infoCol);
 
         if (info != null)
         {
             var nameLabel = new Label { Text = $"Slot {slot} — {info.PlayerName}  (Lv {info.Level} {info.ClassName})" };
-            nameLabel.AddThemeFontSizeOverride("font_size", 16);
+            nameLabel.AddThemeFontSizeOverride("font_size", 14);
 
             var timeLabel = new Label
             {
@@ -138,7 +138,7 @@ public partial class SaveSlotMenu : Node2D
                 VerticalAlignment = VerticalAlignment.Center,
                 Modulate          = new Color(0.5f, 0.5f, 0.5f),
             };
-            emptyLabel.AddThemeFontSizeOverride("font_size", 16);
+            emptyLabel.AddThemeFontSizeOverride("font_size", 14);
             infoCol.AddChild(emptyLabel);
         }
 
@@ -156,7 +156,7 @@ public partial class SaveSlotMenu : Node2D
             {
                 Text              = "Load",
                 Disabled          = info == null,
-                CustomMinimumSize = new Vector2(110, 0),
+                CustomMinimumSize = new Vector2(100, 0),
             };
             loadBtn.Pressed += () => OnLoadPressed(capturedSlot);
             btnCol.AddChild(loadBtn);
@@ -165,7 +165,7 @@ public partial class SaveSlotMenu : Node2D
             var newBtn = new Button
             {
                 Text              = "New Game",
-                CustomMinimumSize = new Vector2(110, 0),
+                CustomMinimumSize = new Vector2(100, 0),
             };
             newBtn.Pressed += () => OnNewGameInSlotPressed(capturedSlot);
             btnCol.AddChild(newBtn);
@@ -175,7 +175,7 @@ public partial class SaveSlotMenu : Node2D
             var newBtn = new Button
             {
                 Text              = info != null ? "Overwrite" : "New Game",
-                CustomMinimumSize = new Vector2(110, 0),
+                CustomMinimumSize = new Vector2(100, 0),
             };
             newBtn.Pressed += () => OnNewGameInSlotPressed(capturedSlot);
             btnCol.AddChild(newBtn);

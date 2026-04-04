@@ -128,6 +128,33 @@ public static class SettingsLogic
         _                          => new Color(0.25f, 0.45f, 1.00f), // Blue (Normal)
     };
 
+    // ── Window ─────────────────────────────────────────────────────────────
+
+    /// <summary>Base game resolution (viewport size).</summary>
+    public static readonly Vector2I BaseResolution = new(1280, 720);
+
+    /// <summary>Returns the window size in pixels for the given scale.</summary>
+    public static Vector2I WindowSize(WindowScale scale) => scale switch
+    {
+        WindowScale.Scale1x    => new Vector2I(640, 360),
+        WindowScale.Scale2x    => new Vector2I(1280, 720),
+        WindowScale.Scale3x    => new Vector2I(1600, 900),
+        WindowScale.Scale4x    => new Vector2I(1920, 1080),
+        WindowScale.Fullscreen => new Vector2I(1920, 1080),
+        _ => new Vector2I(1280, 720),
+    };
+
+    /// <summary>Display name for each window scale option.</summary>
+    public static string WindowScaleLabel(WindowScale scale) => scale switch
+    {
+        WindowScale.Scale1x    => "640x360 (Small)",
+        WindowScale.Scale2x    => "1280x720 (HD)",
+        WindowScale.Scale3x    => "1600x900 (HD+)",
+        WindowScale.Scale4x    => "1920x1080 (Full HD)",
+        WindowScale.Fullscreen => "Fullscreen",
+        _ => "1280x720 (HD)",
+    };
+
     // ── Input key display ──────────────────────────────────────────────────
 
     /// <summary>

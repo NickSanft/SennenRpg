@@ -130,22 +130,8 @@ public partial class Npc : CharacterBody2D, IInteractable
 			},
 		};
 
-		if (Engine.IsEditorHint())
-		{
-			// In the editor there is no camera zoom, so world-space is fine
-			AddChild(nameLabel);
-		}
-		else
-		{
-			// At runtime the camera zooms 3x — render in a CanvasLayer so the
-			// label is at screen resolution, matching the dialog text quality
-			_nameLabelNode          = new Node2D();
-			nameLabel.Position      = new Vector2(-30, 0);
-			_nameLabelNode.AddChild(nameLabel);
-			_nameCanvas             = new CanvasLayer { Layer = 0 };
-			_nameCanvas.AddChild(_nameLabelNode);
-			GetTree().Root.AddChild(_nameCanvas);
-		}
+		// With canvas_items stretch mode, world-space labels scale correctly.
+		AddChild(nameLabel);
 
 		_prompt = new InteractPromptBubble(PromptText);
 		_prompt.Position = new Vector2(0, -40);
@@ -164,18 +150,6 @@ public partial class Npc : CharacterBody2D, IInteractable
 		if (_talkCooldown > 0f)
 			_talkCooldown -= (float)delta;
 
-		if (_nameLabelNode != null)
-		{
-			// Keep the name label locked above the NPC in screen space
-			var worldPos = GlobalPosition + new Vector2(0, -28);
-			var raw      = GetViewportTransform() * worldPos;
-			_nameLabelNode.Position = new Vector2(Mathf.Round(raw.X), Mathf.Round(raw.Y));
-		}
-	}
-
-	public override void _ExitTree()
-	{
-		_nameCanvas?.QueueFree();
 	}
 
 	public override void _PhysicsProcess(double delta)

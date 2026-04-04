@@ -277,4 +277,47 @@ public class SettingsLogicTests
     [Test]
     public void EffectiveKey_BothSet_PrefersKeycode()
         => Assert.That(SettingsLogic.EffectiveKey(Key.A, Key.B), Is.EqualTo(Key.A));
+
+    // ── Window Scale ─────────────────────────────────────────────────────────
+
+    [Test]
+    public void WindowSize_Scale1x_Returns640x360()
+        => Assert.That(SettingsLogic.WindowSize(WindowScale.Scale1x), Is.EqualTo(new Vector2I(640, 360)));
+
+    [Test]
+    public void WindowSize_Scale2x_Returns1280x720()
+        => Assert.That(SettingsLogic.WindowSize(WindowScale.Scale2x), Is.EqualTo(new Vector2I(1280, 720)));
+
+    [Test]
+    public void WindowSize_Scale3x_Returns1600x900()
+        => Assert.That(SettingsLogic.WindowSize(WindowScale.Scale3x), Is.EqualTo(new Vector2I(1600, 900)));
+
+    [Test]
+    public void WindowSize_Scale4x_Returns1920x1080()
+        => Assert.That(SettingsLogic.WindowSize(WindowScale.Scale4x), Is.EqualTo(new Vector2I(1920, 1080)));
+
+    [Test]
+    public void WindowScaleLabel_AllNonEmpty()
+    {
+        foreach (WindowScale scale in System.Enum.GetValues<WindowScale>())
+            Assert.That(SettingsLogic.WindowScaleLabel(scale), Is.Not.Empty);
+    }
+
+    [Test]
+    public void WindowScaleLabel_FullscreenSaysFullscreen()
+        => Assert.That(SettingsLogic.WindowScaleLabel(WindowScale.Fullscreen), Does.Contain("Fullscreen"));
+
+    // ── SettingsData defaults ────────────────────────────────────────────────
+
+    [Test]
+    public void SettingsData_Defaults_VSync_True()
+        => Assert.That(new SettingsData().VSync, Is.True);
+
+    [Test]
+    public void SettingsData_Defaults_WindowScale_2x()
+        => Assert.That(new SettingsData().WindowScale, Is.EqualTo(WindowScale.Scale2x));
+
+    [Test]
+    public void SettingsData_Defaults_ShowFps_False()
+        => Assert.That(new SettingsData().ShowFps, Is.False);
 }

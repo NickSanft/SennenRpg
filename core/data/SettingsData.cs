@@ -10,6 +10,7 @@ public enum BattleDifficulty   { Easy, Normal, Hard }
 public enum EncounterRateMode  { Normal, Low, Off }
 public enum RhythmTimingWindow { Tight, Normal, Forgiving, AutoHit }
 public enum BattleTextSpeed    { Slow, Normal, Fast, Instant }
+public enum WindowScale        { Scale1x, Scale2x, Scale3x, Scale4x, Fullscreen }
 
 /// <summary>
 /// Immutable record holding all player settings.
@@ -28,6 +29,10 @@ public record SettingsData
     public bool           HighContrastMode   { get; init; } = false;
     public ColorblindMode ColorblindMode     { get; init; } = ColorblindMode.Normal;
     public bool           ScreenFlashEffects { get; init; } = true;
+    public WindowScale    WindowScale        { get; init; } = WindowScale.Scale2x;
+    public bool           Fullscreen         { get; init; } = false;
+    public bool           VSync              { get; init; } = true;
+    public bool           ShowFps            { get; init; } = false;
 
     // ── Gameplay ───────────────────────────────────────────────────────
     public BattleDifficulty   BattleDifficulty   { get; init; } = BattleDifficulty.Normal;

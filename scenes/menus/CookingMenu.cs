@@ -100,7 +100,7 @@ public partial class CookingMenu : CanvasLayer
         };
         AddChild(centerer);
 
-        var panel = new PanelContainer { CustomMinimumSize = new Vector2(400f, 0f) };
+        var panel = new PanelContainer { CustomMinimumSize = new Vector2(500f, 0f) };
         UiTheme.ApplyPanelTheme(panel);
         centerer.AddChild(panel);
 
@@ -141,7 +141,7 @@ public partial class CookingMenu : CanvasLayer
             HorizontalAlignment = HorizontalAlignment.Center,
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
-        _feedbackLabel.AddThemeFontSizeOverride("font_size", 11);
+        _feedbackLabel.AddThemeFontSizeOverride("font_size", 12);
         _recipePanel.AddChild(_feedbackLabel);
 
         // Minigame area (added here but hidden)
@@ -156,7 +156,7 @@ public partial class CookingMenu : CanvasLayer
             HorizontalAlignment = HorizontalAlignment.Center,
             Modulate = SubtleGrey,
         };
-        hint.AddThemeFontSizeOverride("font_size", 9);
+        hint.AddThemeFontSizeOverride("font_size", 18);
         _recipePanel.AddChild(hint);
     }
 
@@ -175,7 +175,7 @@ public partial class CookingMenu : CanvasLayer
 
             // Recipe name
             var nameLabel = new Label { Text = recipe.DisplayName };
-            nameLabel.AddThemeFontSizeOverride("font_size", 13);
+            nameLabel.AddThemeFontSizeOverride("font_size", 12);
             nameLabel.AddThemeColorOverride("font_color", Gold);
             row.AddChild(nameLabel);
 
@@ -201,7 +201,7 @@ public partial class CookingMenu : CanvasLayer
                     Text = $"{ingName} {have}/{ing.Count}",
                     Modulate = enough ? HaveGreen : NeedRed,
                 };
-                ingLabel.AddThemeFontSizeOverride("font_size", 10);
+                ingLabel.AddThemeFontSizeOverride("font_size", 16);
                 ingRow.AddChild(ingLabel);
             }
             row.AddChild(ingRow);
