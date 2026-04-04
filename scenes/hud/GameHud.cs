@@ -21,6 +21,8 @@ public partial class GameHud : CanvasLayer
 	private ColorRect _mpBar     = null!;
 	private Label     _goldLabel = null!;
 	private Tween?    _hpTween;
+	private Tween?    _lowHpPulseTween;
+	private bool      _lowHpPulsing;
 	private Tween?    _mpTween;
 
 	public override void _Ready()
@@ -105,6 +107,26 @@ public partial class GameHud : CanvasLayer
 			_mpTween = CreateTween();
 			_mpTween.TweenProperty(_mpBar, "size:x", mpTarget, BarTweenDuration)
 				.SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
+		}
+
+		// Low HP pulse warning
+		bool isLowHp = stats.MaxHp > 0 && (float)stats.CurrentHp / stats.MaxHp < 0.25f && stats.CurrentHp > 0;
+		if (isLowHp && !_lowHpPulsing)
+		{
+			_lowHpPulsing = true;
+			_lowHpPulseTween?.Kill();
+			_lowHpPulseTween = CreateTween().SetLoops();
+			_lowHpPulseTween.TweenProperty(_hpBar, "color", new Color(0.9f, 0.15f, 0.15f), 0.4f);
+			_lowHpPulseTween.TweenProperty(_hpBar, "color",
+				SettingsLogic.HpBarColor(SettingsManager.Instance?.Current.ColorblindMode ?? ColorblindMode.Normal), 0.4f);
+		}
+		else if (!isLowHp && _lowHpPulsing)
+		{
+			_lowHpPulsing = false;
+			_lowHpPulseTween?.Kill();
+			_lowHpPulseTween = null;
+			_hpBar.Color = SettingsLogic.HpBarColor(
+				SettingsManager.Instance?.Current.ColorblindMode ?? ColorblindMode.Normal);
 		}
 	}
 }

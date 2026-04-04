@@ -170,6 +170,7 @@ public partial class BattleScene : Node2D
 		// Start battle BGM with BPM
 		StartBattleBgm(encounter);
 
+		SetupBattleBackground();
 		SetupEnemySprite();
 		_enemyNameplate.Setup(_enemy?.DisplayName ?? "???");
 		_ = RunIntro();
@@ -207,6 +208,37 @@ public partial class BattleScene : Node2D
 	}
 
 	// ── Setup ─────────────────────────────────────────────────────────
+
+	private void SetupBattleBackground()
+	{
+		var baseColor = BattleRegistry.Instance.PendingBackgroundColor;
+		// Create gradient: lighter at top, darker at bottom
+		var topColor    = baseColor.Lerp(Colors.White, 0.3f) with { A = 0.6f };
+		var bottomColor = baseColor.Lerp(Colors.Black, 0.4f) with { A = 0.8f };
+
+		// Use two overlapping ColorRects for a simple two-tone gradient
+		var bgTop = new ColorRect
+		{
+			Color         = topColor,
+			AnchorRight   = 1f,
+			AnchorBottom  = 0.5f,
+			MouseFilter   = Control.MouseFilterEnum.Ignore,
+			ZIndex        = -10,
+		};
+		var bgBottom = new ColorRect
+		{
+			Color         = bottomColor,
+			AnchorTop     = 0.5f,
+			AnchorRight   = 1f,
+			AnchorBottom  = 1f,
+			MouseFilter   = Control.MouseFilterEnum.Ignore,
+			ZIndex        = -10,
+		};
+		AddChild(bgTop);
+		AddChild(bgBottom);
+		MoveChild(bgTop, 0);
+		MoveChild(bgBottom, 1);
+	}
 
 	private void SetupEnemySprite()
 	{
@@ -315,6 +347,14 @@ public partial class BattleScene : Node2D
 		num.Play(damage, isCrit);
 	}
 
+	/// <summary>Brief slow-motion on critical hits for dramatic impact.</summary>
+	private async void PlayCritSlowMotion()
+	{
+		Engine.TimeScale = 0.3;
+		await ToSignal(GetTree().CreateTimer(0.15f * 0.3f), SceneTreeTimer.SignalName.Timeout);
+		Engine.TimeScale = 1.0;
+	}
+
 	/// <summary>Briefly flashes the enemy sprite white via the hit_flash shader.</summary>
 	private void FlashEnemy()
 	{
@@ -358,6 +398,17 @@ public partial class BattleScene : Node2D
 	private async Task RunIntro()
 	{
 		SetState(BattleState.Intro);
+
+		// Enemy intro zoom: start small, bounce to full size
+		if (_enemyVisual != null)
+		{
+			_enemyVisual.Scale = new Vector2(0.5f, 0.5f);
+			var zoomTween = CreateTween();
+			zoomTween.TweenProperty(_enemyVisual, "scale", Vector2.One, 0.3f)
+				.SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Back);
+			await ToSignal(zoomTween, Tween.SignalName.Finished);
+		}
+
 		SetBattleVar("enemy_name", _enemy?.DisplayName ?? "???");
 		await RunBattleTimeline("res://dialog/timelines/battle_intro.dtl");
 
@@ -468,6 +519,7 @@ public partial class BattleScene : Node2D
 		_enemyCurrentHp -= damage;
 		CameraShake.ShakeNode(this, intensity: isCrit ? 5f : 2f, duration: isCrit ? 0.18f : 0.1f);
 		FlashEnemy();
+		if (isCrit) PlayCritSlowMotion();
 
 		GD.Print($"[BattleScene] {hitLabel} grade={grade}, damage={damage}. Enemy HP: {_enemyCurrentHp}");
 		SpawnDamageNumber(damage, isCrit);
@@ -967,6 +1019,19 @@ public partial class BattleScene : Node2D
 		SetState(BattleState.Victory);
 		RhythmClock.Instance.Stop();
 		AudioManager.Instance.StopBgm(fadeTime: 0.5f);
+
+		// Victory: enemy shrinks and fades out
+		if (_enemyVisual != null)
+		{
+			var shrinkTween = CreateTween().SetParallel();
+			shrinkTween.TweenProperty(_enemyVisual, "scale", Vector2.Zero, 0.5f)
+				.SetEase(Tween.EaseType.In).SetTrans(Tween.TransitionType.Back);
+			shrinkTween.TweenProperty(_enemyVisual, "modulate:a", 0f, 0.5f);
+		}
+
+		// Victory fanfare SFX
+		const string fanfarePath = "res://assets/audio/sfx/victory_fanfare.ogg";
+		AudioManager.Instance?.PlaySfx(fanfarePath);
 
 		// Record kill and rhythm performance for quest/adaptation tracking
 		if (!string.IsNullOrEmpty(_enemy?.EnemyId))

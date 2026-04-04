@@ -171,9 +171,42 @@ public partial class OverworldBase : Node2D
 		// Save player position so they return here after battle, not at the map's default spawn
 		if (_player != null)
 			GameManager.Instance.BattleReturnPosition = _player.GlobalPosition;
+		// Sample ground tile color for battle background gradient
+		SampleTileColorForBattle();
+
 		GD.Print($"[OverworldBase] Random encounter triggered (roll {roll:F1} < {enc.EncounterChancePerStep}).");
 		_ = SceneTransition.Instance.ToBattleAsync(enc);
 		return true;
+	}
+
+	private void SampleTileColorForBattle()
+	{
+		if (_player == null) return;
+		var groundLayer = GetNodeOrNull<TileMapLayer>("Ground/Ground")
+			?? GetNodeOrNull<TileMapLayer>("Ground");
+		if (groundLayer?.TileSet == null) return;
+
+		var tilePos = groundLayer.LocalToMap(groundLayer.ToLocal(_player.GlobalPosition));
+		int srcId   = groundLayer.GetCellSourceId(tilePos);
+		if (srcId < 0) return;
+
+		var atlasCoords = groundLayer.GetCellAtlasCoords(tilePos);
+		var source      = groundLayer.TileSet.GetSource(srcId) as TileSetAtlasSource;
+		var texture     = source?.Texture;
+		if (texture == null) return;
+
+		var img = texture.GetImage();
+		if (img == null) return;
+
+		// Sample center pixel of the tile
+		int tileSize = groundLayer.TileSet.TileSize.X;
+		int px = atlasCoords.X * tileSize + tileSize / 2;
+		int py = atlasCoords.Y * tileSize + tileSize / 2;
+		if (px < img.GetWidth() && py < img.GetHeight())
+		{
+			var color = img.GetPixel(px, py);
+			BattleRegistry.Instance.PendingBackgroundColor = color;
+		}
 	}
 
 	/// <summary>

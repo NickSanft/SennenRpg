@@ -61,6 +61,28 @@ A 2D RPG built in **Godot 4.6** with **C# (.NET 10)**. The game features a turn-
 - **Now-playing popup** — top-left overlay showing current track title and artist when BGM changes.
 - **Area name popup** — bottom-center label with dark background that fades in on map load.
 - **Minimap** — top-right corner showing player, NPCs, exits, save points, staircase markers, and quest objective markers.
+- **Low HP warning** — HP bar pulses red when below 25%.
+
+### Visual Effects
+- **SNES theme** — Chrono Trigger-inspired blue gradient panels with PressStart2P pixel font across all menus.
+- **Pixel mosaic transitions** — screen pixelates into large blocks during map transitions, then un-pixelates at the destination.
+- **Teleport dissolve** — when casting Teleport Home, the player sprite dissolves bottom-to-top like sand, then reforms at the destination.
+- **Dynamic battle backgrounds** — gradient tinted to match the overworld tile color where the encounter started.
+- **Battle intro zoom** — enemy sprite bounces in with overshoot scaling on battle start.
+- **Critical hit slow-motion** — brief time slowdown on critical hits for dramatic impact.
+- **Victory animation** — enemy shrinks and fades on defeat, victory fanfare plays.
+- **World map parallax** — subtle cloud layer scrolling behind the tile map for depth.
+
+### Cutscene System
+Reusable cinematic cutscene framework with:
+- Letterbox bars (slide in/out from top and bottom)
+- Camera panning to any position
+- NPC walking to target positions
+- Name cards with fade-in/hold/fade-out
+- Dialogic dialog integration with portraits
+- Flag setting to prevent replay
+
+First usage: Rork introduces himself when the player first enters Mellyr Outpost.
 
 ### MAPP (The Mapp Tavern)
 A fully hand-crafted map scene (`scenes/overworld/MAPP.tscn`) demonstrating all overworld objects. Built entirely in code — no external tile sheets required. Features:

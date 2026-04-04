@@ -9,10 +9,9 @@ namespace SennenRpg.Scenes.Menus;
 /// </summary>
 public partial class CreditsMenu : Node2D
 {
-    private static readonly Color Gold       = new(1.0f, 0.85f, 0.1f);
-    private static readonly Color LinkBlue   = new(0.4f, 0.7f, 1.0f);
-    private static readonly Color SubtleGrey = new(0.55f, 0.55f, 0.55f);
-    private static readonly Color BgColour   = new(0.07f, 0.07f, 0.12f, 1f);
+    private static Color Gold       => UiTheme.Gold;
+    private static Color LinkBlue   => UiTheme.LinkBlue;
+    private static Color SubtleGrey => UiTheme.SubtleGrey;
 
     private bool _transitioning;
 
@@ -40,16 +39,7 @@ public partial class CreditsMenu : Node2D
         {
             CustomMinimumSize = new Vector2(380f, 0f),
         };
-        var style = new StyleBoxFlat
-        {
-            BgColor          = BgColour,
-            BorderWidthLeft   = 1, BorderWidthRight  = 1,
-            BorderWidthTop    = 1, BorderWidthBottom = 1,
-            BorderColor       = new Color(0.25f, 0.25f, 0.35f),
-            CornerRadiusTopLeft    = 4, CornerRadiusTopRight    = 4,
-            CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
-        };
-        panelContainer.AddThemeStyleboxOverride("panel", style);
+        UiTheme.ApplyPanelTheme(panelContainer);
         centerer.AddChild(panelContainer);
 
         var margin = new MarginContainer();

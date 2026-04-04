@@ -209,6 +209,44 @@ Victory → EXP/Gold display → GameManager.AddGold/AddExp → SceneTransition 
 - `MapExit` has `[Export] bool AutoSave` — writes save before scene transition
 - Enabled on all dungeon floor staircase transitions
 
+## SNES Theme (Chrono Trigger Style)
+- `UiTheme.cs` — shared constants: `Gold`, `PanelBg`, `PanelBorder`, `SubtleGrey`, etc.
+- `UiTheme.ApplyPanelTheme(panel)` — applies blue gradient StyleBoxFlat with rounded borders
+- `UiTheme.ApplyButtonTheme(btn)` — applies button normal/hover/focus/pressed styles
+- Font: `PressStart2P-Regular.ttf` pixel font in `assets/fonts/`
+- All code-built menus use UiTheme instead of hardcoded colors
+
+## Scene Transitions
+- `TransitionType.Fade` — classic black fade (menus)
+- `TransitionType.BattleFlash` — fast white flash (entering battle)
+- `TransitionType.PixelMosaic` — screen pixelates into blocks, un-pixelates at destination (map transitions)
+- Pixel mosaic shader: `assets/shaders/pixel_mosaic.gdshader`
+
+## Teleport Dissolve Effect
+- `assets/shaders/dissolve_vertical.gdshader` — per-sprite vertical dissolve (bottom-to-top)
+- Teleport Home spell: player dissolves out → pixel mosaic transition → reforms at MAPP
+- `GameManager.TeleportArriving` flag triggers reform animation in `Player._Ready()`
+
+## Cutscene Framework
+- `CutsceneStep.cs` — data class with factory methods: `ShowLetterbox`, `PanCamera`, `WalkNpc`, `Dialog`, `NameCard`, `Flag`, etc.
+- `CutscenePlayer.cs` — Node that executes a list of steps sequentially with letterbox bars, camera pans, NPC movement, Dialogic dialog, name cards
+- First usage: Rork intro cutscene at Mellyr Outpost (flag: `rork_mellyr_intro`)
+
+## Dynamic Battle Backgrounds
+- `BattleRegistry.PendingBackgroundColor` — sampled from ground tile at encounter position
+- `BattleScene.SetupBattleBackground()` — creates two-tone gradient (lighter top, darker bottom)
+- Fallback: dark purple gradient for scripted encounters
+
+## Battle Visual Effects
+- Enemy intro zoom: 0.5x → 1.0x scale with Back easing bounce
+- Critical hit slow-motion: `Engine.TimeScale` drops to 0.3x for 0.15s on crits
+- Victory: enemy shrinks to 0 + fades, victory fanfare SFX
+- Screen shake + hit flash on all damage
+
+## Low HP Warning
+- HP below 25% → HP bar pulses between normal color and red (0.8s loop)
+- Stops when healed above 25%
+
 ## Music Metadata
 - `MusicMetadata.Lookup(path)` → `MusicTrackInfo` (Artist, Album, TrackNumber, Title)
 - `NowPlayingPopup` — top-left fade-in/out popup spawned by AudioManager on BGM change

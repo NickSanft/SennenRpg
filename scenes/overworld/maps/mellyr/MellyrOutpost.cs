@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using SennenRpg.Autoloads;
@@ -41,6 +42,40 @@ public partial class MellyrOutpost : OverworldBase
 			SpawnResident(LilyScene, "lily_town", LilyTimeline, LilyCharPath, new Vector2(192, 112));
 
 		DialogicBridge.Instance.DialogicSignalReceived += OnDialogicSignal;
+
+		// Rork intro cutscene on first visit
+		if (!GameManager.Instance.GetFlag("rork_mellyr_intro"))
+			Callable.From(PlayRorkIntroCutscene).CallDeferred();
+	}
+
+	private async void PlayRorkIntroCutscene()
+	{
+		var player = new CutscenePlayer();
+		AddChild(player);
+
+		var playerNode = GetTree().GetFirstNodeInGroup("player") as Node2D;
+		var playerPos = playerNode?.GlobalPosition ?? DefaultSpawnPosition;
+
+		// Rork starts at (160, 128), player at ~(160, 185)
+		// Walk Rork down toward the player, then dialog, then walk back
+		float meetY = playerPos.Y - 20f; // Stop just above the player
+
+		await player.Play(new List<CutsceneStep>
+		{
+			CutsceneStep.ShowLetterbox(0.4f),
+			CutsceneStep.Pause(0.3f),
+			CutsceneStep.WalkNpc("rork_town", 160f, meetY, 50f),
+			CutsceneStep.Pause(0.2f),
+			CutsceneStep.NameCard("Rork \u2014 Barkeep", 1.5f),
+			CutsceneStep.HideNameCard(0.5f),
+			CutsceneStep.Dialog("res://dialog/timelines/rork_mellyr_intro.dtl"),
+			CutsceneStep.WaitDialog(),
+			CutsceneStep.WalkNpc("rork_town", 160f, 128f, 50f),
+			CutsceneStep.HideLetterbox(0.4f),
+			CutsceneStep.Flag("rork_mellyr_intro"),
+		});
+
+		player.QueueFree();
 	}
 
 	public override void _ExitTree()

@@ -59,6 +59,9 @@ public partial class InventoryMenu : CanvasLayer
 		vbox.MoveChild(_descLabel, _feedbackLabel.GetIndex());
 
 		_backButton.Pressed += Close;
+
+		// Apply SNES theme
+		UiTheme.ApplyToAllButtons(this);
 	}
 
 	private void BuildCategoryTabs()

@@ -151,6 +151,48 @@ Reference these when creating new game content to ensure consistency.
 
 ---
 
+## Skill: create-cutscene
+**Creates a scripted cinematic cutscene on a map.**
+
+### Steps
+1. In your map's `.cs` file, add a flag check in `_Ready()`:
+   ```csharp
+   if (!GameManager.Instance.GetFlag("my_cutscene_flag"))
+       Callable.From(PlayMyCutscene).CallDeferred();
+   ```
+2. Create the cutscene method using `CutsceneStep` factory methods:
+   ```csharp
+   private async void PlayMyCutscene()
+   {
+       var player = new CutscenePlayer();
+       AddChild(player);
+       await player.Play(new List<CutsceneStep>
+       {
+           CutsceneStep.ShowLetterbox(0.4f),
+           CutsceneStep.NameCard("Character Name", 1.5f),
+           CutsceneStep.HideNameCard(0.5f),
+           CutsceneStep.Dialog("res://dialog/timelines/my_cutscene.dtl"),
+           CutsceneStep.WaitDialog(),
+           CutsceneStep.HideLetterbox(0.4f),
+           CutsceneStep.Flag("my_cutscene_flag"),
+       });
+       player.QueueFree();
+   }
+   ```
+3. Create the Dialogic timeline (see **create-dialog** skill)
+4. Available step types:
+   - `ShowLetterbox(duration)` / `HideLetterbox(duration)` — cinematic bars
+   - `PanCamera(x, y, duration)` — smooth camera movement
+   - `WalkNpc(npcId, x, y, speed)` — move NPC to position
+   - `FaceNpc(npcId, direction)` — face NPC (placeholder)
+   - `Dialog(timelinePath)` / `WaitDialog()` — play Dialogic timeline
+   - `NameCard(text, holdDuration)` / `HideNameCard(fadeDuration)` — title card
+   - `Pause(seconds)` — wait
+   - `Sfx(path)` — play sound effect
+   - `Flag(name)` — set a game flag
+
+---
+
 ## Skill: wire-battle-transition
 **Connects a map trigger to launch a random battle encounter.**
 

@@ -56,9 +56,8 @@ public partial class SettingsMenu : CanvasLayer
 
 	// ── Colours ───────────────────────────────────────────────────────────────
 
-	private static readonly Color Gold       = new(1.0f, 0.85f, 0.1f);
-	private static readonly Color BgColour   = new(0.07f, 0.07f, 0.12f, 1f);
-	private static readonly Color SubtleGrey = new(0.55f, 0.55f, 0.55f);
+	private static Color Gold       => UiTheme.Gold;
+	private static Color SubtleGrey => UiTheme.SubtleGrey;
 
 	// ── Setup ─────────────────────────────────────────────────────────────────
 
@@ -67,6 +66,7 @@ public partial class SettingsMenu : CanvasLayer
 		Layer   = 51;
 		Visible = false;
 		BuildUI();
+		UiTheme.ApplyToAllButtons(this);
 	}
 
 	private void BuildUI()
@@ -87,16 +87,7 @@ public partial class SettingsMenu : CanvasLayer
 
 		// Panel
 		var panel = new PanelContainer { CustomMinimumSize = new Vector2(640f, 0f) };
-		var panelStyle = new StyleBoxFlat
-		{
-			BgColor              = BgColour,
-			BorderWidthLeft      = 1, BorderWidthRight  = 1,
-			BorderWidthTop       = 1, BorderWidthBottom = 1,
-			BorderColor          = new Color(0.25f, 0.25f, 0.35f),
-			CornerRadiusTopLeft  = 4, CornerRadiusTopRight    = 4,
-			CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
-		};
-		panel.AddThemeStyleboxOverride("panel", panelStyle);
+		UiTheme.ApplyPanelTheme(panel);
 		centerer.AddChild(panel);
 
 		// Inner margin + outer VBox

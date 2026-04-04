@@ -71,6 +71,7 @@ public partial class WorldMap : Node2D
 
 		ApplyDayNightBgm(animate: false);
 		SpawnEntranceLabels();
+		SpawnParallaxBackground();
 
 		_nextEncounterThreshold = (int)GD.RandRange(8, 14);
 	}
@@ -210,6 +211,43 @@ public partial class WorldMap : Node2D
 			label.AddThemeColorOverride("font_color", new Color(1f, 0.9f, 0.5f));
 			label.CustomMinimumSize = new Vector2(80f, 0f);
 			AddChild(label);
+		}
+	}
+
+	// ── Parallax background ───────────────────────────────────────────────────
+
+	private void SpawnParallaxBackground()
+	{
+		// Use a CanvasLayer behind the main content (layer -1) so clouds
+		// render behind all tiles and sprites, not on the same canvas.
+		var bgCanvas = new CanvasLayer { Layer = -1 };
+		AddChild(bgCanvas);
+
+		var rng = new RandomNumberGenerator();
+		rng.Seed = 42;
+
+		for (int i = 0; i < 15; i++)
+		{
+			float cx = rng.RandfRange(10f, 310f);
+			float cy = rng.RandfRange(10f, 220f);
+			float w  = rng.RandfRange(30f, 70f);
+			float h  = rng.RandfRange(8f, 18f);
+			float alpha = rng.RandfRange(0.06f, 0.14f);
+
+			var cloud = new ColorRect
+			{
+				Color    = new Color(0.8f, 0.85f, 1f, alpha),
+				Position = new Vector2(cx, cy),
+				Size     = new Vector2(w, h),
+			};
+			bgCanvas.AddChild(cloud);
+
+			// Slow drift animation
+			var drift = CreateTween().SetLoops();
+			float driftDist = rng.RandfRange(10f, 30f);
+			float driftTime = rng.RandfRange(8f, 16f);
+			drift.TweenProperty(cloud, "position:x", cx + driftDist, driftTime);
+			drift.TweenProperty(cloud, "position:x", cx, driftTime);
 		}
 	}
 }

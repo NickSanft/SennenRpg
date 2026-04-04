@@ -29,7 +29,7 @@ public partial class SaveSlotMenu : Node2D
 
         var bg = new ColorRect
         {
-            Color        = new Color(0.08f, 0.08f, 0.12f, 1f),
+            Color        = UiTheme.PanelBg,
             AnchorRight  = 1f,
             AnchorBottom = 1f,
         };
@@ -79,6 +79,14 @@ public partial class SaveSlotMenu : Node2D
         };
         backBtn.Pressed += OnBackPressed;
         root.AddChild(backBtn);
+
+        // Apply SNES theme to all buttons
+        UiTheme.ApplyToAllButtons(canvas);
+
+        // Apply pixel font to title
+        titleLabel.AddThemeColorOverride("font_color", UiTheme.Gold);
+        var font = UiTheme.LoadPixelFont();
+        if (font != null) titleLabel.AddThemeFontOverride("font", font);
     }
 
     // ── Slot card ─────────────────────────────────────────────────────────────

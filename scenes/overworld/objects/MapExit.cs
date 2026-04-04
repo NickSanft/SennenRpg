@@ -1,6 +1,7 @@
 using Godot;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Interfaces;
+using static SennenRpg.Autoloads.TransitionType;
 
 namespace SennenRpg.Scenes.Overworld;
 
@@ -63,7 +64,8 @@ public partial class MapExit : Area2D, IInteractable
 		_triggered = true;
 
 		GameManager.Instance.SetLastSpawn(TargetSpawnId);
-		_ = SceneTransition.Instance.GoToAsync(TargetMapPath, autoSave: AutoSave);
+		_ = SceneTransition.Instance.GoToAsync(TargetMapPath,
+			type: TransitionType.PixelMosaic, autoSave: AutoSave);
 	}
 
 	private void SpawnArrow(ExitHintDirection dir)

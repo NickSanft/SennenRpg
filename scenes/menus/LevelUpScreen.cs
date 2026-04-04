@@ -43,10 +43,10 @@ public partial class LevelUpScreen : CanvasLayer
     private bool _dismissed;
     private TaskCompletionSource<bool>? _dismissTcs;
 
-    private static readonly Color ColourGrey    = new(0.45f, 0.45f, 0.45f);
+    private static Color ColourGrey    => UiTheme.SubtleGrey;
     private static readonly Color ColourWhite   = Colors.White;
-    private static readonly Color ColourGold    = new(1.0f, 0.85f, 0.1f);
-    private static readonly Color ColourGreen   = new(0.3f, 1.0f, 0.4f);
+    private static Color ColourGold    => UiTheme.Gold;
+    private static Color ColourGreen   => UiTheme.HaveGreen;
 
     // ── Setup ─────────────────────────────────────────────────────────────────
 
@@ -81,16 +81,7 @@ public partial class LevelUpScreen : CanvasLayer
         {
             CustomMinimumSize = new Vector2(340f, 0f),
         };
-        var style = new StyleBoxFlat
-        {
-            BgColor               = new Color(0.07f, 0.07f, 0.12f, 1f),
-            BorderWidthLeft       = 1, BorderWidthRight  = 1,
-            BorderWidthTop        = 1, BorderWidthBottom = 1,
-            BorderColor           = new Color(0.25f, 0.25f, 0.35f),
-            CornerRadiusTopLeft    = 4, CornerRadiusTopRight    = 4,
-            CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
-        };
-        panelContainer.AddThemeStyleboxOverride("panel", style);
+        UiTheme.ApplyPanelTheme(panelContainer);
         centerer.AddChild(panelContainer);
 
         // MarginContainer for padding inside the panel

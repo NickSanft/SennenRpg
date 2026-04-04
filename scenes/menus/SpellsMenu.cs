@@ -13,10 +13,9 @@ public partial class SpellsMenu : CanvasLayer
 {
     [Signal] public delegate void ClosedEventHandler();
 
-    private static readonly Color Gold       = new(1.0f, 0.85f, 0.1f);
-    private static readonly Color MpBlue     = new(0.4f, 0.6f, 1.0f);
-    private static readonly Color SubtleGrey = new(0.55f, 0.55f, 0.55f);
-    private static readonly Color BgColour   = new(0.07f, 0.07f, 0.12f, 1f);
+    private static Color Gold       => UiTheme.Gold;
+    private static Color MpBlue     => UiTheme.MpBlue;
+    private static Color SubtleGrey => UiTheme.SubtleGrey;
 
     private VBoxContainer _spellList = null!;
     private Label         _descLabel = null!;
@@ -51,7 +50,7 @@ public partial class SpellsMenu : CanvasLayer
 
         var overlay = new ColorRect
         {
-            Color = new Color(0f, 0f, 0f, 0.75f),
+            Color = UiTheme.OverlayDim,
             AnchorRight = 1f, AnchorBottom = 1f,
         };
         AddChild(overlay);
@@ -60,16 +59,7 @@ public partial class SpellsMenu : CanvasLayer
         AddChild(centerer);
 
         var panel = new PanelContainer { CustomMinimumSize = new Vector2(380f, 0f) };
-        var style = new StyleBoxFlat
-        {
-            BgColor = BgColour,
-            BorderWidthLeft = 1, BorderWidthRight = 1,
-            BorderWidthTop = 1, BorderWidthBottom = 1,
-            BorderColor = new Color(0.25f, 0.25f, 0.35f),
-            CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4,
-            CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
-        };
-        panel.AddThemeStyleboxOverride("panel", style);
+        UiTheme.ApplyPanelTheme(panel);
         centerer.AddChild(panel);
 
         var margin = new MarginContainer();
@@ -221,12 +211,53 @@ public partial class SpellsMenu : CanvasLayer
 
         if (!string.IsNullOrEmpty(spell.OverworldTargetScene))
         {
-            _feedbackLabel.Text = $"Casting {spell.DisplayName}...";
-            _feedbackLabel.Modulate = Gold;
+            // Hide ALL menus immediately so the dissolve is visible
             Visible = false;
             EmitSignal(SignalName.Closed);
+            // Also hide the PauseMenu that will reappear from our Closed signal
+            GetTree().CallGroup("pause_menus", "hide");
+            foreach (var node in GetTree().GetNodesInGroup("pause_menus"))
+                if (node is CanvasLayer cl) cl.Visible = false;
+            // Brute-force: hide any sibling PauseMenu
+            if (GetParent() != null)
+                foreach (var sibling in GetParent().GetChildren())
+                    if (sibling is CanvasLayer cl && cl.Name.ToString().Contains("Pause"))
+                        cl.Visible = false;
+
             gm.SetState(GameState.Overworld);
-            _ = SceneTransition.Instance.GoToAsync(spell.OverworldTargetScene);
+            gm.TeleportArriving = true;
+            _ = PlayTeleportDissolveAndTransition(spell.OverworldTargetScene);
         }
+    }
+
+    private async System.Threading.Tasks.Task PlayTeleportDissolveAndTransition(string targetScene)
+    {
+        // Find the player sprite and apply dissolve shader
+        var player = GetTree().GetFirstNodeInGroup("player") as Node2D;
+        var sprite = player?.GetNodeOrNull<AnimatedSprite2D>("Sprite");
+
+        if (sprite != null)
+        {
+            const string shaderPath = "res://assets/shaders/dissolve_vertical.gdshader";
+            if (ResourceLoader.Exists(shaderPath))
+            {
+                var mat = new ShaderMaterial { Shader = GD.Load<Shader>(shaderPath) };
+                mat.SetShaderParameter("progress", 0.0f);
+                sprite.Material = mat;
+
+                // Dissolve out: bottom to top over 1.2s (slow and dramatic)
+                var tween = CreateTween();
+                tween.TweenMethod(
+                    Callable.From<float>(v => mat.SetShaderParameter("progress", v)),
+                    0.0f, 1.0f, 1.2f)
+                    .SetEase(Tween.EaseType.In).SetTrans(Tween.TransitionType.Quad);
+                await ToSignal(tween, Tween.SignalName.Finished);
+
+                // Brief hold after dissolve completes
+                await ToSignal(GetTree().CreateTimer(0.3f), SceneTreeTimer.SignalName.Timeout);
+            }
+        }
+
+        await SceneTransition.Instance.GoToAsync(targetScene, TransitionType.PixelMosaic);
     }
 }

@@ -27,6 +27,7 @@ public partial class InteractPromptBubble : Node2D
 		_screenNode = new Node2D { Visible = false };
 		_bobNode    = new Node2D();
 
+		var font = Core.Data.UiTheme.LoadPixelFont();
 		var label = new Label
 		{
 			Text                = _text,
@@ -35,18 +36,19 @@ public partial class InteractPromptBubble : Node2D
 			Position            = new Vector2(-30, 0),
 			LabelSettings       = new LabelSettings
 			{
-				FontSize     = 15,
-				FontColor    = Colors.Yellow,
-				OutlineSize  = 4,
+				Font         = font,
+				FontSize     = 8,
+				FontColor    = Core.Data.UiTheme.Gold,
+				OutlineSize  = 2,
 				OutlineColor = new Color(0f, 0f, 0f, 1f),
 			},
 		};
 
 		var bg = new ColorRect
 		{
-			Color    = new Color(0f, 0f, 0f, 0.55f),
+			Color    = Core.Data.UiTheme.PanelBg with { A = 0.8f },
 			Position = new Vector2(-34, -1),
-			Size     = new Vector2(68, 20),
+			Size     = new Vector2(68, 16),
 			ZIndex   = -1,
 		};
 

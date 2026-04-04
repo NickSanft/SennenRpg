@@ -42,14 +42,14 @@ public partial class NpcInteractMenu : CanvasLayer
 		// Dark overlay behind the panel
 		var overlay = new ColorRect
 		{
-			Color          = new Color(0f, 0f, 0f, 0.5f),
+			Color          = UiTheme.OverlayDim,
 			AnchorLeft     = 0f, AnchorRight  = 1f,
 			AnchorTop      = 0f, AnchorBottom = 1f,
 			MouseFilter    = Control.MouseFilterEnum.Ignore,
 		};
 		AddChild(overlay);
 
-		// Centred panel
+		// Centred panel with SNES theme
 		_panel = new Panel
 		{
 			AnchorLeft   = 0.5f, AnchorRight  = 0.5f,
@@ -57,6 +57,7 @@ public partial class NpcInteractMenu : CanvasLayer
 			OffsetLeft   = -80f, OffsetRight  =  80f,
 			OffsetTop    = -60f, OffsetBottom =  60f,
 		};
+		_panel.AddThemeStyleboxOverride("panel", UiTheme.CreatePanelStyle());
 		AddChild(_panel);
 
 		_vbox = new VBoxContainer
@@ -69,26 +70,32 @@ public partial class NpcInteractMenu : CanvasLayer
 		_panel.AddChild(_vbox);
 
 		_talkButton = new Button { Text = "Talk" };
+		UiTheme.ApplyButtonTheme(_talkButton);
 		_talkButton.Pressed += OnTalk;
 		_vbox.AddChild(_talkButton);
 
 		_shopButton = new Button { Text = "Shop", Visible = false };
+		UiTheme.ApplyButtonTheme(_shopButton);
 		_shopButton.Pressed += OnShop;
 		_vbox.AddChild(_shopButton);
 
 		_restButton = new Button { Text = "Rest (10G)", Visible = false };
+		UiTheme.ApplyButtonTheme(_restButton);
 		_restButton.Pressed += OnRest;
 		_vbox.AddChild(_restButton);
 
 		_changeClassButton = new Button { Text = "Change Class", Visible = false };
+		UiTheme.ApplyButtonTheme(_changeClassButton);
 		_changeClassButton.Pressed += OnChangeClass;
 		_vbox.AddChild(_changeClassButton);
 
 		_examineButton = new Button { Text = "Examine" };
+		UiTheme.ApplyButtonTheme(_examineButton);
 		_examineButton.Pressed += OnExamine;
 		_vbox.AddChild(_examineButton);
 
 		_cancelButton = new Button { Text = "Cancel" };
+		UiTheme.ApplyButtonTheme(_cancelButton);
 		_cancelButton.Pressed += OnCancel;
 		_vbox.AddChild(_cancelButton);
 

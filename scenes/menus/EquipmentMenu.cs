@@ -49,6 +49,7 @@ public partial class EquipmentMenu : CanvasLayer
         Layer   = 51;
         Visible = false;
         BuildUI();
+        UiTheme.ApplyToAllButtons(this);
     }
 
     private void BuildUI()

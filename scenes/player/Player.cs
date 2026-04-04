@@ -57,6 +57,30 @@ public partial class Player : CharacterBody2D
 		}
 
 		_lastPosition = GlobalPosition;
+
+		// Teleport arrival: play dissolve-in (reform) animation
+		if (gm.TeleportArriving)
+		{
+			gm.TeleportArriving = false;
+			PlayTeleportReform();
+		}
+	}
+
+	private void PlayTeleportReform()
+	{
+		const string shaderPath = "res://assets/shaders/dissolve_vertical.gdshader";
+		if (!ResourceLoader.Exists(shaderPath)) return;
+
+		var mat = new ShaderMaterial { Shader = GD.Load<Shader>(shaderPath) };
+		mat.SetShaderParameter("progress", 1.0f);
+		_sprite.Material = mat;
+
+		var tween = CreateTween();
+		tween.TweenMethod(
+			Callable.From<float>(v => mat.SetShaderParameter("progress", v)),
+			1.0f, 0.0f, 1.0f)
+			.SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
+		tween.TweenCallback(Callable.From(() => _sprite.Material = null));
 	}
 
 	public override void _PhysicsProcess(double delta)

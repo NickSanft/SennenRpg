@@ -14,8 +14,8 @@ public partial class NowPlayingPopup : CanvasLayer
     private const float HoldSec    = 4.0f;
     private const float FadeOutSec = 1.0f;
 
-    private static readonly Color Gold       = new(1.0f, 0.85f, 0.1f);
-    private static readonly Color SubtleGrey = new(0.65f, 0.65f, 0.65f);
+    private static Color Gold       => UiTheme.Gold;
+    private static Color SubtleGrey => UiTheme.SubtleGrey;
 
     private Label     _titleLabel  = null!;
     private Label     _artistLabel = null!;
@@ -32,7 +32,7 @@ public partial class NowPlayingPopup : CanvasLayer
         // Background panel — top-left
         _bg = new ColorRect
         {
-            Color        = new Color(0f, 0f, 0f, 0.55f),
+            Color        = UiTheme.PanelBg with { A = 0.85f },
             AnchorLeft   = 0f,
             AnchorTop    = 0f,
             OffsetLeft   = 12f,

@@ -17,11 +17,10 @@ public partial class StatsMenu : CanvasLayer
 {
     [Signal] public delegate void ClosedEventHandler();
 
-    private static readonly Color Gold       = new(1.0f, 0.85f, 0.1f);
+    private static Color Gold       => UiTheme.Gold;
     private static readonly Color BarFg      = new(0.25f, 0.75f, 1.0f);
     private static readonly Color BarBg      = new(0.15f, 0.15f, 0.25f);
-    private static readonly Color SubtleGrey = new(0.55f, 0.55f, 0.55f);
-    private static readonly Color BgColour   = new(0.07f, 0.07f, 0.12f, 1f);
+    private static Color SubtleGrey => UiTheme.SubtleGrey;
 
     private Label     _headerLabel   = null!;
     private Label     _xpLabel       = null!;
@@ -64,16 +63,7 @@ public partial class StatsMenu : CanvasLayer
         {
             CustomMinimumSize = new Vector2(360f, 0f),
         };
-        var style = new StyleBoxFlat
-        {
-            BgColor          = BgColour,
-            BorderWidthLeft   = 1, BorderWidthRight  = 1,
-            BorderWidthTop    = 1, BorderWidthBottom = 1,
-            BorderColor       = new Color(0.25f, 0.25f, 0.35f),
-            CornerRadiusTopLeft    = 4, CornerRadiusTopRight    = 4,
-            CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
-        };
-        panelContainer.AddThemeStyleboxOverride("panel", style);
+        UiTheme.ApplyPanelTheme(panelContainer);
         centerer.AddChild(panelContainer);
 
         // MarginContainer provides padding inside the panel.

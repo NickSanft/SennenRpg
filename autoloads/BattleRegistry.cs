@@ -10,6 +10,9 @@ public partial class BattleRegistry : Node
 	// The encounter set by the overworld trigger, read by BattleScene on load
 	private EncounterData? _pendingEncounter;
 
+	/// <summary>Background tint color sampled from the overworld tile at encounter location.</summary>
+	public Color PendingBackgroundColor { get; set; } = new(0.55f, 0.3f, 0.85f);
+
 	public override void _Ready()
 	{
 		Instance = this;

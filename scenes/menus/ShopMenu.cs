@@ -33,6 +33,7 @@ public partial class ShopMenu : CanvasLayer
 		_backButton    = GetNode<Button>("Overlay/Panel/VBox/BackButton");
 
 		_backButton.Pressed += Close;
+		UiTheme.ApplyToAllButtons(this);
 	}
 
 	public override void _UnhandledInput(InputEvent @event)

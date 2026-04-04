@@ -54,6 +54,9 @@ public partial class PauseMenu : CanvasLayer
 		_statsButton.Pressed     += OnStatsPressed;
 		_mainMenuButton.Pressed  += OnMainMenuPressed;
 
+		// Apply SNES theme to all buttons
+		UiTheme.ApplyToAllButtons(this);
+
 		// Cursor SFX on focus change
 		foreach (var btn in new[] { _resumeButton, _saveButton, _settingsButton,
 			_itemsButton, _cookButton, _equipmentButton, _spellsButton, _statsButton, _mainMenuButton })

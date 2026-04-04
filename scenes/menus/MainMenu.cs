@@ -1,5 +1,6 @@
 using Godot;
 using SennenRpg.Autoloads;
+using SennenRpg.Core.Data;
 
 namespace SennenRpg.Scenes.Menus;
 
@@ -28,6 +29,16 @@ public partial class MainMenu : Node2D
 		_continueButton.Pressed += OnContinuePressed;
 		_creditsButton.Pressed  += OnCreditsPressed;
 		_quitButton.Pressed     += () => GetTree().Quit();
+
+		// Apply SNES theme to all buttons and title
+		UiTheme.ApplyToAllButtons(this);
+		var titleLabel = GetNodeOrNull<Label>("UI/Center/VBox/Title");
+		if (titleLabel != null)
+		{
+			var font = UiTheme.LoadPixelFont();
+			if (font != null) titleLabel.AddThemeFontOverride("font", font);
+			titleLabel.AddThemeColorOverride("font_color", UiTheme.Gold);
+		}
 	}
 
 	private void OnNewGamePressed()

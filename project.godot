@@ -102,6 +102,7 @@ directories/dtl_directory={
 "quest_rork_reminder": "res://dialog/timelines/quest_rork_reminder.dtl",
 "quest_rork_rewarded": "res://dialog/timelines/quest_rork_rewarded.dtl",
 "quest_rork_turnin": "res://dialog/timelines/quest_rork_turnin.dtl",
+"rork_mellyr_intro": "res://dialog/timelines/rork_mellyr_intro.dtl",
 "save_point_prompt": "res://dialog/timelines/save_point_prompt.dtl",
 "spell_no_mp": "res://dialog/timelines/spell_no_mp.dtl",
 "spell_shadow_bolt_cast": "res://dialog/timelines/spell_shadow_bolt_cast.dtl",

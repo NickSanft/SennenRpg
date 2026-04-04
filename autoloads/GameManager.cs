@@ -88,6 +88,9 @@ public partial class GameManager : Node
 	public int      RepelStepsRemaining          { get => _world.RepelStepsRemaining;   set => _world.RepelStepsRemaining = value; }
 	public Vector2? BattleReturnPosition         { get => _world.BattleReturnPosition;  set => _world.BattleReturnPosition = value; }
 
+	/// <summary>Set true before teleport transition; player checks this on arrival to play dissolve-in.</summary>
+	public bool TeleportArriving { get; set; }
+
 	// ── Mellyr reward pass-through ────────────────────────────────────────────
 
 	public int          TownStepCounter          { get => _mellyr.TownStepCounter;      set => _mellyr.TownStepCounter = value; }

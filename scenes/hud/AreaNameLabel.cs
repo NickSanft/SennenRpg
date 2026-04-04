@@ -24,14 +24,18 @@ public partial class AreaNameLabel : CanvasLayer
 		_label = GetNode<Label>("Label");
 		_label.Modulate = Colors.Transparent;
 
-		// Add text outline for readability
+		// SNES theme: pixel font + outline
+		var font = Core.Data.UiTheme.LoadPixelFont();
+		if (font != null)
+			_label.AddThemeFontOverride("font", font);
 		_label.AddThemeConstantOverride("outline_size", 2);
 		_label.AddThemeColorOverride("font_outline_color", Colors.Black);
+		_label.AddThemeColorOverride("font_color", Core.Data.UiTheme.Gold);
 
 		// Semi-transparent background behind text
 		_bg = new ColorRect
 		{
-			Color     = new Color(0f, 0f, 0f, 0.45f),
+			Color     = Core.Data.UiTheme.PanelBg with { A = 0.8f },
 			AnchorLeft  = 0.5f, AnchorRight = 0.5f,
 			AnchorTop   = 0.8f, AnchorBottom = 0.8f,
 			OffsetLeft  = -210f, OffsetRight  = 210f,

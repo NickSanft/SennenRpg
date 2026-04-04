@@ -15,11 +15,10 @@ public partial class CookingMenu : CanvasLayer
 {
     [Signal] public delegate void ClosedEventHandler();
 
-    private static readonly Color Gold       = new(1.0f, 0.85f, 0.1f);
-    private static readonly Color HaveGreen  = new(0.3f, 0.9f, 0.4f);
-    private static readonly Color NeedRed    = new(0.9f, 0.3f, 0.3f);
-    private static readonly Color SubtleGrey = new(0.55f, 0.55f, 0.55f);
-    private static readonly Color BgColour   = new(0.07f, 0.07f, 0.12f, 1f);
+    private static Color Gold       => UiTheme.Gold;
+    private static Color HaveGreen  => UiTheme.HaveGreen;
+    private static Color NeedRed    => UiTheme.NeedRed;
+    private static Color SubtleGrey => UiTheme.SubtleGrey;
 
     private static readonly string[] RecipePaths =
     [
@@ -88,7 +87,7 @@ public partial class CookingMenu : CanvasLayer
         // Overlay
         var overlay = new ColorRect
         {
-            Color = new Color(0f, 0f, 0f, 0.75f),
+            Color = UiTheme.OverlayDim,
             AnchorRight = 1f, AnchorBottom = 1f,
         };
         AddChild(overlay);
@@ -100,16 +99,7 @@ public partial class CookingMenu : CanvasLayer
         AddChild(centerer);
 
         var panel = new PanelContainer { CustomMinimumSize = new Vector2(400f, 0f) };
-        var style = new StyleBoxFlat
-        {
-            BgColor = BgColour,
-            BorderWidthLeft = 1, BorderWidthRight = 1,
-            BorderWidthTop = 1, BorderWidthBottom = 1,
-            BorderColor = new Color(0.25f, 0.25f, 0.35f),
-            CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4,
-            CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
-        };
-        panel.AddThemeStyleboxOverride("panel", style);
+        UiTheme.ApplyPanelTheme(panel);
         centerer.AddChild(panel);
 
         var margin = new MarginContainer();
