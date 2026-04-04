@@ -122,6 +122,7 @@ public partial class InventoryMenu : CanvasLayer
 
 	private void Close()
 	{
+		AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
 		Visible = false;
 		EmitSignal(SignalName.Closed);
 	}
@@ -340,6 +341,7 @@ public partial class InventoryMenu : CanvasLayer
 
 	private void OnUseItem(ItemData item, string path)
 	{
+		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
 		int actual = ItemLogic.ActualHeal(
 			item.HealAmount,
 			GameManager.Instance.PlayerStats.CurrentHp,

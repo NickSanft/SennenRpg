@@ -204,6 +204,7 @@ public partial class GameManager : Node
 
 	public void AddItem(string resourcePath)    => _inventory.AddItem(resourcePath);
 	public bool RemoveItem(string resourcePath) => _inventory.RemoveItem(resourcePath);
+	public void AddSpell(string resourcePath)   => _inventory.AddSpell(resourcePath);
 
 	// ── Combat ────────────────────────────────────────────────────────────────
 
@@ -359,6 +360,9 @@ public partial class GameManager : Node
 		_inventory.ApplyFromSave(data);
 		_world.ApplyFromSave(data);
 		_mellyr.ApplyFromSave(data);
+
+		// Ensure Teleport Home spell exists (migration for saves created before it existed)
+		_inventory.AddSpell("res://resources/spells/teleport_home.tres");
 
 		// Multi-class: restore from save or migrate legacy single-class save
 		if (data.ClassProgressionEntries.Count > 0)

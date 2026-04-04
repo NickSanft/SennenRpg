@@ -55,6 +55,7 @@ public partial class ShopMenu : CanvasLayer
 
 	private void Close()
 	{
+		AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
 		Visible = false;
 		EmitSignal(SignalName.Closed);
 	}
@@ -124,8 +125,13 @@ public partial class ShopMenu : CanvasLayer
 
 	private void OnBuy(ItemData item, ShopItemEntry entry)
 	{
-		if (!ShopLogic.CanAfford(GameManager.Instance.Gold, entry.Price)) return;
+		if (!ShopLogic.CanAfford(GameManager.Instance.Gold, entry.Price))
+		{
+			AudioManager.Instance?.PlaySfx(UiSfx.Error);
+			return;
+		}
 
+		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
 		GameManager.Instance.AddGold(-entry.Price);
 		GameManager.Instance.AddItem(entry.ItemDataPath);
 

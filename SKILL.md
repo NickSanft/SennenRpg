@@ -135,6 +135,22 @@ Reference these when creating new game content to ensure consistency.
 
 ---
 
+## Skill: add-spell
+**Adds a new castable spell.**
+
+### Steps
+1. Create `res://resources/spells/{id}.tres` (type: `SpellData`):
+   - Set `SpellId` (snake_case), `DisplayName`, `Description`
+   - Set `BasePower` (for damage spells), `MpCost`
+   - Set `MinigameScene` to a custom PackedScene, or leave null for default ShadowBoltMinigame
+   - Set `OverworldUsable = true` if castable from the pause menu Spells screen
+   - Set `OverworldTargetScene` for teleport-type spells (e.g., `res://scenes/overworld/MAPP.tscn`)
+2. Give the spell to the player via `GameManager.Instance.AddSpell("res://resources/spells/{id}.tres")`
+3. The spell appears automatically in the battle Spells sub-menu and the pause menu Spells screen
+4. For battle spells: implement a minigame scene or use the default ShadowBoltMinigame
+
+---
+
 ## Skill: wire-battle-transition
 **Connects a map trigger to launch a random battle encounter.**
 

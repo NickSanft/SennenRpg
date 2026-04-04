@@ -78,7 +78,7 @@ res://
 │   └── extensions/               # NodeExtensions.cs, CameraShake.cs
 ├── scenes/
 │   ├── boot/                     # Boot.tscn — first scene loaded
-│   ├── menus/                    # MainMenu, PauseMenu, GameOver, InventoryMenu, ShopMenu, EquipmentMenu, ResidencyShopMenu, ClassChangeMenu, CookingMenu, CookingMinigame, CreditsMenu, StatsMenu, SettingsMenu
+│   ├── menus/                    # MainMenu, PauseMenu, GameOver, InventoryMenu, ShopMenu, EquipmentMenu, ResidencyShopMenu, ClassChangeMenu, CookingMenu, CookingMinigame, SpellsMenu, CreditsMenu, StatsMenu, SettingsMenu
 │   ├── overworld/
 │   │   ├── OverworldBase.tscn    # Inherited by all maps
 │   │   ├── MAPP.tscn / .cs / .Events.cs   # Mapp Tavern (partial class split)
@@ -191,10 +191,23 @@ Victory → EXP/Gold display → GameManager.AddGold/AddExp → SceneTransition 
 - Recipes combine ingredients into food items via a rhythm minigame
 - `CookingLogic` (pure static): HasIngredients, DetermineQuality (Burnt/Normal/Perfect), QualityItemPath
 - Quality tiers: Burnt (0.5x heal), Normal (1.0x), Perfect (1.5x) — separate .tres per quality variant
-- `CookingMinigame` — single-lane rhythm game (CharmMinigame pattern), configurable note count
+- `CookingMinigame` — single-lane rhythm game with `cooking.wav` BGM, configurable note count
 - `CookingMenu` — pause menu sub-menu listing recipes with ingredient availability
 - `ItemType` enum on `ItemData`: Consumable, Ingredient, Equipment, KeyItem, Repel
 - Ingredients sold by Rork and dropped by enemies via `BonusLootItemPath`
+- Battle Item menu filters to only show Consumable and Repel items (hides ingredients/key items)
+
+## Spells System
+- `SpellData` Resource: SpellId, DisplayName, Description, BasePower, MpCost, MinigameScene
+- `OverworldUsable` flag: spells castable from pause menu (e.g., Teleport Home)
+- `OverworldTargetScene`: scene path for teleport-type spells
+- `SpellsMenu` — pause menu sub-menu listing known spells with MP costs
+- `GameManager.AddSpell(path)` / `InventoryData.AddSpell(path)` — spell acquisition API
+- Default spell: Shadow Bolt (battle damage); Teleport Home (returns to MAPP Tavern for 5 MP)
+
+## Auto-Save
+- `MapExit` has `[Export] bool AutoSave` — writes save before scene transition
+- Enabled on all dungeon floor staircase transitions
 
 ## Music Metadata
 - `MusicMetadata.Lookup(path)` → `MusicTrackInfo` (Artist, Album, TrackNumber, Title)

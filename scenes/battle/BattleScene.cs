@@ -26,6 +26,7 @@ public partial class BattleScene : Node2D
 	private EnemyData?  _enemy;
 	private int         _enemyCurrentHp;
 	private SubMenuMode _subMenuMode;
+	private readonly System.Collections.Generic.List<int> _itemIndexMap = new();
 	private bool        _playerGoesFirst;
 	private float           _difficultyMultiplier = 1f;
 	private AdaptationResult _adaptation = RhythmMemoryLogic.ComputeAdaptation(null);
@@ -510,7 +511,27 @@ public partial class BattleScene : Node2D
 	private async Task DoItemSelected()
 	{
 		var inv = GameManager.Instance.InventoryItemPaths;
-		if (inv.Count == 0)
+
+		// Build filtered list: only Consumable and Repel items usable in battle
+		_itemIndexMap.Clear();
+		var labels = new System.Collections.Generic.List<string>();
+		for (int i = 0; i < inv.Count; i++)
+		{
+			if (!ResourceLoader.Exists(inv[i])) continue;
+			var item = GD.Load<ItemData>(inv[i]);
+			if (item == null) continue;
+			if (item.Type is not (ItemType.Consumable or ItemType.Repel)) continue;
+
+			string label = item.RepelSteps > 0
+				? $"{item.DisplayName} (Repel {item.RepelSteps} steps)"
+				: item.HealAmount > 0
+					? $"{item.DisplayName} (+{item.HealAmount} HP)"
+					: item.DisplayName;
+			labels.Add(label);
+			_itemIndexMap.Add(i);
+		}
+
+		if (labels.Count == 0)
 		{
 			await RunBattleTimeline("res://dialog/timelines/battle_no_items.dtl");
 			await RunEnemyTurn();
@@ -519,14 +540,7 @@ public partial class BattleScene : Node2D
 
 		_subMenuMode = SubMenuMode.Items;
 		_actionMenu.SlideOut();
-
-		var labels = new string[inv.Count];
-		for (int i = 0; i < inv.Count; i++)
-		{
-			var item = ResourceLoader.Exists(inv[i]) ? GD.Load<ItemData>(inv[i]) : null;
-			labels[i] = item != null ? $"{item.DisplayName} (+{item.HealAmount} HP)" : "???";
-		}
-		_subMenu.Populate(labels);
+		_subMenu.Populate(labels.ToArray());
 		_subMenu.Visible = true;
 	}
 
@@ -724,14 +738,16 @@ public partial class BattleScene : Node2D
 	private async Task HandleItemOption(int index)
 	{
 		var inv = GameManager.Instance.InventoryItemPaths;
-		if (index >= inv.Count)
+		// Map filtered sub-menu index back to actual inventory index
+		int realIndex = index < _itemIndexMap.Count ? _itemIndexMap[index] : -1;
+		if (realIndex < 0 || realIndex >= inv.Count)
 		{
 			await RunBattleTimeline("res://dialog/timelines/battle_item_nothing.dtl");
 			await RunEnemyTurn();
 			return;
 		}
 
-		string path = inv[index];
+		string path = inv[realIndex];
 		var item = ResourceLoader.Exists(path) ? GD.Load<ItemData>(path) : null;
 		if (item == null)
 		{

@@ -379,6 +379,7 @@ public partial class EquipmentMenu : CanvasLayer
 
     private void Close()
     {
+        AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
         Visible = false;
         EmitSignal(SignalName.Closed);
     }

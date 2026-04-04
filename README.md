@@ -53,10 +53,10 @@ A 2D RPG built in **Godot 4.6** with **C# (.NET 10)**. The game features a turn-
 - **Save points** — interactable stars that open a YES/NO confirmation dialog, then write to disk.
 - **Encounter triggers** — invisible Area2D triggers that start a battle when walked into. Supports `OneShot` (fires once then removes itself) and `PersistenceFlag` (remembers across save/load cycles).
 - **Enemy pawns** — visible enemy sprites that idle until the player walks within detection range, then chase the player and start a battle on contact.
-- **Map exits** — transition to another map scene with a configurable spawn point ID. Supports walk-off (auto-trigger) and door (interact) modes.
+- **Map exits** — transition to another map scene with a configurable spawn point ID. Supports walk-off (auto-trigger) and door (interact) modes. Optional auto-save on transition (enabled on dungeon floor staircases).
 - **Cutscene triggers** — play a Dialogic timeline automatically when a map loads (fires once per `OnceFlag`).
 - **Random encounters** — each map has a configurable `RandomEncounterTable`. Every 32 pixels of player movement, the game rolls each encounter's `EncounterChancePerStep` (0–100%). Multiple encounters can coexist on one map with independent probabilities.
-- **Pause menu** — ESC overlay with Resume, Save, Settings, Items, Cook, Equipment, Stats, and Main Menu.
+- **Pause menu** — ESC overlay with Resume, Save, Settings, Items, Cook, Equipment, Spells, Stats, and Main Menu.
 - **HUD** — bottom-left HP/MP bars, player name, and gold. MP bar hidden for classes with 0 MaxMp. Bars animate smoothly on change.
 - **Now-playing popup** — top-left overlay showing current track title and artist when BGM changes.
 - **Area name popup** — bottom-center label with dark background that fades in on map load.

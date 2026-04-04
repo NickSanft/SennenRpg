@@ -51,6 +51,7 @@ script = ExtResource("5_mapexit")
 TargetMapPath = "res://scenes/overworld/maps/dungeon/DungeonFloor1.tscn"
 TargetSpawnId = "stairs_down"
 AutoTrigger = true
+AutoSave = true
 ExitHint = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StairsUp" index="0" unique_id=1988918646]
@@ -63,6 +64,7 @@ script = ExtResource("5_mapexit")
 TargetMapPath = "res://scenes/overworld/maps/dungeon/DungeonFloor3.tscn"
 TargetSpawnId = "stairs_up"
 AutoTrigger = true
+AutoSave = true
 ExitHint = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StairsDown" index="0" unique_id=942200754]

@@ -34,6 +34,22 @@ public class InventoryData
 		return true;
 	}
 
+	// ── Spells ────────────────────────────────────────────────────────────────
+
+	public void AddSpell(string resourcePath)
+	{
+		if (!KnownSpellPaths.Contains(resourcePath))
+			KnownSpellPaths.Add(resourcePath);
+	}
+
+	public bool RemoveSpell(string resourcePath)
+	{
+		int idx = KnownSpellPaths.IndexOf(resourcePath);
+		if (idx < 0) return false;
+		KnownSpellPaths.RemoveAt(idx);
+		return true;
+	}
+
 	// ── Static equipment ──────────────────────────────────────────────────────
 
 	public void AddEquipment(string resourcePath) => OwnedEquipmentPaths.Add(resourcePath);
@@ -93,6 +109,7 @@ public class InventoryData
 		InventoryItemPaths.Add("res://resources/items/item_001.tres");
 		KnownSpellPaths.Clear();
 		KnownSpellPaths.Add("res://resources/spells/shadow_bolt.tres");
+		KnownSpellPaths.Add("res://resources/spells/teleport_home.tres");
 
 		OwnedEquipmentPaths.Clear();
 		OwnedEquipmentPaths.Add("res://resources/equipment/iron_sword.tres");

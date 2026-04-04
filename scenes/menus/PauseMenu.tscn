@@ -54,6 +54,9 @@ text = "COOK"
 [node name="EquipmentButton" type="Button" parent="Overlay/Panel/VBox"]
 text = "EQUIPMENT"
 
+[node name="SpellsButton" type="Button" parent="Overlay/Panel/VBox"]
+text = "SPELLS"
+
 [node name="StatsButton" type="Button" parent="Overlay/Panel/VBox"]
 text = "STATS"
 

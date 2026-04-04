@@ -18,4 +18,8 @@ public partial class SpellData : Resource
     [Export] public Texture2D? Icon { get; set; }
     /// <summary>Optional custom minigame scene. Null uses the default ShadowBoltMinigame.</summary>
     [Export] public PackedScene? MinigameScene { get; set; }
+    /// <summary>When true, this spell can be cast from the overworld Spells menu (e.g., Teleport).</summary>
+    [Export] public bool OverworldUsable { get; set; } = false;
+    /// <summary>Optional scene path to transition to when cast in overworld (e.g., for teleport spells).</summary>
+    [Export] public string OverworldTargetScene { get; set; } = "";
 }

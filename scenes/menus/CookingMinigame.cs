@@ -22,6 +22,7 @@ public partial class CookingMinigame : Control
     private const float PerfectWindowPx = 10f;
     private const float GoodWindowPx    = 22f;
     private const float CookingBpm      = 120f;
+    private const string CookingSfx     = "res://assets/audio/sfx/cooking.wav";
 
     // ── Note labels for visual flair ──────────────────────────────────
     private static readonly string[] NoteLabels = ["Stir", "Flip", "Chop", "Season", "Mix", "Taste", "Sear", "Fold"];
@@ -59,6 +60,7 @@ public partial class CookingMinigame : Control
         _notes.Clear();
 
         Visible = true;
+        AudioManager.Instance?.PlaySfx(CookingSfx);
         RhythmClock.Instance.StartFreeRunning(CookingBpm);
         RhythmClock.Instance.Beat += OnBeat;
         QueueRedraw();
