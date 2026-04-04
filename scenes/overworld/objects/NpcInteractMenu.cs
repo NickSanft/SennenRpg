@@ -18,7 +18,7 @@ public partial class NpcInteractMenu : CanvasLayer
 	[Signal] public delegate void ChangeClassSelectedEventHandler();
 	[Signal] public delegate void CancelledEventHandler();
 
-	private Panel         _panel              = null!;
+	private PanelContainer _panel              = null!;
 	private VBoxContainer _vbox               = null!;
 	private Button        _talkButton         = null!;
 	private Button        _shopButton         = null!;
@@ -49,25 +49,34 @@ public partial class NpcInteractMenu : CanvasLayer
 		};
 		AddChild(overlay);
 
-		// Centred panel with SNES theme
-		_panel = new Panel
+		// Centred auto-sizing panel with SNES theme
+		var centerer = new CenterContainer
 		{
-			AnchorLeft   = 0.5f, AnchorRight  = 0.5f,
-			AnchorTop    = 0.5f, AnchorBottom = 0.5f,
-			OffsetLeft   = -80f, OffsetRight  =  80f,
-			OffsetTop    = -60f, OffsetBottom =  60f,
+			AnchorRight  = 1f,
+			AnchorBottom = 1f,
 		};
-		_panel.AddThemeStyleboxOverride("panel", UiTheme.CreatePanelStyle());
-		AddChild(_panel);
+		AddChild(centerer);
 
-		_vbox = new VBoxContainer
+		var panelContainer = new PanelContainer
 		{
-			AnchorLeft   = 0f, AnchorRight  = 1f,
-			AnchorTop    = 0f, AnchorBottom = 1f,
-			OffsetLeft   =  8f, OffsetRight  = -8f,
-			OffsetTop    =  8f, OffsetBottom = -8f,
+			CustomMinimumSize = new Vector2(160f, 0f),
 		};
-		_panel.AddChild(_vbox);
+		UiTheme.ApplyPanelTheme(panelContainer);
+		centerer.AddChild(panelContainer);
+
+		// Store as Panel for desc-view resizing
+		_panel = panelContainer;
+
+		var margin = new MarginContainer();
+		margin.AddThemeConstantOverride("margin_left",   12);
+		margin.AddThemeConstantOverride("margin_right",  12);
+		margin.AddThemeConstantOverride("margin_top",    8);
+		margin.AddThemeConstantOverride("margin_bottom", 8);
+		panelContainer.AddChild(margin);
+
+		_vbox = new VBoxContainer();
+		_vbox.AddThemeConstantOverride("separation", 4);
+		margin.AddChild(_vbox);
 
 		_talkButton = new Button { Text = "Talk" };
 		UiTheme.ApplyButtonTheme(_talkButton);
@@ -154,8 +163,7 @@ public partial class NpcInteractMenu : CanvasLayer
 		_cancelButton.Visible       = true;
 		_descLabel.Visible          = false;
 		_closeButton.Visible        = false;
-		_panel.OffsetLeft   = -80f; _panel.OffsetRight  =  80f;
-		_panel.OffsetTop    = -60f; _panel.OffsetBottom =  60f;
+		_panel.CustomMinimumSize = new Vector2(160f, 0f);
 		_talkButton.GrabFocus();
 	}
 
@@ -172,8 +180,7 @@ public partial class NpcInteractMenu : CanvasLayer
 		_descLabel.Visible     = true;
 		_closeButton.Visible   = true;
 		// Widen panel to fit description text
-		_panel.OffsetLeft   = -110f; _panel.OffsetRight  =  110f;
-		_panel.OffsetTop    =  -80f; _panel.OffsetBottom =   80f;
+		_panel.CustomMinimumSize = new Vector2(220f, 0f);
 		_closeButton.GrabFocus();
 	}
 
@@ -214,7 +221,7 @@ public partial class NpcInteractMenu : CanvasLayer
 	private void OnCloseDesc()
 	{
 		AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
-		_panel.OffsetLeft   = -80f; _panel.OffsetRight  =  80f;
+		_panel.CustomMinimumSize = new Vector2(160f, 0f);
 		ShowMainButtons();
 	}
 

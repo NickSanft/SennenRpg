@@ -122,7 +122,8 @@ public partial class Npc : CharacterBody2D, IInteractable
 			Position            = new Vector2(-30, -28),
 			LabelSettings       = new LabelSettings
 			{
-				FontSize     = 15,
+				Font         = Core.Data.UiTheme.LoadPixelFont(),
+				FontSize     = 8,
 				FontColor    = Colors.White,
 				OutlineSize  = 2,
 				OutlineColor = new Color(0f, 0f, 0f, 0.9f),

@@ -34,6 +34,10 @@ public partial class MellyrOutpost : OverworldBase
 
 		base._Ready();
 
+		// Paint ground tiles for the walkable outpost area
+		EnsureGroundTiles();
+		FillUnpaintedTilesAsWalls();
+
 		// Spawn residents dynamically — avoids Godot inherited-scene parent_id_path issues
 		if (GameManager.Instance.GetFlag(Flags.NpcRainPurchased))
 			SpawnResident(RainScene, "rain_town", RainTimeline, RainCharPath, new Vector2(128, 112));
@@ -97,6 +101,32 @@ public partial class MellyrOutpost : OverworldBase
 		YSort.AddChild(npc);
 	}
 
+	/// <summary>
+	/// Paint ground tiles to define the walkable outpost area.
+	/// Mellyr Outpost has no pre-painted ground tiles in the .tscn,
+	/// so we create them here to give FillUnpaintedTilesAsWalls a boundary.
+	/// </summary>
+	private void EnsureGroundTiles()
+	{
+		var groundLayer = GetNodeOrNull<TileMapLayer>("Ground/Ground") ?? GroundLayer;
+		if (groundLayer == null) return;
+
+		// Ensure tileset is available
+		const string stdPath = "res://resources/tilesets/sennen_tiles.tres";
+		if (groundLayer.TileSet == null && ResourceLoader.Exists(stdPath))
+			groundLayer.TileSet = GD.Load<TileSet>(stdPath);
+		if (groundLayer.TileSet == null) return;
+
+		// Define walkable area in tile coords (16px tiles)
+		// Spawn at (160,185) = tile (10,11), Rork at (160,128) = tile (10,8), Exit at (160,200) = tile (10,12)
+		// Area: roughly tiles (5,5) to (15,13) covering the outpost
+		var floorAtlas = new Vector2I(0, 6); // ground tile
+		for (int x = 5; x <= 15; x++)
+			for (int y = 5; y <= 13; y++)
+				if (groundLayer.GetCellSourceId(new Vector2I(x, y)) < 0)
+					groundLayer.SetCell(new Vector2I(x, y), 0, floorAtlas);
+	}
+
 	// ── Dialogic signal dispatch ───────────────────────────────────────────────
 
 	private void OnDialogicSignal(Variant arg)
@@ -134,24 +164,45 @@ public partial class MellyrOutpost : OverworldBase
 	{
 		GD.Print($"[MellyrOutpost] {message}");
 
-		var lbl = new Label();
-		lbl.Text                = message;
-		lbl.HorizontalAlignment = HorizontalAlignment.Center;
-		lbl.AutowrapMode        = TextServer.AutowrapMode.Word;
-		lbl.AddThemeFontSizeOverride("font_size", 16);
-
 		var canvas = new CanvasLayer { Layer = 60 };
-		canvas.AddChild(lbl);
 		AddChild(canvas);
 
-		lbl.SetAnchorsPreset(Control.LayoutPreset.CenterBottom);
-		lbl.OffsetTop    = -60;
-		lbl.OffsetBottom = -20;
-		lbl.OffsetLeft   = -200;
-		lbl.OffsetRight  = 200;
+		var centerer = new CenterContainer
+		{
+			AnchorRight = 1f, AnchorBottom = 1f,
+		};
+		canvas.AddChild(centerer);
 
+		var panel = new PanelContainer
+		{
+			CustomMinimumSize = new Vector2(200f, 0f),
+		};
+		UiTheme.ApplyPanelTheme(panel);
+		centerer.AddChild(panel);
+
+		var margin = new MarginContainer();
+		margin.AddThemeConstantOverride("margin_left", 12);
+		margin.AddThemeConstantOverride("margin_right", 12);
+		margin.AddThemeConstantOverride("margin_top", 8);
+		margin.AddThemeConstantOverride("margin_bottom", 8);
+		panel.AddChild(margin);
+
+		var lbl = new Label
+		{
+			Text                = message,
+			HorizontalAlignment = HorizontalAlignment.Center,
+			AutowrapMode        = TextServer.AutowrapMode.WordSmart,
+		};
+		lbl.AddThemeFontSizeOverride("font_size", 8);
+		lbl.AddThemeColorOverride("font_color", UiTheme.Gold);
+		margin.AddChild(lbl);
+
+		// Fade in, hold, fade out
+		panel.Modulate = Colors.Transparent;
 		var tween = CreateTween();
-		tween.TweenInterval(2.5f);
+		tween.TweenProperty(panel, "modulate", Colors.White, 0.3f);
+		tween.TweenInterval(3.0f);
+		tween.TweenProperty(panel, "modulate", Colors.Transparent, 0.5f);
 		tween.TweenCallback(Callable.From(() => canvas.QueueFree()));
 	}
 }

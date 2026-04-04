@@ -26,6 +26,12 @@ public partial class ActionMenu : Control
         _itemButton    = GetNode<Button>("GridContainer/ItemButton");
         _fleeButton    = GetNode<Button>("GridContainer/FleeButton");
 
+        // Ensure all focus modes for gamepad navigation
+        _fightButton.FocusMode   = Control.FocusModeEnum.All;
+        _performButton.FocusMode = Control.FocusModeEnum.All;
+        _itemButton.FocusMode    = Control.FocusModeEnum.All;
+        _fleeButton.FocusMode    = Control.FocusModeEnum.All;
+
         _fightButton.Pressed   += () => { AudioManager.Instance?.PlaySfx(UiSfx.Confirm); EmitSignal(SignalName.FightSelected); };
         _performButton.Pressed += () => { AudioManager.Instance?.PlaySfx(UiSfx.Confirm); EmitSignal(SignalName.PerformSelected); };
         _itemButton.Pressed    += () => { AudioManager.Instance?.PlaySfx(UiSfx.Confirm); EmitSignal(SignalName.ItemSelected); };

@@ -43,6 +43,8 @@ public partial class CookingMenu : CanvasLayer
     {
         LoadRecipes();
         BuildUI();
+        UiTheme.ApplyPixelFontToAll(this);
+        UiTheme.ApplyToAllButtons(this);
         Visible = true;
     }
 

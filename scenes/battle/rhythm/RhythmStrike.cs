@@ -131,9 +131,10 @@ public partial class RhythmStrike : Control
 				Colors.White, 2f);
 
 		// Prompt
+		string strikeHint = $"Press {Core.Extensions.InputMapExtensions.GetInputHint("interact", "Z")} to strike!";
 		DrawString(ThemeDB.FallbackFont,
 				   new Vector2(origin.X, origin.Y - 10f),
-				   "Press Z to strike!",
-				   HorizontalAlignment.Left, -1, 12, Colors.White);
+				   strikeHint,
+				   HorizontalAlignment.Left, -1, 10, Colors.White);
 	}
 }

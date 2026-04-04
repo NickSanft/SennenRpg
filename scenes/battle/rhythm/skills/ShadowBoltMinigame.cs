@@ -142,7 +142,7 @@ public partial class ShadowBoltMinigame : BardMinigameBase
         // Instruction
         DrawString(ThemeDB.FallbackFont,
                    new Vector2(center.X - 65f, VP.Y - 14f),
-                   "Press Z / Enter to cast!", HorizontalAlignment.Left, -1, 11,
+                   $"Press {Core.Extensions.InputMapExtensions.GetInputHint("interact", "Z")} to cast!", HorizontalAlignment.Left, -1, 10,
                    Colors.White with { A = 0.8f });
     }
 

@@ -104,6 +104,12 @@ public partial class GameManager : Node
 		Instance = this;
 		ProcessMode = ProcessModeEnum.Always;
 		_combat.LoadDefaults();
+		UiTheme.ApplyGlobalTheme();
+	}
+
+	public override void _Input(InputEvent @event)
+	{
+		Core.Extensions.InputMapExtensions.TrackInputDevice(@event);
 	}
 
 	public override void _Process(double delta)

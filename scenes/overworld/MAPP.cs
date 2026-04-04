@@ -100,6 +100,9 @@ public partial class MAPP : OverworldBase
 		DialogicBridge.Instance.DialogicSignalReceived += OnDialogicSignal;
 
 		SpawnEntryFade();
+
+		// Re-run wall fill AFTER all code-built tiles (MappTiles) are placed
+		FillUnpaintedTilesAsWalls();
 	}
 
 	// ── Editor preview ─────────────────────────────────────────────────────────

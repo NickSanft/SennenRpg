@@ -21,22 +21,38 @@ public partial class SubMenu : Control
 
 	public void Populate(string[] options)
 	{
-		// Clear old buttons
+		// Clear old buttons immediately (not deferred) to avoid stale child issues
 		foreach (Node child in _list.GetChildren())
+		{
+			_list.RemoveChild(child);
 			child.QueueFree();
+		}
 
+		var buttons = new System.Collections.Generic.List<Button>();
 		for (int i = 0; i < options.Length; i++)
 		{
 			int captured = i;
 			var btn = new Button();
 			btn.Text = options[i];
 			btn.Pressed += () => EmitSignal(SignalName.OptionSelected, captured);
+			// Ensure all focus modes are enabled for gamepad navigation
+			btn.FocusMode = Control.FocusModeEnum.All;
 			_list.AddChild(btn);
+			buttons.Add(btn);
 		}
 
-		// Auto-focus first item
-		if (_list.GetChildCount() > 0)
-			(_list.GetChild(0) as Button)?.GrabFocus();
+		// Set explicit focus neighbors for circular navigation
+		for (int i = 0; i < buttons.Count; i++)
+		{
+			var prev = buttons[(i - 1 + buttons.Count) % buttons.Count];
+			var next = buttons[(i + 1) % buttons.Count];
+			buttons[i].FocusNeighborTop    = prev.GetPath();
+			buttons[i].FocusNeighborBottom = next.GetPath();
+		}
+
+		// Auto-focus first item (deferred so layout is ready)
+		if (buttons.Count > 0)
+			buttons[0].CallDeferred(Control.MethodName.GrabFocus);
 	}
 
 	public override void _Input(InputEvent @event)

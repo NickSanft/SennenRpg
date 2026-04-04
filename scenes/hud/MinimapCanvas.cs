@@ -52,11 +52,7 @@ public partial class MinimapCanvas : Control
 
 		foreach (var node in GetTree().GetNodesInGroup("interactable"))
 		{
-			if (node is SennenRpg.Scenes.Overworld.SavePoint sp)
-			{
-				DrawRect(new Rect2(ToMap(sp.GlobalPosition, bounds) - Vector2.One * 2f, Vector2.One * 4f), SaveColour);
-			}
-			else if (node is SennenRpg.Scenes.Overworld.Npc npc)
+			if (node is SennenRpg.Scenes.Overworld.Npc npc)
 			{
 				// NPCs with active quests get a quest marker instead
 				bool hasQuest = false;

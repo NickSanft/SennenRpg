@@ -1,5 +1,6 @@
 using Godot;
 using SennenRpg.Autoloads;
+using SennenRpg.Core.Data;
 
 namespace SennenRpg.Scenes.Boot;
 
@@ -16,6 +17,15 @@ public partial class Boot : Node2D
 	{
 		_pressAnyLabel = GetNode<Label>("UI/Center/VBox/PressAnyLabel");
 
+		// Apply SNES theme
+		UiTheme.ApplyPixelFontToAll(this);
+		UiTheme.ApplyToAllButtons(this);
+
+		// Style the title
+		var titleLabel = GetNodeOrNull<Label>("UI/Center/VBox/TitleLabel");
+		if (titleLabel != null)
+			titleLabel.AddThemeColorOverride("font_color", UiTheme.Gold);
+
 		// Blink the prompt
 		var tween = CreateTween().SetLoops();
 		tween.TweenProperty(_pressAnyLabel, "modulate:a", 0.0f, 0.55f)
@@ -30,9 +40,10 @@ public partial class Boot : Node2D
 
 		bool pressed = e switch
 		{
-			InputEventKey k         => k.Pressed && !k.Echo,
-			InputEventMouseButton m => m.Pressed,
-			_                       => false,
+			InputEventKey k          => k.Pressed && !k.Echo,
+			InputEventMouseButton m  => m.Pressed,
+			InputEventJoypadButton j => j.Pressed,
+			_                        => false,
 		};
 
 		if (pressed)

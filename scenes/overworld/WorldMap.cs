@@ -175,10 +175,18 @@ public partial class WorldMap : Node2D
 	/// </summary>
 	public bool IsTilePassable(Vector2I tile)
 	{
+		// Check collision layer first — if a collision tile exists, check its data
 		var tileData = _collision.GetCellTileData(tile);
-		if (tileData == null) return true;    // no collision tile painted = passable
-		// AsBool() returns false when the custom data key doesn't exist (Nil variant)
-		return !tileData.GetCustomData("impassable").AsBool();
+		if (tileData != null)
+			return !tileData.GetCustomData("impassable").AsBool();
+
+		// No collision tile — check if a ground tile exists at this position.
+		// If no ground tile exists, the tile is impassable (empty space).
+		var groundLayer = GetNodeOrNull<TileMapLayer>("Ground");
+		if (groundLayer != null)
+			return groundLayer.GetCellSourceId(tile) >= 0;
+
+		return false; // No ground layer = impassable
 	}
 
 	// ── BGM ───────────────────────────────────────────────────────────────────
@@ -218,10 +226,10 @@ public partial class WorldMap : Node2D
 
 	private void SpawnParallaxBackground()
 	{
-		// Use a CanvasLayer behind the main content (layer -1) so clouds
-		// render behind all tiles and sprites, not on the same canvas.
-		var bgCanvas = new CanvasLayer { Layer = -1 };
-		AddChild(bgCanvas);
+		// Render clouds as a subtle overlay above tiles but below HUD.
+		// Using CanvasLayer 1 (above world tiles at layer 0, below GameHud at 2).
+		var cloudLayer = new CanvasLayer { Layer = 1 };
+		AddChild(cloudLayer);
 
 		var rng = new RandomNumberGenerator();
 		rng.Seed = 42;
@@ -232,15 +240,16 @@ public partial class WorldMap : Node2D
 			float cy = rng.RandfRange(10f, 220f);
 			float w  = rng.RandfRange(30f, 70f);
 			float h  = rng.RandfRange(8f, 18f);
-			float alpha = rng.RandfRange(0.06f, 0.14f);
+			float alpha = rng.RandfRange(0.03f, 0.08f);
 
 			var cloud = new ColorRect
 			{
-				Color    = new Color(0.8f, 0.85f, 1f, alpha),
+				Color    = new Color(1f, 1f, 1f, alpha),
 				Position = new Vector2(cx, cy),
 				Size     = new Vector2(w, h),
+				MouseFilter = Control.MouseFilterEnum.Ignore,
 			};
-			bgCanvas.AddChild(cloud);
+			cloudLayer.AddChild(cloud);
 
 			// Slow drift animation
 			var drift = CreateTween().SetLoops();

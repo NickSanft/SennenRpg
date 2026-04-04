@@ -82,6 +82,7 @@ public partial class SaveSlotMenu : Node2D
 
         // Apply SNES theme to all buttons
         UiTheme.ApplyToAllButtons(canvas);
+        UiTheme.ApplyPixelFontToAll(canvas);
 
         // Apply pixel font to title
         titleLabel.AddThemeColorOverride("font_color", UiTheme.Gold);

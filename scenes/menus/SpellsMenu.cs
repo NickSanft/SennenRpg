@@ -30,6 +30,8 @@ public partial class SpellsMenu : CanvasLayer
     public void Open()
     {
         BuildUI();
+        UiTheme.ApplyPixelFontToAll(this);
+        UiTheme.ApplyToAllButtons(this);
         Visible = true;
     }
 

@@ -36,6 +36,7 @@ public partial class StatsMenu : CanvasLayer
         Layer   = 52;
         Visible = false;
         BuildUI();
+        UiTheme.ApplyPixelFontToAll(this);
     }
 
     private void BuildUI()

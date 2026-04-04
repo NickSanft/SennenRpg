@@ -30,13 +30,12 @@ public partial class MainMenu : Node2D
 		_creditsButton.Pressed  += OnCreditsPressed;
 		_quitButton.Pressed     += () => GetTree().Quit();
 
-		// Apply SNES theme to all buttons and title
+		// Apply SNES theme to all buttons, labels, and title
 		UiTheme.ApplyToAllButtons(this);
+		UiTheme.ApplyPixelFontToAll(this);
 		var titleLabel = GetNodeOrNull<Label>("UI/Center/VBox/Title");
 		if (titleLabel != null)
 		{
-			var font = UiTheme.LoadPixelFont();
-			if (font != null) titleLabel.AddThemeFontOverride("font", font);
 			titleLabel.AddThemeColorOverride("font_color", UiTheme.Gold);
 		}
 	}

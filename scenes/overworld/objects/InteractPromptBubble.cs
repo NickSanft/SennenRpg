@@ -12,14 +12,32 @@ namespace SennenRpg.Scenes.Overworld;
 /// </summary>
 public partial class InteractPromptBubble : Node2D
 {
-	private readonly string _text;
+	private readonly string _action;
+	private readonly string _label;
+	private Label?  _labelNode;
 	private CanvasLayer _canvas  = null!;
-	private Node2D      _screenNode = null!; // positioned at screen coords each frame
-	private Node2D      _bobNode    = null!; // child of _screenNode; tweened for bob
+	private Node2D      _screenNode = null!;
+	private Node2D      _bobNode    = null!;
 	private Tween?      _tween;
 
-	public InteractPromptBubble() : this("") { }
-	public InteractPromptBubble(string text) { _text = text; }
+	public InteractPromptBubble() : this("interact", "Talk") { }
+	/// <summary>Create with an action name and label, e.g. ("interact", "Talk").</summary>
+	public InteractPromptBubble(string action, string label) { _action = action; _label = label; }
+	/// <summary>Legacy: parse "[Z] Talk" format into action + label.</summary>
+	public InteractPromptBubble(string text)
+	{
+		// Parse "[Z] Talk" → action "interact", label "Talk"
+		if (text.Contains(']'))
+		{
+			_label = text[(text.IndexOf(']') + 2)..].Trim();
+			_action = "interact";
+		}
+		else
+		{
+			_label = text;
+			_action = "interact";
+		}
+	}
 
 	public override void _Ready()
 	{
@@ -28,9 +46,9 @@ public partial class InteractPromptBubble : Node2D
 		_bobNode    = new Node2D();
 
 		var font = Core.Data.UiTheme.LoadPixelFont();
-		var label = new Label
+		_labelNode = new Label
 		{
-			Text                = _text,
+			Text                = Core.Extensions.InputMapExtensions.HintFor(_action, _label),
 			HorizontalAlignment = HorizontalAlignment.Center,
 			CustomMinimumSize   = new Vector2(60, 0),
 			Position            = new Vector2(-30, 0),
@@ -44,16 +62,25 @@ public partial class InteractPromptBubble : Node2D
 			},
 		};
 
-		var bg = new ColorRect
+		var panel = new PanelContainer();
+		var panelStyle = new StyleBoxFlat
 		{
-			Color    = Core.Data.UiTheme.PanelBg with { A = 0.8f },
-			Position = new Vector2(-34, -1),
-			Size     = new Vector2(68, 16),
-			ZIndex   = -1,
+			BgColor = Core.Data.UiTheme.PanelBg with { A = 0.85f },
+			ContentMarginLeft = 6, ContentMarginRight = 6,
+			ContentMarginTop = 2, ContentMarginBottom = 2,
+			CornerRadiusTopLeft = 3, CornerRadiusTopRight = 3,
+			CornerRadiusBottomLeft = 3, CornerRadiusBottomRight = 3,
+			BorderWidthLeft = 1, BorderWidthRight = 1,
+			BorderWidthTop = 1, BorderWidthBottom = 1,
+			BorderColor = Core.Data.UiTheme.PanelBorder,
 		};
-
-		_bobNode.AddChild(bg);
-		_bobNode.AddChild(label);
+		panel.AddThemeStyleboxOverride("panel", panelStyle);
+		panel.Position = new Vector2(-40, -2);
+		// Reset label position since it's now inside the panel
+		_labelNode.Position = Vector2.Zero;
+		_labelNode.CustomMinimumSize = new Vector2(0, 0);
+		panel.AddChild(_labelNode);
+		_bobNode.AddChild(panel);
 		_screenNode.AddChild(_bobNode);
 		_canvas.AddChild(_screenNode);
 		GetTree().Root.AddChild(_canvas);
@@ -81,6 +108,9 @@ public partial class InteractPromptBubble : Node2D
 
 	public void ShowBubble()
 	{
+		// Update text based on current input device (keyboard vs gamepad)
+		if (_labelNode != null)
+			_labelNode.Text = Core.Extensions.InputMapExtensions.HintFor(_action, _label);
 		_screenNode.Visible = true;
 		if (_tween != null && _tween.IsRunning()) return;
 		_tween?.Kill();

@@ -62,6 +62,7 @@ public partial class InventoryMenu : CanvasLayer
 
 		// Apply SNES theme
 		UiTheme.ApplyToAllButtons(this);
+		UiTheme.ApplyPixelFontToAll(this);
 	}
 
 	private void BuildCategoryTabs()

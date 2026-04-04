@@ -90,6 +90,7 @@ public partial class OverworldBase : Node2D
 			AudioManager.Instance.PlayBgm(BgmPath);
 
 		ApplyCameraBoundsFromGround();
+		FillUnpaintedTilesAsWalls();
 		PreloadNpcTimelines();
 
 		const string hudPath   = "res://scenes/hud/GameHud.tscn";
@@ -207,6 +208,103 @@ public partial class OverworldBase : Node2D
 			var color = img.GetPixel(px, py);
 			BattleRegistry.Instance.PendingBackgroundColor = color;
 		}
+	}
+
+	/// <summary>
+	/// For any tile within the Ground layer's bounding rect that has no ground tile
+	/// painted, paint a wall tile on the Walls layer. This ensures empty space is impassable.
+	/// Also adds a 1-tile wall border around the entire ground area.
+	/// </summary>
+	/// <summary>
+	/// Collect all TileMapLayers that aren't the Walls layer — these represent ground/floor.
+	/// Checks Ground, Ground/Ground, and any dynamically added layers (like MappTiles).
+	/// </summary>
+	private System.Collections.Generic.List<TileMapLayer> GetAllGroundLayers()
+	{
+		var layers = new System.Collections.Generic.List<TileMapLayer>();
+		CollectTileMapLayers(this, layers, "Walls");
+		return layers;
+	}
+
+	private static void CollectTileMapLayers(Node node, System.Collections.Generic.List<TileMapLayer> list, string excludeName)
+	{
+		foreach (var child in node.GetChildren())
+		{
+			if (child is TileMapLayer tl && child.Name != excludeName)
+				list.Add(tl);
+			// Recurse into containers (like the Ground parent node)
+			if (child is not TileMapLayer)
+				CollectTileMapLayers(child, list, excludeName);
+			else if (child.Name.ToString() == "Ground")
+				CollectTileMapLayers(child, list, excludeName); // check nested Ground/Ground
+		}
+	}
+
+	protected void FillUnpaintedTilesAsWalls()
+	{
+		var wallsLayer = GetNodeOrNull<TileMapLayer>("Walls");
+		if (wallsLayer == null) return;
+
+		// Ensure the Walls layer uses a TileSet with physics collision
+		const string stdTilesetPath = "res://resources/tilesets/sennen_tiles.tres";
+		if (wallsLayer.TileSet == null || wallsLayer.TileSet.GetPhysicsLayersCount() == 0)
+		{
+			if (ResourceLoader.Exists(stdTilesetPath))
+				wallsLayer.TileSet = GD.Load<TileSet>(stdTilesetPath);
+			else
+				return;
+		}
+
+		// Gather all ground layers (including dynamically created ones like MappTiles)
+		var groundLayers = GetAllGroundLayers();
+		if (groundLayers.Count == 0) return;
+
+		// Compute the union bounding rect of all ground layers
+		Rect2I bounds = default;
+		bool first = true;
+		foreach (var gl in groundLayers)
+		{
+			var r = gl.GetUsedRect();
+			if (!r.HasArea()) continue;
+			if (first) { bounds = r; first = false; }
+			else bounds = bounds.Merge(r);
+		}
+		if (!bounds.HasArea()) return;
+
+		Vector2I wallAtlas = new(2, 6);
+		int wallSourceId = 0;
+		int wallCount = 0;
+
+		// Expand by 1 tile on each side for border walls
+		var expanded = new Rect2I(
+			bounds.Position - Vector2I.One,
+			bounds.Size + new Vector2I(2, 2));
+
+		for (int x = expanded.Position.X; x < expanded.End.X; x++)
+		{
+			for (int y = expanded.Position.Y; y < expanded.End.Y; y++)
+			{
+				var pos = new Vector2I(x, y);
+
+				// Skip if ANY ground layer has a tile here
+				bool hasGround = false;
+				foreach (var gl in groundLayers)
+				{
+					if (gl.GetCellSourceId(pos) >= 0) { hasGround = true; break; }
+				}
+				if (hasGround) continue;
+
+				// Skip if wall tile already exists here
+				if (wallsLayer.GetCellSourceId(pos) >= 0) continue;
+
+				wallsLayer.SetCell(pos, wallSourceId, wallAtlas);
+				wallCount++;
+			}
+		}
+
+		if (wallCount > 0)
+			GD.Print($"[OverworldBase] FillUnpaintedTilesAsWalls: painted {wallCount} wall tiles " +
+				$"from {groundLayers.Count} ground layers (physics: {wallsLayer.TileSet?.GetPhysicsLayersCount() ?? 0})");
 	}
 
 	/// <summary>

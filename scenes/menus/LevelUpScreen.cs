@@ -175,7 +175,7 @@ public partial class LevelUpScreen : CanvasLayer
         var hint = new Label
         {
             Name                = "DismissHint",
-            Text                = "Press Z / Enter to continue",
+            Text                = $"Press {Core.Extensions.InputMapExtensions.GetInputHint("interact", "Z")} to continue",
             HorizontalAlignment = HorizontalAlignment.Center,
             Modulate            = new Color(0.6f, 0.6f, 0.6f),
         };
@@ -202,7 +202,7 @@ public partial class LevelUpScreen : CanvasLayer
             await AnimateLevelUp(result);
 
         _canDismiss = true;
-        UpdateHint("Press Z / Enter to continue");
+        UpdateHint($"Press {Core.Extensions.InputMapExtensions.GetInputHint("interact", "Z")} to continue");
 
         // Auto-dismiss after 5 s
         GetTree().CreateTimer(5.0).Timeout += () => _dismissTcs.TrySetResult(true);

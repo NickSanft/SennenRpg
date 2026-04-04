@@ -259,7 +259,6 @@ SennenRpg/
 │   │       ├── MapExit.cs
 │   │       ├── SpawnPoint.cs
 │   │       ├── CutsceneTrigger.cs
-│   │       ├── EnemyPawn.cs
 │   │       ├── InteractSign.cs        # Readable sign/notice board
 │   │       ├── Chest.cs               # One-time treasure chest
 │   │       ├── JournalProp.cs         # Opens journal entry list
@@ -484,7 +483,7 @@ RepelSteps                           int
 2. Create a rhythm pattern scene in `scenes/battle/rhythm/patterns/` extending `RhythmPatternBase` and assign it to `AttackPatternScene`.
 3. Create `resources/encounters/{id}.tres` — add your enemy to `Enemies`.
 4. Optionally create Perform dialog timelines at `dialog/timelines/act_{enemyId}_{optionName}.dtl`.
-5. Add your encounter to a map's `RandomEncounterTable`, or place an `EnemyPawn` / `EncounterTrigger`.
+5. Add your encounter to a map's `RandomEncounterTable`, or place an `EncounterTrigger`.
 
 ### New Map
 
@@ -492,7 +491,7 @@ RepelSteps                           int
 2. Create `MyMap.cs` extending `OverworldBase`. Set `MapId` in the inspector.
 3. Add TileMapLayers named `Ground`, `Walls`, `Objects`. Add a `YSort` node for entities.
 4. Place `SpawnPoint.tscn` instances in the scene. Set `SpawnId = "default"` for the default spawn.
-5. Place NPCs, SavePoints, EncounterTriggers, MapExits, and EnemyPawns under `YSort`.
+5. Place NPCs, SavePoints, EncounterTriggers, and MapExits under `YSort`.
 6. Assign `RandomEncounterTable` encounters in the inspector for random battles.
 
 ### New NPC

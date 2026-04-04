@@ -564,24 +564,34 @@ public partial class BattleScene : Node2D
 	{
 		var inv = GameManager.Instance.InventoryItemPaths;
 
-		// Build filtered list: only Consumable and Repel items usable in battle
+		// Build item list — skip ingredients by path convention, fall back gracefully
 		_itemIndexMap.Clear();
 		var labels = new System.Collections.Generic.List<string>();
 		for (int i = 0; i < inv.Count; i++)
 		{
-			if (!ResourceLoader.Exists(inv[i])) continue;
-			var item = GD.Load<ItemData>(inv[i]);
+			string path = inv[i];
+			if (!ResourceLoader.Exists(path)) continue;
+
+			// Skip ingredient items by path convention
+			if (path.Contains("ingredient_")) continue;
+
+			ItemData? item = null;
+			try { item = GD.Load<ItemData>(path); } catch { /* ignore load failures */ }
+
+			// Only show items that actually do something in battle (heal or repel)
+			// Skip items we can't load, and skip items with no heal and no repel
 			if (item == null) continue;
-			if (item.Type is not (ItemType.Consumable or ItemType.Repel)) continue;
+			if (item.HealAmount <= 0 && item.RepelSteps <= 0) continue;
 
 			string label = item.RepelSteps > 0
 				? $"{item.DisplayName} (Repel {item.RepelSteps} steps)"
-				: item.HealAmount > 0
-					? $"{item.DisplayName} (+{item.HealAmount} HP)"
-					: item.DisplayName;
+				: $"{item.DisplayName} (+{item.HealAmount} HP)";
+
 			labels.Add(label);
 			_itemIndexMap.Add(i);
 		}
+
+		GD.Print($"[BattleScene] Item menu: {labels.Count} usable items from {inv.Count} total");
 
 		if (labels.Count == 0)
 		{
@@ -592,8 +602,10 @@ public partial class BattleScene : Node2D
 
 		_subMenuMode = SubMenuMode.Items;
 		_actionMenu.SlideOut();
+		GD.Print($"[BattleScene] Populating SubMenu with {labels.Count} items");
 		_subMenu.Populate(labels.ToArray());
 		_subMenu.Visible = true;
+		GD.Print($"[BattleScene] SubMenu visible = {_subMenu.Visible}");
 	}
 
 	// ── Flee ──────────────────────────────────────────────────────────

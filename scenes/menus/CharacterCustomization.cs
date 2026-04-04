@@ -97,6 +97,7 @@ public partial class CharacterCustomization : Node2D
 
         // Apply SNES theme
         UiTheme.ApplyToAllButtons(this);
+		UiTheme.ApplyPixelFontToAll(this);
     }
 
     // ── Tab 1 — Class ─────────────────────────────────────────────────────────

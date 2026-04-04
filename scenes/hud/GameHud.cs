@@ -56,6 +56,9 @@ public partial class GameHud : CanvasLayer
 		hintLabel.AddThemeColorOverride("font_color", new Color(0.5f, 0.5f, 0.5f));
 		vbox.AddChild(hintLabel);
 
+		// Apply pixel font to all labels
+		UiTheme.ApplyPixelFontToAll(this);
+
 		// Apply colorblind palette on load — SettingsManager.ApplyAll() runs before this HUD loads.
 		var mode = SettingsManager.Instance?.Current.ColorblindMode ?? ColorblindMode.Normal;
 		_hpBar.Color = SettingsLogic.HpBarColor(mode);

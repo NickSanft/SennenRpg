@@ -132,7 +132,8 @@ public partial class LullabyMinigame : BardMinigameBase
 
         // Instruction label
         DrawString(ThemeDB.FallbackFont, new Vector2(VP.X * 0.5f - 60f, centerY - 18f),
-                   "Press Z X C V in order", HorizontalAlignment.Left, -1, 11, Colors.White with { A = 0.8f });
+                   $"Press {Core.Extensions.InputMapExtensions.GetInputHint("lane_0")} {Core.Extensions.InputMapExtensions.GetInputHint("lane_1")} {Core.Extensions.InputMapExtensions.GetInputHint("lane_2")} {Core.Extensions.InputMapExtensions.GetInputHint("lane_3")} in order",
+                   HorizontalAlignment.Left, -1, 10, Colors.White with { A = 0.8f });
     }
 
     public override void _Process(double _delta)

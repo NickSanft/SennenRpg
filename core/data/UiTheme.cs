@@ -120,11 +120,49 @@ public static class UiTheme
 
     public const string PixelFontPath = "res://assets/fonts/PressStart2P-Regular.ttf";
 
-    /// <summary>Load the SNES pixel font. Returns null if not found.</summary>
+    private static Font? _cachedFont;
+
+    /// <summary>Load the SNES pixel font. Cached after first load.</summary>
     public static Font? LoadPixelFont()
     {
-        return ResourceLoader.Exists(PixelFontPath)
+        _cachedFont ??= ResourceLoader.Exists(PixelFontPath)
             ? GD.Load<Font>(PixelFontPath) : null;
+        return _cachedFont;
+    }
+
+    /// <summary>Apply pixel font to a single label. Safe to call on every dynamically created label.</summary>
+    public static void ApplyFont(Label label)
+    {
+        var font = LoadPixelFont();
+        if (font != null)
+            label.AddThemeFontOverride("font", font);
+    }
+
+    /// <summary>
+    /// Apply the pixel font globally via the default theme so ALL labels and buttons
+    /// in the entire game use it automatically, even dynamically created ones.
+    /// Call once from an autoload's _Ready().
+    /// </summary>
+    public static void ApplyGlobalTheme()
+    {
+        var font = LoadPixelFont();
+        if (font == null) return;
+
+        var theme = new Theme();
+        theme.DefaultFont = font;
+        theme.DefaultFontSize = 10;
+
+        // Button styling
+        theme.SetStylebox("normal",  "Button", CreateButtonStyle());
+        theme.SetStylebox("hover",   "Button", CreateButtonHoverStyle());
+        theme.SetStylebox("focus",   "Button", CreateButtonHoverStyle());
+        theme.SetStylebox("pressed", "Button", CreateButtonHoverStyle());
+        theme.SetColor("font_color",       "Button", Colors.White);
+        theme.SetColor("font_hover_color", "Button", Gold);
+        theme.SetColor("font_focus_color", "Button", Gold);
+
+        ThemeDB.FallbackFont     = font;
+        ThemeDB.FallbackFontSize = 10;
     }
 
     /// <summary>

@@ -50,6 +50,7 @@ public partial class EquipmentMenu : CanvasLayer
         Visible = false;
         BuildUI();
         UiTheme.ApplyToAllButtons(this);
+		UiTheme.ApplyPixelFontToAll(this);
     }
 
     private void BuildUI()

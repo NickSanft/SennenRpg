@@ -34,6 +34,8 @@ public partial class ClassChangeMenu : CanvasLayer
     public void Open()
     {
         BuildUI();
+        UiTheme.ApplyPixelFontToAll(this);
+        UiTheme.ApplyToAllButtons(this);
         Visible = true;
     }
 

@@ -181,7 +181,14 @@ public partial class DialogicBridge : Node
 		_dialogic.Call("start", timelinePath);
 		GD.Print("[DialogicBridge] Dialogic.start() returned.");
 
-		// One frame later, confirm the timeline is actually running
+		// Apply SNES theme to Dialogic's UI nodes — retry a few times since
+		// Dialogic creates layout nodes lazily over multiple frames.
+		for (float delay = 0.05f; delay <= 0.5f; delay += 0.15f)
+		{
+			GetTree().CreateTimer(delay).Connect("timeout",
+				Callable.From(ApplyThemeToDialogicUI));
+		}
+
 		GetTree().CreateTimer(0.1).Connect("timeout",
 			Callable.From(() => GD.Print($"[DialogicBridge] IsRunning 0.1s later = {IsRunning()}")));
 	}
@@ -310,5 +317,58 @@ public partial class DialogicBridge : Node
 		_dialogicOwnsDialog = false;
 		AudioManager.Instance?.RestoreBgm();
 		GD.Print("[DialogicBridge] Timeline ended.");
+	}
+
+	/// <summary>
+	/// Apply SNES theme to Dialogic's runtime UI by setting a Theme on the Dialogic
+	/// control node. This cascades to all children automatically.
+	/// </summary>
+	private void ApplyThemeToDialogicUI()
+	{
+		if (_dialogic == null) return;
+		var font = SennenRpg.Core.Data.UiTheme.LoadPixelFont();
+		if (font == null) return;
+
+		// Build a Theme that covers Label, RichTextLabel, Button, Panel
+		var theme = new Theme();
+		theme.DefaultFont = font;
+		theme.DefaultFontSize = 10;
+
+		// Label font
+		theme.SetFont("font", "Label", font);
+		theme.SetFontSize("font_size", "Label", 10);
+
+		// RichTextLabel font
+		theme.SetFont("normal_font", "RichTextLabel", font);
+		theme.SetFontSize("normal_font_size", "RichTextLabel", 10);
+
+		// Button styling
+		theme.SetFont("font", "Button", font);
+		theme.SetStylebox("normal",  "Button", SennenRpg.Core.Data.UiTheme.CreateButtonStyle());
+		theme.SetStylebox("hover",   "Button", SennenRpg.Core.Data.UiTheme.CreateButtonHoverStyle());
+		theme.SetStylebox("focus",   "Button", SennenRpg.Core.Data.UiTheme.CreateButtonHoverStyle());
+		theme.SetStylebox("pressed", "Button", SennenRpg.Core.Data.UiTheme.CreateButtonHoverStyle());
+
+		// Panel styling
+		theme.SetStylebox("panel", "PanelContainer", SennenRpg.Core.Data.UiTheme.CreatePanelStyle());
+		theme.SetStylebox("panel", "Panel", SennenRpg.Core.Data.UiTheme.CreatePanelStyle());
+
+		// Apply to Dialogic's control hierarchy
+		ApplyThemeRecursive(_dialogic, theme);
+	}
+
+	private static void ApplyThemeRecursive(Node node, Theme theme)
+	{
+		if (node is Control ctrl)
+			ctrl.Theme = theme;
+		// Only set on the first Control found — it cascades to children
+		// But Dialogic may have multiple root controls, so recurse one level
+		foreach (var child in node.GetChildren())
+		{
+			if (child is Control childCtrl)
+				childCtrl.Theme = theme;
+			else
+				ApplyThemeRecursive(child, theme);
+		}
 	}
 }

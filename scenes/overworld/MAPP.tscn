@@ -14,7 +14,6 @@
 [ext_resource type="PackedScene" uid="uid://chairfurnit01" path="res://scenes/overworld/objects/furniture/ChairFurniture.tscn" id="12_chair"]
 [ext_resource type="PackedScene" uid="uid://barstoolfurn1" path="res://scenes/overworld/objects/furniture/BarStoolFurniture.tscn" id="13_stool"]
 [ext_resource type="PackedScene" uid="uid://bicqox5152kty" path="res://scenes/overworld/objects/InteractSign.tscn" id="15_sign"]
-[ext_resource type="PackedScene" uid="uid://bm5n2kpvryawd" path="res://scenes/overworld/objects/SavePoint.tscn" id="16_save"]
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/Chest.tscn" id="17_chest"]
 [ext_resource type="PackedScene" uid="uid://evwjjqormcym" path="res://scenes/overworld/objects/MapExit.tscn" id="18_exit"]
 [ext_resource type="PackedScene" uid="uid://bx11g5q7nayii" path="res://scenes/overworld/objects/JournalProp.tscn" id="19_journal"]
@@ -263,10 +262,6 @@ position = Vector2(90, -40)
 
 [node name="Journal" parent="." index="7" unique_id=2050191186 instance=ExtResource("19_journal")]
 position = Vector2(-60, 35)
-
-[node name="SavePoint" parent="." index="8" unique_id=747126169 instance=ExtResource("16_save")]
-position = Vector2(-130, 105)
-SavePointId = "mapp_hearth"
 
 [node name="Chest" parent="." index="9" unique_id=2121869652 instance=ExtResource("17_chest")]
 position = Vector2(152, 185)

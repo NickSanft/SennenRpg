@@ -34,6 +34,7 @@ public partial class ShopMenu : CanvasLayer
 
 		_backButton.Pressed += Close;
 		UiTheme.ApplyToAllButtons(this);
+		UiTheme.ApplyPixelFontToAll(this);
 	}
 
 	public override void _UnhandledInput(InputEvent @event)
