@@ -1,4 +1,5 @@
 using Godot;
+using SennenRpg.Core.Data;
 
 namespace SennenRpg.Scenes.Overworld;
 
@@ -34,6 +35,7 @@ public partial class JournalEntryPopup : CanvasLayer
 			GrowHorizontal = Control.GrowDirection.Both,
 			GrowVertical   = Control.GrowDirection.Both,
 		};
+		UiTheme.ApplyPanelTheme(panel);
 		AddChild(panel);
 
 		var vbox = new VBoxContainer();
@@ -84,6 +86,8 @@ public partial class JournalEntryPopup : CanvasLayer
 		hint.AddThemeColorOverride("font_color", Colors.Yellow);
 		hint.AddThemeFontSizeOverride("font_size", 11);
 		vbox.AddChild(hint);
+
+		UiTheme.ApplyPixelFontToAll(panel);
 	}
 
 	public override void _UnhandledInput(InputEvent @event)

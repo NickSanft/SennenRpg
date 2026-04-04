@@ -77,16 +77,7 @@ public partial class EquipmentMenu : CanvasLayer
         {
             CustomMinimumSize = new Vector2(460f, 0f),
         };
-        var style = new StyleBoxFlat
-        {
-            BgColor               = BgColour,
-            BorderWidthLeft       = 1, BorderWidthRight  = 1,
-            BorderWidthTop        = 1, BorderWidthBottom = 1,
-            BorderColor           = new Color(0.25f, 0.25f, 0.35f),
-            CornerRadiusTopLeft    = 4, CornerRadiusTopRight    = 4,
-            CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
-        };
-        panelContainer.AddThemeStyleboxOverride("panel", style);
+        UiTheme.ApplyPanelTheme(panelContainer);
         centerer.AddChild(panelContainer);
 
         // MarginContainer for padding inside the panel
@@ -363,8 +354,13 @@ public partial class EquipmentMenu : CanvasLayer
 
     private void AddPickerOption(string text, System.Action action)
     {
-        var btn = new Button { Text = text };
-        btn.AddThemeFontSizeOverride("font_size", 16);
+        var btn = new Button
+        {
+            Text = text,
+            ClipText = true,
+            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+        };
+        btn.AddThemeFontSizeOverride("font_size", 10);
         btn.Pressed += action;
         _itemPickerList.AddChild(btn);
     }

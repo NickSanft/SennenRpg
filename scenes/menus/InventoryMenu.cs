@@ -61,6 +61,10 @@ public partial class InventoryMenu : CanvasLayer
 		_backButton.Pressed += Close;
 
 		// Apply SNES theme
+		var overlay = GetNodeOrNull<ColorRect>("Overlay");
+		if (overlay != null) overlay.Color = UiTheme.OverlayDim;
+		var panel = GetNodeOrNull<PanelContainer>("Overlay/Panel");
+		if (panel != null) UiTheme.ApplyPanelTheme(panel);
 		UiTheme.ApplyToAllButtons(this);
 		UiTheme.ApplyPixelFontToAll(this);
 	}
@@ -225,6 +229,9 @@ public partial class InventoryMenu : CanvasLayer
 		_emptyLabel.Visible = itemCount == 0;
 		if (!focusGrabbed)
 			_backButton.GrabFocus();
+
+		// Re-apply font to dynamically created rows
+		UiTheme.ApplyPixelFontToAll(_itemRows);
 	}
 
 	private static Dictionary<string, int> CountItems(Godot.Collections.Array<string> paths)

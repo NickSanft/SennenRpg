@@ -10,11 +10,11 @@ public static class UiTheme
 {
     // ── Color palette ─────────────────────────────────────────────────
 
-    /// <summary>Dark blue panel background.</summary>
-    public static readonly Color PanelBg       = new(0.06f, 0.09f, 0.22f, 1f);
+    /// <summary>Dark royal purple panel background.</summary>
+    public static readonly Color PanelBg       = new(0.12f, 0.06f, 0.22f, 1f);
 
-    /// <summary>Light blue border for panels and separators.</summary>
-    public static readonly Color PanelBorder   = new(0.45f, 0.55f, 0.85f);
+    /// <summary>Light purple border for panels and separators.</summary>
+    public static readonly Color PanelBorder   = new(0.55f, 0.40f, 0.85f);
 
     /// <summary>Full-screen dim overlay behind menus.</summary>
     public static readonly Color OverlayDim    = new(0f, 0f, 0f, 0.75f);
@@ -38,7 +38,7 @@ public static class UiTheme
     public static readonly Color LinkBlue      = new(0.4f, 0.7f, 1.0f);
 
     /// <summary>Active tab/selection highlight.</summary>
-    public static readonly Color ActiveHighlight = new(0.5f, 0.7f, 1.0f);
+    public static readonly Color ActiveHighlight = new(0.7f, 0.5f, 1.0f);
 
     // ── Panel styling ─────────────────────────────────────────────────
 
@@ -75,7 +75,7 @@ public static class UiTheme
     {
         return new StyleBoxFlat
         {
-            BgColor               = new Color(0.10f, 0.14f, 0.32f),
+            BgColor               = new Color(0.14f, 0.08f, 0.28f),
             BorderWidthLeft       = 1,
             BorderWidthRight      = 1,
             BorderWidthTop        = 1,
@@ -99,12 +99,12 @@ public static class UiTheme
     {
         return new StyleBoxFlat
         {
-            BgColor               = new Color(0.15f, 0.20f, 0.42f),
+            BgColor               = new Color(0.20f, 0.12f, 0.38f),
             BorderWidthLeft       = 1,
             BorderWidthRight      = 1,
             BorderWidthTop        = 1,
             BorderWidthBottom     = 1,
-            BorderColor           = new Color(0.6f, 0.7f, 1.0f),
+            BorderColor           = new Color(0.7f, 0.5f, 1.0f),
             CornerRadiusTopLeft    = 4,
             CornerRadiusTopRight   = 4,
             CornerRadiusBottomLeft = 4,
@@ -152,6 +152,18 @@ public static class UiTheme
         theme.DefaultFont = font;
         theme.DefaultFontSize = 12;
 
+        // Set font on ALL common control types so it overrides scene defaults
+        foreach (var type in new[] { "Label", "Button", "RichTextLabel", "LineEdit",
+            "TextEdit", "OptionButton", "CheckButton", "ItemList", "TabBar" })
+        {
+            theme.SetFont("font", type, font);
+            theme.SetFontSize("font_size", type, 12);
+        }
+
+        // RichTextLabel uses "normal_font" not "font"
+        theme.SetFont("normal_font", "RichTextLabel", font);
+        theme.SetFontSize("normal_font_size", "RichTextLabel", 12);
+
         // Button styling
         theme.SetStylebox("normal",  "Button", CreateButtonStyle());
         theme.SetStylebox("hover",   "Button", CreateButtonHoverStyle());
@@ -160,6 +172,9 @@ public static class UiTheme
         theme.SetColor("font_color",       "Button", Colors.White);
         theme.SetColor("font_hover_color", "Button", Gold);
         theme.SetColor("font_focus_color", "Button", Gold);
+
+        // Panel styling for PanelContainer
+        theme.SetStylebox("panel", "PanelContainer", CreatePanelStyle());
 
         ThemeDB.FallbackFont     = font;
         ThemeDB.FallbackFontSize = 12;
@@ -177,8 +192,20 @@ public static class UiTheme
 
     private static void ApplyPixelFontRecursive(Node node, Font font)
     {
-        if (node is Label lbl)
-            lbl.AddThemeFontOverride("font", font);
+        switch (node)
+        {
+            case Label lbl:
+                lbl.AddThemeFontOverride("font", font);
+                if (lbl.LabelSettings != null)
+                    lbl.LabelSettings.Font = font;
+                break;
+            case RichTextLabel rtl:
+                rtl.AddThemeFontOverride("normal_font", font);
+                break;
+            case Button btn:
+                btn.AddThemeFontOverride("font", font);
+                break;
+        }
         foreach (var child in node.GetChildren())
             ApplyPixelFontRecursive(child, font);
     }

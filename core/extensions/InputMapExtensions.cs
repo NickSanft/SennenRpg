@@ -32,7 +32,13 @@ public static class InputMapExtensions
         foreach (var evt in InputMap.ActionGetEvents(action))
         {
             if (evt is InputEventKey key)
-                return key.AsText();
+            {
+                // AsText() returns "Z - Physical" for physical keys.
+                // Extract just the key name before " - ".
+                string text = key.AsText();
+                int dash = text.IndexOf(" - ");
+                return dash > 0 ? text[..dash] : text;
+            }
         }
         return fallback;
     }

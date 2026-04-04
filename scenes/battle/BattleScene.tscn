@@ -22,7 +22,7 @@ anchor_bottom = 1.0
 color = Color(0.08, 0.08, 0.08, 1)
 
 [node name="EnemyArea" type="Node2D" parent="."]
-position = Vector2(576, 100)
+position = Vector2(640, 200)
 
 [node name="DialogBox" type="PanelContainer" parent="."]
 layout_mode = 3
@@ -69,10 +69,10 @@ visible = false
 [node name="EnemyNameplate" parent="." instance=ExtResource("7_nameplate")]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 496.0
-offset_top = 155.0
-offset_right = 656.0
-offset_bottom = 195.0
+offset_left = 540.0
+offset_top = 320.0
+offset_right = 740.0
+offset_bottom = 360.0
 
 [node name="FightBar" parent="." instance=ExtResource("8_fightbar")]
 layout_mode = 3

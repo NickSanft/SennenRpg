@@ -215,6 +215,10 @@ Victory → EXP/Gold display → GameManager.AddGold/AddExp → SceneTransition 
 - `UiTheme.ApplyButtonTheme(btn)` — applies button normal/hover/focus/pressed styles
 - Font: `PressStart2P-Regular.ttf` pixel font in `assets/fonts/`
 - All code-built menus use UiTheme instead of hardcoded colors
+- Color scheme: royal purple (PanelBg: 0.12, 0.06, 0.22; PanelBorder: 0.55, 0.40, 0.85)
+- World-space UI (NPC names, interact prompts, map labels) must NOT use CanvasLayer — use AddChild() for proper stretch scaling
+- `ThemeDB.FallbackFont` and `FallbackFontSize` set globally in `GameManager._Ready()` via `UiTheme.ApplyGlobalTheme()`
+- Dialogic styled via `Default.tres` overrides (font, colors) and `.tres` stylebox files
 
 ## Scene Transitions
 - `TransitionType.Fade` — classic black fade (menus)

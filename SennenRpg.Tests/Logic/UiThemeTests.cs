@@ -56,4 +56,19 @@ public class UiThemeTests
     {
         Assert.That(UiTheme.PixelFontPath, Is.Not.Empty);
     }
+
+    [Test]
+    public void PanelBg_IsRoyalPurple()
+    {
+        // Purple: red channel > blue channel's green
+        Assert.That(UiTheme.PanelBg.R, Is.GreaterThan(UiTheme.PanelBg.G),
+            "PanelBg should have more red than green (purple, not blue)");
+    }
+
+    [Test]
+    public void PanelBorder_IsLightPurple()
+    {
+        Assert.That(UiTheme.PanelBorder.R, Is.GreaterThan(UiTheme.PanelBorder.G),
+            "PanelBorder should have more red than green (purple, not blue)");
+    }
 }

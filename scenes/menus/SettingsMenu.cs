@@ -122,6 +122,12 @@ public partial class SettingsMenu : CanvasLayer
 		var tabs = new TabContainer();
 		tabs.CustomMinimumSize = new Vector2(0f, 300f);
 		tabs.SizeFlagsVertical = Control.SizeFlags.Fill | Control.SizeFlags.Expand;
+		var pixelFont = UiTheme.LoadPixelFont();
+		if (pixelFont != null)
+		{
+			tabs.AddThemeFontOverride("font", pixelFont);
+			tabs.AddThemeFontSizeOverride("font_size", 12);
+		}
 		outer.AddChild(tabs);
 
 		tabs.AddChild(BuildAudioTab());

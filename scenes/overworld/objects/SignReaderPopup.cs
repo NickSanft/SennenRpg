@@ -1,4 +1,5 @@
 using Godot;
+using SennenRpg.Core.Data;
 
 namespace SennenRpg.Scenes.Overworld;
 
@@ -23,6 +24,7 @@ public partial class SignReaderPopup : CanvasLayer
 	public override void _Ready()
 	{
 		Layer = 55;
+		var pixelFont = UiTheme.LoadPixelFont();
 
 		// Bottom panel — spans full width, ~120px tall
 		var panel = new PanelContainer
@@ -34,6 +36,7 @@ public partial class SignReaderPopup : CanvasLayer
 			GrowHorizontal = Control.GrowDirection.Both,
 			GrowVertical   = Control.GrowDirection.Begin,
 		};
+		UiTheme.ApplyPanelTheme(panel);
 		AddChild(panel);
 
 		var vbox = new VBoxContainer();
@@ -47,6 +50,7 @@ public partial class SignReaderPopup : CanvasLayer
 				HorizontalAlignment = HorizontalAlignment.Center,
 				LabelSettings       = new LabelSettings
 				{
+					Font         = pixelFont,
 					FontSize     = 12,
 					FontColor    = Colors.Yellow,
 					OutlineSize  = 2,
@@ -62,6 +66,7 @@ public partial class SignReaderPopup : CanvasLayer
 			AutowrapMode  = TextServer.AutowrapMode.Word,
 			LabelSettings = new LabelSettings
 			{
+				Font         = pixelFont,
 				FontSize     = 12,
 				FontColor    = Colors.White,
 				OutlineSize  = 2,
@@ -76,6 +81,7 @@ public partial class SignReaderPopup : CanvasLayer
 			HorizontalAlignment = HorizontalAlignment.Right,
 			LabelSettings       = new LabelSettings
 			{
+				Font         = pixelFont,
 				FontSize     = 11,
 				FontColor    = Colors.Yellow,
 				OutlineSize  = 2,

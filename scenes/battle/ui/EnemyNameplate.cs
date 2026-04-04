@@ -25,6 +25,8 @@ public partial class EnemyNameplate : Control
 	public void Setup(string enemyName)
 	{
 		_nameLabel.Text = enemyName;
+		_nameLabel.HorizontalAlignment = HorizontalAlignment.Center;
+		Core.Data.UiTheme.ApplyPixelFontToAll(this);
 	}
 
 	/// <summary>Updates the status icon row beneath the enemy name.</summary>

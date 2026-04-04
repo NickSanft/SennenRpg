@@ -219,8 +219,8 @@ public partial class DialogicBridge : Node
 	public void SetVariable(string name, Variant value)
 	{
 		if (_dialogic == null) return;
-		var varSubsystem = _dialogic.Call("get_subsystem", "VAR").AsGodotObject();
-		varSubsystem?.Call("set_variable", name, value);
+		// Use ForceSetVariable so ad-hoc variables (not declared in the editor) work too.
+		ForceSetVariable(name, value);
 	}
 
 	/// <summary>

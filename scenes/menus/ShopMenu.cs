@@ -33,6 +33,12 @@ public partial class ShopMenu : CanvasLayer
 		_backButton    = GetNode<Button>("Overlay/Panel/VBox/BackButton");
 
 		_backButton.Pressed += Close;
+
+		// Apply SNES theme
+		var overlay = GetNodeOrNull<ColorRect>("Overlay");
+		if (overlay != null) overlay.Color = UiTheme.OverlayDim;
+		var panel = GetNodeOrNull<PanelContainer>("Overlay/Panel");
+		if (panel != null) UiTheme.ApplyPanelTheme(panel);
 		UiTheme.ApplyToAllButtons(this);
 		UiTheme.ApplyPixelFontToAll(this);
 	}
@@ -96,6 +102,9 @@ public partial class ShopMenu : CanvasLayer
 
 		if (!focusGrabbed)
 			_backButton.GrabFocus();
+
+		// Re-apply font to dynamically created rows
+		UiTheme.ApplyPixelFontToAll(_itemRows);
 	}
 
 	private HBoxContainer BuildItemRow(ItemData item, ShopItemEntry entry)

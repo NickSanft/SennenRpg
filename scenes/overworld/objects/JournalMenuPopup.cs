@@ -38,6 +38,7 @@ public partial class JournalMenuPopup : CanvasLayer
 			GrowHorizontal = Control.GrowDirection.Both,
 			GrowVertical   = Control.GrowDirection.Both,
 		};
+		UiTheme.ApplyPanelTheme(_panel);
 		AddChild(_panel);
 
 		var vbox = new VBoxContainer();
@@ -98,6 +99,9 @@ public partial class JournalMenuPopup : CanvasLayer
 		hint.AddThemeColorOverride("font_color", Colors.Yellow);
 		hint.AddThemeFontSizeOverride("font_size", 11);
 		vbox.AddChild(hint);
+
+		UiTheme.ApplyPixelFontToAll(_panel);
+		UiTheme.ApplyToAllButtons(_panel);
 
 		if (_buttons.Length > 0)
 			_buttons[0].GrabFocus();

@@ -215,11 +215,16 @@ public partial class WorldMap : Node2D
 				HorizontalAlignment = HorizontalAlignment.Center,
 				Position            = entrance.Position + new Vector2(-40f, -14f),
 				CustomMinimumSize   = new Vector2(80f, 0f),
+				LabelSettings       = new LabelSettings
+				{
+					Font         = UiTheme.LoadPixelFont(),
+					FontSize     = 8,
+					FontColor    = UiTheme.Gold,
+					OutlineSize  = 1,
+					OutlineColor = Colors.Black,
+				},
+				TextureFilter = TextureFilterEnum.Nearest,
 			};
-			label.AddThemeFontSizeOverride("font_size", 8);
-			label.AddThemeConstantOverride("outline_size", 1);
-			label.AddThemeColorOverride("font_outline_color", Colors.Black);
-			label.AddThemeColorOverride("font_color", UiTheme.Gold);
 			AddChild(label);
 		}
 	}

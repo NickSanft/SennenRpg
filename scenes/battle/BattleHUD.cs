@@ -64,6 +64,8 @@ public partial class BattleHUD : CanvasLayer
 
 		GameManager.Instance.PlayerStatsChanged += UpdateHud;
 		Callable.From(UpdateHud).CallDeferred();
+
+		UiTheme.ApplyPixelFontToAll(this);
 	}
 
 	public override void _ExitTree()
@@ -181,6 +183,7 @@ public partial class BattleHUD : CanvasLayer
 		}
 
 		_statusLabel.GetParent().AddChild(row);
+		UiTheme.ApplyPixelFontToAll(row);
 	}
 }
 

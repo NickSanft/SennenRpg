@@ -81,6 +81,8 @@ public partial class CreditsMenu : Node2D
 
         // Hint
         AddLabel(vbox, "[Esc] Back", 9, SubtleGrey, HorizontalAlignment.Center);
+
+        UiTheme.ApplyPixelFontToAll(canvas);
     }
 
     public override void _UnhandledInput(InputEvent e)

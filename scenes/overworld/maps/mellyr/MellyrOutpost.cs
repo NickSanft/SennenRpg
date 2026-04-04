@@ -141,21 +141,21 @@ public partial class MellyrOutpost : OverworldBase
 	private void OnCollectRain()
 	{
 		int gold = GameManager.Instance.CollectRainRewards();
-		ShowCollectNotice(gold > 0
+		string msg = gold > 0
 			? $"Rain gave you {gold}G from her water-collecting barrels!"
-			: "Rain hasn't collected any gold yet — come back after some exploring!");
+			: "Rain hasn't collected any gold yet — come back after some exploring!";
+		DialogicBridge.Instance.SetVariable("reward_message", msg);
+		DialogicBridge.Instance.StartTimeline("res://dialog/timelines/mellyr_reward.dtl");
 	}
 
 	private void OnCollectLily()
 	{
 		var items = GameManager.Instance.CollectLilyRewards();
-		if (items.Count == 0)
-		{
-			ShowCollectNotice("Lily hasn't finished anything yet — come back after some exploring!");
-			return;
-		}
-		var names = string.Join(", ", items.Select(i => i.DisplayName));
-		ShowCollectNotice($"Lily forged {names} at the outpost!");
+		string msg = items.Count == 0
+			? "Lily hasn't finished anything yet — come back after some exploring!"
+			: $"Lily forged {string.Join(", ", items.Select(i => i.DisplayName))} at the outpost!";
+		DialogicBridge.Instance.SetVariable("reward_message", msg);
+		DialogicBridge.Instance.StartTimeline("res://dialog/timelines/mellyr_reward.dtl");
 	}
 
 	// ── Helpers ───────────────────────────────────────────────────────────────
