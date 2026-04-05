@@ -126,6 +126,7 @@ public partial class ShopMenu : CanvasLayer
 		var buyButton = new Button { Text = "BUY", Name = "BuyButton" };
 		buyButton.Disabled = !ShopLogic.CanAfford(GameManager.Instance.Gold, entry.Price);
 		buyButton.Pressed += () => OnBuy(item, entry);
+		buyButton.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
 
 		row.AddChild(nameLabel);
 		row.AddChild(descLabel);

@@ -30,6 +30,10 @@ public partial class MainMenu : Node2D
 		_creditsButton.Pressed  += OnCreditsPressed;
 		_quitButton.Pressed     += () => GetTree().Quit();
 
+		// Cursor SFX on focus change
+		foreach (var btn in new[] { _newGameButton, _continueButton, _creditsButton, _quitButton })
+			btn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+
 		// Apply SNES theme to all buttons, labels, and title
 		UiTheme.ApplyToAllButtons(this);
 		UiTheme.ApplyPixelFontToAll(this);
@@ -44,6 +48,7 @@ public partial class MainMenu : Node2D
 	{
 		if (_transitioning) return;
 		_transitioning = true;
+		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
 		SaveSlotMenu.PendingMode = SaveSlotMenu.MenuMode.NewGame;
 		_ = SceneTransition.Instance.GoToAsync("res://scenes/menus/SaveSlotMenu.tscn");
 	}
@@ -52,6 +57,7 @@ public partial class MainMenu : Node2D
 	{
 		if (_transitioning) return;
 		_transitioning = true;
+		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
 		SaveSlotMenu.PendingMode = SaveSlotMenu.MenuMode.Continue;
 		_ = SceneTransition.Instance.GoToAsync("res://scenes/menus/SaveSlotMenu.tscn");
 	}
@@ -60,6 +66,7 @@ public partial class MainMenu : Node2D
 	{
 		if (_transitioning) return;
 		_transitioning = true;
+		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
 		_ = SceneTransition.Instance.GoToAsync("res://scenes/menus/CreditsMenu.tscn");
 	}
 }

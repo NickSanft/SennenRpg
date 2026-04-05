@@ -203,6 +203,7 @@ public partial class StatsMenu : CanvasLayer
         if (!Visible) return;
         if (!e.IsActionPressed("ui_cancel")) return;
         GetViewport().SetInputAsHandled();
+        AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
         Visible = false;
         EmitSignal(SignalName.Closed);
     }

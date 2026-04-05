@@ -78,6 +78,7 @@ public partial class SaveSlotMenu : Node2D
             CustomMinimumSize   = new Vector2(120, 0),
         };
         backBtn.Pressed += OnBackPressed;
+        backBtn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
         root.AddChild(backBtn);
 
         // Apply SNES theme to all buttons
@@ -159,6 +160,7 @@ public partial class SaveSlotMenu : Node2D
                 CustomMinimumSize = new Vector2(100, 0),
             };
             loadBtn.Pressed += () => OnLoadPressed(capturedSlot);
+            loadBtn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
             btnCol.AddChild(loadBtn);
 
             // Allow starting fresh from any slot even on the Continue screen
@@ -168,6 +170,7 @@ public partial class SaveSlotMenu : Node2D
                 CustomMinimumSize = new Vector2(100, 0),
             };
             newBtn.Pressed += () => OnNewGameInSlotPressed(capturedSlot);
+            newBtn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
             btnCol.AddChild(newBtn);
         }
         else // NewGame mode
@@ -178,6 +181,7 @@ public partial class SaveSlotMenu : Node2D
                 CustomMinimumSize = new Vector2(100, 0),
             };
             newBtn.Pressed += () => OnNewGameInSlotPressed(capturedSlot);
+            newBtn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
             btnCol.AddChild(newBtn);
         }
 
@@ -189,6 +193,7 @@ public partial class SaveSlotMenu : Node2D
     private void OnLoadPressed(int slot)
     {
         if (_transitioning) return;
+        AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
         SaveManager.Instance.CurrentSlot = slot;
         var data = SaveManager.Instance.LoadGame();
         if (data == null) return;
@@ -203,6 +208,7 @@ public partial class SaveSlotMenu : Node2D
     private void OnNewGameInSlotPressed(int slot)
     {
         if (_transitioning) return;
+        AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
         _transitioning = true;
         SaveManager.Instance.CurrentSlot = slot;
         GameManager.Instance.ResetForNewGame();
@@ -215,6 +221,7 @@ public partial class SaveSlotMenu : Node2D
     private void OnBackPressed()
     {
         if (_transitioning) return;
+        AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
         _transitioning = true;
         _ = SceneTransition.Instance.GoToAsync("res://scenes/menus/MainMenu.tscn");
     }

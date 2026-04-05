@@ -216,6 +216,7 @@ public partial class CookingMenu : CanvasLayer
             };
             var capturedRecipe = recipe;
             btn.Pressed += () => OnCookPressed(capturedRecipe);
+            btn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
             row.AddChild(btn);
 
             if (canCook && firstCookable == null)

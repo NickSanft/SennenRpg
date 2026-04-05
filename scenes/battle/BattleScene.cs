@@ -564,7 +564,7 @@ public partial class BattleScene : Node2D
 	{
 		var inv = GameManager.Instance.InventoryItemPaths;
 
-		// Build item list — skip ingredients by path convention, fall back gracefully
+		// Build item list — only show Consumable and Repel items in battle
 		_itemIndexMap.Clear();
 		var labels = new System.Collections.Generic.List<string>();
 		for (int i = 0; i < inv.Count; i++)
@@ -572,15 +572,12 @@ public partial class BattleScene : Node2D
 			string path = inv[i];
 			if (!ResourceLoader.Exists(path)) continue;
 
-			// Skip ingredient items by path convention
-			if (path.Contains("ingredient_")) continue;
-
 			ItemData? item = null;
 			try { item = GD.Load<ItemData>(path); } catch { /* ignore load failures */ }
-
-			// Only show items that actually do something in battle (heal or repel)
-			// Skip items we can't load, and skip items with no heal and no repel
 			if (item == null) continue;
+
+			// Only show Consumable and Repel items in battle
+			if (item.Type != ItemType.Consumable && item.Type != ItemType.Repel) continue;
 			if (item.HealAmount <= 0 && item.RepelSteps <= 0) continue;
 
 			string label = item.RepelSteps > 0

@@ -56,6 +56,7 @@ public partial class ResidencyShopMenu : CanvasLayer
 
 	private void Close()
 	{
+		AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
 		Visible = false;
 		EmitSignal(SignalName.Closed);
 	}
@@ -119,6 +120,7 @@ public partial class ResidencyShopMenu : CanvasLayer
 			var hireButton = new Button { Text = "HIRE", Name = "HireButton" };
 			hireButton.Disabled = GameManager.Instance.Gold < entry.Price;
 			hireButton.Pressed += () => OnHire(entry);
+			hireButton.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
 
 			row.AddChild(nameLabel);
 			row.AddChild(descLabel);
@@ -133,6 +135,7 @@ public partial class ResidencyShopMenu : CanvasLayer
 	{
 		if (GameManager.Instance.Gold < entry.Price) return;
 
+		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
 		GameManager.Instance.AddGold(-entry.Price);
 		GameManager.Instance.SetFlag(entry.FlagKey, true);
 

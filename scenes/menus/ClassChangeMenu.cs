@@ -194,7 +194,7 @@ public partial class ClassChangeMenu : CanvasLayer
         for (int i = 0; i < _classButtons.Count; i++)
         {
             var capturedIdx = i;
-            _classButtons[i].FocusEntered += () => OnClassFocused(capturedIdx);
+            _classButtons[i].FocusEntered += () => { OnClassFocused(capturedIdx); AudioManager.Instance?.PlaySfx(UiSfx.Cursor); };
         }
 
         // Grab focus on first available button

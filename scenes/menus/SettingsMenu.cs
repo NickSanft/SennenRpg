@@ -145,10 +145,12 @@ public partial class SettingsMenu : CanvasLayer
 
 		_applyButton = new Button { Text = "APPLY", CustomMinimumSize = new Vector2(100f, 0f) };
 		_applyButton.Pressed += OnApplyPressed;
+		_applyButton.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
 		buttonRow.AddChild(_applyButton);
 
 		_closeButton = new Button { Text = "CLOSE", CustomMinimumSize = new Vector2(100f, 0f) };
 		_closeButton.Pressed += OnClosePressed;
+		_closeButton.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
 		buttonRow.AddChild(_closeButton);
 	}
 
@@ -315,6 +317,7 @@ public partial class SettingsMenu : CanvasLayer
 			rebindKeyBtn.AddThemeFontSizeOverride("font_size", 18);
 			string capturedAction = actionStr;
 			rebindKeyBtn.Pressed += () => StartRebind(capturedAction, keyLabel, rebindKeyBtn);
+			rebindKeyBtn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
 
 			// Controller binding
 			var padLabel = new Label
@@ -329,6 +332,7 @@ public partial class SettingsMenu : CanvasLayer
 			var rebindPadBtn = new Button { Text = "Pad" };
 			rebindPadBtn.AddThemeFontSizeOverride("font_size", 18);
 			rebindPadBtn.Pressed += () => StartRebind(capturedAction, padLabel, rebindPadBtn);
+			rebindPadBtn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
 
 			row.AddChild(actionLabel);
 			row.AddChild(keyLabel);
@@ -544,12 +548,14 @@ public partial class SettingsMenu : CanvasLayer
 
 	private void OnApplyPressed()
 	{
+		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
 		SettingsManager.Instance!.Apply(BuildSettings());
 		GD.Print("[SettingsMenu] Settings applied.");
 	}
 
 	private void OnClosePressed()
 	{
+		AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
 		_rebindingAction = null;
 		_rebindingButton = null;
 		_rebindingLabel  = null;

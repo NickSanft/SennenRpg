@@ -59,6 +59,7 @@ public partial class InventoryMenu : CanvasLayer
 		vbox.MoveChild(_descLabel, _feedbackLabel.GetIndex());
 
 		_backButton.Pressed += Close;
+		_backButton.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
 
 		// Apply SNES theme
 		var overlay = GetNodeOrNull<ColorRect>("Overlay");
@@ -88,6 +89,7 @@ public partial class InventoryMenu : CanvasLayer
 		};
 		btn.AddThemeFontSizeOverride("font_size", 9);
 		btn.Modulate = filter == _activeFilter ? TabActiveColor : TabInactiveColor;
+		btn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
 		btn.Pressed += () =>
 		{
 			_activeFilter = filter;
@@ -287,7 +289,7 @@ public partial class InventoryMenu : CanvasLayer
 				GameManager.Instance.PlayerStats.CurrentHp,
 				GameManager.Instance.PlayerStats.MaxHp);
 			useButton.Pressed      += () => OnUseItem(item, path);
-			useButton.FocusEntered += () => ShowDesc(item);
+			useButton.FocusEntered += () => { ShowDesc(item); AudioManager.Instance?.PlaySfx(UiSfx.Cursor); };
 			row.AddChild(useButton);
 		}
 		else
@@ -295,7 +297,7 @@ public partial class InventoryMenu : CanvasLayer
 			// Ingredient / KeyItem — info-only button for focus/description
 			var infoBtn = new Button { Text = "INFO", Name = "InfoButton", Disabled = false };
 			infoBtn.AddThemeFontSizeOverride("font_size", 9);
-			infoBtn.FocusEntered += () => ShowDesc(item);
+			infoBtn.FocusEntered += () => { ShowDesc(item); AudioManager.Instance?.PlaySfx(UiSfx.Cursor); };
 			infoBtn.Pressed     += () => ShowDesc(item);
 			row.AddChild(infoBtn);
 		}

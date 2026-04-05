@@ -147,6 +147,7 @@ public partial class EquipmentMenu : CanvasLayer
             btn.Init(slot);
             var captured = slot;
             btn.Pressed += () => OnSlotPressed(captured);
+            btn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
             _slotButtons[slot] = btn;
         }
     }
@@ -280,6 +281,7 @@ public partial class EquipmentMenu : CanvasLayer
             string bonusStr = FormatBonuses(data);
             AddPickerOption($"[Unequip] {data?.DisplayName ?? "???"}{bonusStr}", () =>
             {
+                AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
                 gm.Unequip(slot);
                 CloseItemPicker();
             });
@@ -291,6 +293,7 @@ public partial class EquipmentMenu : CanvasLayer
             string bonusStr = FormatDynamicBonuses(dynItem);
             AddPickerOption($"[Unequip] {dynItem?.DisplayName ?? "???"}{bonusStr}", () =>
             {
+                AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
                 gm.UnequipDynamic(slot);
                 CloseItemPicker();
             });
@@ -308,6 +311,7 @@ public partial class EquipmentMenu : CanvasLayer
             string bonusStr = FormatBonuses(data);
             AddPickerOption($"{data.DisplayName}{bonusStr}", () =>
             {
+                AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
                 if (hasDynamicEquipped) gm.UnequipDynamic(slot);
                 gm.Equip(slot, captured);
                 CloseItemPicker();
@@ -326,6 +330,7 @@ public partial class EquipmentMenu : CanvasLayer
             string bonusStr = FormatDynamicBonuses(dynItem);
             AddPickerOption($"{dynItem.DisplayName}{bonusStr}", () =>
             {
+                AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
                 if (hasStaticEquipped) gm.Unequip(slot);
                 gm.EquipDynamic(slot, captured);
                 CloseItemPicker();
@@ -369,6 +374,7 @@ public partial class EquipmentMenu : CanvasLayer
         };
         btn.AddThemeFontSizeOverride("font_size", 9);
         btn.Pressed += action;
+        btn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
         _itemPickerList.AddChild(btn);
     }
 
