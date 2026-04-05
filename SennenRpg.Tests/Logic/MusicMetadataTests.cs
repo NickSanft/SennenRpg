@@ -47,7 +47,7 @@ public class MusicMetadataTests
     [Test]
     public void All_ContainsNineTracks()
     {
-        Assert.That(MusicMetadata.All, Has.Count.EqualTo(9));
+        Assert.That(MusicMetadata.All, Has.Count.EqualTo(10));
     }
 
     [Test]

@@ -26,6 +26,9 @@ public partial class Boot : Node2D
 		if (titleLabel != null)
 			titleLabel.AddThemeColorOverride("font_color", UiTheme.Gold);
 
+		// Title screen BGM — deferred so the scene tree is fully ready
+		CallDeferred(MethodName.PlayTitleBgm);
+
 		// Blink the prompt
 		var tween = CreateTween().SetLoops();
 		tween.TweenProperty(_pressAnyLabel, "modulate:a", 0.0f, 0.55f)
@@ -51,5 +54,10 @@ public partial class Boot : Node2D
 			_transitioning = true;
 			_ = SceneTransition.Instance.GoToAsync("res://scenes/menus/MainMenu.tscn");
 		}
+	}
+
+	private void PlayTitleBgm()
+	{
+		AudioManager.Instance?.PlayBgm("res://assets/music/Melancholy Conspectus.wav", fadeTime: 2.0f);
 	}
 }

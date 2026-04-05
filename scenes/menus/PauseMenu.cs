@@ -176,6 +176,7 @@ public partial class PauseMenu : CanvasLayer
 
 	private void OnSavePressed()
 	{
+		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
 		SaveManager.Instance.SaveGame();
 		_saveButton.Text     = "Saved!";
 		_saveButton.Disabled = true;

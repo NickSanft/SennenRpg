@@ -34,6 +34,15 @@ public partial class ResidencyShopMenu : CanvasLayer
 		_backButton    = GetNode<Button>("Overlay/Panel/VBox/BackButton");
 
 		_backButton.Pressed += Close;
+		_backButton.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+
+		// Apply SNES theme
+		var overlay = GetNodeOrNull<ColorRect>("Overlay");
+		if (overlay != null) overlay.Color = UiTheme.OverlayDim;
+		var panel = GetNodeOrNull<PanelContainer>("Overlay/Panel");
+		if (panel != null) UiTheme.ApplyPanelTheme(panel);
+		UiTheme.ApplyToAllButtons(this);
+		UiTheme.ApplyPixelFontToAll(this);
 	}
 
 	public override void _UnhandledInput(InputEvent @event)
@@ -91,6 +100,9 @@ public partial class ResidencyShopMenu : CanvasLayer
 
 		if (!focusGrabbed)
 			_backButton.GrabFocus();
+
+		// Re-apply font to dynamically created rows
+		UiTheme.ApplyPixelFontToAll(_itemRows);
 	}
 
 	private HBoxContainer BuildRow(NpcResidencyEntry entry, bool purchased)

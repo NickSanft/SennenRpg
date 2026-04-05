@@ -19,6 +19,8 @@ public partial class SaveSlotMenu : Node2D
     public static MenuMode PendingMode { get; set; } = MenuMode.Continue;
 
     private bool _transitioning = false;
+    private CanvasLayer? _confirmOverlay;
+    private int _pendingSlot;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -169,7 +171,11 @@ public partial class SaveSlotMenu : Node2D
                 Text              = "New Game",
                 CustomMinimumSize = new Vector2(100, 0),
             };
-            newBtn.Pressed += () => OnNewGameInSlotPressed(capturedSlot);
+            newBtn.Pressed += () =>
+            {
+                if (info != null) ShowOverwriteConfirm(capturedSlot);
+                else OnNewGameInSlotPressed(capturedSlot);
+            };
             newBtn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
             btnCol.AddChild(newBtn);
         }
@@ -180,12 +186,101 @@ public partial class SaveSlotMenu : Node2D
                 Text              = info != null ? "Overwrite" : "New Game",
                 CustomMinimumSize = new Vector2(100, 0),
             };
-            newBtn.Pressed += () => OnNewGameInSlotPressed(capturedSlot);
+            newBtn.Pressed += () =>
+            {
+                if (info != null) ShowOverwriteConfirm(capturedSlot);
+                else OnNewGameInSlotPressed(capturedSlot);
+            };
             newBtn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
             btnCol.AddChild(newBtn);
         }
 
         parent.AddChild(card);
+    }
+
+    // ── Overwrite confirmation ────────────────────────────────────────────────
+
+    private void ShowOverwriteConfirm(int slot)
+    {
+        if (_confirmOverlay != null) return;
+        _pendingSlot = slot;
+
+        AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+
+        // Must use a CanvasLayer above the slot cards (layer 5) so the overlay renders on top
+        _confirmOverlay = new CanvasLayer { Layer = 6 };
+        AddChild(_confirmOverlay);
+
+        var dimBg = new ColorRect
+        {
+            Color        = new Color(0f, 0f, 0f, 0.7f),
+            AnchorRight  = 1f,
+            AnchorBottom = 1f,
+        };
+        _confirmOverlay.AddChild(dimBg);
+
+        var centerer = new CenterContainer
+        {
+            AnchorRight  = 1f,
+            AnchorBottom = 1f,
+        };
+        _confirmOverlay.AddChild(centerer);
+
+        var panel = new PanelContainer();
+        UiTheme.ApplyPanelTheme(panel);
+        centerer.AddChild(panel);
+
+        var margin = new MarginContainer();
+        margin.AddThemeConstantOverride("margin_left",   20);
+        margin.AddThemeConstantOverride("margin_right",  20);
+        margin.AddThemeConstantOverride("margin_top",    16);
+        margin.AddThemeConstantOverride("margin_bottom", 16);
+        panel.AddChild(margin);
+
+        var vbox = new VBoxContainer();
+        vbox.AddThemeConstantOverride("separation", 10);
+        margin.AddChild(vbox);
+
+        var label = new Label
+        {
+            Text                = $"Overwrite Slot {slot}? This cannot be undone.",
+            HorizontalAlignment = HorizontalAlignment.Center,
+        };
+        label.AddThemeFontSizeOverride("font_size", 12);
+        vbox.AddChild(label);
+
+        var btnRow = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
+        btnRow.AddThemeConstantOverride("separation", 16);
+        vbox.AddChild(btnRow);
+
+        var yesBtn = new Button { Text = "Overwrite", CustomMinimumSize = new Vector2(110, 0) };
+        yesBtn.Pressed += () =>
+        {
+            DismissConfirm();
+            OnNewGameInSlotPressed(_pendingSlot);
+        };
+        yesBtn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+        btnRow.AddChild(yesBtn);
+
+        var noBtn = new Button { Text = "Cancel", CustomMinimumSize = new Vector2(110, 0) };
+        noBtn.Pressed += () =>
+        {
+            AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
+            DismissConfirm();
+        };
+        noBtn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+        btnRow.AddChild(noBtn);
+
+        UiTheme.ApplyToAllButtons(_confirmOverlay);
+        UiTheme.ApplyPixelFontToAll(_confirmOverlay);
+
+        noBtn.CallDeferred(Button.MethodName.GrabFocus);
+    }
+
+    private void DismissConfirm()
+    {
+        _confirmOverlay?.QueueFree();
+        _confirmOverlay = null;
     }
 
     // ── Handlers ──────────────────────────────────────────────────────────────

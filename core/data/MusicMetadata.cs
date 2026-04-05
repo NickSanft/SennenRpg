@@ -45,6 +45,10 @@ public static class MusicMetadata
         ["res://assets/music/Slow Broil.wav"] = new(
             "Divora", "The Gravity Of The Situation - DND 5", 10,
             "Slow Broil", "res://assets/music/Slow Broil.wav"),
+
+        ["res://assets/music/Melancholy Conspectus.wav"] = new(
+            "Divora", "The Gravity Of The Situation - DND 5", 1,
+            "Melancholy Conspectus", "res://assets/music/Melancholy Conspectus.wav"),
     };
 
     /// <summary>

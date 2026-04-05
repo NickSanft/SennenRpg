@@ -142,7 +142,7 @@ public partial class MellyrOutpost : OverworldBase
 	{
 		int gold = GameManager.Instance.CollectRainRewards();
 		string msg = gold > 0
-			? $"Rain gave you {gold}G from her water-collecting barrels!"
+			? $"Rain gave you {gold}G from his... endeavors."
 			: "Rain hasn't collected any gold yet — come back after some exploring!";
 		DialogicBridge.Instance.SetVariable("reward_message", msg);
 		DialogicBridge.Instance.StartTimeline("res://dialog/timelines/mellyr_reward.dtl");

@@ -17,6 +17,7 @@ public partial class ShopMenu : CanvasLayer
 	private VBoxContainer _itemRows   = null!;
 	private Label         _emptyLabel = null!;
 	private Label         _feedbackLabel = null!;
+	private Label         _descLabel  = null!;
 	private Button        _backButton = null!;
 
 	private ShopItemEntry[] _stock = [];
@@ -33,6 +34,20 @@ public partial class ShopMenu : CanvasLayer
 		_backButton    = GetNode<Button>("Overlay/Panel/VBox/BackButton");
 
 		_backButton.Pressed += Close;
+
+		// Description area — shows item info on focus
+		var vbox = GetNode<VBoxContainer>("Overlay/Panel/VBox");
+		_descLabel = new Label
+		{
+			Text                = "",
+			AutowrapMode        = TextServer.AutowrapMode.Word,
+			HorizontalAlignment = HorizontalAlignment.Center,
+		};
+		_descLabel.AddThemeFontSizeOverride("font_size", 8);
+		_descLabel.AddThemeColorOverride("font_color", new Color(0.8f, 0.8f, 0.8f));
+		_descLabel.SizeFlagsHorizontal = Control.SizeFlags.Expand | Control.SizeFlags.Fill;
+		vbox.AddChild(_descLabel);
+		vbox.MoveChild(_descLabel, _feedbackLabel.GetIndex());
 
 		// Apply SNES theme
 		var overlay = GetNodeOrNull<ColorRect>("Overlay");
@@ -72,6 +87,7 @@ public partial class ShopMenu : CanvasLayer
 	{
 		_goldLabel.Text = $"Gold: {GameManager.Instance.Gold}";
 		_feedbackLabel.Text = "";
+		_descLabel.Text     = "";
 
 		foreach (var child in _itemRows.GetChildren())
 			child.QueueFree();
@@ -115,21 +131,19 @@ public partial class ShopMenu : CanvasLayer
 		nameLabel.SizeFlagsHorizontal = Control.SizeFlags.Expand | Control.SizeFlags.Fill;
 		nameLabel.AddThemeFontSizeOverride("font_size", 10);
 
-		string descText = item.HealAmount > 0 ? $"+{item.HealAmount} HP" : item.Description;
-		var descLabel = new Label { Text = descText };
-		descLabel.SizeFlagsHorizontal = Control.SizeFlags.Expand | Control.SizeFlags.Fill;
-		descLabel.AddThemeFontSizeOverride("font_size", 10);
-
 		var priceLabel = new Label { Text = $"{entry.Price}G" };
 		priceLabel.AddThemeFontSizeOverride("font_size", 10);
 
 		var buyButton = new Button { Text = "BUY", Name = "BuyButton" };
 		buyButton.Disabled = !ShopLogic.CanAfford(GameManager.Instance.Gold, entry.Price);
 		buyButton.Pressed += () => OnBuy(item, entry);
-		buyButton.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+		buyButton.FocusEntered += () =>
+		{
+			ShowItemDesc(item);
+			AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+		};
 
 		row.AddChild(nameLabel);
-		row.AddChild(descLabel);
 		row.AddChild(priceLabel);
 		row.AddChild(buyButton);
 		return row;
@@ -149,6 +163,15 @@ public partial class ShopMenu : CanvasLayer
 
 		ShowFeedback($"Bought {item.DisplayName}!");
 		Refresh();
+	}
+
+	private void ShowItemDesc(ItemData item)
+	{
+		var parts = new System.Collections.Generic.List<string>();
+		if (!string.IsNullOrEmpty(item.Description)) parts.Add(item.Description);
+		if (item.HealAmount > 0) parts.Add($"Restores {item.HealAmount} HP");
+		if (item.RepelSteps > 0) parts.Add($"Repels enemies for {item.RepelSteps} steps");
+		_descLabel.Text = parts.Count > 0 ? string.Join("  ·  ", parts) : item.DisplayName;
 	}
 
 	private void ShowFeedback(string text)
