@@ -60,6 +60,7 @@ res://
 │   │   ├── RhythmConstants.cs, PerformanceScore.cs
 │   │   ├── Flags.cs              # Flag name constants + helpers
 │   │   ├── ItemLogic.cs, ShopLogic.cs, NpcLogic.cs   # pure/testable logic
+│   │   ├── ForageLogic.cs, ForageTableEntry.cs, JunkSellLogic.cs  # foraging system
 │   │   ├── CookingLogic.cs, CookingQuality.cs, RecipeIngredient.cs, RecipeData.cs  # cooking system
 │   │   ├── TownRewardLogic.cs, LilyForgeLogic.cs     # Mellyr Outpost pure logic
 │   │   ├── MultiClassLogic.cs, MultiClassData.cs, ClassProgressionEntry.cs  # multi-class system
@@ -193,9 +194,20 @@ Victory → EXP/Gold display → GameManager.AddGold/AddExp → SceneTransition 
 - Quality tiers: Burnt (0.5x heal), Normal (1.0x), Perfect (1.5x) — separate .tres per quality variant
 - `CookingMinigame` — single-lane rhythm game with `cooking.wav` BGM, configurable note count
 - `CookingMenu` — pause menu sub-menu listing recipes with ingredient availability
-- `ItemType` enum on `ItemData`: Consumable, Ingredient, Equipment, KeyItem, Repel
+- `ItemType` enum on `ItemData`: Consumable, Ingredient, Equipment, KeyItem, Repel, Junk
 - Ingredients sold by Rork and dropped by enemies via `BonusLootItemPath`
-- Battle Item menu filters to only show Consumable and Repel items (hides ingredients/key items)
+- Battle Item menu filters to only show Consumable and Repel items (hides ingredients/key items/junk)
+
+## Foraging System
+- 5% chance per step on the world map to forage a junk item
+- `ForageLogic` (pure static): `ShouldForage(roll)`, `SelectForageItem(roll, table)` with weighted table
+- Junk items: Astral Flower (30G), Gravi Shard (20G), Flopsin Hairball (10G), Anima Slug Slime (5G)
+- Rarer items are more valuable; `DefaultTable` weights: 10/20/30/40
+- `JunkSellLogic` (pure static): `CountJunkItems`, `TotalJunkValue`
+- Rork's barkeep menu has "Sell Junk" option — bulk-sells all junk for gold
+- `ItemData.SellValue` field stores gold value (default 0, used by Junk type)
+- Forage triggers in `OverworldBase.OnPlayerMoved()` after encounter check
+- Dialog timeline `forage_found.dtl` displays "Sen found a {forage_item_name}!"
 
 ## Spells System
 - `SpellData` Resource: SpellId, DisplayName, Description, BasePower, MpCost, MinigameScene

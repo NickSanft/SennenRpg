@@ -14,6 +14,9 @@ public partial class GameManager : Node
 {
 	public static GameManager Instance { get; private set; } = null!;
 
+	/// <summary>Debug toggle: when true, random encounters are suppressed. Toggle with L key.</summary>
+	public bool DebugNoEncounters { get; set; }
+
 	[Signal] public delegate void GameStateChangedEventHandler(GameState newState);
 	[Signal] public delegate void PlayerStatsChangedEventHandler();
 	/// <summary>Fired after level-up stat rolls are applied. Read PendingLevelUps for results.</summary>

@@ -135,8 +135,19 @@ public partial class OverworldBase : Node2D
 			if (CountsForTownRewards)
 				TickTownRewards();
 
-			if (RandomEncounterTable.Count > 0 && !_encounterLocked)
+			if (RandomEncounterTable.Count > 0 && !_encounterLocked && !GameManager.Instance.DebugNoEncounters)
 				if (TryRandomEncounter()) return;
+		}
+	}
+
+	public override void _UnhandledInput(InputEvent @event)
+	{
+		if (@event is InputEventKey { Pressed: true, Keycode: Key.L })
+		{
+			var gm = GameManager.Instance;
+			gm.DebugNoEncounters = !gm.DebugNoEncounters;
+			GD.Print($"[Debug] Encounters {(gm.DebugNoEncounters ? "OFF" : "ON")}");
+			GetViewport().SetInputAsHandled();
 		}
 	}
 

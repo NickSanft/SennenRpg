@@ -75,7 +75,7 @@ public partial class EquipmentMenu : CanvasLayer
         // PanelContainer auto-sizes to content; StyleBoxFlat provides the background + border
         var panelContainer = new PanelContainer
         {
-            CustomMinimumSize = new Vector2(460f, 0f),
+            CustomMinimumSize = new Vector2(560f, 0f),
         };
         UiTheme.ApplyPanelTheme(panelContainer);
         centerer.AddChild(panelContainer);
@@ -113,7 +113,7 @@ public partial class EquipmentMenu : CanvasLayer
         columns.AddChild(leftCol);
 
         // Centre column — stat panel + item picker (mutually exclusive)
-        var centreCol = new VBoxContainer { CustomMinimumSize = new Vector2(220f, 0f) };
+        var centreCol = new VBoxContainer { CustomMinimumSize = new Vector2(320f, 0f) };
         centreCol.AddThemeConstantOverride("separation", 4);
         columns.AddChild(centreCol);
 
@@ -216,10 +216,16 @@ public partial class EquipmentMenu : CanvasLayer
 
         _itemPickerPanel.AddChild(new HSeparator());
 
-        var scroll = new ScrollContainer { CustomMinimumSize = new Vector2(0f, 120f) };
+        var scroll = new ScrollContainer
+        {
+            CustomMinimumSize    = new Vector2(0f, 120f),
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            SizeFlagsHorizontal  = Control.SizeFlags.Fill | Control.SizeFlags.Expand,
+        };
         _itemPickerPanel.AddChild(scroll);
 
         _itemPickerList = new VBoxContainer();
+        _itemPickerList.SizeFlagsHorizontal = Control.SizeFlags.Fill | Control.SizeFlags.Expand;
         scroll.AddChild(_itemPickerList);
     }
 
@@ -356,11 +362,12 @@ public partial class EquipmentMenu : CanvasLayer
     {
         var btn = new Button
         {
-            Text = text,
-            ClipText = true,
+            Text                = text,
+            SizeFlagsHorizontal = Control.SizeFlags.Fill | Control.SizeFlags.Expand,
+            ClipText            = true,
             TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
         };
-        btn.AddThemeFontSizeOverride("font_size", 10);
+        btn.AddThemeFontSizeOverride("font_size", 9);
         btn.Pressed += action;
         _itemPickerList.AddChild(btn);
     }

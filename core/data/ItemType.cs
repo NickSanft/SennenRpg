@@ -7,4 +7,5 @@ public enum ItemType
     Equipment,
     KeyItem,
     Repel,
+    Junk,
 }

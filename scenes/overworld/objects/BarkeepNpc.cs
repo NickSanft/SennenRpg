@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
@@ -32,11 +33,13 @@ public partial class BarkeepNpc : VendorNpc
 
 		var menu = new NpcInteractMenu();
 		GetTree().Root.AddChild(menu);
-		menu.Open(_characterDescription, showShop: true, showRest: true, showChangeClass: true);
+		menu.Open(_characterDescription, showShop: true, showRest: true,
+			showChangeClass: true, showSellJunk: true);
 		menu.TalkSelected        += OnMenuTalkSelected;
 		menu.ShopSelected        += OpenShopFromMenu;
 		menu.RestSelected        += OnRestSelected;
 		menu.ChangeClassSelected += OnChangeClassSelected;
+		menu.SellJunkSelected    += OnSellJunkSelected;
 		menu.Cancelled           += OnMenuCancelled;
 	}
 
@@ -109,6 +112,44 @@ public partial class BarkeepNpc : VendorNpc
 		gm.RestoreMp(gm.PlayerStats.MaxMp);
 
 		await RunRestTimeline("res://dialog/timelines/npc_barkeep_rest.dtl");
+		GameManager.Instance.SetState(GameState.Overworld);
+		PlayFacingIdle(DefaultFacing);
+	}
+
+	private async void OnSellJunkSelected()
+	{
+		var gm = GameManager.Instance;
+
+		// Collect all junk items from inventory
+		var junkItems = new List<(string Path, int SellValue)>();
+		foreach (string path in gm.InventoryItemPaths)
+		{
+			if (!ResourceLoader.Exists(path)) continue;
+			var resource = GD.Load<Resource>(path);
+			if (resource is ItemData item && item.Type == ItemType.Junk)
+				junkItems.Add((path, item.SellValue));
+		}
+
+		int count = JunkSellLogic.CountJunkItems(junkItems);
+		int value = JunkSellLogic.TotalJunkValue(junkItems);
+
+		if (count == 0)
+		{
+			await RunRestTimeline("res://dialog/timelines/sell_junk_empty.dtl");
+			GameManager.Instance.SetState(GameState.Overworld);
+			PlayFacingIdle(DefaultFacing);
+			return;
+		}
+
+		// Remove all junk items from inventory
+		foreach (var (path, _) in junkItems)
+			gm.RemoveItem(path);
+
+		gm.AddGold(value);
+
+		DialogicBridge.Instance.SetVariable("junk_count", count.ToString());
+		DialogicBridge.Instance.SetVariable("junk_value", value.ToString());
+		await RunRestTimeline("res://dialog/timelines/sell_junk_result.dtl");
 		GameManager.Instance.SetState(GameState.Overworld);
 		PlayFacingIdle(DefaultFacing);
 	}

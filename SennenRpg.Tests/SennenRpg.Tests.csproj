@@ -75,6 +75,10 @@
         <Compile Include="../core/data/CookingQuality.cs" />
         <Compile Include="../core/data/RecipeIngredient.cs" />
         <Compile Include="../core/data/CookingLogic.cs" />
+        <!-- Foraging system — pure logic, no Godot runtime -->
+        <Compile Include="../core/data/ForageTableEntry.cs" />
+        <Compile Include="../core/data/ForageLogic.cs" />
+        <Compile Include="../core/data/JunkSellLogic.cs" />
     </ItemGroup>
 
 </Project>

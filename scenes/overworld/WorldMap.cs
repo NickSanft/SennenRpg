@@ -116,7 +116,10 @@ public partial class WorldMap : Node2D
 			ApplyDayNightBgm(animate: true);
 		}
 
-		// 5. Random encounter roll
+		// 5. Foraging roll
+		if (TryForage()) return;
+
+		// 6. Random encounter roll
 		TryRollEncounter(newTile);
 	}
 
@@ -131,11 +134,51 @@ public partial class WorldMap : Node2D
 		await SceneTransition.Instance.GoToAsync(entrance.TargetScenePath);
 	}
 
+	public override void _UnhandledInput(InputEvent @event)
+	{
+		if (@event is InputEventKey { Pressed: true, Keycode: Key.L })
+		{
+			var gm = GameManager.Instance;
+			gm.DebugNoEncounters = !gm.DebugNoEncounters;
+			GD.Print($"[Debug] Encounters {(gm.DebugNoEncounters ? "OFF" : "ON")}");
+			GetViewport().SetInputAsHandled();
+		}
+	}
+
+	// ── Foraging ──────────────────────────────────────────────────────────────
+
+	private bool TryForage()
+	{
+		if (GameManager.Instance.CurrentState != GameState.Overworld) return false;
+		if (DialogicBridge.Instance.IsRunning()) return false;
+
+		double roll = GD.RandRange(0.0, 100.0);
+		if (!ForageLogic.ShouldForage(roll)) return false;
+
+		double itemRoll = GD.RandRange(0.0, 1.0);
+		string path = ForageLogic.SelectForageItem(itemRoll, ForageLogic.DefaultTable);
+
+		if (!ResourceLoader.Exists(path)) return false;
+		var item = GD.Load<ItemData>(path);
+		if (item == null) return false;
+
+		GameManager.Instance.AddItem(path);
+		GD.Print($"[WorldMap] Foraged: {item.DisplayName}");
+
+		GameManager.Instance.SetState(GameState.Dialog);
+		DialogicBridge.Instance.SetVariable("forage_item_name", item.DisplayName);
+		DialogicBridge.Instance.ConnectTimelineEnded(
+			Callable.From(() => GameManager.Instance.SetState(GameState.Overworld)));
+		DialogicBridge.Instance.StartTimelineWithFlags("res://dialog/timelines/forage_found.dtl");
+		return true;
+	}
+
 	// ── Random encounter ──────────────────────────────────────────────────────
 
 	private void TryRollEncounter(Vector2I tile)
 	{
 		var gm = GameManager.Instance;
+		if (gm.DebugNoEncounters) return;
 
 		// Repel: block encounters and consume one step of protection.
 		if (gm.RepelStepsRemaining > 0)

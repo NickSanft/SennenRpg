@@ -16,4 +16,9 @@ public partial class ItemData : Resource
     /// steps of encounter immunity on the world map.
     /// </summary>
     [Export] public int RepelSteps { get; set; } = 0;
+
+    /// <summary>
+    /// Gold value when selling this item. Used primarily by Junk items.
+    /// </summary>
+    [Export] public int SellValue { get; set; } = 0;
 }

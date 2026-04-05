@@ -75,6 +75,7 @@ public partial class InventoryMenu : CanvasLayer
 		AddTab("CONSUMABLE", ItemType.Consumable);
 		AddTab("INGREDIENT", ItemType.Ingredient);
 		AddTab("KEY ITEM", ItemType.KeyItem);
+		AddTab("JUNK", ItemType.Junk);
 	}
 
 	private void AddTab(string label, ItemType? filter)
@@ -99,7 +100,7 @@ public partial class InventoryMenu : CanvasLayer
 	private void UpdateTabVisuals()
 	{
 		int idx = 0;
-		ItemType?[] filters = [null, ItemType.Consumable, ItemType.Ingredient, ItemType.KeyItem];
+		ItemType?[] filters = [null, ItemType.Consumable, ItemType.Ingredient, ItemType.KeyItem, ItemType.Junk];
 		foreach (var child in _tabRow.GetChildren())
 		{
 			if (child is Button btn && idx < filters.Length)
@@ -257,14 +258,23 @@ public partial class InventoryMenu : CanvasLayer
 			ItemType.Ingredient => new Color(0.6f, 0.85f, 1f),
 			ItemType.KeyItem    => new Color(1f, 0.85f, 0.1f),
 			ItemType.Repel      => new Color(0.7f, 0.9f, 0.5f),
+			ItemType.Junk       => new Color(0.7f, 0.7f, 0.5f),
 			_                   => Colors.White,
 		};
 		nameLabel.AddThemeColorOverride("font_color", typeColor);
 
 		var hpLabel = new Label();
-		hpLabel.Text = item.HealAmount > 0 ? $"+{item.HealAmount} HP" : "";
+		if (item.Type == ItemType.Junk && item.SellValue > 0)
+		{
+			hpLabel.Text = $"{item.SellValue}G";
+			hpLabel.AddThemeColorOverride("font_color", UiTheme.Gold);
+		}
+		else
+		{
+			hpLabel.Text = item.HealAmount > 0 ? $"+{item.HealAmount} HP" : "";
+			hpLabel.AddThemeColorOverride("font_color", new Color(0.5f, 1f, 0.5f));
+		}
 		hpLabel.AddThemeFontSizeOverride("font_size", 10);
-		hpLabel.AddThemeColorOverride("font_color", new Color(0.5f, 1f, 0.5f));
 
 		row.AddChild(nameLabel);
 		row.AddChild(hpLabel);

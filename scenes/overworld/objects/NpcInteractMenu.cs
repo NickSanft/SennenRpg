@@ -16,6 +16,7 @@ public partial class NpcInteractMenu : CanvasLayer
 	[Signal] public delegate void ShopSelectedEventHandler();
 	[Signal] public delegate void RestSelectedEventHandler();
 	[Signal] public delegate void ChangeClassSelectedEventHandler();
+	[Signal] public delegate void SellJunkSelectedEventHandler();
 	[Signal] public delegate void CancelledEventHandler();
 
 	private PanelContainer _panel              = null!;
@@ -24,6 +25,7 @@ public partial class NpcInteractMenu : CanvasLayer
 	private Button        _shopButton         = null!;
 	private Button        _restButton         = null!;
 	private Button        _changeClassButton  = null!;
+	private Button        _sellJunkButton     = null!;
 	private Button        _examineButton      = null!;
 	private Button        _cancelButton       = null!;
 	private Label         _descLabel          = null!;
@@ -34,6 +36,7 @@ public partial class NpcInteractMenu : CanvasLayer
 	private bool   _showShop;
 	private bool   _showRest;
 	private bool   _showChangeClass;
+	private bool   _showSellJunk;
 
 	public override void _Ready()
 	{
@@ -98,6 +101,11 @@ public partial class NpcInteractMenu : CanvasLayer
 		_changeClassButton.Pressed += OnChangeClass;
 		_vbox.AddChild(_changeClassButton);
 
+		_sellJunkButton = new Button { Text = "Sell Junk", Visible = false };
+		UiTheme.ApplyButtonTheme(_sellJunkButton);
+		_sellJunkButton.Pressed += OnSellJunk;
+		_vbox.AddChild(_sellJunkButton);
+
 		_examineButton = new Button { Text = "Examine" };
 		UiTheme.ApplyButtonTheme(_examineButton);
 		_examineButton.Pressed += OnExamine;
@@ -141,12 +149,14 @@ public partial class NpcInteractMenu : CanvasLayer
 	/// <param name="showShop">When true, shows a Shop button that emits ShopSelected.</param>
 	/// <param name="showRest">When true, shows a Rest button that emits RestSelected.</param>
 	/// <param name="showChangeClass">When true, shows a Change Class button that emits ChangeClassSelected.</param>
-	public void Open(string description, bool showShop = false, bool showRest = false, bool showChangeClass = false)
+	public void Open(string description, bool showShop = false, bool showRest = false,
+		bool showChangeClass = false, bool showSellJunk = false)
 	{
 		_description     = description;
 		_showShop        = showShop;
 		_showRest        = showRest;
 		_showChangeClass = showChangeClass;
+		_showSellJunk    = showSellJunk;
 		ShowMainButtons();
 	}
 
@@ -159,6 +169,7 @@ public partial class NpcInteractMenu : CanvasLayer
 		_shopButton.Visible         = _showShop;
 		_restButton.Visible         = _showRest;
 		_changeClassButton.Visible  = _showChangeClass;
+		_sellJunkButton.Visible     = _showSellJunk;
 		_examineButton.Visible      = !string.IsNullOrEmpty(_description);
 		_cancelButton.Visible       = true;
 		_descLabel.Visible          = false;
@@ -174,6 +185,7 @@ public partial class NpcInteractMenu : CanvasLayer
 		_shopButton.Visible         = false;
 		_restButton.Visible         = false;
 		_changeClassButton.Visible  = false;
+		_sellJunkButton.Visible     = false;
 		_examineButton.Visible      = false;
 		_cancelButton.Visible       = false;
 		_descLabel.Text        = _description;
@@ -210,6 +222,13 @@ public partial class NpcInteractMenu : CanvasLayer
 		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
 		QueueFree();
 		EmitSignal(SignalName.ChangeClassSelected);
+	}
+
+	private void OnSellJunk()
+	{
+		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
+		QueueFree();
+		EmitSignal(SignalName.SellJunkSelected);
 	}
 
 	private void OnExamine()
