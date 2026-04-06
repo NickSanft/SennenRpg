@@ -10,7 +10,6 @@ Project name: **SennenRpg**. Assembly: `SennenRpg`.
 | Engine | Godot 4.6 |
 | Language | C# (.NET 10) — all gameplay code |
 | Dialog | Dialogic 2 (GDScript plugin) via `DialogicBridge.cs` autoload |
-| Camera | PhantomCamera 2D plugin |
 | Serialization | `System.Text.Json` (no Newtonsoft) |
 | Physics | Jolt Physics (3D only; 2D uses default) |
 
@@ -38,8 +37,7 @@ Project name: **SennenRpg**. Assembly: `SennenRpg`.
 ```
 res://
 ├── addons/
-│   ├── dialogic/                 # Dialogic 2 — dialog management
-│   └── phantom_camera/           # PhantomCamera 2D — smooth camera follow
+│   └── dialogic/                 # Dialogic 2 — dialog management
 ├── autoloads/
 │   ├── GameManager.cs            # Facade: delegates to domain data classes below
 │   ├── SaveManager.cs            # Save/load JSON to user://save.json
@@ -330,7 +328,3 @@ Victory → EXP/Gold display → GameManager.AddGold/AddExp → SceneTransition 
 - Place in `addons/dialogic/`. Enable in **Project > Project Settings > Plugins**.
 - Never call Dialogic directly in C# — always go through `DialogicBridge.cs`.
 
-### PhantomCamera 2D
-- Install from AssetLib: search "PhantomCamera"
-- Place in `addons/phantom_camera/`. Enable in Project Settings > Plugins.
-- Add `PhantomCamera2D` node inside `Player.tscn` to drive the camera.

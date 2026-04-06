@@ -320,7 +320,7 @@ public partial class OverworldBase : Node2D
 
 	/// <summary>
 	/// Reads the Ground TileMapLayer's used rect and applies it as camera limits
-	/// to the PhantomCamera2D inside the player scene.
+	/// to the Camera2D inside the player scene.
 	/// </summary>
 	private void ApplyCameraBoundsFromGround()
 	{
@@ -344,12 +344,15 @@ public partial class OverworldBase : Node2D
 
 		_worldBounds = new Rect2(left, top, right - left, bottom - top);
 
-		// Apply to PhantomCamera2D so it clamps movement to the map bounds.
-		var pcam = _player.GetNodeOrNull("PhantomCamera2D");
-		pcam?.Set("limit_left",   left);
-		pcam?.Set("limit_top",    top);
-		pcam?.Set("limit_right",  right);
-		pcam?.Set("limit_bottom", bottom);
+		// Apply to the player's Camera2D so it clamps movement to the map bounds.
+		var cam = _player.GetNodeOrNull<Camera2D>("Camera2D");
+		if (cam != null)
+		{
+			cam.LimitLeft   = left;
+			cam.LimitTop    = top;
+			cam.LimitRight  = right;
+			cam.LimitBottom = bottom;
+		}
 
 		GD.Print($"[OverworldBase] Camera bounds set: L={left} T={top} R={right} B={bottom}");
 	}

@@ -42,6 +42,10 @@ public partial class ActionMenu : Control
         _performButton.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
         _itemButton.FocusEntered    += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
         _fleeButton.FocusEntered    += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+
+        // Apply SNES theme
+        UiTheme.ApplyToAllButtons(this);
+        UiTheme.ApplyPixelFontToAll(this);
     }
 
     public void FocusFirst() => _fightButton.GrabFocus();

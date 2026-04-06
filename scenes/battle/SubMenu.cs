@@ -1,4 +1,5 @@
 using Godot;
+using SennenRpg.Core.Data;
 
 namespace SennenRpg.Scenes.Battle;
 
@@ -49,6 +50,10 @@ public partial class SubMenu : Control
 			buttons[i].FocusNeighborTop    = prev.GetPath();
 			buttons[i].FocusNeighborBottom = next.GetPath();
 		}
+
+		// Apply SNES theme to dynamically created buttons
+		UiTheme.ApplyToAllButtons(_list);
+		UiTheme.ApplyPixelFontToAll(_list);
 
 		// Auto-focus first item (deferred so layout is ready)
 		if (buttons.Count > 0)
