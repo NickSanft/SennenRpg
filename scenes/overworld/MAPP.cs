@@ -32,7 +32,6 @@ public partial class MAPP : OverworldBase
 	private CanvasLayer? _nauseaLayer;
 	private const string FrogTexturePath      = "res://assets/sprites/npcs/GusGiantFrog.png";
 	private const string TilesetPath          = "res://assets/tilesets/sennen_tiles.png";
-	private const string AmbiencePath        = "res://assets/audio/sfx/tavern_ambience.ogg";
 
 	public override void _Ready()
 	{
@@ -69,10 +68,7 @@ public partial class MAPP : OverworldBase
 			AnimateCandleFlame(flame);
 
 		SpawnStaircase();
-		// Short fade-in simulates a door swinging open onto a busy room
-		AudioManager.Instance.PlayAmbience(AmbiencePath, fadeTime: 0.4f);
 		ApplyFirelightTints();
-		StartClinkCycle();
 
 		// Restore the horse on re-entry if it has already appeared
 		if (GameManager.Instance.GetFlag(Flags.BrixHorseAppeared))
@@ -129,7 +125,6 @@ public partial class MAPP : OverworldBase
 	{
 		if (DialogicBridge.Instance != null)
 			DialogicBridge.Instance.DialogicSignalReceived -= OnDialogicSignal;
-		AudioManager.Instance?.StopAmbience();
 	}
 
 	// ── Signal dispatch ────────────────────────────────────────────────────────

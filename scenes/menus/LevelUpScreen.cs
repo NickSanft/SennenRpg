@@ -345,7 +345,7 @@ public partial class LevelUpScreen : CanvasLayer
 
 	private static void PlayFanfareSfx()
 	{
-		const string path = "res://assets/audio/sfx/level_up_fanfare.ogg";
+		const string path = "res://assets/audio/sfx/level_up_fanfare.wav";
 		if (ResourceLoader.Exists(path))
 			AudioManager.Instance.PlaySfx(path);
 	}

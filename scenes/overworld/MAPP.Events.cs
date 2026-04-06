@@ -779,56 +779,6 @@ public partial class MAPP
 		}
 	}
 
-	// ── Glass clinks ────────────────────────────────────────────────────────────
-
-	/// <summary>
-	/// Starts an infinitely recurring timer that plays a quiet glass-clink SFX
-	/// at a random table position every 18–35 seconds.
-	/// Silently skips if the audio asset does not yet exist.
-	/// </summary>
-	private void StartClinkCycle()
-	{
-		const string clinkPath = "res://assets/audio/sfx/glass_clink.ogg";
-		if (!ResourceLoader.Exists(clinkPath)) return;
-
-		var rng = new RandomNumberGenerator();
-		rng.Randomize();
-
-		var tablePositions = new Vector2[]
-		{
-			new Vector2(-60f,  40f),
-			new Vector2( 60f,  40f),
-			new Vector2(  0f, -10f),
-		};
-
-		System.Action scheduleNext = null!;
-		scheduleNext = () =>
-		{
-			if (!IsInsideTree()) return;
-
-			GetTree().CreateTimer(rng.RandfRange(18f, 35f))
-				.Connect("timeout", Callable.From(() =>
-			{
-				if (!IsInsideTree()) return;
-
-				var player = new AudioStreamPlayer2D
-				{
-					Stream      = GD.Load<AudioStream>(clinkPath),
-					VolumeDb    = rng.RandfRange(-8f, -2f),
-					MaxDistance = 200f,
-				};
-				AddChild(player);
-				player.GlobalPosition = tablePositions[rng.RandiRange(0, tablePositions.Length - 1)];
-				player.Play();
-				player.Connect("finished", Callable.From(player.QueueFree));
-
-				scheduleNext();
-			}));
-		};
-
-		scheduleNext();
-	}
-
 	// ── Ambient life ────────────────────────────────────────────────────────────
 
 	/// <summary>

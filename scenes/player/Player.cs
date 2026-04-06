@@ -21,9 +21,6 @@ public partial class Player : CharacterBody2D
 	private IInteractable? _nearbyInteractable;
 	private Vector2 _lastPosition;
 	private string _lastFacingDir = "down";
-	private float _footstepAccum;
-	private const float FootstepInterval = 24f;
-	private const string FootstepSfx = "res://assets/audio/sfx/footstep.ogg";
 
 	public override void _Ready()
 	{
@@ -116,12 +113,6 @@ public partial class Player : CharacterBody2D
 			EmitSignal(SignalName.Moved, moved);
 			_lastPosition = GlobalPosition;
 
-			_footstepAccum += moved;
-			if (_footstepAccum >= FootstepInterval)
-			{
-				_footstepAccum -= FootstepInterval;
-				AudioManager.Instance?.PlaySfxVaried(FootstepSfx, 0.08f);
-			}
 		}
 
 		// Pick the closest candidate within the InteractRange Area2D

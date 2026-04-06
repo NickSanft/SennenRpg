@@ -1039,7 +1039,7 @@ public partial class BattleScene : Node2D
 		}
 
 		// Victory fanfare SFX
-		const string fanfarePath = "res://assets/audio/sfx/victory_fanfare.ogg";
+		const string fanfarePath = "res://assets/audio/sfx/victory_fanfare.wav";
 		AudioManager.Instance?.PlaySfx(fanfarePath);
 
 		// Record kill and rhythm performance for quest/adaptation tracking

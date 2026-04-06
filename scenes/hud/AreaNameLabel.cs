@@ -16,7 +16,7 @@ public partial class AreaNameLabel : CanvasLayer
 	private const float FadeInSec  = 0.5f;
 	private const float HoldSec    = 1.5f;
 	private const float FadeOutSec = 1.0f;
-	private const string ChimeSfx  = "res://assets/audio/sfx/area_chime.ogg";
+	private const string ChimeSfx  = "res://assets/audio/sfx/area_chime.wav";
 
 	public override void _Ready()
 	{
