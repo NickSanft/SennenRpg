@@ -17,10 +17,14 @@ Luck = 2
 
 [resource]
 script = ExtResource("1_EnemyData")
-EnemyId = "dungeon_boss"
+EnemyId = "warden"
 DisplayName = "The Warden"
 FlavorText = "A stone sentinel bound to the dungeon since before memory. It remembers nothing but its purpose."
 Stats = SubResource("CharacterStats_1")
+BattleSprite = ExtResource("4_sprite")
+SpriteFrameCount = 8
+SpriteFrameSize = 32
+SpriteAnimFps = 6.0
 BattleBpm = 110.0
 BardicActOptions = PackedStringArray("Lullaby", "Dirge")
 ActOptions = PackedStringArray("Check", "Examine Cracks", "Speak")
