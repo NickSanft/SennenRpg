@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://c5d22rd36ltx4" path="res://core/data/EnemyData.cs" id="1_7wuwq"]
 [ext_resource type="Script" uid="uid://dgj4v4oe30iqr" path="res://core/data/EncounterData.cs" id="1_EncounterData"]
-[ext_resource type="EnemyData" uid="uid://bqf7nmxwk4pv1" path="res://resources/enemies/enemy_001.tres" id="2_enemy"]
+[ext_resource type="EnemyData" uid="uid://bqf7nmxwk4pv1" path="res://resources/enemies/wisplet.tres" id="2_enemy"]
 
 [resource]
 script = ExtResource("1_EncounterData")

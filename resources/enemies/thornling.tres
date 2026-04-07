@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://c5d22rd36ltx4" path="res://core/data/EnemyData.cs" id="1_EnemyData"]
 [ext_resource type="Script" uid="uid://dqonjuygth0gq" path="res://core/data/CharacterStats.cs" id="2_CharacterStats"]
 [ext_resource type="PackedScene" path="res://scenes/battle/rhythm/patterns/LaneSweepPattern.tscn" id="3_pattern"]
+[ext_resource type="Texture2D" path="res://assets/sprites/enemies/thornling.png" id="4_sprite"]
 
 [sub_resource type="Resource" id="CharacterStats_1"]
 script = ExtResource("2_CharacterStats")
@@ -17,10 +18,14 @@ Luck = 3
 
 [resource]
 script = ExtResource("1_EnemyData")
-EnemyId = "enemy_002"
+EnemyId = "thornling"
 DisplayName = "Thornling"
 FlavorText = "A small plant sprite prickled by the world. It just wants space."
 Stats = SubResource("CharacterStats_1")
+BattleSprite = ExtResource("4_sprite")
+SpriteFrameCount = 8
+SpriteFrameSize = 32
+SpriteAnimFps = 6.0
 ActOptions = PackedStringArray("Check", "Water", "Apologize")
 ActResultTexts = PackedStringArray("* 35 HP. Keeps its thorns raised.", "* You offer water. Its leaves perk up.", "* You apologize. It seems surprised.")
 BattleDialogLines = PackedStringArray("* Don't come closer...", "* These thorns aren't for show.", "* I didn't ask to be here either.", "* ...")

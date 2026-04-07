@@ -572,7 +572,7 @@ Godot destroys the current scene tree on every scene change. Cross-scene data li
 |---|---|---|
 | Scenes | PascalCase.tscn | `BattleScene.tscn` |
 | C# scripts | PascalCase.cs (matches scene) | `BattleScene.cs` |
-| Resources | snake_case.tres | `enemy_001.tres` |
+| Resources | snake_case.tres | `wisplet.tres` |
 | Dialog timelines | snake_case.dtl | `npc_intro.dtl` |
 | Dialogic characters | PascalCase.dch | `Barkeep.dch` |
 | Folders | snake_case/ | `scenes/battle/` |

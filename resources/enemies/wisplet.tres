@@ -19,6 +19,7 @@ DisplayName = "Wisplet"
 FlavorText = "A small wandering spirit. Seems lost."
 Stats = SubResource("CharacterStats_1")
 BattleSprite = ExtResource("4_sprite")
+SpriteFrameCount = 8
 ActOptions = PackedStringArray("Check", "Greet", "Hum")
 ActResultTexts = PackedStringArray("* 20 HP. Looks uncertain.", "* The Wisplet bobs happily.", "* The Wisplet hums along!")
 BattleDialogLines = PackedStringArray("* ...", "* Hm?", "* What do you want?", "* This is scary.")

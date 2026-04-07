@@ -242,7 +242,30 @@ public partial class BattleScene : Node2D
 
 	private void SetupEnemySprite()
 	{
-		if (_enemy?.BattleSprite != null)
+		if (_enemy?.BattleSprite != null && _enemy.SpriteFrameCount > 0)
+		{
+			var tex = _enemy.BattleSprite;
+			int size = _enemy.SpriteFrameSize;
+			var frames = new SpriteFrames();
+			frames.AddAnimation("idle");
+			frames.SetAnimationLoop("idle", true);
+			frames.SetAnimationSpeed("idle", _enemy.SpriteAnimFps);
+
+			for (int f = 0; f < _enemy.SpriteFrameCount; f++)
+			{
+				var atlas = new AtlasTexture
+				{
+					Atlas  = tex,
+					Region = new Rect2(f * size, 0, size, size),
+				};
+				frames.AddFrame("idle", atlas);
+			}
+
+			var animated = new AnimatedSprite2D { SpriteFrames = frames };
+			animated.Play("idle");
+			_enemyVisual = animated;
+		}
+		else if (_enemy?.BattleSprite != null)
 		{
 			var sprite = new Sprite2D { Texture = _enemy.BattleSprite };
 			_enemyVisual = sprite;
@@ -268,13 +291,10 @@ public partial class BattleScene : Node2D
 			ci.Material = _hitFlashMat;
 		}
 
-		_enemyArea.AddChild(_enemyVisual);
+		if (_enemyVisual is Node2D visual)
+			visual.Scale = new Vector2(4f, 4f);
 
-		var tween = CreateTween().SetLoops();
-		tween.TweenProperty(_enemyVisual, "position:y",  4f, 0.6f)
-			 .SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Sine);
-		tween.TweenProperty(_enemyVisual, "position:y", -4f, 0.6f)
-			 .SetEase(Tween.EaseType.InOut).SetTrans(Tween.TransitionType.Sine);
+		_enemyArea.AddChild(_enemyVisual);
 	}
 
 	public override void _ExitTree()
@@ -402,9 +422,9 @@ public partial class BattleScene : Node2D
 		// Enemy intro zoom: start small, bounce to full size
 		if (_enemyVisual != null)
 		{
-			_enemyVisual.Scale = new Vector2(0.5f, 0.5f);
+			_enemyVisual.Scale = new Vector2(2f, 2f);
 			var zoomTween = CreateTween();
-			zoomTween.TweenProperty(_enemyVisual, "scale", Vector2.One, 0.3f)
+			zoomTween.TweenProperty(_enemyVisual, "scale", new Vector2(4f, 4f), 0.3f)
 				.SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Back);
 			await ToSignal(zoomTween, Tween.SignalName.Finished);
 		}

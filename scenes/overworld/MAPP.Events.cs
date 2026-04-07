@@ -385,9 +385,9 @@ public partial class MAPP
 		{
 			frames.AddAnimation(animName);
 			frames.SetAnimationLoop(animName, true);
-			frames.SetAnimationSpeed(animName, 3.0f);
+			frames.SetAnimationSpeed(animName, 6.0f);
 
-			for (int f = 0; f < 2; f++)
+			for (int f = 0; f < 8; f++)
 			{
 				var atlas = new AtlasTexture
 				{

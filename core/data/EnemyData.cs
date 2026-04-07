@@ -11,6 +11,13 @@ public partial class EnemyData : Resource
 	[Export] public CharacterStats? Stats { get; set; }
 	[Export] public Texture2D? BattleSprite { get; set; }
 
+	/// <summary>Number of frames in the sprite sheet (0 = static sprite).</summary>
+	[Export] public int SpriteFrameCount { get; set; } = 0;
+	/// <summary>Width/height of each frame in the sprite sheet.</summary>
+	[Export] public int SpriteFrameSize { get; set; } = 32;
+	/// <summary>Animation FPS for sprite sheet playback.</summary>
+	[Export] public float SpriteAnimFps { get; set; } = 6f;
+
 	// ── Rhythm fields ──────────────────────────────────────────────────
 	/// <summary>BPM of this enemy's battle track. 0 = use encounter/default BPM.</summary>
     [Export] public float BattleBpm { get; set; } = 0f;
