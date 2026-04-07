@@ -32,6 +32,7 @@ public partial class GameManager : Node
 	private readonly WorldStateData        _world       = new();
 	private readonly MellyrRewardData      _mellyr      = new();
 	private readonly MultiClassData        _multiClass  = new();
+	private readonly ForageCodexData       _forageCodex = new();
 
 	// ── State ─────────────────────────────────────────────────────────────────
 
@@ -47,6 +48,15 @@ public partial class GameManager : Node
 
 	/// <summary>Per-enemy rhythm performance history for the Rhythm Memory adaptation system.</summary>
 	public System.Collections.Generic.Dictionary<string, EnemyRhythmHistory> RhythmMemory { get; } = new();
+
+	/// <summary>
+	/// Current Perfect-streak counter for the foraging minigame. Increments on a Perfect grade,
+	/// resets to zero on anything else. Persisted in <see cref="SaveData.ForageStreak"/>.
+	/// </summary>
+	public int ForageStreak { get; set; }
+
+	/// <summary>Foragery codex container — populated by the foraging minigame on every find.</summary>
+	public ForageCodexData ForageCodex => _forageCodex;
 
 	/// <summary>Original palette colours extracted from the sprite at character creation.</summary>
 	public Color[] PaletteSourceColors { get; set; } = [];
@@ -359,6 +369,8 @@ public partial class GameManager : Node
 		Flags.Clear();
 		KillCounts.Clear();
 		RhythmMemory.Clear();
+		_forageCodex.Reset();
+		ForageStreak = 0;
 		PaletteSourceColors = [];
 		PaletteTargetColors = [];
 
@@ -405,6 +417,9 @@ public partial class GameManager : Node
 
 		RhythmMemory.Clear();
 		foreach (var kv in data.RhythmMemory) RhythmMemory[kv.Key] = kv.Value;
+
+		ForageStreak = data.ForageStreak;
+		_forageCodex.ReplaceAll(data.ForageCodex);
 
 		PaletteSourceColors = DeserialiseColors(data.PaletteSourceColors);
 		PaletteTargetColors = DeserialiseColors(data.PaletteTargetColors);

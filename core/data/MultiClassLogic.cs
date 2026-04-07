@@ -57,6 +57,21 @@ public static class MultiClassLogic
     }
 
     /// <summary>
+    /// Returns true when the player has earned a cross-class bonus carrying the
+    /// given <paramref name="tag"/>. Used by gameplay systems (foraging, etc.)
+    /// to query for system-specific passives by stable identifier.
+    /// </summary>
+    public static bool HasTag(Dictionary<PlayerClass, int> classLevels, string tag)
+    {
+        foreach (var bonus in GetEarnedBonuses(classLevels))
+        {
+            if (bonus.Tag == tag)
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
     /// Creates a <see cref="ClassProgressionEntry"/> snapshot from current player state.
     /// Called before switching away from the active class.
     /// </summary>

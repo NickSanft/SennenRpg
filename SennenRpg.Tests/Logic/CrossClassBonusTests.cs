@@ -53,14 +53,59 @@ public class CrossClassBonusTests
     }
 
     [Test]
-    public void Registry_EachBonusHasStatOrSpell()
+    public void Registry_EachBonusHasStatSpellOrTag()
     {
         foreach (var bonus in CrossClassBonusRegistry.All)
         {
-            bool hasStat = bonus.StatBonuses != default;
+            bool hasStat  = bonus.StatBonuses != default;
             bool hasSpell = bonus.UnlockedSpellPath != null;
-            Assert.That(hasStat || hasSpell, Is.True,
-                $"Bonus '{bonus.Description}' has neither stat bonuses nor a spell unlock");
+            bool hasTag   = !string.IsNullOrEmpty(bonus.Tag);
+            Assert.That(hasStat || hasSpell || hasTag, Is.True,
+                $"Bonus '{bonus.Description}' has neither stat bonuses, a spell unlock, nor a system tag");
         }
+    }
+
+    // ── Forager's Eye (Ranger Lv5) ────────────────────────────────────
+
+    [Test]
+    public void Registry_ForagersEye_RangerLv5_Exists()
+    {
+        var matches = CrossClassBonusRegistry.All
+            .Where(b => b.Tag == CrossClassBonus.ForagersEye)
+            .ToList();
+
+        Assert.That(matches, Has.Count.EqualTo(1));
+        Assert.That(matches[0].SourceClass,   Is.EqualTo(PlayerClass.Ranger));
+        Assert.That(matches[0].RequiredLevel, Is.EqualTo(5));
+    }
+
+    [Test]
+    public void HasTag_ReturnsFalse_BeforeRangerLv5()
+    {
+        var levels = new System.Collections.Generic.Dictionary<PlayerClass, int>
+        {
+            [PlayerClass.Ranger] = 4,
+        };
+        Assert.That(MultiClassLogic.HasTag(levels, CrossClassBonus.ForagersEye), Is.False);
+    }
+
+    [Test]
+    public void HasTag_ReturnsTrue_AtRangerLv5()
+    {
+        var levels = new System.Collections.Generic.Dictionary<PlayerClass, int>
+        {
+            [PlayerClass.Ranger] = 5,
+        };
+        Assert.That(MultiClassLogic.HasTag(levels, CrossClassBonus.ForagersEye), Is.True);
+    }
+
+    [Test]
+    public void HasTag_UnknownTag_ReturnsFalse()
+    {
+        var levels = new System.Collections.Generic.Dictionary<PlayerClass, int>
+        {
+            [PlayerClass.Ranger] = 99,
+        };
+        Assert.That(MultiClassLogic.HasTag(levels, "no_such_tag"), Is.False);
     }
 }

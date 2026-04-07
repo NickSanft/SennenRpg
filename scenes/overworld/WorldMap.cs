@@ -175,7 +175,7 @@ public partial class WorldMap : Node2D
 		bool minigameEnabled = SettingsManager.Instance?.Current.ForageMinigameEnabled ?? true;
 		if (!minigameEnabled)
 		{
-			GrantForageItems(ForageLogic.ForageGrade.Miss);
+			GrantForageItems(ForageLogic.ForageGrade.Miss, grantStreakReward: false);
 			return true;
 		}
 
@@ -187,6 +187,7 @@ public partial class WorldMap : Node2D
 	/// Spawn the rhythm minigame as a top-of-screen overlay, freeze player input via
 	/// GameState.Dialog, and connect the completion signal.
 	/// Note count scales gently with BPM so faster songs feel slightly more challenging.
+	/// Forager's Eye Ranger cross-class bonus adds one extra note slot.
 	/// </summary>
 	private void LaunchForageMinigame()
 	{
@@ -195,7 +196,7 @@ public partial class WorldMap : Node2D
 		{
 			// Asset missing — fall back to instant grant so the feature degrades gracefully.
 			GD.PushWarning($"[WorldMap] ForageMinigame scene missing at {scenePath}; granting fallback item.");
-			GrantForageItems(ForageLogic.ForageGrade.Miss);
+			GrantForageItems(ForageLogic.ForageGrade.Miss, grantStreakReward: false);
 			return;
 		}
 
@@ -217,8 +218,24 @@ public partial class WorldMap : Node2D
 		float bpm       = AudioManager.Instance?.GetCurrentBgmBpm() ?? RhythmConstants.DefaultBpm;
 		int   noteCount = bpm > 110f ? 5 : 4;
 
+		// Forager's Eye (Ranger Lv5 cross-class) — one extra note slot.
+		if (HasForagersEye())
+			noteCount += 1;
+
 		GameManager.Instance.SetState(GameState.Dialog); // freeze player input
 		minigame.Activate(noteCount);
+	}
+
+	/// <summary>
+	/// True when the player has earned the Forager's Eye cross-class bonus
+	/// (Ranger Lv5). Grants +1 forage item count and +1 note slot in the minigame.
+	/// </summary>
+	private static bool HasForagersEye()
+	{
+		var levels = new System.Collections.Generic.Dictionary<PlayerClass, int>();
+		foreach (var (cls, entry) in GameManager.Instance.ClassEntries)
+			levels[cls] = entry.Level;
+		return MultiClassLogic.HasTag(levels, CrossClassBonus.ForagersEye);
 	}
 
 	private void OnForageCancelled()
@@ -230,8 +247,54 @@ public partial class WorldMap : Node2D
 	private void OnForageCompleted(int perfects, int hits, int totalNotes)
 	{
 		var grade = ForageLogic.GradeFromAccuracy(hits, perfects, totalNotes);
-		GrantForageItems(grade);
+		var gm    = GameManager.Instance;
+
+		// Check the streak threshold BEFORE we update the counter for this run.
+		// The plan: "At streak >= 5 the NEXT forage guarantees an Astral Flower."
+		// So a player who hit 5 perfects in a row gets the rare drop on the
+		// 6th forage, regardless of how that 6th run grades.
+		bool grantStreakReward = ForageLogic.ShouldGrantStreakReward(gm.ForageStreak);
+
+		GrantForageItems(grade, grantStreakReward);
+
+		// Update the streak counter — Perfect increments, anything else resets.
+		// If we just consumed a streak reward, the next streak starts fresh
+		// regardless of this run's grade.
+		gm.ForageStreak = grantStreakReward
+			? 0
+			: ForageLogic.NextStreak(gm.ForageStreak, grade);
+
 		TeardownActiveForageMinigame();
+
+		// Mini-juice: a Perfect grade gets a gold screen flash and a soft fanfare.
+		if (grade == ForageLogic.ForageGrade.Perfect)
+		{
+			AudioManager.Instance?.PlaySfx("res://assets/audio/sfx/victory_fanfare.wav");
+			FlashGoldOverlay();
+		}
+	}
+
+	/// <summary>
+	/// Brief gold-tinted full-screen flash on a Perfect forage. Self-cleaning ColorRect
+	/// added to its own CanvasLayer so it doesn't fight the existing scene tree.
+	/// </summary>
+	private void FlashGoldOverlay()
+	{
+		var layer = new CanvasLayer { Layer = 99 };
+		AddChild(layer);
+
+		var flash = new ColorRect
+		{
+			Color       = new Color(1f, 0.85f, 0.2f, 0.55f),
+			AnchorRight = 1f,
+			AnchorBottom = 1f,
+			MouseFilter = Control.MouseFilterEnum.Ignore,
+		};
+		layer.AddChild(flash);
+
+		var tween = CreateTween();
+		tween.TweenProperty(flash, "color:a", 0f, 0.45f).SetTrans(Tween.TransitionType.Sine);
+		tween.TweenCallback(Callable.From(() => layer.QueueFree()));
 	}
 
 	private void TeardownActiveForageMinigame()
@@ -250,24 +313,51 @@ public partial class WorldMap : Node2D
 	/// Grant items for the given grade and play the forage_found dialog.
 	/// Selects items independently from the grade-biased table so the player can
 	/// receive a mix of common/rare drops on a strong run.
+	///
+	/// Applies, in order:
+	///   - Forager's Eye Ranger cross-class bonus → +1 item count
+	///   - Streak system → first item swapped for Astral Flower when streak is at threshold
+	///   - Day/Night biasing → night doubles slime/hairball weights
+	///   - Codex recording → unlocks first-discovery chime per item
 	/// </summary>
-	private void GrantForageItems(ForageLogic.ForageGrade grade)
+	private void GrantForageItems(ForageLogic.ForageGrade grade, bool grantStreakReward)
 	{
-		int    count = ForageLogic.BonusItemCount(grade);
-		var    table = ForageLogic.WeightedTableForGrade(grade);
-		string firstName = "something";
+		var gm = GameManager.Instance;
+
+		int count = ForageLogic.BonusItemCount(grade);
+		if (HasForagersEye()) count += 1;
+
+		var phase = ForageLogic.ToDayPhase(gm.IsNight);
+		var table = ForageLogic.WeightedTableForGrade(grade, phase);
+
+		string firstName  = "something";
 		bool   anyGranted = false;
+		bool   anyNewDiscovery = false;
 
 		for (int i = 0; i < count; i++)
 		{
-			double itemRoll = GD.RandRange(0.0, 1.0);
-			string path = ForageLogic.SelectForageItem(itemRoll, table);
-			if (!ResourceLoader.Exists(path)) continue;
+			string path;
+			if (grantStreakReward && i == 0)
+			{
+				// Streak reward: replace the first roll with a guaranteed Astral Flower.
+				path = ForageLogic.AstralFlowerPath;
+			}
+			else
+			{
+				double itemRoll = GD.RandRange(0.0, 1.0);
+				path = ForageLogic.SelectForageItem(itemRoll, table);
+			}
 
+			if (!ResourceLoader.Exists(path)) continue;
 			var item = GD.Load<ItemData>(path);
 			if (item == null) continue;
 
-			GameManager.Instance.AddItem(path);
+			gm.AddItem(path);
+
+			// Codex: deterministic UTC timestamp injection.
+			if (gm.ForageCodex.Record(path, grade, System.DateTime.UtcNow))
+				anyNewDiscovery = true;
+
 			if (!anyGranted)
 			{
 				firstName  = item.DisplayName;
@@ -277,14 +367,16 @@ public partial class WorldMap : Node2D
 
 		if (!anyGranted)
 		{
-			// Nothing was actually granted (broken table?) — restore overworld and bail.
-			GameManager.Instance.SetState(GameState.Overworld);
+			gm.SetState(GameState.Overworld);
 			return;
 		}
 
-		GD.Print($"[WorldMap] Foraged ({grade}): {count}× starting with {firstName}");
+		if (anyNewDiscovery)
+			AudioManager.Instance?.PlaySfx("res://assets/audio/sfx/area_chime.wav");
 
-		GameManager.Instance.SetState(GameState.Dialog);
+		GD.Print($"[WorldMap] Foraged ({grade}, streak {gm.ForageStreak}): {count}× starting with {firstName}");
+
+		gm.SetState(GameState.Dialog);
 		var bridge = DialogicBridge.Instance;
 		bridge.SetVariable("forage_item_name", firstName);
 		bridge.SetVariable("forage_grade",     ForageLogic.GradeArticle(grade));

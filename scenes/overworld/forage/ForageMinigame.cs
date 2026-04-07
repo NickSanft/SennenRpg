@@ -72,6 +72,15 @@ public partial class ForageMinigame : Control
         public string Label = "";
     }
 
+    /// <summary>Short-lived spark drawn on a Perfect-grade hit.</summary>
+    private sealed class HitSpark
+    {
+        public float Age;            // seconds since spawned
+        public const float Lifetime = 0.35f;
+        public bool Dead => Age >= Lifetime;
+    }
+    private readonly System.Collections.Generic.List<HitSpark> _sparks = new();
+
     // ── Public API ───────────────────────────────────────────────────────
 
     /// <summary>
@@ -181,6 +190,14 @@ public partial class ForageMinigame : Control
                 _misses++;
             }
         }
+
+        // Age and prune Perfect-hit sparks.
+        for (int i = _sparks.Count - 1; i >= 0; i--)
+        {
+            _sparks[i].Age += dt;
+            if (_sparks[i].Dead) _sparks.RemoveAt(i);
+        }
+
         QueueRedraw();
     }
 
@@ -222,6 +239,7 @@ public partial class ForageMinigame : Control
             {
                 nearest.Grade = 1;
                 _perfects++;
+                _sparks.Add(new HitSpark()); // perfect-hit juice
             }
             else
             {
@@ -238,9 +256,18 @@ public partial class ForageMinigame : Control
 
     public override void _Draw()
     {
-        // Lane background
-        DrawRect(new Rect2(0f, LaneY - NoteRadius - 8f, 320f, (NoteRadius + 8f) * 2f),
-                 new Color(0.06f, 0.10f, 0.06f, 1f));
+        // Lane background — pulses on every beat (brighter at beat onset, fading
+        // toward the next). Acts as a visible metronome that doesn't depend on a
+        // separate UI element.
+        float beatPhaseForPulse = RhythmClock.Instance.BeatPhase;
+        float bgPulse           = Mathf.Max(0f, 1f - beatPhaseForPulse * 2f);
+        var bgBase = new Color(0.06f, 0.10f, 0.06f, 1f);
+        var bgFlash = new Color(
+            bgBase.R + 0.05f * bgPulse,
+            bgBase.G + 0.10f * bgPulse,
+            bgBase.B + 0.05f * bgPulse,
+            1f);
+        DrawRect(new Rect2(0f, LaneY - NoteRadius - 8f, 320f, (NoteRadius + 8f) * 2f), bgFlash);
 
         // Hit zone, pulsing on beat phase
         float phase = RhythmClock.Instance.BeatPhase;
@@ -249,6 +276,16 @@ public partial class ForageMinigame : Control
                 Colors.White with { A = 0.4f + pulse * 0.5f }, 2f);
         DrawArc(new Vector2(HitZoneX, LaneY), NoteRadius, 0f, Mathf.Tau, 32,
                 new Color(0.4f, 1f, 0.4f) with { A = 0.3f + pulse * 0.4f }, 3f);
+
+        // Perfect-hit sparks (drawn under notes so notes still read clearly)
+        foreach (var spark in _sparks)
+        {
+            float t = spark.Age / HitSpark.Lifetime;
+            float r = NoteRadius + 4f + 18f * t;
+            float a = 0.65f * (1f - t);
+            DrawArc(new Vector2(HitZoneX, LaneY), r, 0f, Mathf.Tau, 24,
+                    new Color(1f, 0.85f, 0.2f) with { A = a }, 2f);
+        }
 
         // Notes
         foreach (var note in _notes)

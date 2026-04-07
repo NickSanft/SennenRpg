@@ -81,6 +81,12 @@ public record SaveData
 	/// <summary>Active class name. Null for legacy saves (falls back to PlayerClassName).</summary>
 	public string? ActiveClassName { get; init; }
 
+	// ── Foraging ──────────────────────────────────────────────────────────────
+	/// <summary>Current Perfect-streak counter for the foraging rhythm minigame.</summary>
+	public int                                                              ForageStreak { get; init; } = 0;
+	/// <summary>Foragery codex entries — item path → discovery record.</summary>
+	public Dictionary<string, SennenRpg.Core.Data.ForageCodexEntry>         ForageCodex  { get; init; } = new();
+
 	// ── Slot metadata ─────────────────────────────────────────────────────────
 	/// <summary>Player's chosen name (displayed on the slot card).</summary>
 	public string PlayerName      { get; init; } = "Sen";

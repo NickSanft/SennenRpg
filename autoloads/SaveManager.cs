@@ -111,6 +111,9 @@ public partial class SaveManager : Node
 			// Multi-class progression
 			ClassProgressionEntries  = new System.Collections.Generic.List<SennenRpg.Core.Data.ClassProgressionEntry>(gm.ClassEntries.Values),
 			ActiveClassName          = gm.ActiveClass.ToString(),
+			// Foraging
+			ForageStreak             = gm.ForageStreak,
+			ForageCodex              = new System.Collections.Generic.Dictionary<string, SennenRpg.Core.Data.ForageCodexEntry>(gm.ForageCodex.Entries),
 		};
 
 		string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });

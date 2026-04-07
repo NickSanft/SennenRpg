@@ -51,6 +51,9 @@ text = "ITEMS"
 [node name="CookButton" type="Button" parent="Overlay/Panel/VBox"]
 text = "COOK"
 
+[node name="ForageryButton" type="Button" parent="Overlay/Panel/VBox"]
+text = "FORAGERY"
+
 [node name="EquipmentButton" type="Button" parent="Overlay/Panel/VBox"]
 text = "EQUIPMENT"
 

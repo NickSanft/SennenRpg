@@ -22,8 +22,8 @@ public static class CrossClassBonusRegistry
             StatBonuses: new EquipmentBonuses(Speed: 3)),
 
         // Ranger bonuses
-        new(PlayerClass.Ranger, 5, "Ranger Lv5: +3 SPD",
-            StatBonuses: new EquipmentBonuses(Speed: 3)),
+        new(PlayerClass.Ranger, 5, "Ranger Lv5: Forager's Eye (+1 forage item, longer rhythm prompt)",
+            Tag: CrossClassBonus.ForagersEye),
         new(PlayerClass.Ranger, 10, "Ranger Lv10: +5 LCK",
             StatBonuses: new EquipmentBonuses(Luck: 5)),
 

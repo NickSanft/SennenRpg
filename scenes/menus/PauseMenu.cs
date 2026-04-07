@@ -16,6 +16,7 @@ public partial class PauseMenu : CanvasLayer
 	private Button _settingsButton  = null!;
 	private Button _itemsButton     = null!;
 	private Button _cookButton      = null!;
+	private Button _forageryButton  = null!;
 	private Button _equipmentButton = null!;
 	private Button _spellsButton    = null!;
 	private Button _statsButton     = null!;
@@ -24,6 +25,7 @@ public partial class PauseMenu : CanvasLayer
 
 	private InventoryMenu?  _inventoryMenu;
 	private CookingMenu?    _cookingMenu;
+	private ForageryMenu?   _forageryMenu;
 	private EquipmentMenu?  _equipmentMenu;
 	private SpellsMenu?     _spellsMenu;
 	private StatsMenu?      _statsMenu;
@@ -39,6 +41,7 @@ public partial class PauseMenu : CanvasLayer
 		_settingsButton  = GetNode<Button>("Overlay/Panel/VBox/SettingsButton");
 		_itemsButton     = GetNode<Button>("Overlay/Panel/VBox/ItemsButton");
 		_cookButton      = GetNode<Button>("Overlay/Panel/VBox/CookButton");
+		_forageryButton  = GetNode<Button>("Overlay/Panel/VBox/ForageryButton");
 		_equipmentButton = GetNode<Button>("Overlay/Panel/VBox/EquipmentButton");
 		_spellsButton    = GetNode<Button>("Overlay/Panel/VBox/SpellsButton");
 		_statsButton     = GetNode<Button>("Overlay/Panel/VBox/StatsButton");
@@ -49,6 +52,7 @@ public partial class PauseMenu : CanvasLayer
 		_settingsButton.Pressed  += OnSettingsPressed;
 		_itemsButton.Pressed     += OnItemsPressed;
 		_cookButton.Pressed      += OnCookPressed;
+		_forageryButton.Pressed  += OnForageryPressed;
 		_equipmentButton.Pressed += OnEquipmentPressed;
 		_spellsButton.Pressed    += OnSpellsPressed;
 		_statsButton.Pressed     += OnStatsPressed;
@@ -60,7 +64,7 @@ public partial class PauseMenu : CanvasLayer
 
 		// Cursor SFX on focus change
 		foreach (var btn in new[] { _resumeButton, _saveButton, _settingsButton,
-			_itemsButton, _cookButton, _equipmentButton, _spellsButton, _statsButton, _mainMenuButton })
+			_itemsButton, _cookButton, _forageryButton, _equipmentButton, _spellsButton, _statsButton, _mainMenuButton })
 			btn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
 
 		// Instantiate InventoryMenu as a sibling so its visibility is independent of PauseMenu
@@ -88,6 +92,19 @@ public partial class PauseMenu : CanvasLayer
 		{
 			GD.PushWarning("[PauseMenu] CookingMenu.tscn not found — COOK button will be disabled.");
 			_cookButton.Disabled = true;
+		}
+
+		const string forageryPath = "res://scenes/menus/ForageryMenu.tscn";
+		if (ResourceLoader.Exists(forageryPath))
+		{
+			_forageryMenu = GD.Load<PackedScene>(forageryPath).Instantiate<ForageryMenu>();
+			_forageryMenu.Closed += OnForageryClosed;
+			AddSibling(_forageryMenu);
+		}
+		else
+		{
+			GD.PushWarning("[PauseMenu] ForageryMenu.tscn not found — FORAGERY button will be disabled.");
+			_forageryButton.Disabled = true;
 		}
 
 		const string eqPath = "res://scenes/menus/EquipmentMenu.tscn";
@@ -234,6 +251,21 @@ public partial class PauseMenu : CanvasLayer
 		Visible = true;
 		_cookButton.GrabFocus();
 		GD.Print("[PauseMenu] Cooking menu closed, PauseMenu restored.");
+	}
+
+	private void OnForageryPressed()
+	{
+		if (_forageryMenu == null) return;
+		Visible = false;
+		_forageryMenu.Open();
+		GD.Print("[PauseMenu] Foragery menu opened.");
+	}
+
+	private void OnForageryClosed()
+	{
+		Visible = true;
+		_forageryButton.GrabFocus();
+		GD.Print("[PauseMenu] Foragery menu closed, PauseMenu restored.");
 	}
 
 	private void OnEquipmentPressed()

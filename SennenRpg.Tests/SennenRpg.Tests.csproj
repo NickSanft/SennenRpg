@@ -79,6 +79,8 @@
         <Compile Include="../core/data/ForageTableEntry.cs" />
         <Compile Include="../core/data/ForageLogic.cs" />
         <Compile Include="../core/data/JunkSellLogic.cs" />
+        <Compile Include="../core/data/ForageCodexEntry.cs" />
+        <Compile Include="../core/data/ForageCodexLogic.cs" />
     </ItemGroup>
 
 </Project>

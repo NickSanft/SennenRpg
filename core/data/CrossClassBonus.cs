@@ -10,4 +10,13 @@ public readonly record struct CrossClassBonus(
     int RequiredLevel,
     string Description,
     EquipmentBonuses StatBonuses = default,
-    string? UnlockedSpellPath = null);
+    string? UnlockedSpellPath = null,
+    /// <summary>
+    /// Optional gameplay tag for system-specific lookups (e.g. <see cref="ForagersEye"/>).
+    /// Use <see cref="MultiClassLogic.HasTag"/> to query.
+    /// </summary>
+    string? Tag = null)
+{
+    /// <summary>Tag for the Ranger Lv5 Forager's Eye bonus — extends the foraging minigame.</summary>
+    public const string ForagersEye = "forager_eye";
+}

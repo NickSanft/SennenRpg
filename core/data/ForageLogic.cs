@@ -166,4 +166,60 @@ public static class ForageLogic
         ForageGrade.Good    => "a fine",
         _                   => "a",
     };
+
+    // ── Streak system ─────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Streak threshold at which the next forage guarantees an Astral Flower drop.
+    /// </summary>
+    public const int GuaranteedRareStreak = 5;
+
+    /// <summary>Resource path of the rare drop awarded by the streak system.</summary>
+    public const string AstralFlowerPath  = "res://resources/items/junk_astral_flower.tres";
+
+    /// <summary>
+    /// Returns the streak after recording <paramref name="grade"/>.
+    /// Perfect increments the streak; everything else resets it to zero.
+    /// Pure: callers manage state.
+    /// </summary>
+    public static int NextStreak(int currentStreak, ForageGrade grade)
+        => grade == ForageGrade.Perfect ? currentStreak + 1 : 0;
+
+    /// <summary>
+    /// Returns true if the streak counter has reached the rare-guarantee threshold,
+    /// meaning the very next forage should be an Astral Flower instead of a roll.
+    /// </summary>
+    public static bool ShouldGrantStreakReward(int streak)
+        => streak >= GuaranteedRareStreak;
+
+    // ── Day/Night biasing ─────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Phase of the day/night cycle used for forage table biasing.
+    /// Maps from <see cref="DayNightLogic"/>'s simple day/night flag with optional
+    /// dawn/dusk extension if the cycle ever grows more states.
+    /// </summary>
+    public enum DayPhase { Day, Night }
+
+    /// <summary>Helper that converts <see cref="DayNightLogic"/>'s bool into the enum.</summary>
+    public static DayPhase ToDayPhase(bool isNight) => isNight ? DayPhase.Night : DayPhase.Day;
+
+    /// <summary>
+    /// Day/Night-aware overload of <see cref="WeightedTableForGrade(ForageGrade)"/>.
+    /// At Night, slimes and hairballs are weighted heavier (creatures of the dark).
+    /// During the Day, the table is unchanged from the grade-only version.
+    /// </summary>
+    public static ForageTableEntry[] WeightedTableForGrade(ForageGrade grade, DayPhase phase)
+    {
+        var table = WeightedTableForGrade(grade, DefaultTable);
+
+        if (phase != DayPhase.Night) return table;
+
+        // Night bias: double the weight of the front half (slimes / hairballs).
+        int nightBoostEnd = table.Length / 2;
+        for (int i = 0; i < nightBoostEnd; i++)
+            table[i] = table[i] with { Weight = table[i].Weight * 2 };
+
+        return table;
+    }
 }

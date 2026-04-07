@@ -63,17 +63,18 @@ public class MultiClassLogicTests
     {
         var levels = new Dictionary<PlayerClass, int>
         {
-            { PlayerClass.Fighter, 5 },  // +5 ATK
-            { PlayerClass.Ranger, 5 },   // +3 SPD
-            { PlayerClass.Mage, 5 },     // +5 MAG
+            { PlayerClass.Fighter, 10 }, // +5 ATK (Lv5) + +5 DEF (Lv10)
+            { PlayerClass.Ranger,  10 }, // Forager's Eye (no stats, Lv5) + +5 LCK (Lv10)
+            { PlayerClass.Mage,    5  }, // +5 MAG
         };
 
         var bonus = MultiClassLogic.SumCrossClassBonuses(levels);
 
-        Assert.That(bonus.Attack, Is.EqualTo(5));
-        Assert.That(bonus.Speed, Is.EqualTo(3));
-        Assert.That(bonus.Magic, Is.EqualTo(5));
-        Assert.That(bonus.Defense, Is.EqualTo(0));
+        Assert.That(bonus.Attack,  Is.EqualTo(5));
+        Assert.That(bonus.Defense, Is.EqualTo(5));
+        Assert.That(bonus.Luck,    Is.EqualTo(5));
+        Assert.That(bonus.Magic,   Is.EqualTo(5));
+        Assert.That(bonus.Speed,   Is.EqualTo(0)); // Ranger Lv5 no longer grants speed
     }
 
     [Test]

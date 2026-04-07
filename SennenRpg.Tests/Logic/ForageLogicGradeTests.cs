@@ -185,4 +185,80 @@ public class ForageLogicGradeTests
         foreach (ForageLogic.ForageGrade g in System.Enum.GetValues<ForageLogic.ForageGrade>())
             Assert.That(ForageLogic.GradeArticle(g), Is.Not.Empty);
     }
+
+    // ── Streak system ───────────────────────────────────────────────────
+
+    [Test]
+    public void NextStreak_PerfectIncrements()
+    {
+        Assert.That(ForageLogic.NextStreak(0, ForageLogic.ForageGrade.Perfect), Is.EqualTo(1));
+        Assert.That(ForageLogic.NextStreak(4, ForageLogic.ForageGrade.Perfect), Is.EqualTo(5));
+    }
+
+    [TestCase(ForageLogic.ForageGrade.Miss)]
+    [TestCase(ForageLogic.ForageGrade.Good)]
+    [TestCase(ForageLogic.ForageGrade.Great)]
+    public void NextStreak_NonPerfectResets(ForageLogic.ForageGrade grade)
+    {
+        Assert.That(ForageLogic.NextStreak(7, grade), Is.EqualTo(0));
+    }
+
+    [Test]
+    public void ShouldGrantStreakReward_ThresholdBoundary()
+    {
+        Assert.That(ForageLogic.ShouldGrantStreakReward(4), Is.False);
+        Assert.That(ForageLogic.ShouldGrantStreakReward(5), Is.True);
+        Assert.That(ForageLogic.ShouldGrantStreakReward(99), Is.True);
+    }
+
+    [Test]
+    public void AstralFlowerPath_PointsToExpectedResource()
+    {
+        Assert.That(ForageLogic.AstralFlowerPath, Does.EndWith("junk_astral_flower.tres"));
+    }
+
+    // ── Day/Night biasing ──────────────────────────────────────────────
+
+    [Test]
+    public void WeightedTable_Day_MatchesGradeOnlyOverload()
+    {
+        var day  = ForageLogic.WeightedTableForGrade(
+            ForageLogic.ForageGrade.Perfect, ForageLogic.DayPhase.Day);
+        var grad = ForageLogic.WeightedTableForGrade(ForageLogic.ForageGrade.Perfect);
+        for (int i = 0; i < day.Length; i++)
+            Assert.That(day[i].Weight, Is.EqualTo(grad[i].Weight));
+    }
+
+    [Test]
+    public void WeightedTable_Night_BoostsCommonHalf()
+    {
+        // At Night, the front half (slimes/hairballs) is doubled on top of any grade bias.
+        var night = ForageLogic.WeightedTableForGrade(
+            ForageLogic.ForageGrade.Miss, ForageLogic.DayPhase.Night);
+        // Default [40,30,20,10] → night Miss → [80,60,20,10]
+        Assert.That(night[0].Weight, Is.EqualTo(80));
+        Assert.That(night[1].Weight, Is.EqualTo(60));
+        Assert.That(night[2].Weight, Is.EqualTo(20));
+        Assert.That(night[3].Weight, Is.EqualTo(10));
+    }
+
+    [Test]
+    public void WeightedTable_NightPerfect_StacksBothBiases()
+    {
+        // Perfect bias: rare-half ×2, rarest entry ×1.5 (ceil) → [40,30,40,30]
+        // Then Night bias: front-half ×2 → [80,60,40,30]
+        var t = ForageLogic.WeightedTableForGrade(
+            ForageLogic.ForageGrade.Perfect, ForageLogic.DayPhase.Night);
+        Assert.That(t[0].Weight, Is.EqualTo(80));
+        Assert.That(t[1].Weight, Is.EqualTo(60));
+        Assert.That(t[2].Weight, Is.EqualTo(40));
+        Assert.That(t[3].Weight, Is.EqualTo(30));
+    }
+
+    [Test]
+    public void ToDayPhase_BoolMapping()
+    {
+        Assert.That(ForageLogic.ToDayPhase(true),  Is.EqualTo(ForageLogic.DayPhase.Night));
+        Assert.That(ForageLogic.ToDayPhase(false), Is.EqualTo(ForageLogic.DayPhase.Day));
+    }
 }
