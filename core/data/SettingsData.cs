@@ -41,6 +41,12 @@ public record SettingsData
     public BattleTextSpeed    BattleTextSpeed    { get; init; } = BattleTextSpeed.Normal;
     public bool               AutoAdvanceDialog  { get; init; } = false;
 
+    /// <summary>
+    /// When true, foraging triggers the rhythm minigame for grade-based bonuses.
+    /// When false, foraging falls back to the legacy instant-grant of one default-table item.
+    /// </summary>
+    public bool               ForageMinigameEnabled { get; init; } = true;
+
     // ── Subtitles / Dialog ─────────────────────────────────────────────
     public bool AlwaysShowSpeakerName { get; init; } = true;
     public bool DialogHistoryEnabled  { get; init; } = true;

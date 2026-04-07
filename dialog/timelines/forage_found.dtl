@@ -1,1 +1,1 @@
-Sen found a {forage_item_name}!
+Sen found {forage_grade} {forage_item_name} (x{forage_count})!

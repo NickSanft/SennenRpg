@@ -194,6 +194,38 @@ public partial class AudioManager : Node
 		player.Play();
 	}
 
+	// ── BGM rhythm sync helpers ───────────────────────────────────────────────
+
+	/// <summary>
+	/// Returns the BPM of the currently playing BGM track via <see cref="MusicMetadata"/>,
+	/// or <see cref="RhythmConstants.DefaultBpm"/> if no track is playing or the track has
+	/// no registered BPM.
+	/// </summary>
+	public float GetCurrentBgmBpm()
+	{
+		if (string.IsNullOrEmpty(_currentBgmPath))
+			return RhythmConstants.DefaultBpm;
+
+		var info = MusicMetadata.Lookup(_currentBgmPath);
+		return info != null && info.Bpm > 0f ? info.Bpm : RhythmConstants.DefaultBpm;
+	}
+
+	/// <summary>
+	/// Re-binds <see cref="RhythmClock"/> to the active BGM player using the current
+	/// track's registered BPM. Use this from rhythm minigames that need to lock notes
+	/// to the live overworld track. Falls back to free-running mode if no BGM is playing.
+	/// </summary>
+	public void AttachRhythmClockToCurrentBgm()
+	{
+		float bpm    = GetCurrentBgmBpm();
+		var   active = _usingPlayerA ? _bgmPlayer : _bgmPlayerB;
+
+		if (active.Playing)
+			RhythmClock.Instance.AttachPlayer(active, bpm);
+		else
+			RhythmClock.Instance.StartFreeRunning(bpm);
+	}
+
 	// ── BGM Ducking ───────────────────────────────────────────────────────────
 
 	private Tween? _duckTween;

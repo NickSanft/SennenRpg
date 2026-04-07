@@ -12,43 +12,43 @@ public static class MusicMetadata
     {
         ["res://assets/music/Carillion Forest.wav"] = new(
             "Divora", "New Beginnings - DND 4", 2,
-            "Carillion Forest", "res://assets/music/Carillion Forest.wav"),
+            "Carillion Forest", "res://assets/music/Carillion Forest.wav", Bpm: 108f),
 
         ["res://assets/music/Mellyr Outpost.wav"] = new(
             "Divora", "New Beginnings - DND 4", 9,
-            "Mellyr Outpost", "res://assets/music/Mellyr Outpost.wav"),
+            "Mellyr Outpost", "res://assets/music/Mellyr Outpost.wav", Bpm: 72f),
 
         ["res://assets/music/Drifting in the Astral Paring (Ambient).wav"] = new(
             "Divora", "Ominous Augury - DND 7", 5,
-            "Drifting in the Astral Paring", "res://assets/music/Drifting in the Astral Paring (Ambient).wav"),
+            "Drifting in the Astral Paring", "res://assets/music/Drifting in the Astral Paring (Ambient).wav", Bpm: 148f),
 
         ["res://assets/music/Drifting in the Astral Paring.wav"] = new(
             "Divora", "Ominous Augury - DND 7", 6,
-            "Drifting in the Astral Paring", "res://assets/music/Drifting in the Astral Paring.wav"),
+            "Drifting in the Astral Paring", "res://assets/music/Drifting in the Astral Paring.wav", Bpm: 148f),
 
         ["res://assets/music/Outpacing.wav"] = new(
             "Divora", "Ominous Augury - DND 7", 8,
-            "Outpacing", "res://assets/music/Outpacing.wav"),
+            "Outpacing", "res://assets/music/Outpacing.wav", Bpm: 128f),
 
         ["res://assets/music/Corruption Can Be Fun.wav"] = new(
             "Divora", "Ominous Augury - DND 7", 10,
-            "Corruption Can Be Fun", "res://assets/music/Corruption Can Be Fun.wav"),
+            "Corruption Can Be Fun", "res://assets/music/Corruption Can Be Fun.wav", Bpm: 180f),
 
         ["res://assets/music/Origins Of The Gyre.wav"] = new(
             "Divora", "Origins Of The Gyre - DND 6", 1,
-            "Origins Of The Gyre", "res://assets/music/Origins Of The Gyre.wav"),
+            "Origins Of The Gyre", "res://assets/music/Origins Of The Gyre.wav", Bpm: 148f),
 
         ["res://assets/music/Sozitek.wav"] = new(
             "Divora", "The Gravity Of The Situation - DND 5", 7,
-            "Sozitek", "res://assets/music/Sozitek.wav"),
+            "Sozitek", "res://assets/music/Sozitek.wav", Bpm: 108f),
 
         ["res://assets/music/Slow Broil.wav"] = new(
             "Divora", "The Gravity Of The Situation - DND 5", 10,
-            "Slow Broil", "res://assets/music/Slow Broil.wav"),
+            "Slow Broil", "res://assets/music/Slow Broil.wav", Bpm: 128f),
 
         ["res://assets/music/Melancholy Conspectus.wav"] = new(
             "Divora", "The Gravity Of The Situation - DND 5", 1,
-            "Melancholy Conspectus", "res://assets/music/Melancholy Conspectus.wav"),
+            "Melancholy Conspectus", "res://assets/music/Melancholy Conspectus.wav", Bpm: 140f),
     };
 
     /// <summary>

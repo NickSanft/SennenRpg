@@ -1,0 +1,6 @@
+[gd_scene format=4]
+[ext_resource type="Script" path="res://scenes/overworld/forage/ForageMinigame.cs" id="1"]
+[node name="ForageMinigame" type="Control"]
+script = ExtResource("1")
+custom_minimum_size = Vector2(320, 80)
+visible = false

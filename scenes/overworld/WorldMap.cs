@@ -3,6 +3,7 @@ using Godot.Collections;
 using System.Threading.Tasks;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
+using SennenRpg.Scenes.Overworld.Forage;
 
 namespace SennenRpg.Scenes.Overworld;
 
@@ -30,6 +31,15 @@ public partial class WorldMap : Node2D
 	// Step counter: encounters are gated by a minimum step count between rolls.
 	private int _stepsSinceLastEncounter = 0;
 	private int _nextEncounterThreshold  = 0; // initialised in _Ready
+
+	// Forage cooldown floor — guarantees at least N steps between forage minigames so
+	// the player isn't pulled into back-to-back rhythm prompts. Increments every step,
+	// resets after a successful forage trigger.
+	private const int ForageCooldownSteps = 10;
+	private int _stepsSinceLastForage = ForageCooldownSteps;
+
+	// Active minigame instance — non-null while the player is mid-prompt.
+	private ForageMinigame? _activeForageMinigame;
 
 	public override void _Ready()
 	{
@@ -116,7 +126,8 @@ public partial class WorldMap : Node2D
 			ApplyDayNightBgm(animate: true);
 		}
 
-		// 5. Foraging roll
+		// 5. Foraging roll (cooldown floor between minigames)
+		_stepsSinceLastForage++;
 		if (TryForage()) return;
 
 		// 6. Random encounter roll
@@ -151,26 +162,136 @@ public partial class WorldMap : Node2D
 	{
 		if (GameManager.Instance.CurrentState != GameState.Overworld) return false;
 		if (DialogicBridge.Instance.IsRunning()) return false;
+		if (_activeForageMinigame != null) return false;
+		if (_stepsSinceLastForage < ForageCooldownSteps) return false;
 
 		double roll = GD.RandRange(0.0, 100.0);
 		if (!ForageLogic.ShouldForage(roll)) return false;
 
-		double itemRoll = GD.RandRange(0.0, 1.0);
-		string path = ForageLogic.SelectForageItem(itemRoll, ForageLogic.DefaultTable);
+		_stepsSinceLastForage = 0;
 
-		if (!ResourceLoader.Exists(path)) return false;
-		var item = GD.Load<ItemData>(path);
-		if (item == null) return false;
+		// Settings toggle: when the minigame is disabled, fall back to the legacy
+		// instant-grant path (one default-table item, no rhythm prompt).
+		bool minigameEnabled = SettingsManager.Instance?.Current.ForageMinigameEnabled ?? true;
+		if (!minigameEnabled)
+		{
+			GrantForageItems(ForageLogic.ForageGrade.Miss);
+			return true;
+		}
 
-		GameManager.Instance.AddItem(path);
-		GD.Print($"[WorldMap] Foraged: {item.DisplayName}");
+		LaunchForageMinigame();
+		return true;
+	}
+
+	/// <summary>
+	/// Spawn the rhythm minigame as a top-of-screen overlay, freeze player input via
+	/// GameState.Dialog, and connect the completion signal.
+	/// Note count scales gently with BPM so faster songs feel slightly more challenging.
+	/// </summary>
+	private void LaunchForageMinigame()
+	{
+		const string scenePath = "res://scenes/overworld/forage/ForageMinigame.tscn";
+		if (!ResourceLoader.Exists(scenePath))
+		{
+			// Asset missing — fall back to instant grant so the feature degrades gracefully.
+			GD.PushWarning($"[WorldMap] ForageMinigame scene missing at {scenePath}; granting fallback item.");
+			GrantForageItems(ForageLogic.ForageGrade.Miss);
+			return;
+		}
+
+		var minigame = GD.Load<PackedScene>(scenePath).Instantiate<ForageMinigame>();
+		_activeForageMinigame = minigame;
+
+		// Host on a CanvasLayer so it floats above the world without scaling oddly.
+		var layer = new CanvasLayer { Layer = 51 };
+		AddChild(layer);
+		layer.AddChild(minigame);
+
+		// Center the minigame near the top of the screen.
+		var viewportSize = GetViewportRect().Size;
+		minigame.Position = new Vector2((viewportSize.X - 320f) * 0.5f, viewportSize.Y * 0.18f);
+
+		minigame.ForageCompleted += OnForageCompleted;
+		minigame.ForageCancelled += OnForageCancelled;
+
+		float bpm       = AudioManager.Instance?.GetCurrentBgmBpm() ?? RhythmConstants.DefaultBpm;
+		int   noteCount = bpm > 110f ? 5 : 4;
+
+		GameManager.Instance.SetState(GameState.Dialog); // freeze player input
+		minigame.Activate(noteCount);
+	}
+
+	private void OnForageCancelled()
+	{
+		// ESC bail — treat as Miss, still grant baseline item so the player isn't punished.
+		// OnForageCompleted will fire next from the minigame's Finish() and handle cleanup.
+	}
+
+	private void OnForageCompleted(int perfects, int hits, int totalNotes)
+	{
+		var grade = ForageLogic.GradeFromAccuracy(hits, perfects, totalNotes);
+		GrantForageItems(grade);
+		TeardownActiveForageMinigame();
+	}
+
+	private void TeardownActiveForageMinigame()
+	{
+		if (_activeForageMinigame == null) return;
+
+		// The minigame was added under a wrapper CanvasLayer in LaunchForageMinigame.
+		var layer = _activeForageMinigame.GetParent();
+		_activeForageMinigame.ForageCompleted -= OnForageCompleted;
+		_activeForageMinigame.ForageCancelled -= OnForageCancelled;
+		_activeForageMinigame = null;
+		layer?.QueueFree();
+	}
+
+	/// <summary>
+	/// Grant items for the given grade and play the forage_found dialog.
+	/// Selects items independently from the grade-biased table so the player can
+	/// receive a mix of common/rare drops on a strong run.
+	/// </summary>
+	private void GrantForageItems(ForageLogic.ForageGrade grade)
+	{
+		int    count = ForageLogic.BonusItemCount(grade);
+		var    table = ForageLogic.WeightedTableForGrade(grade);
+		string firstName = "something";
+		bool   anyGranted = false;
+
+		for (int i = 0; i < count; i++)
+		{
+			double itemRoll = GD.RandRange(0.0, 1.0);
+			string path = ForageLogic.SelectForageItem(itemRoll, table);
+			if (!ResourceLoader.Exists(path)) continue;
+
+			var item = GD.Load<ItemData>(path);
+			if (item == null) continue;
+
+			GameManager.Instance.AddItem(path);
+			if (!anyGranted)
+			{
+				firstName  = item.DisplayName;
+				anyGranted = true;
+			}
+		}
+
+		if (!anyGranted)
+		{
+			// Nothing was actually granted (broken table?) — restore overworld and bail.
+			GameManager.Instance.SetState(GameState.Overworld);
+			return;
+		}
+
+		GD.Print($"[WorldMap] Foraged ({grade}): {count}× starting with {firstName}");
 
 		GameManager.Instance.SetState(GameState.Dialog);
-		DialogicBridge.Instance.SetVariable("forage_item_name", item.DisplayName);
-		DialogicBridge.Instance.ConnectTimelineEnded(
+		var bridge = DialogicBridge.Instance;
+		bridge.SetVariable("forage_item_name", firstName);
+		bridge.SetVariable("forage_grade",     ForageLogic.GradeArticle(grade));
+		bridge.SetVariable("forage_count",     count);
+		bridge.ConnectTimelineEnded(
 			Callable.From(() => GameManager.Instance.SetState(GameState.Overworld)));
-		DialogicBridge.Instance.StartTimelineWithFlags("res://dialog/timelines/forage_found.dtl");
-		return true;
+		bridge.StartTimelineWithFlags("res://dialog/timelines/forage_found.dtl");
 	}
 
 	// ── Random encounter ──────────────────────────────────────────────────────

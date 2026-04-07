@@ -79,4 +79,30 @@ public class MusicMetadataTests
         Assert.That(info, Is.Not.Null);
         Assert.That(info!.Title, Is.EqualTo("Drifting in the Astral Paring"));
     }
+
+    [Test]
+    public void All_AllTracksHavePositiveBpm()
+    {
+        // Locked invariant: every registered track must have a known BPM so the
+        // forage minigame and any future rhythm-sync features can rely on it.
+        foreach (var (path, info) in MusicMetadata.All)
+            Assert.That(info.Bpm, Is.GreaterThan(0f), $"Track {path} has BPM <= 0");
+    }
+
+    [TestCase("res://assets/music/Carillion Forest.wav", 108f)]
+    [TestCase("res://assets/music/Mellyr Outpost.wav", 72f)]
+    [TestCase("res://assets/music/Origins Of The Gyre.wav", 148f)]
+    [TestCase("res://assets/music/Outpacing.wav", 128f)]
+    [TestCase("res://assets/music/Slow Broil.wav", 128f)]
+    [TestCase("res://assets/music/Melancholy Conspectus.wav", 140f)]
+    [TestCase("res://assets/music/Corruption Can Be Fun.wav", 180f)]
+    [TestCase("res://assets/music/Sozitek.wav", 108f)]
+    [TestCase("res://assets/music/Drifting in the Astral Paring.wav", 148f)]
+    [TestCase("res://assets/music/Drifting in the Astral Paring (Ambient).wav", 148f)]
+    public void Lookup_TrackBpm_MatchesLockedValue(string path, float expectedBpm)
+    {
+        var info = MusicMetadata.Lookup(path);
+        Assert.That(info, Is.Not.Null);
+        Assert.That(info!.Bpm, Is.EqualTo(expectedBpm));
+    }
 }
