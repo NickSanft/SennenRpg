@@ -70,8 +70,20 @@ public partial class BattleRegistry : Node
 		while ((file = dir.GetNext()) != "")
 		{
 			if (dir.CurrentIsDir() || !file.EndsWith(".tres")) continue;
-			var enemy = GD.Load<EnemyData>($"res://resources/enemies/{file}");
-			if (enemy != null) list.Add(enemy);
+
+			// Defensive: a single broken .tres (missing ext_resource id, invalid path,
+			// etc.) shouldn't take down the whole bestiary. Skip it with a warning.
+			string path = $"res://resources/enemies/{file}";
+			try
+			{
+				var enemy = GD.Load<EnemyData>(path);
+				if (enemy != null) list.Add(enemy);
+				else GD.PushWarning($"[BattleRegistry] Skipped {path}: GD.Load returned null.");
+			}
+			catch (System.Exception ex)
+			{
+				GD.PushWarning($"[BattleRegistry] Skipped {path}: {ex.Message}");
+			}
 		}
 		dir.ListDirEnd();
 
