@@ -37,6 +37,21 @@ public static class UiTheme
     /// <summary>Link/URL color.</summary>
     public static readonly Color LinkBlue      = new(0.4f, 0.7f, 1.0f);
 
+    /// <summary>
+    /// Subtle tint color applied to world-space UI (e.g. area name label) based on the
+    /// current weather state. Sunny returns <see cref="Gold"/> (the default label color);
+    /// every other weather returns a thematic tint.
+    /// </summary>
+    public static Color WeatherTint(WeatherType weather) => weather switch
+    {
+        WeatherType.Sunny  => Gold,
+        WeatherType.Foggy  => new Color(0.88f, 0.90f, 0.95f),
+        WeatherType.Stormy => new Color(0.70f, 0.80f, 1.00f),
+        WeatherType.Snowy  => new Color(0.85f, 0.95f, 1.00f),
+        WeatherType.Aurora => new Color(1.00f, 0.65f, 1.00f),
+        _                  => Gold,
+    };
+
     /// <summary>Active tab/selection highlight.</summary>
     public static readonly Color ActiveHighlight = new(0.7f, 0.5f, 1.0f);
 

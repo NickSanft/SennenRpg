@@ -45,9 +45,10 @@ public class MusicMetadataTests
     }
 
     [Test]
-    public void All_ContainsNineTracks()
+    public void All_ContainsAllRegisteredTracks()
     {
-        Assert.That(MusicMetadata.All, Has.Count.EqualTo(10));
+        // 10 original + 3 weather tracks (foggy, rain, glimmersong).
+        Assert.That(MusicMetadata.All, Has.Count.EqualTo(13));
     }
 
     [Test]
@@ -99,6 +100,9 @@ public class MusicMetadataTests
     [TestCase("res://assets/music/Sozitek.wav", 108f)]
     [TestCase("res://assets/music/Drifting in the Astral Paring.wav", 148f)]
     [TestCase("res://assets/music/Drifting in the Astral Paring (Ambient).wav", 148f)]
+    [TestCase("res://assets/music/Foggy Morning in Flas.wav", 78f)]
+    [TestCase("res://assets/music/A Calm Rain in Argyre.wav", 70f)]
+    [TestCase("res://assets/music/Glimmersong Forest.wav", 88f)]
     public void Lookup_TrackBpm_MatchesLockedValue(string path, float expectedBpm)
     {
         var info = MusicMetadata.Lookup(path);

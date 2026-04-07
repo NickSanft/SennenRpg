@@ -30,7 +30,10 @@ public partial class AreaNameLabel : CanvasLayer
 			_label.AddThemeFontOverride("font", font);
 		_label.AddThemeConstantOverride("outline_size", 2);
 		_label.AddThemeColorOverride("font_outline_color", Colors.Black);
-		_label.AddThemeColorOverride("font_color", Core.Data.UiTheme.Gold);
+		// Weather-aware tint: the default is Gold, but ongoing weather shifts
+		// the hue for visible variety (e.g. cooler blue-white during snow).
+		var currentWeather = WeatherManager.Instance?.Current ?? Core.Data.WeatherType.Sunny;
+		_label.AddThemeColorOverride("font_color", Core.Data.UiTheme.WeatherTint(currentWeather));
 
 		// Semi-transparent background behind text
 		_bg = new ColorRect

@@ -61,6 +61,16 @@ public partial class AudioManager : Node
 	{
 		if (!ResourceLoader.Exists(path)) return;
 
+		// Defensive load: an unimportable WAV (e.g. 24-bit PCM, missing .sample
+		// cache) returns null here. Without this check the player would crash with
+		// "Stream cannot be null". Bail and keep the existing track playing.
+		var stream = GD.Load<AudioStream>(path);
+		if (stream == null)
+		{
+			GD.PushWarning($"[AudioManager] Failed to load BGM '{path}' — keeping current track.");
+			return;
+		}
+
 		// If the same track is already playing, keep it going seamlessly
 		// (e.g. transitioning between dungeon floors with the same BGM).
 		// Battle scenes pass forceRestart=true to always start fresh.
@@ -82,7 +92,7 @@ public partial class AudioManager : Node
 		if (forceRestart)
 			outgoing.Stop();
 
-		incoming.Stream    = GD.Load<AudioStream>(path);
+		incoming.Stream    = stream;
 		incoming.VolumeDb  = -80f;
 		incoming.Play();
 

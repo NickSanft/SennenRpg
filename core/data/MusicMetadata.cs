@@ -49,6 +49,19 @@ public static class MusicMetadata
         ["res://assets/music/Melancholy Conspectus.wav"] = new(
             "Divora", "The Gravity Of The Situation - DND 5", 1,
             "Melancholy Conspectus", "res://assets/music/Melancholy Conspectus.wav", Bpm: 140f),
+
+        // ── Weather tracks ────────────────────────────────────────────
+        ["res://assets/music/Foggy Morning in Flas.wav"] = new(
+            "Divora", "New Beginnings - DND 4", 8,
+            "Foggy Morning in Flas", "res://assets/music/Foggy Morning in Flas.wav", Bpm: 78f),
+
+        ["res://assets/music/A Calm Rain in Argyre.wav"] = new(
+            "Divora", "New Beginnings - DND 4", 7,
+            "A Calm Rain in Argyre", "res://assets/music/A Calm Rain in Argyre.wav", Bpm: 70f),
+
+        ["res://assets/music/Glimmersong Forest.wav"] = new(
+            "Divora", "Ominous Augury - DND 7", 7,
+            "Glimmersong Forest", "res://assets/music/Glimmersong Forest.wav", Bpm: 88f),
     };
 
     /// <summary>

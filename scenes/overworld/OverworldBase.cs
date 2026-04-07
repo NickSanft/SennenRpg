@@ -27,6 +27,14 @@ public partial class OverworldBase : Node2D
 	[Export] public Array<EncounterData> RandomEncounterTable { get; set; } = [];
 
 	/// <summary>
+	/// When true, <see cref="WeatherManager"/> is locked for the duration of this scene
+	/// (no step ticks, no BGM swaps). Defaults to true since OverworldBase powers
+	/// interior maps and dungeon floors, which should be weather-free.
+	/// The open WorldMap sets it false implicitly by not inheriting from OverworldBase.
+	/// </summary>
+	[Export] public bool LockWeather { get; set; } = true;
+
+	/// <summary>
 	/// When true, each step on this map ticks the Mellyr Outpost passive reward counters
 	/// (Rain gold, Lily forge items). Set to true on 16×16 dungeon floor maps.
 	/// </summary>
@@ -57,6 +65,10 @@ public partial class OverworldBase : Node2D
 
 		GameManager.Instance.SetLastMap(SceneFilePath);
 		GameManager.Instance.SetState(GameState.Overworld);
+
+		// Dungeons and interior maps opt out of the weather system by default.
+		if (LockWeather && WeatherManager.Instance != null)
+			WeatherManager.Instance.Locked = true;
 
 		// Register SpawnPoint nodes from the scene BEFORE spawning the player,
 		// so GetSpawnPosition() can find them.
@@ -138,6 +150,14 @@ public partial class OverworldBase : Node2D
 			if (RandomEncounterTable.Count > 0 && !_encounterLocked && !GameManager.Instance.DebugNoEncounters)
 				if (TryRandomEncounter()) return;
 		}
+	}
+
+	public override void _ExitTree()
+	{
+		// Release the weather lock we took in _Ready so the next scene (e.g. WorldMap)
+		// can resume advancing weather.
+		if (LockWeather && WeatherManager.Instance != null)
+			WeatherManager.Instance.Locked = false;
 	}
 
 	public override void _UnhandledInput(InputEvent @event)

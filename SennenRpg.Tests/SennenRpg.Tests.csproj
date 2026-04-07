@@ -81,6 +81,10 @@
         <Compile Include="../core/data/JunkSellLogic.cs" />
         <Compile Include="../core/data/ForageCodexEntry.cs" />
         <Compile Include="../core/data/ForageCodexLogic.cs" />
+        <!-- Weather system — pure logic, no Godot runtime -->
+        <Compile Include="../core/data/WeatherType.cs" />
+        <Compile Include="../core/data/WeatherTransitionTable.cs" />
+        <Compile Include="../core/data/WeatherLogic.cs" />
     </ItemGroup>
 
 </Project>

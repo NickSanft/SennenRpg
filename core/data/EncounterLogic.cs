@@ -26,4 +26,24 @@ public static class EncounterLogic
         float nightFactor = isNight ? NightMultiplier : 1f;
         return BaseRate * luckFactor * nightFactor;
     }
+
+    /// <summary>
+    /// Multiplier applied to an encounter's selection weight based on the current
+    /// weather. Used when picking one encounter from a weighted list. Encounters
+    /// that list the active weather in their <c>PreferredWeather</c> array get a 2×
+    /// boost; everything else stays at 1×.
+    /// </summary>
+    /// <param name="currentWeather">Current weather state (cast from WeatherType enum).</param>
+    /// <param name="preferred">
+    /// Array of weather-type ints this encounter prefers (empty = no preference).
+    /// Accepts ints so the pure-logic layer stays free of the WeatherType import.
+    /// </param>
+    public static float WeatherWeightMultiplier(int currentWeather, int[] preferred)
+    {
+        if (preferred == null || preferred.Length == 0) return 1f;
+        foreach (int p in preferred)
+            if (p == currentWeather)
+                return 2f;
+        return 1f;
+    }
 }

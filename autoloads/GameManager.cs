@@ -371,6 +371,7 @@ public partial class GameManager : Node
 		RhythmMemory.Clear();
 		_forageCodex.Reset();
 		ForageStreak = 0;
+		WeatherManager.Instance?.Reset();
 		PaletteSourceColors = [];
 		PaletteTargetColors = [];
 
@@ -420,6 +421,8 @@ public partial class GameManager : Node
 
 		ForageStreak = data.ForageStreak;
 		_forageCodex.ReplaceAll(data.ForageCodex);
+
+		WeatherManager.Instance?.LoadFromSave(data.Weather, data.WeatherStepCounter);
 
 		PaletteSourceColors = DeserialiseColors(data.PaletteSourceColors);
 		PaletteTargetColors = DeserialiseColors(data.PaletteTargetColors);

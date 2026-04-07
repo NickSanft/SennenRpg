@@ -114,6 +114,9 @@ public partial class SaveManager : Node
 			// Foraging
 			ForageStreak             = gm.ForageStreak,
 			ForageCodex              = new System.Collections.Generic.Dictionary<string, SennenRpg.Core.Data.ForageCodexEntry>(gm.ForageCodex.Entries),
+			// Weather
+			Weather                  = WeatherManager.Instance?.Current ?? SennenRpg.Core.Data.WeatherType.Sunny,
+			WeatherStepCounter       = WeatherManager.Instance?.StepCounter ?? 0,
 		};
 
 		string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });

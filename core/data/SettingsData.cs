@@ -47,6 +47,13 @@ public record SettingsData
     /// </summary>
     public bool               ForageMinigameEnabled { get; init; } = true;
 
+    /// <summary>
+    /// When true, the weather system ticks and swaps BGM/overlay on the world map.
+    /// When false, WeatherManager stays pinned to Sunny with no overlay — used for
+    /// accessibility, motion sensitivity, and low-perf builds.
+    /// </summary>
+    public bool               WeatherEnabled        { get; init; } = true;
+
     // ── Subtitles / Dialog ─────────────────────────────────────────────
     public bool AlwaysShowSpeakerName { get; init; } = true;
     public bool DialogHistoryEnabled  { get; init; } = true;

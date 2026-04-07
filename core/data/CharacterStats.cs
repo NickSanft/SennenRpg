@@ -15,7 +15,7 @@ public partial class CharacterStats : Resource
 	[Export] public int Magic { get; set; } = 0;
 	/// <summary>Magic defence — reduces incoming spell damage like Defense does for physical.</summary>
 	[Export] public int Resistance { get; set; } = 0;
-	/// <summary>Critical hit chance. Crit probability = Luck / 200f (max 99 → ~49.5%).</summary>
+	/// <summary>Critical hit chance. Crit probability = Luck / 20f (max 99 → ~49.5%).</summary>
 	[Export] public int Luck { get; set; } = 0;
 	/// <summary>Overworld movement speed in pixels per second.</summary>
 	[Export] public float MoveSpeed { get; set; } = 80f;

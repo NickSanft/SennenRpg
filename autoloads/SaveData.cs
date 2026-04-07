@@ -87,6 +87,12 @@ public record SaveData
 	/// <summary>Foragery codex entries — item path → discovery record.</summary>
 	public Dictionary<string, SennenRpg.Core.Data.ForageCodexEntry>         ForageCodex  { get; init; } = new();
 
+	// ── Weather ───────────────────────────────────────────────────────────────
+	/// <summary>Current weather state. Defaults to Sunny for legacy saves.</summary>
+	public SennenRpg.Core.Data.WeatherType                                  Weather            { get; init; } = SennenRpg.Core.Data.WeatherType.Sunny;
+	/// <summary>Steps accumulated toward the next weather roll. Defaults to 0 for legacy saves.</summary>
+	public int                                                              WeatherStepCounter { get; init; } = 0;
+
 	// ── Slot metadata ─────────────────────────────────────────────────────────
 	/// <summary>Player's chosen name (displayed on the slot card).</summary>
 	public string PlayerName      { get; init; } = "Sen";

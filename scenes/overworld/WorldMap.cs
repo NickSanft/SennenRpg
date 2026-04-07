@@ -41,6 +41,9 @@ public partial class WorldMap : Node2D
 	// Active minigame instance — non-null while the player is mid-prompt.
 	private ForageMinigame? _activeForageMinigame;
 
+	// Weather overlay spawned on this map — removed on exit.
+	private SennenRpg.Scenes.Hud.WeatherOverlay? _weatherOverlay;
+
 	public override void _Ready()
 	{
 		_collision = GetNode<TileMapLayer>("Collision");
@@ -82,6 +85,7 @@ public partial class WorldMap : Node2D
 		ApplyDayNightBgm(animate: false);
 		SpawnEntranceLabels();
 		SpawnParallaxBackground();
+		SetupWeather();
 
 		_nextEncounterThreshold = (int)GD.RandRange(8, 14);
 	}
@@ -130,7 +134,13 @@ public partial class WorldMap : Node2D
 		_stepsSinceLastForage++;
 		if (TryForage()) return;
 
-		// 6. Random encounter roll
+		// 6. Weather tick — may change weather and swap BGM via OnWeatherChanged
+		WeatherManager.Instance?.TickStep();
+
+		// 7. Storm-only lightning loot roll
+		MaybeSpawnLightningBolt(newTile);
+
+		// 8. Random encounter roll
 		TryRollEncounter(newTile);
 	}
 
@@ -403,6 +413,12 @@ public partial class WorldMap : Node2D
 		var enc = gm.IsNight ? NightEncounters : DayEncounters;
 		if (enc.Count == 0) return;
 
+		// Weather-biased selection: encounters whose PreferredWeather list contains
+		// the current weather get a 2× weight. Everything else stays at 1×.
+		// The threshold/frequency logic below runs unchanged — we only influence
+		// which encounter wins when one is picked.
+		int currentWeatherInt = (int)(WeatherManager.Instance?.Current ?? SennenRpg.Core.Data.WeatherType.Sunny);
+
 		// Step counter: enforce a minimum gap between encounters.
 		_stepsSinceLastEncounter++;
 		if (_stepsSinceLastEncounter < _nextEncounterThreshold) return;
@@ -416,9 +432,40 @@ public partial class WorldMap : Node2D
 			SettingsManager.Instance?.Current.EncounterRateMode ?? EncounterRateMode.Normal);
 		if (mult <= 0f || GD.Randf() >= mult) return;
 
-		var chosen = enc[(int)GD.RandRange(0, enc.Count - 1)];
+		var chosen = PickWeatherBiasedEncounter(enc, currentWeatherInt);
+		if (chosen == null) return;
+
 		gm.WorldMapReturnTile = tile;
 		_ = SceneTransition.Instance.ToBattleAsync(chosen);
+	}
+
+	/// <summary>
+	/// Weighted random encounter selection honoring each entry's
+	/// <see cref="EncounterData.PreferredWeather"/>. Pure math lives in
+	/// <see cref="EncounterLogic.WeatherWeightMultiplier"/>.
+	/// </summary>
+	private static EncounterData? PickWeatherBiasedEncounter(Array<EncounterData> enc, int currentWeather)
+	{
+		if (enc.Count == 0) return null;
+
+		float totalWeight = 0f;
+		var weights = new float[enc.Count];
+		for (int i = 0; i < enc.Count; i++)
+		{
+			var e = enc[i];
+			int[] preferred = e?.PreferredWeather?.ToArray() ?? [];
+			weights[i] = EncounterLogic.WeatherWeightMultiplier(currentWeather, preferred);
+			totalWeight += weights[i];
+		}
+
+		float roll = (float)GD.RandRange(0.0, (double)totalWeight);
+		float cumulative = 0f;
+		for (int i = 0; i < enc.Count; i++)
+		{
+			cumulative += weights[i];
+			if (roll < cumulative) return enc[i];
+		}
+		return enc[^1];
 	}
 
 	// ── Passability ───────────────────────────────────────────────────────────
@@ -482,6 +529,112 @@ public partial class WorldMap : Node2D
 				TextureFilter = TextureFilterEnum.Nearest,
 			};
 			AddChild(label);
+		}
+	}
+
+	// ── Weather ───────────────────────────────────────────────────────────────
+
+	/// <summary>
+	/// Initialise WeatherManager for this map: cache the map's sunny BGM path,
+	/// unlock the weather system, subscribe to WeatherChanged, spawn the overlay,
+	/// and immediately apply the current weather's BGM if it differs from Sunny.
+	/// </summary>
+	private void SetupWeather()
+	{
+		var wm = WeatherManager.Instance;
+		if (wm == null) return;
+
+		// WorldMap uses day/night-specific tracks as its "sunny" baseline.
+		// ResolveSunnyBgmPath() recomputes this on-demand from the current IsNight.
+		wm.SunnyBgmPath = ResolveSunnyBgmPath();
+		wm.Locked       = false;
+
+		wm.WeatherChanged += OnWeatherChanged;
+
+		// Spawn overlay
+		_weatherOverlay = new SennenRpg.Scenes.Hud.WeatherOverlay();
+		AddChild(_weatherOverlay);
+
+		// Apply current weather's BGM immediately (e.g. if the player loaded a save
+		// mid-storm, the weather track should resume without waiting for a roll).
+		ApplyWeatherBgm(wm.Current, animate: false);
+	}
+
+	private void OnWeatherChanged(int weatherInt)
+	{
+		var weather = (SennenRpg.Core.Data.WeatherType)weatherInt;
+		ApplyWeatherBgm(weather, animate: true);
+
+		// Update WeatherManager's cached sunny path so the next roll back to Sunny
+		// restores the correct day/night track.
+		WeatherManager.Instance!.SunnyBgmPath = ResolveSunnyBgmPath();
+	}
+
+	/// <summary>Returns the world-map BGM that should play under Sunny weather right now.</summary>
+	private static string ResolveSunnyBgmPath()
+		=> GameManager.Instance.IsNight ? NightBgmPath : DayBgmPath;
+
+	private void ApplyWeatherBgm(SennenRpg.Core.Data.WeatherType weather, bool animate)
+	{
+		string path = SennenRpg.Core.Data.WeatherLogic.BgmPathFor(weather, ResolveSunnyBgmPath());
+		if (string.IsNullOrEmpty(path) || !ResourceLoader.Exists(path)) return;
+		AudioManager.Instance.PlayBgm(path, fadeTime: animate ? 2.5f : 0.5f);
+	}
+
+	/// <summary>
+	/// Rare lightning loot event during Stormy weather. ~0.5% per step — grants
+	/// the Charged Bark key item and plays a gold flash + fanfare SFX.
+	/// </summary>
+	private void MaybeSpawnLightningBolt(Vector2I tile)
+	{
+		var wm = WeatherManager.Instance;
+		if (wm == null || wm.Current != SennenRpg.Core.Data.WeatherType.Stormy) return;
+
+		double roll = GD.RandRange(0.0, 100.0);
+		if (!SennenRpg.Core.Data.WeatherLogic.ShouldStrikeLightning(roll)) return;
+
+		const string barkPath = "res://resources/items/key_charged_bark.tres";
+		if (!ResourceLoader.Exists(barkPath))
+		{
+			GD.PushWarning($"[WorldMap] Lightning strike fired but {barkPath} is missing.");
+			return;
+		}
+
+		GameManager.Instance.AddItem(barkPath);
+		AudioManager.Instance?.PlaySfx("res://assets/audio/sfx/victory_fanfare.wav");
+		FlashGoldOverlay();
+		GD.Print($"[WorldMap] Lightning strike! Granted Charged Bark at tile {tile}.");
+	}
+
+	public override void _ExitTree()
+	{
+		var wm = WeatherManager.Instance;
+		if (wm != null)
+		{
+			wm.WeatherChanged -= OnWeatherChanged;
+		}
+		if (_weatherOverlay != null && IsInstanceValid(_weatherOverlay))
+			_weatherOverlay.QueueFree();
+		_weatherOverlay = null;
+	}
+
+	// ── Debug input ───────────────────────────────────────────────────────────
+
+	/// <summary>Augment the base debug input with a K-key weather peek.</summary>
+	public override void _UnhandledKeyInput(InputEvent @event)
+	{
+		if (@event is not InputEventKey { Pressed: true } keyEvent) return;
+		if (!OS.IsDebugBuild()) return;
+
+		if (keyEvent.Keycode == Key.K)
+		{
+			var wm = WeatherManager.Instance;
+			if (wm != null)
+			{
+				GD.Print($"[Debug] Weather: {SennenRpg.Core.Data.WeatherLogic.DisplayName(wm.Current)} " +
+					$"(step {wm.StepCounter % wm.RollInterval}/{wm.RollInterval})");
+			}
+			GetViewport().SetInputAsHandled();
 		}
 	}
 
