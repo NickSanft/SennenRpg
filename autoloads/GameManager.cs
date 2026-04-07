@@ -23,6 +23,8 @@ public partial class GameManager : Node
 	[Signal] public delegate void PlayerLeveledUpEventHandler();
 	/// <summary>Fired after the player switches to a different class.</summary>
 	[Signal] public delegate void ClassChangedEventHandler();
+	/// <summary>Fired the very first time an enemy is defeated. Bestiary toast hook.</summary>
+	[Signal] public delegate void BestiaryDiscoveredEventHandler(string enemyId);
 
 	// ── Internal domains ──────────────────────────────────────────────────────
 
@@ -33,6 +35,7 @@ public partial class GameManager : Node
 	private readonly MellyrRewardData      _mellyr      = new();
 	private readonly MultiClassData        _multiClass  = new();
 	private readonly ForageCodexData       _forageCodex = new();
+	private readonly BestiaryData          _bestiary    = new();
 
 	// ── State ─────────────────────────────────────────────────────────────────
 
@@ -57,6 +60,9 @@ public partial class GameManager : Node
 
 	/// <summary>Foragery codex container — populated by the foraging minigame on every find.</summary>
 	public ForageCodexData ForageCodex => _forageCodex;
+
+	/// <summary>Bestiary container — records first-defeated timestamp + total kills per enemy.</summary>
+	public BestiaryData Bestiary => _bestiary;
 
 	/// <summary>Original palette colours extracted from the sprite at character creation.</summary>
 	public Color[] PaletteSourceColors { get; set; } = [];
@@ -323,6 +329,12 @@ public partial class GameManager : Node
 	{
 		KillCounts[enemyId] = KillCounts.GetValueOrDefault(enemyId, 0) + 1;
 		GD.Print($"[GameManager] Kill recorded: {enemyId} (total: {KillCounts[enemyId]})");
+
+		// Bestiary: record kill with deterministic UTC timestamp; signal new discoveries.
+		bool isNewDiscovery = _bestiary.Record(enemyId, System.DateTime.UtcNow);
+		if (isNewDiscovery)
+			EmitSignal(SignalName.BestiaryDiscovered, enemyId);
+
 		QuestManager.Instance?.NotifyKill(enemyId);
 	}
 
@@ -370,6 +382,7 @@ public partial class GameManager : Node
 		KillCounts.Clear();
 		RhythmMemory.Clear();
 		_forageCodex.Reset();
+		_bestiary.Reset();
 		ForageStreak = 0;
 		WeatherManager.Instance?.Reset();
 		PaletteSourceColors = [];
@@ -421,6 +434,7 @@ public partial class GameManager : Node
 
 		ForageStreak = data.ForageStreak;
 		_forageCodex.ReplaceAll(data.ForageCodex);
+		_bestiary.ReplaceAll(data.Bestiary);
 
 		WeatherManager.Instance?.LoadFromSave(data.Weather, data.WeatherStepCounter);
 

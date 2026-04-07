@@ -93,6 +93,10 @@ public record SaveData
 	/// <summary>Steps accumulated toward the next weather roll. Defaults to 0 for legacy saves.</summary>
 	public int                                                              WeatherStepCounter { get; init; } = 0;
 
+	// ── Bestiary ──────────────────────────────────────────────────────────────
+	/// <summary>Bestiary entries — enemy id → kill record with first-defeated timestamp.</summary>
+	public Dictionary<string, SennenRpg.Core.Data.BestiaryEntry>            Bestiary           { get; init; } = new();
+
 	// ── Slot metadata ─────────────────────────────────────────────────────────
 	/// <summary>Player's chosen name (displayed on the slot card).</summary>
 	public string PlayerName      { get; init; } = "Sen";

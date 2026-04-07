@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" format=3]
+
+[ext_resource type="Script" path="res://core/data/ItemData.cs" id="1_ItemData"]
+
+[resource]
+script = ExtResource("1_ItemData")
+ItemId = "ingredient_dust_pollen"
+DisplayName = "Dust Pollen"
+Description = "Fine luminescent dust that lingers on the air. Faintly tickles the nose."
+Type = 1
+HealAmount = 0

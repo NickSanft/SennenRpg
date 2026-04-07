@@ -117,6 +117,8 @@ public partial class SaveManager : Node
 			// Weather
 			Weather                  = WeatherManager.Instance?.Current ?? SennenRpg.Core.Data.WeatherType.Sunny,
 			WeatherStepCounter       = WeatherManager.Instance?.StepCounter ?? 0,
+			// Bestiary
+			Bestiary                 = new System.Collections.Generic.Dictionary<string, SennenRpg.Core.Data.BestiaryEntry>(gm.Bestiary.Entries),
 		};
 
 		string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });

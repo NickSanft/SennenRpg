@@ -41,4 +41,41 @@ public partial class BattleRegistry : Node
 		}
 		return GD.Load<EnemyData>(resourcePath);
 	}
+
+	// ── Bestiary support ─────────────────────────────────────────────────────
+
+	private System.Collections.Generic.List<EnemyData>? _allEnemiesCache;
+
+	/// <summary>
+	/// Returns every <see cref="EnemyData"/> resource discovered under
+	/// <c>res://resources/enemies/</c>, sorted by <see cref="EnemyData.EnemyId"/>.
+	/// Lazily populated on first access — used by the Bestiary menu to show locked
+	/// silhouettes for enemies the player has not yet defeated.
+	/// </summary>
+	public System.Collections.Generic.IReadOnlyList<EnemyData> AllEnemies()
+	{
+		if (_allEnemiesCache != null) return _allEnemiesCache;
+		_allEnemiesCache = LoadAllEnemiesFromDisk();
+		return _allEnemiesCache;
+	}
+
+	private static System.Collections.Generic.List<EnemyData> LoadAllEnemiesFromDisk()
+	{
+		var list = new System.Collections.Generic.List<EnemyData>();
+		using var dir = DirAccess.Open("res://resources/enemies");
+		if (dir == null) return list;
+
+		dir.ListDirBegin();
+		string file;
+		while ((file = dir.GetNext()) != "")
+		{
+			if (dir.CurrentIsDir() || !file.EndsWith(".tres")) continue;
+			var enemy = GD.Load<EnemyData>($"res://resources/enemies/{file}");
+			if (enemy != null) list.Add(enemy);
+		}
+		dir.ListDirEnd();
+
+		list.Sort((a, b) => string.CompareOrdinal(a.EnemyId, b.EnemyId));
+		return list;
+	}
 }

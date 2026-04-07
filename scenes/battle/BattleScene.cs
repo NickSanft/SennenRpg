@@ -1091,6 +1091,22 @@ public partial class BattleScene : Node2D
 			}
 		}
 
+		// Per-enemy LootTable roll — independent of the Rhythm Memory bonus.
+		// One item from the table is rolled per kill; empty tables grant nothing.
+		var lootEntries = (_enemy?.LootTable ?? []).OfType<LootEntry>().ToArray();
+		if (lootEntries.Length > 0)
+		{
+			var paths      = lootEntries.Select(e => e.ItemPath).ToArray();
+			var weights    = lootEntries.Select(e => e.Weight).ToArray();
+			var guaranteed = lootEntries.Select(e => e.Guaranteed).ToArray();
+			string? rolled = LootLogic.RollLoot(paths, weights, guaranteed, () => GD.Randf());
+			if (!string.IsNullOrEmpty(rolled) && ResourceLoader.Exists(rolled))
+			{
+				GameManager.Instance.AddItem(rolled);
+				GD.Print($"[BattleScene] LootTable drop: {rolled}");
+			}
+		}
+
 		// Show level-up screen for each level gained before the victory dialog
 		if (GameManager.Instance.PendingLevelUps.Count > 0)
 		{

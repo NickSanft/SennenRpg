@@ -4,6 +4,25 @@
 [ext_resource type="Script" uid="uid://dqonjuygth0gq" path="res://core/data/CharacterStats.cs" id="2_CharacterStats"]
 [ext_resource type="PackedScene" path="res://scenes/battle/rhythm/patterns/BeatRainPattern.tscn" id="3_pattern"]
 [ext_resource type="Texture2D" uid="uid://cq6k7x26sgirc" path="res://assets/sprites/enemies/wisplet.png" id="4_sprite"]
+[ext_resource type="Script" path="res://core/data/LootEntry.cs" id="5_LootEntry"]
+
+[sub_resource type="Resource" id="LootEntry_1"]
+script = ExtResource("5_LootEntry")
+ItemPath = "res://resources/items/ingredient_ecto_essence.tres"
+Weight = 50
+Guaranteed = false
+
+[sub_resource type="Resource" id="LootEntry_2"]
+script = ExtResource("5_LootEntry")
+ItemPath = "res://resources/items/junk_astral_flower.tres"
+Weight = 30
+Guaranteed = false
+
+[sub_resource type="Resource" id="LootEntry_3"]
+script = ExtResource("5_LootEntry")
+ItemPath = "res://resources/items/ingredient_sugar.tres"
+Weight = 20
+Guaranteed = false
 
 [sub_resource type="Resource" id="CharacterStats_1"]
 script = ExtResource("2_CharacterStats")
@@ -27,3 +46,4 @@ GoldDrop = 5
 ExpDrop = 100
 AttackPatternScene = ExtResource("3_pattern")
 BonusLootItemPath = "res://resources/items/ingredient_ecto_essence.tres"
+LootTable = [SubResource("LootEntry_1"), SubResource("LootEntry_2"), SubResource("LootEntry_3")]

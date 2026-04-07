@@ -85,6 +85,10 @@
         <Compile Include="../core/data/WeatherType.cs" />
         <Compile Include="../core/data/WeatherTransitionTable.cs" />
         <Compile Include="../core/data/WeatherLogic.cs" />
+        <!-- Bestiary system — pure logic, no Godot runtime -->
+        <Compile Include="../core/data/BestiaryLogic.cs" />
+        <Compile Include="../core/data/BestiaryEntry.cs" />
+        <Compile Include="../core/data/BestiaryRecordLogic.cs" />
     </ItemGroup>
 
 </Project>

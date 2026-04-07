@@ -43,4 +43,14 @@ public partial class EnemyData : Resource
 
 	/// <summary>Item awarded as bonus loot when the Rhythm Memory adaptation roll succeeds. Leave empty for no bonus loot.</summary>
 	[Export] public string BonusLootItemPath { get; set; } = "";
+
+	/// <summary>
+	/// Per-enemy loot table. One entry is rolled per kill via <see cref="LootLogic.RollLoot"/>.
+	/// Each element is a <see cref="LootEntry"/> resource. Empty = no item drop on kill.
+	///
+	/// Per CLAUDE.md sub-resource rule: this MUST be typed as <c>Resource[]</c> (not
+	/// <c>LootEntry[]</c>) so the C++ serializer can handle it. Cast at runtime via
+	/// <c>.OfType&lt;LootEntry&gt;()</c>.
+	/// </summary>
+	[Export] public Resource[] LootTable { get; set; } = [];
 }

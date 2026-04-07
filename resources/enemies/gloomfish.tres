@@ -4,6 +4,25 @@
 [ext_resource type="Script" path="res://core/data/CharacterStats.cs" id="2_CharacterStats"]
 [ext_resource type="PackedScene" path="res://scenes/battle/rhythm/patterns/AllLanesPattern.tscn" id="3_pattern"]
 [ext_resource type="Texture2D" path="res://assets/sprites/enemies/gloomfish.png" id="4_sprite"]
+[ext_resource type="Script" path="res://core/data/LootEntry.cs" id="5_LootEntry"]
+
+[sub_resource type="Resource" id="LootEntry_1"]
+script = ExtResource("5_LootEntry")
+ItemPath = "res://resources/items/ingredient_chill_scale.tres"
+Weight = 50
+Guaranteed = false
+
+[sub_resource type="Resource" id="LootEntry_2"]
+script = ExtResource("5_LootEntry")
+ItemPath = "res://resources/items/ingredient_mystery_meat.tres"
+Weight = 35
+Guaranteed = false
+
+[sub_resource type="Resource" id="LootEntry_3"]
+script = ExtResource("5_LootEntry")
+ItemPath = "res://resources/items/junk_flopsin_hairball.tres"
+Weight = 15
+Guaranteed = false
 
 [sub_resource type="Resource" id="CharacterStats_1"]
 script = ExtResource("2_CharacterStats")
@@ -32,3 +51,4 @@ BattleDialogLines = PackedStringArray("* ...glub.", "* (It pulses faintly.)", "*
 GoldDrop = 15
 ExpDrop = 10
 AttackPatternScene = ExtResource("3_pattern")
+LootTable = [SubResource("LootEntry_1"), SubResource("LootEntry_2"), SubResource("LootEntry_3")]

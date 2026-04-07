@@ -1,0 +1,4 @@
+[gd_scene format=4]
+[ext_resource type="Script" path="res://scenes/menus/BestiaryMenu.cs" id="1"]
+[node name="BestiaryMenu" type="CanvasLayer"]
+script = ExtResource("1")
