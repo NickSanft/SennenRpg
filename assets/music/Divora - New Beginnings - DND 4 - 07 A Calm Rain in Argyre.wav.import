@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://273svc082axj"
+path="res://.godot/imported/Divora - New Beginnings - DND 4 - 07 A Calm Rain in Argyre.wav-acefc7026d3d689337d38b0b106eef94.sample"
+
+[deps]
+
+source_file="res://assets/music/Divora - New Beginnings - DND 4 - 07 A Calm Rain in Argyre.wav"
+dest_files=["res://.godot/imported/Divora - New Beginnings - DND 4 - 07 A Calm Rain in Argyre.wav-acefc7026d3d689337d38b0b106eef94.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

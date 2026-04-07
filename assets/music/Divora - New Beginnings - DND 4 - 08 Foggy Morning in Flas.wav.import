@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://cepu6defmbyf"
+path="res://.godot/imported/Divora - New Beginnings - DND 4 - 08 Foggy Morning in Flas.wav-1514ce373aadf233773aa72d2ca9a610.sample"
+
+[deps]
+
+source_file="res://assets/music/Divora - New Beginnings - DND 4 - 08 Foggy Morning in Flas.wav"
+dest_files=["res://.godot/imported/Divora - New Beginnings - DND 4 - 08 Foggy Morning in Flas.wav-1514ce373aadf233773aa72d2ca9a610.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2
