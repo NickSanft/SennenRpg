@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bt3o7aepv2t2"
-path="res://.godot/imported/warden.png-089710ce31d3c4d195a91e7a42b6631d.ctex"
+uid="uid://cdtdujbkup7j3"
+path="res://.godot/imported/CentiphantomQuing.png-7ca1417560e3df63441b4c2dc998bfa0.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/enemies/warden.png"
-dest_files=["res://.godot/imported/warden.png-089710ce31d3c4d195a91e7a42b6631d.ctex"]
+source_file="res://assets/sprites/enemies/CentiphantomQuing.png"
+dest_files=["res://.godot/imported/CentiphantomQuing.png-7ca1417560e3df63441b4c2dc998bfa0.ctex"]
 
 [params]
 
