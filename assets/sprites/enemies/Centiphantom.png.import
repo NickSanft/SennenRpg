@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b7y604xqoxj6g"
-path="res://.godot/imported/flickerfly.png-36f1bec1c32fbfec65a8a8f8921a8f7f.ctex"
+uid="uid://c83q1mm1smq8u"
+path="res://.godot/imported/Centiphantom.png-e4a704dad2e881667d9c17bfd6b36019.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/enemies/flickerfly.png"
-dest_files=["res://.godot/imported/flickerfly.png-36f1bec1c32fbfec65a8a8f8921a8f7f.ctex"]
+source_file="res://assets/sprites/enemies/Centiphantom.png"
+dest_files=["res://.godot/imported/Centiphantom.png-e4a704dad2e881667d9c17bfd6b36019.ctex"]
 
 [params]
 

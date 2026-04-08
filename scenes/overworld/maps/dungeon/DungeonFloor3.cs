@@ -30,7 +30,7 @@ public partial class DungeonFloor3 : OverworldBase
 
     public override void _Ready()
     {
-        const string enc = "res://resources/encounters/encounter_005.tres";
+        const string enc = "res://resources/encounters/encounter_003.tres";
         if (ResourceLoader.Exists(enc))
         {
             var encounter = GD.Load<EncounterData>(enc);

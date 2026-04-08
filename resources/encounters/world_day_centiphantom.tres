@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="EncounterData" format=3]
+
+[ext_resource type="Script" uid="uid://c5d22rd36ltx4" path="res://core/data/EnemyData.cs" id="1_EnemyData"]
+[ext_resource type="Script" uid="uid://dgj4v4oe30iqr" path="res://core/data/EncounterData.cs" id="2_EncounterData"]
+[ext_resource type="EnemyData" path="res://resources/enemies/centiphantom.tres" id="3_centiphantom"]
+
+[resource]
+script = ExtResource("2_EncounterData")
+Enemies = Array[ExtResource("1_EnemyData")]([ExtResource("3_centiphantom")])
+BattleBpm = 120.0

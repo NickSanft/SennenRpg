@@ -284,8 +284,8 @@ SennenRpg/
 │
 ├── resources/
 │   ├── characters/         # player_stats.tres
-│   ├── enemies/            # wisplet.tres, thornling.tres, etc.
-│   ├── encounters/         # encounter_001 – encounter_004 .tres
+│   ├── enemies/            # wisplet.tres, centiphantom.tres, etc.
+│   ├── encounters/         # encounter_001, encounter_003 .tres
 │   └── items/              # item_001.tres (Bandage)
 │
 ├── dialog/
@@ -560,9 +560,7 @@ Godot destroys the current scene tree on every scene change. Cross-scene data li
 | ID | Name | HP | ATK | DEF | Pattern |
 |---|---|---|---|---|---|
 | `wisplet` | Wisplet | 20 | 5 | 0 | PatternRandom |
-| `thornling` | Thornling | 35 | 8 | 2 | Horizontal sweep |
-| `gloomfish` | Gloomfish | 60 | 15 | 3 | Radial burst |
-| `dustmote` | Dustmote | 12 | 4 | 0 | Bouncing chaos |
+| `centiphantom` | Centiphantom | 60 | 15 | 3 | Radial burst |
 
 ---
 
@@ -577,7 +575,7 @@ Godot destroys the current scene tree on every scene change. Cross-scene data li
 | Dialogic characters | PascalCase.dch | `Barkeep.dch` |
 | Folders | snake_case/ | `scenes/battle/` |
 | Perform timelines | `act_{enemyId}_{optionName}.dtl` | `act_wisplet_greet.dtl` |
-| Battle turn timelines | `battle_{enemyId}_turn.dtl` | `battle_gloomfish_turn.dtl` |
+| Battle turn timelines | `battle_{enemyId}_turn.dtl` | `battle_centiphantom_turn.dtl` |
 
 ---
 
