@@ -68,6 +68,13 @@
         <!-- Rogue / Alchemist Fight minigame logic — pure, no Godot runtime -->
         <Compile Include="../core/data/RogueStealLogic.cs" />
         <Compile Include="../core/data/AlchemistBrewLogic.cs" />
+        <!-- Party system — pure, no Godot runtime -->
+        <Compile Include="../core/data/FormationRow.cs" />
+        <Compile Include="../core/data/PartyMember.cs" />
+        <Compile Include="../core/data/PartyData.cs" />
+        <Compile Include="../core/data/PartyMemberLogic.cs" />
+        <Compile Include="../core/data/FollowerTrail.cs" />
+        <Compile Include="../core/data/PartyMemberStatsLogic.cs" />
         <!-- Music metadata — pure logic, no Godot runtime -->
         <Compile Include="../core/data/MusicTrackInfo.cs" />
         <Compile Include="../core/data/MusicMetadata.cs" />

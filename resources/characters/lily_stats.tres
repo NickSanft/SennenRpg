@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CharacterStats" format=3 uid="uid://lily_stats_01"]
+
+[ext_resource type="Script" uid="uid://dqonjuygth0gq" path="res://core/data/CharacterStats.cs" id="1_cs"]
+
+[resource]
+script = ExtResource("1_cs")
+MaxHp = 16
+CurrentHp = 16
+Attack = 5
+Defense = 2
+Speed = 9
+Magic = 13
+Resistance = 5
+Luck = 14
+MaxMp = 26
+CurrentMp = 26
+Class = 5
+ClassName = "Alchemist"

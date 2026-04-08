@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://party_menu_01"]
+
+[ext_resource type="Script" path="res://scenes/menus/PartyMenu.cs" id="1_party"]
+
+[node name="PartyMenu" type="CanvasLayer"]
+script = ExtResource("1_party")
