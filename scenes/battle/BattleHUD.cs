@@ -24,6 +24,7 @@ public partial class BattleHUD : CanvasLayer
 
 	private record CardWidgets(
 		PanelContainer Root,
+		TextureRect    Portrait,
 		Label          Name,
 		Label          Lv,
 		Label          Hp,
@@ -46,8 +47,8 @@ public partial class BattleHUD : CanvasLayer
 	private static readonly Color CardBorderActive = new(1f, 0.85f, 0.1f, 1f);
 	private static readonly Color BarBgColor      = new(0.15f, 0.15f, 0.2f, 1f);
 
-	private const float CardWidth     = 200f;
-	private const float CardMinHeight = 70f;
+	private const float CardWidth     = 240f;
+	private const float CardMinHeight = 80f;
 
 	public override void _Ready()
 	{
@@ -156,9 +157,40 @@ public partial class BattleHUD : CanvasLayer
 		margin.AddThemeConstantOverride("margin_bottom", 4);
 		panel.AddChild(margin);
 
-		var vbox = new VBoxContainer();
+		// Outer HBox: portrait on the left, content (name/HP/MP/status) on the right.
+		var rootRow = new HBoxContainer();
+		rootRow.AddThemeConstantOverride("separation", 6);
+		margin.AddChild(rootRow);
+
+		// Portrait — pulls the first 16×16 frame from the member's overworld sheet,
+		// scaled up via TextureRect's StretchMode so it reads at HUD scale.
+		var portrait = new TextureRect
+		{
+			ExpandMode          = TextureRect.ExpandModeEnum.IgnoreSize,
+			StretchMode         = TextureRect.StretchModeEnum.KeepAspectCentered,
+			TextureFilter       = CanvasItem.TextureFilterEnum.Nearest,
+			CustomMinimumSize   = new Vector2(40f, 40f),
+			SizeFlagsVertical   = Control.SizeFlags.ShrinkCenter,
+		};
+		string spritePath = string.IsNullOrEmpty(m.OverworldSpritePath)
+			? "res://assets/sprites/player/Sen_Overworld.png"
+			: m.OverworldSpritePath;
+		if (ResourceLoader.Exists(spritePath))
+		{
+			portrait.Texture = new AtlasTexture
+			{
+				Atlas  = GD.Load<Texture2D>(spritePath),
+				Region = new Rect2(0, 0, 16, 16),
+			};
+		}
+		rootRow.AddChild(portrait);
+
+		var vbox = new VBoxContainer
+		{
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+		};
 		vbox.AddThemeConstantOverride("separation", 2);
-		margin.AddChild(vbox);
+		rootRow.AddChild(vbox);
 
 		// Name + level row
 		var topRow = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Begin };
@@ -240,7 +272,7 @@ public partial class BattleHUD : CanvasLayer
 		statusRow.AddThemeConstantOverride("separation", 3);
 		vbox.AddChild(statusRow);
 
-		return new CardWidgets(panel, nameLabel, lvLabel, hpLabel, hpBarBg, hpBar,
+		return new CardWidgets(panel, portrait, nameLabel, lvLabel, hpLabel, hpBarBg, hpBar,
 			mpLabel, mpBarBg, mpBar, statusRow);
 	}
 
@@ -327,12 +359,20 @@ public partial class BattleHUD : CanvasLayer
 	}
 
 	/// <summary>
-	/// Phase 7a-compat: writes status badges onto Sen's card. Per-actor status routing
-	/// for Lily/Rain ships in Phase 7d (deferred).
+	/// Writes status badges onto Sen's card specifically. For non-Sen members use
+	/// <see cref="UpdateStatusesFor"/>.
 	/// </summary>
 	public void UpdateStatuses(Dictionary<StatusEffect, int> statuses)
 	{
 		if (!_cards.TryGetValue("sen", out var card)) return;
+		ApplyStatusBadges(card.StatusRow, statuses);
+	}
+
+	/// <summary>Writes status badges onto a specific party member's card.</summary>
+	public void UpdateStatusesFor(string memberId, Dictionary<StatusEffect, int> statuses)
+	{
+		if (string.IsNullOrEmpty(memberId)) return;
+		if (!_cards.TryGetValue(memberId, out var card)) return;
 		ApplyStatusBadges(card.StatusRow, statuses);
 	}
 

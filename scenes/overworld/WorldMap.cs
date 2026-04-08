@@ -725,7 +725,11 @@ public partial class WorldMap : Node2D
 
 	// ── Debug input ───────────────────────────────────────────────────────────
 
-	/// <summary>Augment the base debug input with a K-key weather peek.</summary>
+	/// <summary>
+	/// Debug-build only —
+	///   K = peek the current weather state in the console
+	///   J = force the weather to Aurora for testing
+	/// </summary>
 	public override void _UnhandledKeyInput(InputEvent @event)
 	{
 		if (@event is not InputEventKey { Pressed: true } keyEvent) return;
@@ -738,6 +742,16 @@ public partial class WorldMap : Node2D
 			{
 				GD.Print($"[Debug] Weather: {SennenRpg.Core.Data.WeatherLogic.DisplayName(wm.Current)} " +
 					$"(step {wm.StepCounter % wm.RollInterval}/{wm.RollInterval})");
+			}
+			GetViewport().SetInputAsHandled();
+		}
+		else if (keyEvent.Keycode == Key.J)
+		{
+			var wm = WeatherManager.Instance;
+			if (wm != null)
+			{
+				GD.Print($"[Debug] Forcing weather → Aurora (was {SennenRpg.Core.Data.WeatherLogic.DisplayName(wm.Current)})");
+				wm.ForceSet(SennenRpg.Core.Data.WeatherType.Aurora);
 			}
 			GetViewport().SetInputAsHandled();
 		}

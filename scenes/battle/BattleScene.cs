@@ -70,7 +70,10 @@ public partial class BattleScene : Node2D
 			{
 				_targetIndex = i;
 				if (_enemyNameplate != null && Target != null)
+				{
 					_enemyNameplate.Setup(Target.DisplayName);
+					_enemyNameplate.UpdateStatuses(Target.Statuses);
+				}
 				RefreshTargetCursor();
 				return;
 			}
@@ -93,7 +96,10 @@ public partial class BattleScene : Node2D
 			{
 				_targetIndex = next;
 				if (_enemyNameplate != null && Target != null)
+				{
 					_enemyNameplate.Setup(Target.DisplayName);
+					_enemyNameplate.UpdateStatuses(Target.Statuses);
+				}
 				RefreshTargetCursor();
 				AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
 				return;
@@ -227,6 +233,40 @@ public partial class BattleScene : Node2D
 		if (m.CurrentMp < cost) return false;
 		m.CurrentMp -= cost;
 		return true;
+	}
+
+	/// <summary>
+	/// Apply a status effect to the active actor. Sen routes through the shared
+	/// _statuses.PlayerStatuses (so the existing rhythm-arena / status pipeline keeps
+	/// working). Lily / Rain write to their per-member dict.
+	/// </summary>
+	private void ActorApplyStatus(StatusEffect effect, int turns)
+	{
+		var m = CurrentActor();
+		if (m == null) return;
+		if (CurrentActorIsSen())
+			StatusLogic.Apply(_statuses.PlayerStatuses, effect, turns);
+		else
+			StatusLogic.Apply(m.Statuses, effect, turns);
+	}
+
+	/// <summary>Read the active status dict for a party member by index.</summary>
+	private System.Collections.Generic.Dictionary<StatusEffect, int>? GetStatusesFor(int memberIdx)
+	{
+		var party = GameManager.Instance.Party;
+		if (memberIdx < 0 || memberIdx >= party.Members.Count) return null;
+		var m = party.Members[memberIdx];
+		return m.MemberId == "sen" ? _statuses.PlayerStatuses : m.Statuses;
+	}
+
+	/// <summary>Push the current status dict for a member into the BattleHUD card.</summary>
+	private void RefreshActorStatusBadges(int memberIdx)
+	{
+		var dict = GetStatusesFor(memberIdx);
+		if (dict == null || _battleHud == null) return;
+		var party = GameManager.Instance.Party;
+		if (memberIdx < 0 || memberIdx >= party.Members.Count) return;
+		_battleHud.UpdateStatusesFor(party.Members[memberIdx].MemberId, dict);
 	}
 
 	/// <summary>
@@ -1071,18 +1111,22 @@ public partial class BattleScene : Node2D
 			}
 			case BrewResult.PoisonEnemy:
 			{
-				StatusLogic.Apply(_statuses.EnemyStatuses, StatusEffect.Poison, AlchemistBrewLogic.PoisonTurns);
-				_enemyNameplate.UpdateStatuses(_statuses.EnemyStatuses);
+				// Apply Poison to whichever enemy was just splashed (the current target).
+				if (splashHit != null)
+				{
+					StatusLogic.Apply(splashHit.Statuses, StatusEffect.Poison, AlchemistBrewLogic.PoisonTurns);
+					_enemyNameplate?.UpdateStatuses(splashHit.Statuses);
+				}
 				label = $"Toxic Vial! -{splashDamage} HP, poisoned.";
-				GD.Print($"[BattleScene] Alchemist POISON enemy, splash {splashDamage}");
+				GD.Print($"[BattleScene] Alchemist POISON {splashHit?.DisplayName ?? "enemy"}, splash {splashDamage}");
 				break;
 			}
 			case BrewResult.ShieldSelf:
 			{
-				StatusLogic.Apply(_statuses.PlayerStatuses, StatusEffect.Shield, AlchemistBrewLogic.ShieldTurns);
-				_battleHud.UpdateStatuses(_statuses.PlayerStatuses);
-				label = $"Aegis Tonic! -{splashDamage} HP, shielded.";
-				GD.Print($"[BattleScene] Alchemist SHIELD self, splash {splashDamage}");
+				ActorApplyStatus(StatusEffect.Shield, AlchemistBrewLogic.ShieldTurns);
+				RefreshActorStatusBadges(_currentActorMemberIdx);
+				label = $"Aegis Tonic! -{splashDamage} HP, {ActorDisplayName()} shielded.";
+				GD.Print($"[BattleScene] Alchemist SHIELD {ActorDisplayName()}, splash {splashDamage}");
 				break;
 			}
 			case BrewResult.Backfire:
@@ -1483,8 +1527,15 @@ public partial class BattleScene : Node2D
 		if (PartyAllKO()) { await HandleDefeat(); return; }
 		if (!AnyLivingEnemy()) { await HandleVictory(); return; }
 
-		// Tick all statuses (both sides) at the top of each round
+		// Tick all statuses at the top of each round.
+		// _statuses.TickAll() handles Sen's PlayerStatuses (legacy single-actor path).
+		// Non-Sen members tick their own per-instance Statuses dict.
 		_statuses.TickAll();
+		foreach (var m in GameManager.Instance.Party.Members)
+		{
+			if (m.MemberId == "sen") continue;
+			StatusLogic.TickAll(m.Statuses);
+		}
 		UpdateStatusHud();
 
 		// Apply player Poison (Sen for now — Lily/Rain status effects ship in 7c)
@@ -1501,22 +1552,30 @@ public partial class BattleScene : Node2D
 			}
 		}
 
-		// Apply enemy Poison — phase 7a only ticks the current target. A future
-		// per-enemy status pass (phase 7c) will tick every poisoned enemy.
-		if (_statuses.EnemyHasStatus(StatusEffect.Poison))
+		// Per-enemy Poison tick: walk every living enemy with its OWN status dict
+		// and apply poison damage individually. Tick the status durations down too.
+		// (TickAll() above only handled Sen's player statuses; enemies are per-instance now.)
+		foreach (var ei in _enemies)
 		{
-			var poisoned = Target;
-			int dmg = _statuses.EnemyPoisonDamage(poisoned?.Data?.Stats?.MaxHp ?? 10);
-			_enemyCurrentHp = Math.Max(0, _enemyCurrentHp - dmg);
-			SetBattleVar("damage", dmg.ToString());
-			await RunBattleTimeline("res://dialog/timelines/battle_poison_enemy.dtl");
-			HandleEnemyDeathIfApplicable(poisoned);
-			if (!AnyLivingEnemy())
+			if (ei == null || ei.IsKO) continue;
+			StatusLogic.TickAll(ei.Statuses);
+			if (StatusLogic.HasStatus(ei.Statuses, StatusEffect.Poison))
 			{
-				await HandleVictory();
-				return;
+				int dmg = StatusLogic.PoisonDamage(ei.Data?.Stats?.MaxHp ?? 10);
+				ei.CurrentHp = Math.Max(0, ei.CurrentHp - dmg);
+				SetBattleVar("damage",     dmg.ToString());
+				SetBattleVar("enemy_name", ei.DisplayName);
+				await RunBattleTimeline("res://dialog/timelines/battle_poison_enemy.dtl");
+				HandleEnemyDeathIfApplicable(ei);
+				if (!AnyLivingEnemy())
+				{
+					await HandleVictory();
+					return;
+				}
 			}
 		}
+		// Refresh nameplate badges for the current target after the tick.
+		_enemyNameplate?.UpdateStatuses(Target?.Statuses ?? new System.Collections.Generic.Dictionary<StatusEffect, int>());
 
 		// Build the speed-sorted queue from the current living actors.
 		var party = GameManager.Instance.Party;
@@ -1617,9 +1676,12 @@ public partial class BattleScene : Node2D
 	/// </summary>
 	private async Task RunSingleEnemyTurn()
 	{
-		// Enemy Stun: skip the rhythm phase this turn
-		if (_statuses.EnemyHasStatus(StatusEffect.Stun))
+		// Per-enemy Stun: skip THIS specific enemy's rhythm phase this turn (the
+		// turn queue already pointed _targetIndex at the right enemy).
+		var actor = Target;
+		if (actor != null && StatusLogic.HasStatus(actor.Statuses, StatusEffect.Stun))
 		{
+			SetBattleVar("enemy_name", actor.DisplayName);
 			await RunBattleTimeline("res://dialog/timelines/battle_stun_enemy.dtl");
 			await AdvanceTurn();
 			return;
@@ -1942,7 +2004,17 @@ public partial class BattleScene : Node2D
 
 	private void UpdateStatusHud()
 	{
+		// Sen's status badges flow through the existing PlayerStatuses dict.
 		_battleHud.UpdateStatuses(_statuses.PlayerStatuses);
-		_enemyNameplate.UpdateStatuses(_statuses.EnemyStatuses);
+		// Non-Sen members each push their own per-instance dict to their card.
+		var party = GameManager.Instance.Party;
+		foreach (var m in party.Members)
+		{
+			if (m.MemberId == "sen") continue;
+			_battleHud.UpdateStatusesFor(m.MemberId, m.Statuses);
+		}
+		// Per-enemy: nameplate shows the current target's status badges.
+		_enemyNameplate.UpdateStatuses(Target?.Statuses
+			?? new System.Collections.Generic.Dictionary<StatusEffect, int>());
 	}
 }

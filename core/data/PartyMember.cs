@@ -90,6 +90,14 @@ public class PartyMember
     /// </summary>
     public Dictionary<string, string> EquippedDynamicItemIds { get; set; } = new();
 
+    /// <summary>
+    /// In-battle status effects (Poison / Stun / Shield / Silence) and their remaining
+    /// turn counts. Persisted across save/load so brews / debuffs survive scene changes
+    /// (though typically these clear at battle end). Used by the per-actor status
+    /// pipeline added in phase 7-stretch.
+    /// </summary>
+    public Dictionary<StatusEffect, int> Statuses { get; set; } = new();
+
     // ── Convenience helpers ───────────────────────────────────────────
 
     /// <summary>
