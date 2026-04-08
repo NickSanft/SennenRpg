@@ -49,6 +49,21 @@ public partial class WorldMapPlayer : CharacterBody2D
 		Position = TileToWorld(WorldToTile(Position));
 	}
 
+	/// <summary>
+	/// Replace the sprite sheet at runtime — used when the player swaps the active
+	/// party leader from the Party Menu so the world-map character matches the new
+	/// leader's identity (Sen / Lily / Rain). Accepts the standard 32×16 two-frame
+	/// strip layout used by Sen_Overworld.png / Lily_Overworld.png / Rain_Overworld.png.
+	/// </summary>
+	public void SetSpriteSheet(string spriteSheetPath)
+	{
+		if (_sprite == null) _sprite = GetNodeOrNull<AnimatedSprite2D>("AnimatedSprite2D");
+		if (_sprite == null) return;
+
+		_sprite.SpriteFrames = SennenRpg.Scenes.Player.OverworldSpriteFactory.Build(spriteSheetPath);
+		_sprite.Play("idle_down");
+	}
+
 	public override void _Process(double delta)
 	{
 		if (Engine.IsEditorHint()) return;

@@ -195,13 +195,30 @@ public partial class InventoryMenu : CanvasLayer
 				eqHeader.AddThemeColorOverride("font_color", new Color(0.6f, 0.7f, 1f));
 				_itemRows.AddChild(eqHeader);
 
+				// Sen — read static equipment from InventoryData (canonical for him).
 				foreach (var kv in equippedPaths)
 				{
 					if (string.IsNullOrEmpty(kv.Value) || !ResourceLoader.Exists(kv.Value)) continue;
 					var eq = GD.Load<EquipmentData>(kv.Value);
 					if (eq == null) continue;
-					_itemRows.AddChild(BuildStaticEquipRow(eq, kv.Key.ToString(), equipped: true));
+					_itemRows.AddChild(BuildStaticEquipRow(eq, kv.Key.ToString(),
+						equipped: true, ownerName: gm.PlayerName));
 					itemCount++;
+				}
+
+				// Lily / Rain / future recruits — read static equipment from each PartyMember.
+				foreach (var member in gm.Party.Members)
+				{
+					if (member.MemberId == "sen") continue; // Sen handled above
+					foreach (var kv in member.EquippedItemPaths)
+					{
+						if (string.IsNullOrEmpty(kv.Value) || !ResourceLoader.Exists(kv.Value)) continue;
+						var eq = GD.Load<EquipmentData>(kv.Value);
+						if (eq == null) continue;
+						_itemRows.AddChild(BuildStaticEquipRow(eq, kv.Key,
+							equipped: true, ownerName: member.DisplayName));
+						itemCount++;
+					}
 				}
 
 				foreach (var eqPath in ownedEquip)
@@ -209,7 +226,8 @@ public partial class InventoryMenu : CanvasLayer
 					if (!ResourceLoader.Exists(eqPath)) continue;
 					var eq = GD.Load<EquipmentData>(eqPath);
 					if (eq == null) continue;
-					_itemRows.AddChild(BuildStaticEquipRow(eq, eq.Slot.ToString(), equipped: false));
+					_itemRows.AddChild(BuildStaticEquipRow(eq, eq.Slot.ToString(),
+						equipped: false, ownerName: ""));
 					itemCount++;
 				}
 
@@ -305,7 +323,7 @@ public partial class InventoryMenu : CanvasLayer
 		return row;
 	}
 
-	private HBoxContainer BuildStaticEquipRow(EquipmentData eq, string slotText, bool equipped)
+	private HBoxContainer BuildStaticEquipRow(EquipmentData eq, string slotText, bool equipped, string ownerName)
 	{
 		var row = new HBoxContainer();
 
@@ -317,6 +335,13 @@ public partial class InventoryMenu : CanvasLayer
 		slotLabel.AddThemeFontSizeOverride("font_size", 9);
 		slotLabel.AddThemeColorOverride("font_color", new Color(0.6f, 0.6f, 0.6f));
 
+		// Owner column — only meaningful when equipped. Empty for unworn items.
+		string ownerText = equipped && !string.IsNullOrEmpty(ownerName) ? ownerName : "";
+		var ownerLabel = new Label { Text = ownerText };
+		ownerLabel.AddThemeFontSizeOverride("font_size", 9);
+		ownerLabel.AddThemeColorOverride("font_color", UiTheme.Gold);
+		ownerLabel.CustomMinimumSize = new Vector2(60f, 0f);
+
 		var hint = new Button
 		{
 			Text     = equipped ? "EQUIPPED" : "—",
@@ -326,6 +351,7 @@ public partial class InventoryMenu : CanvasLayer
 
 		row.AddChild(nameLabel);
 		row.AddChild(slotLabel);
+		row.AddChild(ownerLabel);
 		row.AddChild(hint);
 		return row;
 	}

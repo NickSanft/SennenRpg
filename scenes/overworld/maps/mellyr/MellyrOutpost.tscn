@@ -6,6 +6,8 @@
 [ext_resource type="PackedScene" path="res://scenes/overworld/objects/RorkTownNpc.tscn" id="3_rork_town"]
 [ext_resource type="PackedScene" uid="uid://evwjjqormcym" path="res://scenes/overworld/objects/MapExit.tscn" id="4_exit"]
 [ext_resource type="Script" uid="uid://dd4js4g2ge105" path="res://core/data/NpcResidencyEntry.cs" id="5_residency_entry"]
+[ext_resource type="Resource" path="res://resources/characters/rain_stats.tres" id="6_rain_stats"]
+[ext_resource type="Resource" path="res://resources/characters/lily_stats.tres" id="7_lily_stats"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_rl83k"]
 texture = ExtResource("3_dby7a")
@@ -74,16 +76,26 @@ sources/0 = SubResource("TileSetAtlasSource_rl83k")
 [sub_resource type="Resource" id="ResidencyEntry_Rain"]
 script = ExtResource("5_residency_entry")
 DisplayName = "Rain"
-Description = "Passively earns gold while you adventure."
+Description = "Quick on her feet. Joins the party as a Rogue."
 FlagKey = "npc_rain_purchased"
 Price = 150
+PartyMemberId = "rain"
+JoinClass = 4
+StartingStats = ExtResource("6_rain_stats")
+OverworldSpritePath = "res://assets/sprites/player/Rain_Overworld.png"
+JoinTimelinePath = "res://dialog/timelines/rain_joins.dtl"
 
 [sub_resource type="Resource" id="ResidencyEntry_Lily"]
 script = ExtResource("5_residency_entry")
 DisplayName = "Lily"
-Description = "Forges equipment while you adventure."
+Description = "Master brewer. Joins the party as an Alchemist."
 FlagKey = "npc_lily_purchased"
 Price = 200
+PartyMemberId = "lily"
+JoinClass = 5
+StartingStats = ExtResource("7_lily_stats")
+OverworldSpritePath = "res://assets/sprites/player/Lily_Overworld.png"
+JoinTimelinePath = "res://dialog/timelines/lily_joins.dtl"
 
 [node name="MellyrOutpost" unique_id=1522034536 instance=ExtResource("1_mellyr01")]
 script = ExtResource("2_mellyr02")

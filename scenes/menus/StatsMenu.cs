@@ -29,6 +29,10 @@ public partial class StatsMenu : CanvasLayer
     private Label     _classLabel    = null!;
     private Label     _bonusLabel    = null!;
 
+    // Phase 6 — member cycler. Index into GameManager.Party.Members for the
+    // currently inspected member. Use ←/→ to cycle.
+    private int _currentMemberIndex;
+
     // ── Setup ─────────────────────────────────────────────────────────────────
 
     public override void _Ready()
@@ -149,9 +153,22 @@ public partial class StatsMenu : CanvasLayer
         bonusHeader.AddThemeFontSizeOverride("font_size", 12);
         outer.AddChild(bonusHeader);
 
-        _bonusLabel = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
-        _bonusLabel.AddThemeFontSizeOverride("font_size", 16);
-        outer.AddChild(_bonusLabel);
+        // Wrapped in a scroll container so the now-12 cross-class entries can't push
+        // the rest of the menu off screen on shorter viewports.
+        var bonusScroll = new ScrollContainer
+        {
+            CustomMinimumSize    = new Vector2(0f, 110f),
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+        };
+        outer.AddChild(bonusScroll);
+
+        _bonusLabel = new Label
+        {
+            AutowrapMode        = TextServer.AutowrapMode.WordSmart,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        _bonusLabel.AddThemeFontSizeOverride("font_size", 11);
+        bonusScroll.AddChild(_bonusLabel);
 
         outer.AddChild(new HSeparator());
 
@@ -192,6 +209,15 @@ public partial class StatsMenu : CanvasLayer
 
     public void Open()
     {
+        // Honour the cursor set by PartyMenu (if any) so the same member appears here.
+        var party = GameManager.Instance.Party;
+        _currentMemberIndex = 0;
+        for (int i = 0; i < party.Members.Count; i++)
+            if (party.Members[i].MemberId == GameManager.Instance.SelectedMemberId)
+            {
+                _currentMemberIndex = i;
+                break;
+            }
         Refresh();
         Visible = true;
     }
@@ -201,6 +227,31 @@ public partial class StatsMenu : CanvasLayer
     public override void _UnhandledInput(InputEvent e)
     {
         if (!Visible) return;
+
+        // Cycle members with ←/→ when the menu is open.
+        var party = GameManager.Instance.Party;
+        if (party.Count > 1)
+        {
+            if (e.IsActionPressed("ui_left"))
+            {
+                _currentMemberIndex = (_currentMemberIndex - 1 + party.Count) % party.Count;
+                GameManager.Instance.SelectedMemberId = party.Members[_currentMemberIndex].MemberId;
+                AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+                Refresh();
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+            if (e.IsActionPressed("ui_right"))
+            {
+                _currentMemberIndex = (_currentMemberIndex + 1) % party.Count;
+                GameManager.Instance.SelectedMemberId = party.Members[_currentMemberIndex].MemberId;
+                AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+                Refresh();
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+        }
+
         if (!e.IsActionPressed("ui_cancel")) return;
         GetViewport().SetInputAsHandled();
         AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
@@ -213,14 +264,65 @@ public partial class StatsMenu : CanvasLayer
     private void Refresh()
     {
         var gm    = GameManager.Instance;
-        var base_ = gm.PlayerStats;
-        var eff   = gm.EffectiveStats;
-        int lv    = gm.PlayerLevel;
+        var party = gm.Party;
+        if (party.IsEmpty)
+        {
+            _headerLabel.Text = "(no party)";
+            return;
+        }
+        if (_currentMemberIndex < 0 || _currentMemberIndex >= party.Count)
+            _currentMemberIndex = 0;
 
-        _headerLabel.Text = $"{gm.PlayerName}   ·   Level {lv}";
+        var member  = party.Members[_currentMemberIndex];
+        bool isSen  = member.MemberId == "sen";
+        bool canCycle = party.Count > 1;
+        string left  = canCycle ? "◀ " : "  ";
+        string right = canCycle ? " ▶" : "  ";
 
-        // XP progress
-        int   currentXp   = gm.Exp;
+        // Sen reads from the live combat domain so the existing equipment / cross-class
+        // pipeline still drives effective stats. Lily/Rain are computed from their
+        // PartyMember directly via PartyMemberStatsLogic.
+        int lv;
+        int currentXp;
+        int baseHp, baseAtk, baseDef, baseSpd, baseMag, baseRes, baseLck, baseMp;
+        int effHp, effAtk, effDef, effSpd, effMag, effRes, effLck, effMp;
+
+        if (isSen)
+        {
+            var b = gm.PlayerStats;
+            var e = gm.EffectiveStats;
+            lv         = gm.PlayerLevel;
+            currentXp  = gm.Exp;
+            baseHp     = b.MaxHp;      effHp  = e.MaxHp;
+            baseAtk    = b.Attack;     effAtk = e.Attack;
+            baseDef    = b.Defense;    effDef = e.Defense;
+            baseSpd    = b.Speed;      effSpd = e.Speed;
+            baseMag    = b.Magic;      effMag = e.Magic;
+            baseRes    = b.Resistance; effRes = e.Resistance;
+            baseLck    = b.Luck;       effLck = e.Luck;
+            baseMp     = b.MaxMp;      effMp  = e.MaxMp;
+        }
+        else
+        {
+            lv        = member.Level;
+            currentXp = member.Exp;
+
+            var bonuses = SumBonusesForMember(member);
+            var eff     = PartyMemberStatsLogic.ComputeEffective(member, bonuses);
+
+            baseHp = member.MaxHp;      effHp  = eff.MaxHp;
+            baseAtk = member.Attack;    effAtk = eff.Attack;
+            baseDef = member.Defense;   effDef = eff.Defense;
+            baseSpd = member.Speed;     effSpd = eff.Speed;
+            baseMag = member.Magic;     effMag = eff.Magic;
+            baseRes = member.Resistance; effRes = eff.Resistance;
+            baseLck = member.Luck;      effLck = eff.Luck;
+            baseMp  = member.MaxMp;     effMp  = eff.MaxMp;
+        }
+
+        _headerLabel.Text = $"{left}{member.DisplayName}{right}   ·   {member.Class}   ·   Level {lv}";
+
+        // XP progress (uses LevelData thresholds the same way as Sen).
         bool  atMax       = lv >= LevelData.MaxLevel;
         int   prevThresh  = LevelData.ExpThreshold(lv);
         int   nextThresh  = atMax ? prevThresh : LevelData.ExpThreshold(lv + 1);
@@ -238,20 +340,39 @@ public partial class StatsMenu : CanvasLayer
 
         // Stat rows
         _statsLabel.Text =
-              StatRow("HP",  base_.MaxHp,      eff.MaxHp)
-            + StatRow("ATK", base_.Attack,     eff.Attack)
-            + StatRow("DEF", base_.Defense,    eff.Defense)
-            + StatRow("SPD", base_.Speed,      eff.Speed)
-            + StatRow("MAG", base_.Magic,      eff.Magic)
-            + StatRow("RES", base_.Resistance, eff.Resistance)
-            + StatRow("LCK", base_.Luck,       eff.Luck)
-            + StatRow("MP",  base_.MaxMp,      eff.MaxMp);
+              StatRow("HP",  baseHp,  effHp)
+            + StatRow("ATK", baseAtk, effAtk)
+            + StatRow("DEF", baseDef, effDef)
+            + StatRow("SPD", baseSpd, effSpd)
+            + StatRow("MAG", baseMag, effMag)
+            + StatRow("RES", baseRes, effRes)
+            + StatRow("LCK", baseLck, effLck)
+            + StatRow("MP",  baseMp,  effMp);
 
-        // Class levels
-        RefreshClassInfo(gm);
+        // Class levels (only meaningful for Sen — Lily/Rain are locked).
+        if (isSen) RefreshClassInfo(gm);
+        else        _classLabel.Text = $"Class: {member.Class}  (locked)";
 
-        // Cross-class bonuses
-        RefreshBonuses(gm);
+        // Cross-class bonuses (only Sen accumulates them — Lily/Rain show none).
+        if (isSen) RefreshBonuses(gm);
+        else        _bonusLabel.Text = "—";
+    }
+
+    /// <summary>
+    /// Sum equipment bonuses for a non-Sen party member by walking their
+    /// per-member EquippedItemPaths dictionary and reading each .tres.
+    /// </summary>
+    private static EquipmentBonuses SumBonusesForMember(PartyMember member)
+    {
+        var list = new List<EquipmentBonuses>();
+        foreach (var kv in member.EquippedItemPaths)
+        {
+            if (string.IsNullOrEmpty(kv.Value) || !ResourceLoader.Exists(kv.Value)) continue;
+            var data = GD.Load<EquipmentData>(kv.Value);
+            if (data == null) continue;
+            list.Add(data.Bonuses);
+        }
+        return EquipmentLogic.SumBonuses(list);
     }
 
     private void RefreshClassInfo(GameManager gm)

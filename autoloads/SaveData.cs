@@ -97,6 +97,15 @@ public record SaveData
 	/// <summary>Bestiary entries — enemy id → kill record with first-defeated timestamp.</summary>
 	public Dictionary<string, SennenRpg.Core.Data.BestiaryEntry>            Bestiary           { get; init; } = new();
 
+	// ── Party (Phase 2) ──────────────────────────────────────────────────────
+	/// <summary>
+	/// All party members in order. Empty for legacy saves — auto-migrated on load
+	/// (Sen is reconstructed from the legacy single-character fields above).
+	/// </summary>
+	public List<SennenRpg.Core.Data.PartyMember> Party { get; init; } = new();
+	/// <summary>Index of the current party leader within <see cref="Party"/>. Defaults to 0.</summary>
+	public int PartyLeaderIndex { get; init; } = 0;
+
 	// ── Slot metadata ─────────────────────────────────────────────────────────
 	/// <summary>Player's chosen name (displayed on the slot card).</summary>
 	public string PlayerName      { get; init; } = "Sen";

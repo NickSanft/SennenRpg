@@ -23,6 +23,8 @@ public partial class RorkTownNpc : Npc
 	[Export] public Resource[] ResidencyStock { get; set; } = [];
 
 	private ResidencyShopMenu? _menu;
+	// Queue of post-menu join cutscenes drained one at a time after the menu closes.
+	private System.Collections.Generic.Queue<string> _pendingJoinTimelines = new();
 
 	protected override string PromptText => "[Z] Residents";
 
@@ -80,9 +82,45 @@ public partial class RorkTownNpc : Npc
 
 	private void OnMenuClosed()
 	{
+		// Snapshot the menu's pending timeline queue (the menu queue-frees right after).
+		_pendingJoinTimelines.Clear();
+		if (_menu != null)
+		{
+			foreach (var path in _menu.PendingJoinTimelines)
+				_pendingJoinTimelines.Enqueue(path);
+		}
 		_menu?.QueueFree();
 		_menu = null;
 		PlayFacingIdle(DefaultFacing);
+
+		PlayNextJoinTimeline();
+	}
+
+	/// <summary>
+	/// Drain one timeline from <see cref="_pendingJoinTimelines"/> and play it. When the
+	/// timeline ends, recurse to play the next entry. Once the queue is empty we return
+	/// the game to the Overworld state. Lets hiring multiple party members in one menu
+	/// session play every join cutscene back-to-back.
+	/// </summary>
+	private void PlayNextJoinTimeline()
+	{
+		while (_pendingJoinTimelines.Count > 0)
+		{
+			string path = _pendingJoinTimelines.Dequeue();
+			if (string.IsNullOrEmpty(path) || !ResourceLoader.Exists(path)) continue;
+
+			GameManager.Instance.SetState(GameState.Dialog);
+			DialogicBridge.Instance.ConnectTimelineEnded(Callable.From(OnJoinTimelineEnded));
+			DialogicBridge.Instance.StartTimelineWithFlags(path);
+			return;
+		}
+
+		// Queue exhausted — hand control back to the player.
 		GameManager.Instance.SetState(GameState.Overworld);
+	}
+
+	private void OnJoinTimelineEnded()
+	{
+		PlayNextJoinTimeline();
 	}
 }

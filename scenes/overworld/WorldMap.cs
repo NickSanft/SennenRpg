@@ -44,6 +44,15 @@ public partial class WorldMap : Node2D
 	// Weather overlay spawned on this map — removed on exit.
 	private SennenRpg.Scenes.Hud.WeatherOverlay? _weatherOverlay;
 
+	// Phase 4 — overworld follower chain. The WorldMap is a 16×16 sprite map so it
+	// always spawns followers when the party has more than one member.
+	private FollowerTrail? _followerTrail;
+	private System.Collections.Generic.List<SennenRpg.Scenes.Player.PartyFollower> _followers = new();
+	// Tracks the leader's position from BEFORE the latest step. Pushing this into the
+	// trail (instead of the leader's current position) means stepsBack=1 returns the
+	// tile directly behind the leader, not the leader's own tile.
+	private Vector2 _lastLeaderPos;
+
 	public override void _Ready()
 	{
 		_collision = GetNode<TileMapLayer>("Collision");
@@ -88,6 +97,80 @@ public partial class WorldMap : Node2D
 		SetupWeather();
 
 		_nextEncounterThreshold = (int)GD.RandRange(8, 14);
+
+		// Phase 4: spawn party followers (16×16 sprite map → always-on).
+		// First make sure the leader's sprite matches whoever is currently leading.
+		ApplyLeaderSpriteToPlayer();
+		SpawnFollowers();
+
+		// Refresh leader sprite + follower chain whenever the party order changes
+		// (e.g. via the Party Menu's set-leader / swap actions).
+		GameManager.Instance.PartyOrderChanged += OnPartyOrderChanged;
+	}
+
+	private void OnPartyOrderChanged()
+	{
+		ApplyLeaderSpriteToPlayer();
+		RespawnFollowers();
+	}
+
+	private void ApplyLeaderSpriteToPlayer()
+	{
+		var leader = GameManager.Instance.Party.Leader;
+		if (leader == null || _player == null) return;
+		string path = string.IsNullOrEmpty(leader.OverworldSpritePath)
+			? "res://assets/sprites/player/Sen_Overworld.png"
+			: leader.OverworldSpritePath;
+		_player.SetSpriteSheet(path);
+	}
+
+	private void RespawnFollowers()
+	{
+		// Tear down existing followers and rebuild from the new party order.
+		foreach (var f in _followers)
+		{
+			if (IsInstanceValid(f)) f.QueueFree();
+		}
+		_followers.Clear();
+		_followerTrail = null;
+		SpawnFollowers();
+	}
+
+	// ── Party followers (Phase 4) ────────────────────────────────────
+
+	private void SpawnFollowers()
+	{
+		var party = GameManager.Instance.Party;
+		if (party.IsEmpty) return;
+
+		var followerMembers = new System.Collections.Generic.List<SennenRpg.Core.Data.PartyMember>();
+		for (int i = 0; i < party.Members.Count; i++)
+		{
+			if (i == party.LeaderIndex) continue;
+			followerMembers.Add(party.Members[i]);
+		}
+		if (followerMembers.Count == 0) return;
+
+		_followerTrail = new FollowerTrail(capacity: System.Math.Max(8, followerMembers.Count + 2));
+		_lastLeaderPos = _player.Position;
+
+		Vector2 spawn = _player.Position;
+
+		// Make sure the leader visually outranks every follower so the player is never
+		// covered up when they overlap (spawn frame, intersections at corners, etc.).
+		_player.ZIndex = 10;
+
+		for (int i = 0; i < followerMembers.Count; i++)
+		{
+			var member   = followerMembers[i];
+			var follower = new SennenRpg.Scenes.Player.PartyFollower();
+			follower.Configure(member.OverworldSpritePath, _followerTrail, stepsBack: i + 1, spawnPosition: spawn);
+			follower.ZIndex = 5; // Below the leader, above the ground tiles.
+			AddChild(follower);
+			_followers.Add(follower);
+		}
+
+		GD.Print($"[WorldMap] Spawned {_followers.Count} party follower(s).");
 	}
 
 	// ── Step handler ─────────────────────────────────────────────────────────
@@ -95,6 +178,15 @@ public partial class WorldMap : Node2D
 	private void OnStepTaken(Vector2I newTile)
 	{
 		var gm = GameManager.Instance;
+
+		// Phase 4: push the leader's PREVIOUS tile so a follower at stepsBack=1 lands one
+		// tile behind the leader (not on the leader's own tile). _lastLeaderPos is updated
+		// AFTER the push so the next step records this tile as "previous".
+		if (_followerTrail != null)
+		{
+			_followerTrail.Push(_lastLeaderPos);
+			_lastLeaderPos = WorldMapPlayer.TileToWorld(newTile);
+		}
 
 		// 1. Check entrances before any counter logic
 		foreach (Node child in _entrances.GetChildren())
@@ -616,6 +708,10 @@ public partial class WorldMap : Node2D
 		if (_weatherOverlay != null && IsInstanceValid(_weatherOverlay))
 			_weatherOverlay.QueueFree();
 		_weatherOverlay = null;
+
+		// Unsubscribe from PartyOrderChanged so we don't leak handlers across scenes.
+		var gm = GameManager.Instance;
+		if (gm != null) gm.PartyOrderChanged -= OnPartyOrderChanged;
 	}
 
 	// ── Debug input ───────────────────────────────────────────────────────────

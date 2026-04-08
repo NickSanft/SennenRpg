@@ -630,30 +630,53 @@ public partial class BattleScene : Node2D
 		var  result = AlchemistBrewLogic.Resolve(accuracy, luck, GD.Randf());
 		string label;
 
+		// Every brew (except Backfire) lobs the flask at the enemy for ~50% of a normal
+		// physical strike on top of its status effect. Sweet brews use a Perfect grade,
+		// neutral fizzles use a Good grade so the alchemist always feels like they're
+		// chipping away even when the rolled effect is dull.
+		int  splashDamage = 0;
+		bool splashCrit   = false;
+		if (result != BrewResult.Backfire)
+		{
+			var splashGrade = result == BrewResult.Neutral ? HitGrade.Good : HitGrade.Perfect;
+			var (rawDamage, isCrit, _) = BattleAttackResolver.ResolveStrike(
+				splashGrade,
+				stats.Attack,
+				_enemy?.Stats?.Defense ?? 0,
+				luck);
+			splashDamage = System.Math.Max(1, rawDamage / 2);
+			splashCrit   = isCrit;
+			_enemyCurrentHp -= splashDamage;
+			SpawnDamageNumber(splashDamage, splashCrit);
+			FlashEnemy();
+			CameraShake.ShakeNode(this, intensity: splashCrit ? 4f : 2f,
+				duration: splashCrit ? 0.15f : 0.08f);
+		}
+
 		switch (result)
 		{
 			case BrewResult.Heal:
 			{
 				int amount = AlchemistBrewLogic.HealAmount(magic);
 				GameManager.Instance.HealPlayer(amount);
-				label = $"Brewed a Healing Draught! +{amount} HP";
-				GD.Print($"[BattleScene] Alchemist HEAL +{amount}");
+				label = $"Healing Draught! -{splashDamage} HP, +{amount} self";
+				GD.Print($"[BattleScene] Alchemist HEAL +{amount}, splash {splashDamage}");
 				break;
 			}
 			case BrewResult.PoisonEnemy:
 			{
 				StatusLogic.Apply(_statuses.EnemyStatuses, StatusEffect.Poison, AlchemistBrewLogic.PoisonTurns);
 				_enemyNameplate.UpdateStatuses(_statuses.EnemyStatuses);
-				label = "Brewed a Toxic Vial! Enemy poisoned.";
-				GD.Print("[BattleScene] Alchemist POISON enemy");
+				label = $"Toxic Vial! -{splashDamage} HP, poisoned.";
+				GD.Print($"[BattleScene] Alchemist POISON enemy, splash {splashDamage}");
 				break;
 			}
 			case BrewResult.ShieldSelf:
 			{
 				StatusLogic.Apply(_statuses.PlayerStatuses, StatusEffect.Shield, AlchemistBrewLogic.ShieldTurns);
 				_battleHud.UpdateStatuses(_statuses.PlayerStatuses);
-				label = "Brewed an Aegis Tonic! Shielded.";
-				GD.Print("[BattleScene] Alchemist SHIELD self");
+				label = $"Aegis Tonic! -{splashDamage} HP, shielded.";
+				GD.Print($"[BattleScene] Alchemist SHIELD self, splash {splashDamage}");
 				break;
 			}
 			case BrewResult.Backfire:
@@ -667,21 +690,27 @@ public partial class BattleScene : Node2D
 			}
 			default: // Neutral
 			{
-				label = "The brew fizzles.";
-				GD.Print("[BattleScene] Alchemist neutral fizzle");
+				label = $"The brew fizzles. -{splashDamage} HP";
+				GD.Print($"[BattleScene] Alchemist neutral fizzle, splash {splashDamage}");
 				break;
 			}
 		}
 
 		SetBattleVar("hit_label",  label);
 		SetBattleVar("enemy_name", _enemy?.DisplayName ?? "???");
-		SetBattleVar("damage",     "0");
+		SetBattleVar("damage",     splashDamage.ToString());
 		await RunBattleTimeline("res://dialog/timelines/battle_hit.dtl");
 
 		// Player is the only one who could die from a backfire.
 		if (GameManager.Instance.PlayerStats.CurrentHp <= 0)
 		{
 			await HandleDefeat();
+			return;
+		}
+		// Splash damage may have killed the enemy.
+		if (_enemyCurrentHp <= 0)
+		{
+			await HandleVictory();
 			return;
 		}
 		await RunEnemyTurn();

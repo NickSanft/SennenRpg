@@ -18,6 +18,7 @@ public partial class PauseMenu : CanvasLayer
 	private Button _cookButton      = null!;
 	private Button _forageryButton  = null!;
 	private Button _bestiaryButton  = null!;
+	private Button _partyButton     = null!;
 	private Button _equipmentButton = null!;
 	private Button _spellsButton    = null!;
 	private Button _statsButton     = null!;
@@ -28,6 +29,7 @@ public partial class PauseMenu : CanvasLayer
 	private CookingMenu?    _cookingMenu;
 	private ForageryMenu?   _forageryMenu;
 	private BestiaryMenu?   _bestiaryMenu;
+	private PartyMenu?      _partyMenu;
 	private EquipmentMenu?  _equipmentMenu;
 	private SpellsMenu?     _spellsMenu;
 	private StatsMenu?      _statsMenu;
@@ -45,6 +47,7 @@ public partial class PauseMenu : CanvasLayer
 		_cookButton      = GetNode<Button>("Overlay/Panel/VBox/CookButton");
 		_forageryButton  = GetNode<Button>("Overlay/Panel/VBox/ForageryButton");
 		_bestiaryButton  = GetNode<Button>("Overlay/Panel/VBox/BestiaryButton");
+		_partyButton     = GetNode<Button>("Overlay/Panel/VBox/PartyButton");
 		_equipmentButton = GetNode<Button>("Overlay/Panel/VBox/EquipmentButton");
 		_spellsButton    = GetNode<Button>("Overlay/Panel/VBox/SpellsButton");
 		_statsButton     = GetNode<Button>("Overlay/Panel/VBox/StatsButton");
@@ -57,6 +60,7 @@ public partial class PauseMenu : CanvasLayer
 		_cookButton.Pressed      += OnCookPressed;
 		_forageryButton.Pressed  += OnForageryPressed;
 		_bestiaryButton.Pressed  += OnBestiaryPressed;
+		_partyButton.Pressed     += OnPartyPressed;
 		_equipmentButton.Pressed += OnEquipmentPressed;
 		_spellsButton.Pressed    += OnSpellsPressed;
 		_statsButton.Pressed     += OnStatsPressed;
@@ -68,7 +72,7 @@ public partial class PauseMenu : CanvasLayer
 
 		// Cursor SFX on focus change
 		foreach (var btn in new[] { _resumeButton, _saveButton, _settingsButton,
-			_itemsButton, _cookButton, _forageryButton, _bestiaryButton, _equipmentButton, _spellsButton, _statsButton, _mainMenuButton })
+			_itemsButton, _cookButton, _forageryButton, _bestiaryButton, _partyButton, _equipmentButton, _spellsButton, _statsButton, _mainMenuButton })
 			btn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
 
 		// Instantiate InventoryMenu as a sibling so its visibility is independent of PauseMenu
@@ -122,6 +126,19 @@ public partial class PauseMenu : CanvasLayer
 		{
 			GD.PushWarning("[PauseMenu] BestiaryMenu.tscn not found — BESTIARY button will be disabled.");
 			_bestiaryButton.Disabled = true;
+		}
+
+		const string partyPath = "res://scenes/menus/PartyMenu.tscn";
+		if (ResourceLoader.Exists(partyPath))
+		{
+			_partyMenu = GD.Load<PackedScene>(partyPath).Instantiate<PartyMenu>();
+			_partyMenu.Closed += OnPartyClosed;
+			AddSibling(_partyMenu);
+		}
+		else
+		{
+			GD.PushWarning("[PauseMenu] PartyMenu.tscn not found — PARTY button will be disabled.");
+			_partyButton.Disabled = true;
 		}
 
 		const string eqPath = "res://scenes/menus/EquipmentMenu.tscn";
@@ -298,6 +315,21 @@ public partial class PauseMenu : CanvasLayer
 		Visible = true;
 		_bestiaryButton.GrabFocus();
 		GD.Print("[PauseMenu] Bestiary menu closed, PauseMenu restored.");
+	}
+
+	private void OnPartyPressed()
+	{
+		if (_partyMenu == null) return;
+		Visible = false;
+		_partyMenu.Open();
+		GD.Print("[PauseMenu] Party menu opened.");
+	}
+
+	private void OnPartyClosed()
+	{
+		Visible = true;
+		_partyButton.GrabFocus();
+		GD.Print("[PauseMenu] Party menu closed, PauseMenu restored.");
 	}
 
 	private void OnEquipmentPressed()

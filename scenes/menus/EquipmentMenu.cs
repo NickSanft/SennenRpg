@@ -32,7 +32,8 @@ public partial class EquipmentMenu : CanvasLayer
         { EquipmentSlot.Weapon, EquipmentSlot.Shield, EquipmentSlot.Gloves, EquipmentSlot.Accessory };
 
     // ── Node references ───────────────────────────────────────────────────────
-    private RichTextLabel _statsLabel = null!;
+    private RichTextLabel _statsLabel    = null!;
+    private TextureRect?  _portraitRect;
 
     // Item picker (visible when choosing what to equip / unequip)
     private Control        _itemPickerPanel = null!;
@@ -41,6 +42,11 @@ public partial class EquipmentMenu : CanvasLayer
 
     private readonly Dictionary<EquipmentSlot, EquipmentSlotButton> _slotButtons = new();
     private EquipmentSlot? _activeSlot;
+
+    // Phase 6 — member cycler. Index into GameManager.Party.Members for the
+    // currently inspected member. Use ←/→ to cycle when the menu is open.
+    private int _currentMemberIndex;
+    private Label _memberHeaderLabel = null!;
 
     // ── Setup ─────────────────────────────────────────────────────────────────
 
@@ -101,6 +107,16 @@ public partial class EquipmentMenu : CanvasLayer
         };
         title.AddThemeFontSizeOverride("font_size", 18);
         outer.AddChild(title);
+
+        // Phase 6 — member cycler header (◀ Sen ▶ · Bard)
+        _memberHeaderLabel = new Label
+        {
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Modulate            = Gold,
+        };
+        _memberHeaderLabel.AddThemeFontSizeOverride("font_size", 12);
+        outer.AddChild(_memberHeaderLabel);
+
         outer.AddChild(new HSeparator());
 
         // Three-column content row
@@ -154,7 +170,8 @@ public partial class EquipmentMenu : CanvasLayer
 
     private void BuildStatPanel(VBoxContainer parent)
     {
-        // Player portrait — first frame of the Sen sprite sheet
+        // Member portrait — refreshed with the current member's overworld sprite
+        // each time the cycler moves. Texture is set in RefreshPortrait().
         var portraitContainer = new ColorRect
         {
             Color             = new Color(0.18f, 0.18f, 0.28f),
@@ -162,28 +179,18 @@ public partial class EquipmentMenu : CanvasLayer
         };
         parent.AddChild(portraitContainer);
 
-        const string spritePath = "res://assets/sprites/player/player_sen.png";
-        if (ResourceLoader.Exists(spritePath))
+        _portraitRect = new TextureRect
         {
-            var atlas = new AtlasTexture
-            {
-                Atlas  = GD.Load<Texture2D>(spritePath),
-                Region = new Rect2(0, 0, 32, 32),
-            };
-            var portraitRect = new TextureRect
-            {
-                Texture              = atlas,
-                ExpandMode           = TextureRect.ExpandModeEnum.FitWidthProportional,
-                StretchMode          = TextureRect.StretchModeEnum.KeepAspectCentered,
-                TextureFilter        = CanvasItem.TextureFilterEnum.Nearest,
-                CustomMinimumSize    = new Vector2(48f, 48f),
-                AnchorLeft           = 0.5f, AnchorRight = 0.5f,
-                AnchorTop            = 0.5f, AnchorBottom = 0.5f,
-                OffsetLeft           = -24f, OffsetRight = 24f,
-                OffsetTop            = -24f, OffsetBottom = 24f,
-            };
-            portraitContainer.AddChild(portraitRect);
-        }
+            ExpandMode           = TextureRect.ExpandModeEnum.FitWidthProportional,
+            StretchMode          = TextureRect.StretchModeEnum.KeepAspectCentered,
+            TextureFilter        = CanvasItem.TextureFilterEnum.Nearest,
+            CustomMinimumSize    = new Vector2(48f, 48f),
+            AnchorLeft           = 0.5f, AnchorRight = 0.5f,
+            AnchorTop            = 0.5f, AnchorBottom = 0.5f,
+            OffsetLeft           = -24f, OffsetRight = 24f,
+            OffsetTop            = -24f, OffsetBottom = 24f,
+        };
+        portraitContainer.AddChild(_portraitRect);
 
         // Stats text — RichTextLabel for BBCode colour support
         _statsLabel = new RichTextLabel
@@ -235,6 +242,17 @@ public partial class EquipmentMenu : CanvasLayer
     public void Open()
     {
         Visible = true;
+
+        // Honour the cursor set by PartyMenu so the same member appears here.
+        var party = GameManager.Instance.Party;
+        _currentMemberIndex = 0;
+        for (int i = 0; i < party.Members.Count; i++)
+            if (party.Members[i].MemberId == GameManager.Instance.SelectedMemberId)
+            {
+                _currentMemberIndex = i;
+                break;
+            }
+
         RefreshAll();
         // Focus first left-column button
         if (_slotButtons.TryGetValue(EquipmentSlot.Head, out var first))
@@ -247,6 +265,34 @@ public partial class EquipmentMenu : CanvasLayer
     public override void _UnhandledInput(InputEvent e)
     {
         if (!Visible) return;
+
+        // Cycle members with ←/→ when the picker is closed.
+        if (!_itemPickerPanel.Visible)
+        {
+            var party = GameManager.Instance.Party;
+            if (party.Count > 1)
+            {
+                if (e.IsActionPressed("ui_left"))
+                {
+                    _currentMemberIndex = (_currentMemberIndex - 1 + party.Count) % party.Count;
+                    GameManager.Instance.SelectedMemberId = party.Members[_currentMemberIndex].MemberId;
+                    AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+                    RefreshAll();
+                    GetViewport().SetInputAsHandled();
+                    return;
+                }
+                if (e.IsActionPressed("ui_right"))
+                {
+                    _currentMemberIndex = (_currentMemberIndex + 1) % party.Count;
+                    GameManager.Instance.SelectedMemberId = party.Members[_currentMemberIndex].MemberId;
+                    AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+                    RefreshAll();
+                    GetViewport().SetInputAsHandled();
+                    return;
+                }
+            }
+        }
+
         if (!e.IsActionPressed("ui_cancel")) return;
         GetViewport().SetInputAsHandled();
         if (_itemPickerPanel.Visible)
@@ -255,17 +301,48 @@ public partial class EquipmentMenu : CanvasLayer
             Close();
     }
 
+    /// <summary>The party member currently shown in the menu, or null if the party is empty.</summary>
+    private PartyMember? CurrentMember
+    {
+        get
+        {
+            var party = GameManager.Instance.Party;
+            if (party.IsEmpty) return null;
+            int idx = System.Math.Clamp(_currentMemberIndex, 0, party.Count - 1);
+            return party.Members[idx];
+        }
+    }
+
+    private bool IsCurrentSen => CurrentMember?.MemberId == "sen";
+
     // ── Slot pressed ──────────────────────────────────────────────────────────
 
     private void OnSlotPressed(EquipmentSlot slot)
     {
         _activeSlot = slot;
-        var gm = GameManager.Instance;
+        var gm     = GameManager.Instance;
+        var member = CurrentMember;
+        if (member == null) return;
+        bool isSen = IsCurrentSen;
 
-        bool hasStaticEquipped  = gm.EquippedItemPaths.ContainsKey(slot)
-                                && !string.IsNullOrEmpty(gm.EquippedItemPaths[slot]);
-        bool hasDynamicEquipped = gm.EquippedDynamicItemIds.ContainsKey(slot);
-        bool isEquipped         = hasStaticEquipped || hasDynamicEquipped;
+        // For Sen, the InventoryData dicts are canonical (and include Lily-forged dynamic
+        // equipment). For non-Sen, use the per-member dict on PartyMember (static items only).
+        bool hasStaticEquipped;
+        bool hasDynamicEquipped;
+
+        if (isSen)
+        {
+            hasStaticEquipped = gm.EquippedItemPaths.ContainsKey(slot)
+                              && !string.IsNullOrEmpty(gm.EquippedItemPaths[slot]);
+            hasDynamicEquipped = gm.EquippedDynamicItemIds.ContainsKey(slot);
+        }
+        else
+        {
+            hasStaticEquipped = member.EquippedItemPaths.TryGetValue(slot.ToString(), out string? mp)
+                              && !string.IsNullOrEmpty(mp);
+            hasDynamicEquipped = false; // non-Sen don't use Lily forge slots in v1
+        }
+        bool isEquipped = hasStaticEquipped || hasDynamicEquipped;
 
         _itemPickerTitle.Text = $"{slot}";
 
@@ -276,17 +353,31 @@ public partial class EquipmentMenu : CanvasLayer
         // Unequip option — always shown when something is equipped
         if (hasStaticEquipped)
         {
-            string path     = gm.EquippedItemPaths[slot];
+            string path = isSen ? gm.EquippedItemPaths[slot]
+                                 : member.EquippedItemPaths[slot.ToString()];
             var    data     = ResourceLoader.Exists(path) ? GD.Load<EquipmentData>(path) : null;
             string bonusStr = FormatBonuses(data);
             AddPickerOption($"[Unequip] {data?.DisplayName ?? "???"}{bonusStr}", () =>
             {
                 AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
-                gm.Unequip(slot);
+                if (isSen)
+                {
+                    gm.Unequip(slot);
+                }
+                else
+                {
+                    // Mirror gm.Unequip's behaviour: return the item to the shared bag
+                    // so it stops being "owned" by this member and becomes available
+                    // again to other members and the inventory listing.
+                    string returningPath = member.EquippedItemPaths[slot.ToString()];
+                    member.EquippedItemPaths.Remove(slot.ToString());
+                    if (!string.IsNullOrEmpty(returningPath))
+                        gm.AddEquipment(returningPath);
+                }
                 CloseItemPicker();
             });
         }
-        else if (hasDynamicEquipped)
+        else if (hasDynamicEquipped && isSen)
         {
             string dynId    = gm.EquippedDynamicItemIds[slot];
             var    dynItem  = gm.DynamicEquipmentInventory.Find(e => e.Id == dynId);
@@ -299,7 +390,7 @@ public partial class EquipmentMenu : CanvasLayer
             });
         }
 
-        // Static .tres equipment available for this slot
+        // Static .tres equipment available for this slot — shared bag for all members.
         bool any = false;
         foreach (string path in gm.OwnedEquipmentPaths)
         {
@@ -307,35 +398,56 @@ public partial class EquipmentMenu : CanvasLayer
             var data = GD.Load<EquipmentData>(path);
             if (data == null || data.Slot != slot) continue;
 
+            // Prevent equipping the same item on two members at once: skip when another
+            // party member already has this item equipped.
+            if (IsItemEquippedByAnotherMember(path, member)) continue;
+
             var captured = path;
             string bonusStr = FormatBonuses(data);
             AddPickerOption($"{data.DisplayName}{bonusStr}", () =>
             {
                 AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
-                if (hasDynamicEquipped) gm.UnequipDynamic(slot);
-                gm.Equip(slot, captured);
+                if (isSen)
+                {
+                    if (hasDynamicEquipped) gm.UnequipDynamic(slot);
+                    gm.Equip(slot, captured);
+                }
+                else
+                {
+                    // If the slot was already occupied, return the previous item to the bag.
+                    if (member.EquippedItemPaths.TryGetValue(slot.ToString(), out string? prev)
+                        && !string.IsNullOrEmpty(prev))
+                    {
+                        gm.AddEquipment(prev);
+                    }
+                    // Move the picked item from the shared bag to this member's slot.
+                    gm.OwnedEquipmentPaths.Remove(captured);
+                    member.EquippedItemPaths[slot.ToString()] = captured;
+                }
                 CloseItemPicker();
             });
             any = true;
         }
 
-        // Lily-forged dynamic equipment available for this slot
-        foreach (var dynItem in gm.DynamicEquipmentInventory)
+        // Lily-forged dynamic equipment available for this slot — Sen only.
+        if (isSen)
         {
-            if (dynItem.Slot != slot) continue;
-            // Skip if this item is already equipped in this or another slot
-            if (gm.EquippedDynamicItemIds.ContainsValue(dynItem.Id)) continue;
-
-            var captured = dynItem.Id;
-            string bonusStr = FormatDynamicBonuses(dynItem);
-            AddPickerOption($"{dynItem.DisplayName}{bonusStr}", () =>
+            foreach (var dynItem in gm.DynamicEquipmentInventory)
             {
-                AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
-                if (hasStaticEquipped) gm.Unequip(slot);
-                gm.EquipDynamic(slot, captured);
-                CloseItemPicker();
-            });
-            any = true;
+                if (dynItem.Slot != slot) continue;
+                if (gm.EquippedDynamicItemIds.ContainsValue(dynItem.Id)) continue;
+
+                var captured = dynItem.Id;
+                string bonusStr = FormatDynamicBonuses(dynItem);
+                AddPickerOption($"{dynItem.DisplayName}{bonusStr}", () =>
+                {
+                    AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
+                    if (hasStaticEquipped) gm.Unequip(slot);
+                    gm.EquipDynamic(slot, captured);
+                    CloseItemPicker();
+                });
+                any = true;
+            }
         }
 
         if (!isEquipped && !any)
@@ -361,6 +473,33 @@ public partial class EquipmentMenu : CanvasLayer
         // Focus first picker button
         if (_itemPickerList.GetChildCount() > 0 && _itemPickerList.GetChild(0) is Button first)
             first.CallDeferred(Button.MethodName.GrabFocus);
+    }
+
+    /// <summary>
+    /// Returns true when an item path is already equipped by a party member other than
+    /// <paramref name="excludeMember"/>. Sen's equipment lives in <c>InventoryData.EquippedItemPaths</c>;
+    /// other members store their slots on the PartyMember directly.
+    /// </summary>
+    private static bool IsItemEquippedByAnotherMember(string path, PartyMember excludeMember)
+    {
+        var gm = GameManager.Instance;
+
+        // Sen
+        if (excludeMember.MemberId != "sen")
+        {
+            foreach (var kv in gm.EquippedItemPaths)
+                if (kv.Value == path) return true;
+        }
+
+        // Other party members
+        foreach (var m in gm.Party.Members)
+        {
+            if (m.MemberId == excludeMember.MemberId) continue;
+            if (m.MemberId == "sen") continue; // already handled above
+            foreach (var kv in m.EquippedItemPaths)
+                if (kv.Value == path) return true;
+        }
+        return false;
     }
 
     private void AddPickerOption(string text, System.Action action)
@@ -401,48 +540,144 @@ public partial class EquipmentMenu : CanvasLayer
 
     private void RefreshAll()
     {
-        var gm = GameManager.Instance;
+        var gm     = GameManager.Instance;
+        var member = CurrentMember;
+        bool isSen = IsCurrentSen;
+
+        // Header — ◀ Name ▶ · Class
+        if (member != null)
+        {
+            string left  = gm.Party.Count > 1 ? "◀ " : "  ";
+            string right = gm.Party.Count > 1 ? " ▶" : "  ";
+            _memberHeaderLabel.Text = $"{left}{member.DisplayName}{right}   ·   {member.Class}";
+        }
+
         foreach (var (slot, btn) in _slotButtons)
         {
             string? name = null;
-            if (gm.EquippedItemPaths.TryGetValue(slot, out string? path)
-                && !string.IsNullOrEmpty(path)
-                && ResourceLoader.Exists(path))
+
+            if (isSen)
             {
-                name = GD.Load<EquipmentData>(path).DisplayName;
+                if (gm.EquippedItemPaths.TryGetValue(slot, out string? path)
+                    && !string.IsNullOrEmpty(path)
+                    && ResourceLoader.Exists(path))
+                {
+                    name = GD.Load<EquipmentData>(path).DisplayName;
+                }
+                else if (gm.EquippedDynamicItemIds.TryGetValue(slot, out string? dynId))
+                {
+                    name = gm.DynamicEquipmentInventory.Find(e => e.Id == dynId)?.DisplayName;
+                }
             }
-            else if (gm.EquippedDynamicItemIds.TryGetValue(slot, out string? dynId))
+            else if (member != null)
             {
-                name = gm.DynamicEquipmentInventory.Find(e => e.Id == dynId)?.DisplayName;
+                if (member.EquippedItemPaths.TryGetValue(slot.ToString(), out string? path)
+                    && !string.IsNullOrEmpty(path)
+                    && ResourceLoader.Exists(path))
+                {
+                    name = GD.Load<EquipmentData>(path).DisplayName;
+                }
             }
+
             btn.Refresh(name);
         }
         RefreshStatsLabel();
+        RefreshPortrait();
         UiTheme.ApplyPixelFontToAll(this);
         UiTheme.ApplyToAllButtons(this);
+    }
+
+    /// <summary>
+    /// Update the portrait TextureRect to show the current member's first overworld
+    /// frame. Falls back to Sen's overworld sprite when the member doesn't have one
+    /// configured.
+    /// </summary>
+    private void RefreshPortrait()
+    {
+        if (_portraitRect == null) return;
+
+        var member = CurrentMember;
+        string path = member?.OverworldSpritePath ?? "";
+        if (string.IsNullOrEmpty(path) || !ResourceLoader.Exists(path))
+            path = "res://assets/sprites/player/Sen_Overworld.png";
+
+        if (!ResourceLoader.Exists(path))
+        {
+            _portraitRect.Texture = null;
+            return;
+        }
+
+        // Lily / Rain / Sen overworld sheets are all 32×16 (two 16×16 frames).
+        // Pull the first frame as the portrait.
+        _portraitRect.Texture = new AtlasTexture
+        {
+            Atlas  = GD.Load<Texture2D>(path),
+            Region = new Rect2(0, 0, 16, 16),
+        };
     }
 
     private void RefreshStatsLabel()
     {
         if (_statsLabel == null) return; // not yet built
 
-        var gm   = GameManager.Instance;
-        var base_ = gm.PlayerStats;
-        var eff  = gm.EffectiveStats;
+        var gm     = GameManager.Instance;
+        var member = CurrentMember;
+        if (member == null)
+        {
+            _statsLabel.Text = "(no party)";
+            return;
+        }
 
         string BonusStr(int eff_, int base__) =>
             eff_ > base__ ? $" [color=green](+{eff_ - base__})[/color]" : "";
 
-        _statsLabel.Text =
-            $"{gm.PlayerName}  LV {gm.PlayerLevel}\n" +
-            $"━━━━━━━━━━━━━━━━━\n" +
-            $"HP:   {eff.MaxHp,4}{BonusStr(eff.MaxHp, base_.MaxHp)}\n" +
-            $"ATK:  {eff.Attack,4}{BonusStr(eff.Attack, base_.Attack)}\n" +
-            $"DEF:  {eff.Defense,4}{BonusStr(eff.Defense, base_.Defense)}\n" +
-            $"SPD:  {eff.Speed,4}{BonusStr(eff.Speed, base_.Speed)}\n" +
-            $"MAG:  {eff.Magic,4}{BonusStr(eff.Magic, base_.Magic)}\n" +
-            $"RES:  {eff.Resistance,4}{BonusStr(eff.Resistance, base_.Resistance)}\n" +
-            $"LCK:  {eff.Luck,4}{BonusStr(eff.Luck, base_.Luck)}";
+        if (IsCurrentSen)
+        {
+            var base_ = gm.PlayerStats;
+            var eff   = gm.EffectiveStats;
+            _statsLabel.Text =
+                $"{member.DisplayName}  LV {gm.PlayerLevel}\n" +
+                $"━━━━━━━━━━━━━━━━━\n" +
+                $"HP:   {eff.MaxHp,4}{BonusStr(eff.MaxHp, base_.MaxHp)}\n" +
+                $"ATK:  {eff.Attack,4}{BonusStr(eff.Attack, base_.Attack)}\n" +
+                $"DEF:  {eff.Defense,4}{BonusStr(eff.Defense, base_.Defense)}\n" +
+                $"SPD:  {eff.Speed,4}{BonusStr(eff.Speed, base_.Speed)}\n" +
+                $"MAG:  {eff.Magic,4}{BonusStr(eff.Magic, base_.Magic)}\n" +
+                $"RES:  {eff.Resistance,4}{BonusStr(eff.Resistance, base_.Resistance)}\n" +
+                $"LCK:  {eff.Luck,4}{BonusStr(eff.Luck, base_.Luck)}";
+        }
+        else
+        {
+            var bonuses = SumBonusesForMember(member);
+            var eff     = PartyMemberStatsLogic.ComputeEffective(member, bonuses);
+            _statsLabel.Text =
+                $"{member.DisplayName}  LV {member.Level}\n" +
+                $"━━━━━━━━━━━━━━━━━\n" +
+                $"HP:   {eff.MaxHp,4}{BonusStr(eff.MaxHp, member.MaxHp)}\n" +
+                $"ATK:  {eff.Attack,4}{BonusStr(eff.Attack, member.Attack)}\n" +
+                $"DEF:  {eff.Defense,4}{BonusStr(eff.Defense, member.Defense)}\n" +
+                $"SPD:  {eff.Speed,4}{BonusStr(eff.Speed, member.Speed)}\n" +
+                $"MAG:  {eff.Magic,4}{BonusStr(eff.Magic, member.Magic)}\n" +
+                $"RES:  {eff.Resistance,4}{BonusStr(eff.Resistance, member.Resistance)}\n" +
+                $"LCK:  {eff.Luck,4}{BonusStr(eff.Luck, member.Luck)}";
+        }
+    }
+
+    /// <summary>
+    /// Sum equipment bonuses for a non-Sen party member by walking their per-member
+    /// EquippedItemPaths dict and reading each .tres.
+    /// </summary>
+    private static EquipmentBonuses SumBonusesForMember(PartyMember member)
+    {
+        var list = new List<EquipmentBonuses>();
+        foreach (var kv in member.EquippedItemPaths)
+        {
+            if (string.IsNullOrEmpty(kv.Value) || !ResourceLoader.Exists(kv.Value)) continue;
+            var data = GD.Load<EquipmentData>(kv.Value);
+            if (data == null) continue;
+            list.Add(data.Bonuses);
+        }
+        return EquipmentLogic.SumBonuses(list);
     }
 
     private static string FormatBonuses(EquipmentData? data)

@@ -52,6 +52,15 @@ public partial class OverworldBase : Node2D
 	private bool             _encounterLocked; // prevents overlapping battle transitions
 	private Rect2            _worldBounds;
 
+	// Phase 4 — overworld follower chain. Only populated on 16×16 sprite maps
+	// (UseSmallPlayer == true). Each entry is positioned 1 tile back further than the prior.
+	private FollowerTrail? _followerTrail;
+	private System.Collections.Generic.List<SennenRpg.Scenes.Player.PartyFollower> _followers = new();
+	// Tracks the leader's position from BEFORE the latest step. Pushing this into the
+	// trail (instead of the leader's current position) means stepsBack=1 returns the
+	// tile directly behind the leader, not the leader's own tile.
+	private Vector2 _lastLeaderPos;
+
 	private const float StepDistance = 32f; // pixels per "step" roll
 
 	public override void _Ready()
@@ -72,6 +81,7 @@ public partial class OverworldBase : Node2D
 
 		// Register SpawnPoint nodes from the scene BEFORE spawning the player,
 		// so GetSpawnPosition() can find them.
+		SpawnPoint? firstRegistered = null;
 		foreach (var node in GetTree().GetNodesInGroup("spawn_points"))
 		{
 			if (node is SpawnPoint sp)
@@ -79,8 +89,21 @@ public partial class OverworldBase : Node2D
 				SpawnPoints[sp.SpawnId] = sp.GlobalPosition;
 				if (sp.SpawnId == "default")
 					DefaultSpawnPosition = sp.GlobalPosition;
+				if (firstRegistered == null)
+					firstRegistered = sp;
 				GD.Print($"[OverworldBase] SpawnPoint registered: '{sp.SpawnId}' @ {sp.GlobalPosition}");
 			}
+		}
+
+		// Fallback: if no spawn point claimed the "default" id, use the first registered
+		// one. Without this the player lands at world (0, 0) on maps like DungeonFloor1
+		// (whose spawn points are "entrance" / "stairs_down") whenever the entry
+		// transition didn't set GameManager.LastSpawnId — including the WorldMap →
+		// dungeon transition, which uses WorldMapEntrance instead of MapExit.
+		if (DefaultSpawnPosition == Vector2.Zero && firstRegistered != null)
+		{
+			DefaultSpawnPosition = firstRegistered.GlobalPosition;
+			GD.Print($"[OverworldBase] No 'default' spawn point — using '{firstRegistered.SpawnId}' as fallback @ {firstRegistered.GlobalPosition}");
 		}
 
 		// Spawn player into YSort so it Y-sorts with NPCs
@@ -97,6 +120,15 @@ public partial class OverworldBase : Node2D
 			p.Moved += OnPlayerMoved;
 		else if (_player is Player.DungeonPlayer dp)
 			dp.Moved += OnPlayerMoved;
+
+		// Phase 4: spawn party followers on 16×16 sprite maps only.
+		// Towns / interiors that use the 32×32 player sprite skip this entirely.
+		if (UseSmallPlayer)
+		{
+			ApplyLeaderSpriteToPlayer();
+			SpawnFollowers();
+			GameManager.Instance.PartyOrderChanged += OnPartyOrderChanged;
+		}
 
 		if (!string.IsNullOrEmpty(BgmPath))
 			AudioManager.Instance.PlayBgm(BgmPath);
@@ -138,6 +170,16 @@ public partial class OverworldBase : Node2D
 	{
 		if (GameManager.Instance.CurrentState != GameState.Overworld) return;
 
+		// Phase 4: push the leader's PREVIOUS position into the trail so a follower at
+		// stepsBack=1 lands one tile behind the leader. We track _lastLeaderPos locally
+		// because the Moved signal fires AFTER the move completes — by the time we get
+		// here _player.GlobalPosition is already the new tile centre.
+		if (_followerTrail != null && _player != null)
+		{
+			_followerTrail.Push(_lastLeaderPos);
+			_lastLeaderPos = _player.GlobalPosition;
+		}
+
 		_stepAccumulator += distance;
 
 		while (_stepAccumulator >= StepDistance)
@@ -152,12 +194,104 @@ public partial class OverworldBase : Node2D
 		}
 	}
 
+	// ── Party followers (Phase 4) ────────────────────────────────────
+
+	private void SpawnFollowers()
+	{
+		var party = GameManager.Instance.Party;
+		if (party.IsEmpty || _player == null) return;
+
+		// Skip the leader (Sen, by default at index 0) — only the *other* members follow.
+		var followerMembers = new System.Collections.Generic.List<SennenRpg.Core.Data.PartyMember>();
+		for (int i = 0; i < party.Members.Count; i++)
+		{
+			if (i == party.LeaderIndex) continue;
+			followerMembers.Add(party.Members[i]);
+		}
+		if (followerMembers.Count == 0) return;
+
+		// Capacity must hold at least one position per follower so the deepest one
+		// has a real history entry to read once enough steps have been taken.
+		_followerTrail = new FollowerTrail(capacity: System.Math.Max(8, followerMembers.Count + 2));
+
+		// Snap the spawn to a 16-px tile centre. DungeonPlayer snaps itself on its
+		// first _Process frame; we mirror that here so the followers (which don't run
+		// the dungeon player's snap logic) end up on the same tile as Sen even if the
+		// raw spawn-point position was off-grid.
+		Vector2 raw   = _player.GlobalPosition;
+		Vector2 spawn = SnapToTileCentre(raw);
+		_player.GlobalPosition = spawn;
+		_lastLeaderPos = spawn;
+
+		// Make sure the leader visually outranks every follower so the player is never
+		// covered up when they overlap (spawn frame, intersections at corners, etc.).
+		_player.ZIndex = 10;
+
+		for (int i = 0; i < followerMembers.Count; i++)
+		{
+			var member   = followerMembers[i];
+			var follower = new SennenRpg.Scenes.Player.PartyFollower();
+			follower.Configure(member.OverworldSpritePath, _followerTrail, stepsBack: i + 1, spawnPosition: spawn);
+			follower.ZIndex = 5; // Below the leader, above the ground tiles.
+			YSort.AddChild(follower);
+			_followers.Add(follower);
+		}
+
+		GD.Print($"[OverworldBase] Spawned {_followers.Count} party follower(s).");
+	}
+
+	private void OnPartyOrderChanged()
+	{
+		if (!UseSmallPlayer) return;
+		ApplyLeaderSpriteToPlayer();
+		RespawnFollowers();
+	}
+
+	private void ApplyLeaderSpriteToPlayer()
+	{
+		var leader = GameManager.Instance.Party.Leader;
+		if (leader == null || _player == null) return;
+		string path = string.IsNullOrEmpty(leader.OverworldSpritePath)
+			? "res://assets/sprites/player/Sen_Overworld.png"
+			: leader.OverworldSpritePath;
+		// Both the small and the dungeon player support SetSpriteSheet via overload.
+		if (_player is Player.DungeonPlayer dp) dp.SetSpriteSheet(path);
+	}
+
+	private void RespawnFollowers()
+	{
+		foreach (var f in _followers)
+		{
+			if (IsInstanceValid(f)) f.QueueFree();
+		}
+		_followers.Clear();
+		_followerTrail = null;
+		SpawnFollowers();
+	}
+
+	/// <summary>
+	/// Snap a world coordinate to the centre of its 16×16 tile, matching the snap
+	/// rule used by <c>DungeonPlayer.SnapToGrid</c>. Centres land at (8, 8) within
+	/// each tile.
+	/// </summary>
+	private static Vector2 SnapToTileCentre(Vector2 pos)
+	{
+		const int tile = 16;
+		return new Vector2(
+			Mathf.Floor(pos.X / tile) * tile + tile * 0.5f,
+			Mathf.Floor(pos.Y / tile) * tile + tile * 0.5f);
+	}
+
 	public override void _ExitTree()
 	{
 		// Release the weather lock we took in _Ready so the next scene (e.g. WorldMap)
 		// can resume advancing weather.
 		if (LockWeather && WeatherManager.Instance != null)
 			WeatherManager.Instance.Locked = false;
+
+		// Unsubscribe from PartyOrderChanged so we don't leak handlers across scenes.
+		var gm = GameManager.Instance;
+		if (gm != null) gm.PartyOrderChanged -= OnPartyOrderChanged;
 	}
 
 	public override void _UnhandledInput(InputEvent @event)

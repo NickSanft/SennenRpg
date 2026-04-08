@@ -44,6 +44,13 @@ public partial class Npc : CharacterBody2D, IInteractable
 	/// <summary>Body colour used when no sprite sheet is assigned.</summary>
 	[Export] public Color PlaceholderColor { get; set; } = new Color(1f, 0.75f, 0.3f);
 
+	/// <summary>
+	/// Optional flag key. When set and the corresponding GameManager flag is true, this
+	/// NPC despawns from the scene at <c>_Ready</c>. Used to hide MAPP's Lily/Rain once
+	/// the player has recruited them at Mellyr Outpost.
+	/// </summary>
+	[Export] public string HideIfFlagSet { get; set; } = "";
+
 	/// <summary>Label text shown in the interaction prompt. Override in subclasses.</summary>
 	protected virtual string PromptText => "[Z] Talk";
 

@@ -22,6 +22,15 @@ public partial class ResidencyShopMenu : CanvasLayer
 
 	private NpcResidencyEntry[] _stock = [];
 
+	/// <summary>
+	/// Queue of join-dialog timeline paths to play after the menu closes. Each successful
+	/// party-recruit hire appends to this list, so hiring Lily AND Rain in the same
+	/// session plays both join cutscenes back-to-back instead of dropping the first one.
+	/// Cleared on every <see cref="Open"/>.
+	/// </summary>
+	public System.Collections.Generic.List<string> PendingJoinTimelines { get; }
+		= new System.Collections.Generic.List<string>();
+
 	public override void _Ready()
 	{
 		Layer   = 51;
@@ -59,6 +68,7 @@ public partial class ResidencyShopMenu : CanvasLayer
 	public void Open(NpcResidencyEntry[] stock)
 	{
 		_stock = stock;
+		PendingJoinTimelines.Clear();
 		Refresh();
 		Visible = true;
 	}
@@ -151,8 +161,50 @@ public partial class ResidencyShopMenu : CanvasLayer
 		GameManager.Instance.AddGold(-entry.Price);
 		GameManager.Instance.SetFlag(entry.FlagKey, true);
 
-		ShowFeedback($"{entry.DisplayName} has moved into Mellyr Outpost!");
+		// Phase 3: residency entries with a PartyMemberId also recruit a party member.
+		if (!string.IsNullOrEmpty(entry.PartyMemberId))
+		{
+			var member = BuildPartyMemberFromEntry(entry);
+			if (GameManager.Instance.RecruitPartyMember(member)
+				&& !string.IsNullOrEmpty(entry.JoinTimelinePath))
+			{
+				// Queue the join cutscene; multiple hires in one session play back-to-back.
+				PendingJoinTimelines.Add(entry.JoinTimelinePath);
+			}
+			ShowFeedback($"{entry.DisplayName} joined the party!");
+		}
+		else
+		{
+			ShowFeedback($"{entry.DisplayName} has moved into Mellyr Outpost!");
+		}
+
 		Refresh();
+	}
+
+	private static PartyMember BuildPartyMemberFromEntry(NpcResidencyEntry entry)
+	{
+		var stats = entry.StartingStats as CharacterStats;
+		return new PartyMember
+		{
+			MemberId            = entry.PartyMemberId,
+			DisplayName         = entry.DisplayName,
+			Class               = entry.JoinClass.ToString(),
+			CanChangeClass      = false,
+			Row                 = FormationRow.Front,
+			OverworldSpritePath = entry.OverworldSpritePath,
+			Level               = 1,
+			Exp                 = 0,
+			MaxHp               = stats?.MaxHp      ?? 18,
+			CurrentHp           = stats?.MaxHp      ?? 18,
+			MaxMp               = stats?.MaxMp      ?? 10,
+			CurrentMp           = stats?.MaxMp      ?? 10,
+			Attack              = stats?.Attack     ?? 8,
+			Defense             = stats?.Defense    ?? 3,
+			Speed               = stats?.Speed      ?? 10,
+			Magic               = stats?.Magic      ?? 6,
+			Resistance          = stats?.Resistance ?? 3,
+			Luck                = stats?.Luck       ?? 8,
+		};
 	}
 
 	private void ShowFeedback(string text)

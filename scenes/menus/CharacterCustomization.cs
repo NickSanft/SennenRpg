@@ -8,7 +8,7 @@ namespace SennenRpg.Scenes.Menus;
 
 /// <summary>
 /// Three-tab character customization screen shown after the intro cutscene.
-///   Tab 1 — Class:      choose Bard / Fighter / Ranger / Mage
+///   Tab 1 — Class:      choose Bard / Fighter / Ranger / Mage / Rogue / Alchemist
 ///   Tab 2 — Stats:      allocate 5 bonus points across 6 stats
 ///   Tab 3 — Appearance: per-colour palette swap of the player sprite
 ///
@@ -21,13 +21,16 @@ public partial class CharacterCustomization : Node2D
     private const string NextScene   = "res://scenes/overworld/WorldMap.tscn";
     private const int    BonusPoints = 5;
     private const int    PerStatCap  = 5;
+    private const int    ClassGridColumns = 3;
 
     private static readonly (string Path, string Desc)[] ClassDefs =
     [
-        ("res://resources/characters/class_bard.tres",    "Song-based magic.\nHigh speed and MP."),
-        ("res://resources/characters/class_fighter.tres", "Front-line warrior.\nHigh HP and attack."),
-        ("res://resources/characters/class_ranger.tres",  "Swift and precise.\nHigh speed and luck."),
-        ("res://resources/characters/class_mage.tres",    "Arcane power.\nHigh magic and MP, fragile."),
+        ("res://resources/characters/class_bard.tres",      "Song-based magic.\nHigh speed and MP."),
+        ("res://resources/characters/class_fighter.tres",   "Front-line warrior.\nHigh HP and attack."),
+        ("res://resources/characters/class_ranger.tres",    "Swift and precise.\nHigh speed and luck."),
+        ("res://resources/characters/class_mage.tres",      "Arcane power.\nHigh magic and MP, fragile."),
+        ("res://resources/characters/class_rogue.tres",     "Quick blades.\nMaximum speed, can steal."),
+        ("res://resources/characters/class_alchemist.tres", "Brewer of fortune.\nHigh luck and MP, frail."),
     ];
 
     // (save key, display label, hp-multiplier for one point spend)
@@ -105,11 +108,20 @@ public partial class CharacterCustomization : Node2D
     private void BuildClassTab()
     {
         var tab  = GetNode<VBoxContainer>("UI/Margin/VBox/Tabs/Class");
-        var hbox = new HBoxContainer();
-        hbox.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        hbox.SizeFlagsVertical   = Control.SizeFlags.ExpandFill;
-        hbox.AddThemeConstantOverride("separation", 8);
-        tab.AddChild(hbox);
+
+        // Use a 3-column GridContainer so 4 / 6 / 9 classes all lay out cleanly
+        // without overflowing the viewport horizontally. Each card is constrained
+        // by SizeFlagsHorizontal = ExpandFill which divides the available width
+        // evenly across the columns.
+        var grid = new GridContainer
+        {
+            Columns                = ClassGridColumns,
+            SizeFlagsHorizontal    = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical      = Control.SizeFlags.ExpandFill,
+        };
+        grid.AddThemeConstantOverride("h_separation", 8);
+        grid.AddThemeConstantOverride("v_separation", 8);
+        tab.AddChild(grid);
 
         _classSelectBtns = new Button[ClassDefs.Length];
 
@@ -118,31 +130,50 @@ public partial class CharacterCustomization : Node2D
             int            idx   = i;
             CharacterStats stats = _presets[i];
 
-            var card = new PanelContainer();
-            card.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            card.SizeFlagsVertical   = Control.SizeFlags.ExpandFill;
+            var card = new PanelContainer
+            {
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                SizeFlagsVertical   = Control.SizeFlags.ExpandFill,
+                ClipContents        = true,
+            };
 
             var vbox = new VBoxContainer();
             vbox.AddThemeConstantOverride("separation", 6);
+            vbox.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
 
-            var nameLabel = new Label { Text = stats.ClassName, HorizontalAlignment = HorizontalAlignment.Center };
-            nameLabel.AddThemeFontSizeOverride("font_size", 14);
+            var nameLabel = new Label
+            {
+                Text                = stats.ClassName,
+                HorizontalAlignment = HorizontalAlignment.Center,
+            };
+            nameLabel.AddThemeFontSizeOverride("font_size", 12);
 
             var descLabel = new Label
             {
-                Text                = ClassDefs[i].Desc,
-                AutowrapMode        = TextServer.AutowrapMode.Word,
-                HorizontalAlignment = HorizontalAlignment.Center,
+                Text                 = ClassDefs[i].Desc,
+                AutowrapMode         = TextServer.AutowrapMode.Word,
+                HorizontalAlignment  = HorizontalAlignment.Center,
+                SizeFlagsHorizontal  = Control.SizeFlags.ExpandFill,
             };
+            descLabel.AddThemeFontSizeOverride("font_size", 10);
 
             var statsLabel = new Label
             {
                 Text = $"HP {stats.MaxHp}  ATK {stats.Attack}  DEF {stats.Defense}\n" +
-                       $"MAG {stats.Magic}  SPD {stats.Speed}  LCK {stats.Luck}  MP {stats.MaxMp}",
-                HorizontalAlignment = HorizontalAlignment.Center,
+                       $"MAG {stats.Magic}  SPD {stats.Speed}  LCK {stats.Luck}\n" +
+                       $"MP {stats.MaxMp}",
+                HorizontalAlignment  = HorizontalAlignment.Center,
+                SizeFlagsHorizontal  = Control.SizeFlags.ExpandFill,
             };
+            statsLabel.AddThemeFontSizeOverride("font_size", 9);
 
-            var btn = new Button { Text = "Select", SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter };
+            var btn = new Button
+            {
+                Text                = "Select",
+                SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
+                CustomMinimumSize   = new Vector2(120f, 32f),
+            };
+            btn.AddThemeFontSizeOverride("font_size", 14);
             btn.Pressed += () => SelectClass(idx);
             _classSelectBtns[i] = btn;
 
@@ -151,7 +182,7 @@ public partial class CharacterCustomization : Node2D
             vbox.AddChild(statsLabel);
             vbox.AddChild(btn);
             card.AddChild(vbox);
-            hbox.AddChild(card);
+            grid.AddChild(card);
         }
     }
 

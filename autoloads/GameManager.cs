@@ -25,6 +25,10 @@ public partial class GameManager : Node
 	[Signal] public delegate void ClassChangedEventHandler();
 	/// <summary>Fired the very first time an enemy is defeated. Bestiary toast hook.</summary>
 	[Signal] public delegate void BestiaryDiscoveredEventHandler(string enemyId);
+	/// <summary>Fired when a new party member is recruited (e.g. Lily, Rain).</summary>
+	[Signal] public delegate void PartyMemberRecruitedEventHandler(string memberId);
+	/// <summary>Fired when the party order or leader changes (Party Menu reorder / promote).</summary>
+	[Signal] public delegate void PartyOrderChangedEventHandler();
 
 	// ── Internal domains ──────────────────────────────────────────────────────
 
@@ -36,6 +40,7 @@ public partial class GameManager : Node
 	private readonly MultiClassData        _multiClass  = new();
 	private readonly ForageCodexData       _forageCodex = new();
 	private readonly BestiaryData          _bestiary    = new();
+	private readonly PartyData             _party       = new();
 
 	// ── State ─────────────────────────────────────────────────────────────────
 
@@ -85,6 +90,13 @@ public partial class GameManager : Node
 
 	public PlayerClass ActiveClass                                              => _multiClass.ActiveClass;
 	public System.Collections.Generic.Dictionary<PlayerClass, ClassProgressionEntry> ClassEntries => _multiClass.ClassEntries;
+
+	// ── Party pass-through ────────────────────────────────────────────────────
+
+	/// <summary>Active party (Sen + any recruited members). Always contains at least Sen post-init.</summary>
+	public PartyData Party => _party;
+	/// <summary>Member id of whichever member is currently selected for inspection in menus.</summary>
+	public string SelectedMemberId { get; set; } = "sen";
 
 	// ── Inventory pass-through ────────────────────────────────────────────────
 
@@ -223,6 +235,10 @@ public partial class GameManager : Node
 		_combat.ApplyFromClassEntry(entry);
 		_combat.LoadGrowthRatesForClass(newClass);
 		_progression.ApplyFromSave(Gold, entry.Exp, entry.Level, PlayTimeSeconds);
+
+		// Mirror the new class's stats onto Sen's PartyMember so menus reading
+		// from the party get the up-to-date numbers.
+		SyncSenToParty();
 
 		EmitSignal(SignalName.ClassChanged);
 		EmitSignal(SignalName.PlayerStatsChanged);
@@ -364,6 +380,10 @@ public partial class GameManager : Node
 		_multiClass.InitializeStartingClass(stats.Class, startEntry);
 		_combat.LoadGrowthRatesForClass(stats.Class);
 
+		// Make sure Sen's party entry mirrors the freshly chosen stats so the rest
+		// of the party API can read from it immediately.
+		SyncSenToParty();
+
 		EmitSignal(SignalName.PlayerStatsChanged);
 	}
 
@@ -388,7 +408,116 @@ public partial class GameManager : Node
 		PaletteSourceColors = [];
 		PaletteTargetColors = [];
 
+		// Seed the party with Sen as the sole leader. Stats are mirrored from
+		// _combat at this point — ApplyCharacterCustomization or class switches
+		// will keep the mirror in sync.
+		_party.Clear();
+		_party.Add(BuildSenMemberFromCurrentState());
+		SelectedMemberId = "sen";
+
 		GD.Print("[GameManager] Reset for new game.");
+	}
+
+	// ── Party / Sen mirroring ─────────────────────────────────────────────────
+
+	/// <summary>
+	/// Build a fresh PartyMember for Sen from the current authoritative state held in
+	/// <see cref="_combat"/>, <see cref="_progression"/>, and <see cref="_inventory"/>.
+	/// Used by ResetForNewGame and the legacy save migration path.
+	/// </summary>
+	private PartyMember BuildSenMemberFromCurrentState()
+	{
+		var s = _combat.PlayerStats;
+		var sen = PartyMember.CreateSen(
+			displayName: PlayerName,
+			cls: _multiClass.ActiveClass,
+			level: PlayerLevel, exp: Exp,
+			currentHp: s.CurrentHp, maxHp: s.MaxHp,
+			currentMp: s.CurrentMp, maxMp: s.MaxMp,
+			attack: s.Attack, defense: s.Defense, speed: s.Speed,
+			magic: s.Magic, resistance: s.Resistance, luck: s.Luck);
+		// Mirror Sen's equipment dicts so the party member is fully self-describing
+		// (Phase 6 will route equipment writes through the member directly).
+		foreach (var kv in _inventory.EquippedItemPaths)
+			sen.EquippedItemPaths[kv.Key.ToString()] = kv.Value;
+		foreach (var kv in _inventory.EquippedDynamicItemIds)
+			sen.EquippedDynamicItemIds[kv.Key.ToString()] = kv.Value;
+		return sen;
+	}
+
+	/// <summary>
+	/// Promote a member to leader. Returns true on success and emits
+	/// <see cref="PartyOrderChanged"/>.
+	/// </summary>
+	public bool SetPartyLeader(string memberId)
+	{
+		if (!_party.SetLeader(memberId)) return false;
+		EmitSignal(SignalName.PartyOrderChanged);
+		return true;
+	}
+
+	/// <summary>
+	/// Swap two members in the marching order. Out-of-range or self-swap is a no-op.
+	/// Emits <see cref="PartyOrderChanged"/> when the swap actually changes the list.
+	/// </summary>
+	public void SwapPartyMembers(int i, int j)
+	{
+		if (i == j) return;
+		_party.Swap(i, j);
+		EmitSignal(SignalName.PartyOrderChanged);
+	}
+
+	/// <summary>
+	/// Add a recruited member to the active party. No-op if a member with the same id
+	/// already exists or if the party is full. Emits <see cref="PartyMemberRecruited"/>
+	/// on success.
+	/// </summary>
+	public bool RecruitPartyMember(PartyMember member)
+	{
+		if (member == null) return false;
+		if (_party.Contains(member.MemberId)) return false;
+		if (!_party.Add(member)) return false;
+		GD.Print($"[GameManager] Recruited party member: {member.MemberId} ({member.DisplayName}, {member.Class})");
+		EmitSignal(SignalName.PartyMemberRecruited, member.MemberId);
+		EmitSignal(SignalName.PlayerStatsChanged);
+		return true;
+	}
+
+	/// <summary>
+	/// Push Sen's authoritative state into his PartyMember. Called by SaveManager just
+	/// before serialization so the saved Party list reflects the current numbers.
+	/// </summary>
+	public void SyncSenToParty()
+	{
+		var sen = _party.GetById("sen");
+		if (sen == null)
+		{
+			_party.Add(BuildSenMemberFromCurrentState());
+			return;
+		}
+		var s = _combat.PlayerStats;
+		sen.DisplayName            = PlayerName;
+		sen.Class                  = _multiClass.ActiveClass.ToString();
+		sen.CanChangeClass         = true;
+		sen.OverworldSpritePath    = "res://assets/sprites/player/Sen_Overworld.png";
+		sen.Level                  = PlayerLevel;
+		sen.Exp                    = Exp;
+		sen.CurrentHp              = s.CurrentHp;
+		sen.MaxHp                  = s.MaxHp;
+		sen.CurrentMp              = s.CurrentMp;
+		sen.MaxMp                  = s.MaxMp;
+		sen.Attack                 = s.Attack;
+		sen.Defense                = s.Defense;
+		sen.Speed                  = s.Speed;
+		sen.Magic                  = s.Magic;
+		sen.Resistance             = s.Resistance;
+		sen.Luck                   = s.Luck;
+		sen.EquippedItemPaths.Clear();
+		foreach (var kv in _inventory.EquippedItemPaths)
+			sen.EquippedItemPaths[kv.Key.ToString()] = kv.Value;
+		sen.EquippedDynamicItemIds.Clear();
+		foreach (var kv in _inventory.EquippedDynamicItemIds)
+			sen.EquippedDynamicItemIds[kv.Key.ToString()] = kv.Value;
 	}
 
 	public void ApplySaveData(SaveData data)
@@ -440,6 +569,74 @@ public partial class GameManager : Node
 
 		PaletteSourceColors = DeserialiseColors(data.PaletteSourceColors);
 		PaletteTargetColors = DeserialiseColors(data.PaletteTargetColors);
+
+		// Party (Phase 2): legacy saves have an empty Party list — synthesise Sen
+		// from the existing _combat / _progression state. Newer saves carry a Party
+		// list directly; we replace the runtime party with what was on disk.
+		PlayerName = string.IsNullOrEmpty(data.PlayerName) ? PlayerName : data.PlayerName;
+		_party.Clear();
+		if (data.Party != null && data.Party.Count > 0)
+		{
+			_party.ReplaceAll(data.Party, data.PartyLeaderIndex);
+		}
+		else
+		{
+			_party.Add(BuildSenMemberFromCurrentState());
+		}
+		// Sen's authoritative state already lives in _combat — make sure his PartyMember
+		// reflects that exactly. (For Lily/Rain in Phase 3+, their PartyMember IS the
+		// authoritative state, so this only touches the Sen entry.)
+		SyncSenToParty();
+		SelectedMemberId = "sen";
+
+		// Legacy migration: a save written before Phase 3 may already have
+		// npc_lily_purchased / npc_rain_purchased set without the corresponding
+		// PartyMember on disk. Synthesise the missing members so the player keeps
+		// who they recruited across the upgrade.
+		MigrateLegacyRecruitFlag(SennenRpg.Core.Data.Flags.NpcLilyPurchased,
+			"lily", "Lily", PlayerClass.Alchemist,
+			"res://resources/characters/lily_stats.tres",
+			"res://assets/sprites/player/Lily_Overworld.png");
+		MigrateLegacyRecruitFlag(SennenRpg.Core.Data.Flags.NpcRainPurchased,
+			"rain", "Rain", PlayerClass.Rogue,
+			"res://resources/characters/rain_stats.tres",
+			"res://assets/sprites/player/Rain_Overworld.png");
+	}
+
+	private void MigrateLegacyRecruitFlag(
+		string flagKey, string memberId, string displayName,
+		PlayerClass cls, string statsPath, string overworldSpritePath)
+	{
+		if (!GetFlag(flagKey)) return;
+		if (_party.Contains(memberId)) return;
+
+		CharacterStats? stats = null;
+		if (ResourceLoader.Exists(statsPath))
+			stats = GD.Load<CharacterStats>(statsPath);
+
+		var member = new PartyMember
+		{
+			MemberId            = memberId,
+			DisplayName         = displayName,
+			Class               = cls.ToString(),
+			CanChangeClass      = false,
+			Row                 = FormationRow.Front,
+			OverworldSpritePath = overworldSpritePath,
+			Level               = 1,
+			Exp                 = 0,
+			MaxHp      = stats?.MaxHp      ?? 18,
+			CurrentHp  = stats?.MaxHp      ?? 18,
+			MaxMp      = stats?.MaxMp      ?? 10,
+			CurrentMp  = stats?.MaxMp      ?? 10,
+			Attack     = stats?.Attack     ?? 8,
+			Defense    = stats?.Defense    ?? 3,
+			Speed      = stats?.Speed      ?? 10,
+			Magic      = stats?.Magic      ?? 6,
+			Resistance = stats?.Resistance ?? 3,
+			Luck       = stats?.Luck       ?? 8,
+		};
+		_party.Add(member);
+		GD.Print($"[GameManager] Legacy migration: synthesised {memberId} party member from existing flag.");
 	}
 
 	private static Color[] DeserialiseColors(string[]? hexArray)

@@ -16,10 +16,10 @@ color = Color(0.08, 0.08, 0.12, 1)
 [node name="Margin" type="MarginContainer" parent="UI"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_constants/margin_left = 40
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 40
-theme_override_constants/margin_bottom = 20
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 16
 
 [node name="VBox" type="VBoxContainer" parent="UI/Margin"]
 theme_override_constants/separation = 10
@@ -42,15 +42,13 @@ theme_override_constants/separation = 6
 theme_override_constants/separation = 8
 
 [node name="BottomBar" type="HBoxContainer" parent="UI/Margin/VBox"]
-theme_override_constants/separation = 12
-
-[node name="Spacer" type="Control" parent="UI/Margin/VBox/BottomBar"]
-size_flags_horizontal = 3
+theme_override_constants/separation = 16
+alignment = 2
 
 [node name="SkipButton" type="Button" parent="UI/Margin/VBox/BottomBar"]
 text = "Skip"
-custom_minimum_size = Vector2(100, 0)
+custom_minimum_size = Vector2(120, 40)
 
 [node name="ConfirmButton" type="Button" parent="UI/Margin/VBox/BottomBar"]
 text = "Begin Adventure"
-custom_minimum_size = Vector2(160, 0)
+custom_minimum_size = Vector2(280, 40)

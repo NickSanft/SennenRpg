@@ -63,6 +63,18 @@ public partial class DungeonPlayer : CharacterBody2D
         // OverworldBase._Ready() has finished setting GlobalPosition from the SpawnPoint.
     }
 
+    /// <summary>
+    /// Replace the sprite sheet at runtime — used when the player swaps the active
+    /// party leader from the Party Menu. Accepts the standard 32×16 two-frame strip.
+    /// </summary>
+    public void SetSpriteSheet(string spriteSheetPath)
+    {
+        if (_sprite == null) _sprite = GetNodeOrNull<AnimatedSprite2D>("Sprite");
+        if (_sprite == null) return;
+        _sprite.SpriteFrames = OverworldSpriteFactory.Build(spriteSheetPath);
+        _sprite.Play("idle_down");
+    }
+
     public override void _Process(double delta)
     {
         if (!_startSnapped)

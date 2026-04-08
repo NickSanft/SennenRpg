@@ -64,6 +64,9 @@ public partial class SaveManager : Node
 	public void SaveGame()
 	{
 		var gm   = GameManager.Instance;
+		// Push Sen's authoritative state into his PartyMember so the serialised
+		// Party list reflects the current numbers (Phase 2 mirror).
+		gm.SyncSenToParty();
 		var data = new SaveData
 		{
 			PlayerHp         = gm.PlayerStats.CurrentHp,
@@ -119,6 +122,9 @@ public partial class SaveManager : Node
 			WeatherStepCounter       = WeatherManager.Instance?.StepCounter ?? 0,
 			// Bestiary
 			Bestiary                 = new System.Collections.Generic.Dictionary<string, SennenRpg.Core.Data.BestiaryEntry>(gm.Bestiary.Entries),
+			// Party (Phase 2)
+			Party                    = new System.Collections.Generic.List<SennenRpg.Core.Data.PartyMember>(gm.Party.Members),
+			PartyLeaderIndex         = gm.Party.LeaderIndex,
 		};
 
 		string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
