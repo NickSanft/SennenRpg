@@ -21,4 +21,10 @@ public partial class EncounterData : Resource
 	/// rain but still possible in clear skies.
 	/// </summary>
 	[Export] public Array<int> PreferredWeather { get; set; } = [];
+
+	/// <summary>
+	/// Marks this encounter as a boss fight. When set, BattleScene records
+	/// <see cref="Flags.DungeonBossDefeated"/> on victory so the map can react.
+	/// </summary>
+	[Export] public bool IsBoss { get; set; } = false;
 }

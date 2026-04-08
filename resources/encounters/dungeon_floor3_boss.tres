@@ -11,3 +11,4 @@ BackgroundId = "dungeon"
 EncounterChancePerStep = 100.0
 BattleBpm = 110.0
 BattleBgmPath = "res://assets/music/Outpacing.wav"
+IsBoss = true

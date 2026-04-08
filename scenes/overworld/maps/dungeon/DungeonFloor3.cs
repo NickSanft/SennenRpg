@@ -28,6 +28,10 @@ public partial class DungeonFloor3 : OverworldBase
     private Area2D _bossEntrance  = null!;
     private Area2D _warpToSurface = null!;
 
+    // Boss visual: 4 tiles (32×32 world units) centered on the BossEntrance Area2D.
+    // After defeat we drop a black ColorRect over those tiles.
+    private ColorRect? _bossBlackout;
+
     public override void _Ready()
     {
         const string enc = "res://resources/encounters/encounter_003.tres";
@@ -52,6 +56,9 @@ public partial class DungeonFloor3 : OverworldBase
         // Warp is only available after the boss is beaten
         _warpToSurface.Monitoring = bossDefeated;
 
+        if (bossDefeated)
+            ShowBossBlackout();
+
         _bossEntrance.BodyEntered  += OnBossEntranceEntered;
         _warpToSurface.BodyEntered += OnWarpToSurfaceEntered;
     }
@@ -65,7 +72,31 @@ public partial class DungeonFloor3 : OverworldBase
             GD.PushWarning("[DungeonFloor3] BossEncounterData is not assigned — boss fight skipped.");
             return;
         }
+
+        // Remember exactly where the player was so they respawn on this tile after the fight.
+        if (body is Node2D player)
+            GameManager.Instance.BattleReturnPosition = player.GlobalPosition;
+
         _ = SceneTransition.Instance.ToBattleAsync(BossEncounterData);
+    }
+
+    /// <summary>
+    /// Drops a 32×32 black square over the four tiles that visually represent the boss.
+    /// The square is anchored to the BossEntrance Area2D so its position tracks the
+    /// scene's actual collision shape (centered, 32×32).
+    /// </summary>
+    private void ShowBossBlackout()
+    {
+        if (_bossBlackout != null) return;
+        _bossBlackout = new ColorRect
+        {
+            Color    = Colors.Black,
+            Size     = new Vector2(32f, 32f),
+            Position = _bossEntrance.GlobalPosition - new Vector2(16f, 16f),
+            ZIndex   = 1,
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+        };
+        AddChild(_bossBlackout);
     }
 
     private void OnWarpToSurfaceEntered(Node2D body)

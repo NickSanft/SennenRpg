@@ -41,6 +41,11 @@ public partial class DungeonFloor1 : OverworldBase
 
 		if (!GameManager.Instance.GetFlag(Flags.DungeonDiscovered))
 			GameManager.Instance.SetFlag(Flags.DungeonDiscovered, true);
+
+		// Re-entering the dungeon resets the boss state — the Centiphantom Quing
+		// rises again and the Floor 3 warp becomes inert until it is felled anew.
+		if (GameManager.Instance.GetFlag(Flags.DungeonBossDefeated))
+			GameManager.Instance.SetFlag(Flags.DungeonBossDefeated, false);
 	}
 
 	private void OnSurfaceExitEntered(Node2D body)

@@ -22,8 +22,9 @@ public partial class BattleScene : Node2D
 {
 	private enum SubMenuMode { Perform, Items, Spells }
 
-	private BattleState _state;
-	private EnemyData?  _enemy;
+	private BattleState   _state;
+	private EncounterData? _encounter;
+	private EnemyData?    _enemy;
 	private int         _enemyCurrentHp;
 	private SubMenuMode _subMenuMode;
 	private readonly System.Collections.Generic.List<int> _itemIndexMap = new();
@@ -142,6 +143,7 @@ public partial class BattleScene : Node2D
 
 		// Load encounter
 		var encounter = BattleRegistry.Instance.GetPendingEncounter();
+		_encounter = encounter;
 		if (encounter != null && encounter.Enemies.Count > 0)
 			_enemy = encounter.Enemies[0];
 		else
@@ -1068,6 +1070,10 @@ public partial class BattleScene : Node2D
 			GameManager.Instance.RecordKill(_enemy.EnemyId);
 			GameManager.Instance.RecordRhythmPerformance(_enemy.EnemyId, _performance);
 		}
+
+		// Boss encounters: flag the dungeon so the map can react on return.
+		if (_encounter?.IsBoss == true)
+			GameManager.Instance.SetFlag(Flags.DungeonBossDefeated, true);
 
 		// Apply Rhythm Memory bonus rewards
 		int baseGold = _enemy?.GoldDrop ?? 0;
