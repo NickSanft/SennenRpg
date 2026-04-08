@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SpellData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/data/SpellData.cs" id="1_SpellData"]
+
+[resource]
+script = ExtResource("1_SpellData")
+SpellId = "backstab"
+DisplayName = "Backstab"
+Description = "A swift strike from the shadows. Deals double damage when the user's Speed exceeds the target's."
+BasePower = 14
+MpCost = 6

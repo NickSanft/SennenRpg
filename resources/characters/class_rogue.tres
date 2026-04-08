@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CharacterStats" format=3 uid="uid://class_rogue_01"]
+
+[ext_resource type="Script" uid="uid://dqonjuygth0gq" path="res://core/data/CharacterStats.cs" id="1_cs"]
+
+[resource]
+script = ExtResource("1_cs")
+MaxHp = 18
+CurrentHp = 18
+Attack = 9
+Defense = 3
+Speed = 14
+Magic = 4
+Resistance = 2
+Luck = 11
+MaxMp = 10
+CurrentMp = 10
+Class = 4
+ClassName = "Rogue"

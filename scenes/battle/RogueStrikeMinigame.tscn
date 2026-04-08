@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://rogue_strike_minigame"]
+
+[ext_resource type="Script" path="res://scenes/battle/RogueStrikeMinigame.cs" id="1_script"]
+
+[node name="RogueStrikeMinigame" type="Control"]
+custom_minimum_size = Vector2(320, 96)
+visible = false
+script = ExtResource("1_script")

@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://alchemist_brew_minigame"]
+
+[ext_resource type="Script" path="res://scenes/battle/AlchemistBrewMinigame.cs" id="1_script"]
+
+[node name="AlchemistBrewMinigame" type="Control"]
+custom_minimum_size = Vector2(320, 32)
+visible = false
+script = ExtResource("1_script")

@@ -48,9 +48,11 @@ public partial class BattleScene : Node2D
 	private CharmMinigame      _charmMinigame      = null!;
 	private BardMinigameBase[] _bardSkills         = null!;
 	private ShadowBoltMinigame _shadowBoltMinigame = null!;
-	private FightBar           _fightBar           = null!;
-	private RangerAim          _rangerAim          = null!;
-	private MageRuneInput      _mageRuneInput      = null!;
+	private FightBar              _fightBar              = null!;
+	private RangerAim             _rangerAim             = null!;
+	private MageRuneInput         _mageRuneInput         = null!;
+	private RogueStrikeMinigame   _rogueStrike           = null!;
+	private AlchemistBrewMinigame _alchemistBrew         = null!;
 	private int                _currentSkillIndex;
 	private SpellData?         _currentSpell;
 	private List<SpellData>    _knownSpells        = new();
@@ -102,9 +104,13 @@ public partial class BattleScene : Node2D
 		_fightBar      = GetNode<FightBar>("FightBar");
 		_rangerAim     = GetNode<RangerAim>("RangerAim");
 		_mageRuneInput = GetNode<MageRuneInput>("MageRuneInput");
-		_fightBar.Confirmed      += OnFighterConfirmed;
-		_rangerAim.Confirmed     += OnRangerConfirmed;
-		_mageRuneInput.Completed += OnMageCompleted;
+		_rogueStrike   = GetNode<RogueStrikeMinigame>("RogueStrikeMinigame");
+		_alchemistBrew = GetNode<AlchemistBrewMinigame>("AlchemistBrewMinigame");
+		_fightBar.Confirmed       += OnFighterConfirmed;
+		_rangerAim.Confirmed      += OnRangerConfirmed;
+		_mageRuneInput.Completed  += OnMageCompleted;
+		_rogueStrike.Confirmed    += OnRogueConfirmed;
+		_alchemistBrew.Confirmed  += OnAlchemistConfirmed;
 
 		// Instantiate Charm and Bard skills programmatically
 		_charmMinigame = InstantiateFullRect<CharmMinigame>("res://scenes/battle/rhythm/CharmMinigame.tscn");
@@ -473,6 +479,18 @@ public partial class BattleScene : Node2D
 				_mageRuneInput.Activate();
 				break;
 
+			case PlayerClass.Rogue:
+				_battleHud.SetHints(BattleHints.RogueCombo);
+				_rogueStrike.Visible = true;
+				_rogueStrike.Activate();
+				break;
+
+			case PlayerClass.Alchemist:
+				_battleHud.SetHints(BattleHints.AlchemistBrew);
+				_alchemistBrew.Visible = true;
+				_alchemistBrew.Activate();
+				break;
+
 			default: // Bard + fallback
 				_rhythmStrike.Visible = true;
 				_rhythmStrike.Activate();
@@ -524,6 +542,149 @@ public partial class BattleScene : Node2D
 	{
 		_mageRuneInput.Visible = false;
 		_ = DoStrikeResolved((int)BattleAttackResolver.ResolveMageGrade(correctCount));
+	}
+
+	// ── Rogue — pickpocket combo result ───────────────────────────────
+
+	private void OnRogueConfirmed(int perfectCount, int hitCount)
+	{
+		_rogueStrike.Visible = false;
+		_ = DoRogueResolved(perfectCount, hitCount);
+	}
+
+	private async Task DoRogueResolved(int perfectCount, int hitCount)
+	{
+		var outcome  = RogueStealLogic.Resolve(perfectCount, hitCount);
+		var grade    = RogueStealLogic.ToHitGrade(outcome);
+		bool forceCrit = RogueStealLogic.GuaranteedCrit(outcome);
+
+		var (baseDamage, rolledCrit, hitLabel) = BattleAttackResolver.ResolveStrike(
+			grade,
+			GameManager.Instance.EffectiveStats.Attack,
+			_enemy?.Stats?.Defense ?? 0,
+			GameManager.Instance.EffectiveStats.Luck);
+
+		int  damage = baseDamage;
+		bool isCrit = rolledCrit;
+		if (forceCrit && !rolledCrit)
+		{
+			damage *= 2;
+			isCrit = true;
+		}
+
+		_enemyCurrentHp -= damage;
+		CameraShake.ShakeNode(this, intensity: isCrit ? 5f : 2f, duration: isCrit ? 0.18f : 0.1f);
+		FlashEnemy();
+		if (isCrit) PlayCritSlowMotion();
+		SpawnDamageNumber(damage, isCrit);
+
+		// On a full PerfectSteal, roll the enemy loot table and pocket one item.
+		string stolenLabel = "";
+		if (RogueStealLogic.ShouldSteal(outcome))
+		{
+			var lootEntries = (_enemy?.LootTable ?? System.Array.Empty<Resource>())
+				.OfType<LootEntry>().ToArray();
+			if (lootEntries.Length > 0)
+			{
+				var paths      = lootEntries.Select(e => e.ItemPath).ToArray();
+				var weights    = lootEntries.Select(e => e.Weight).ToArray();
+				var guaranteed = lootEntries.Select(e => e.Guaranteed).ToArray();
+				string? rolled = LootLogic.RollLoot(paths, weights, guaranteed, () => GD.Randf());
+				if (!string.IsNullOrEmpty(rolled) && ResourceLoader.Exists(rolled))
+				{
+					GameManager.Instance.AddItem(rolled);
+					var item  = GD.Load<ItemData>(rolled);
+					stolenLabel = $"  Stole {item?.DisplayName ?? "an item"}!";
+					GD.Print($"[BattleScene] Rogue PerfectSteal — pocketed {rolled}");
+				}
+			}
+		}
+
+		string label = (outcome == RogueStrikeOutcome.PerfectSteal ? "Pickpocket!" : hitLabel) + stolenLabel;
+		GD.Print($"[BattleScene] Rogue {outcome} → grade={grade}, damage={damage}. Enemy HP: {_enemyCurrentHp}");
+
+		SetBattleVar("hit_label",   label);
+		SetBattleVar("enemy_name",  _enemy?.DisplayName ?? "???");
+		SetBattleVar("damage",      damage.ToString());
+		await RunBattleTimeline("res://dialog/timelines/battle_hit.dtl");
+
+		if (_enemyCurrentHp <= 0)
+			await HandleVictory();
+		else
+			await RunEnemyTurn();
+	}
+
+	// ── Alchemist — potion brew result ────────────────────────────────
+
+	private void OnAlchemistConfirmed(float accuracy)
+	{
+		_alchemistBrew.Visible = false;
+		_ = DoAlchemistResolved(accuracy);
+	}
+
+	private async Task DoAlchemistResolved(float accuracy)
+	{
+		var stats  = GameManager.Instance.EffectiveStats;
+		int  luck   = stats.Luck;
+		int  magic  = stats.Magic;
+		var  result = AlchemistBrewLogic.Resolve(accuracy, luck, GD.Randf());
+		string label;
+
+		switch (result)
+		{
+			case BrewResult.Heal:
+			{
+				int amount = AlchemistBrewLogic.HealAmount(magic);
+				GameManager.Instance.HealPlayer(amount);
+				label = $"Brewed a Healing Draught! +{amount} HP";
+				GD.Print($"[BattleScene] Alchemist HEAL +{amount}");
+				break;
+			}
+			case BrewResult.PoisonEnemy:
+			{
+				StatusLogic.Apply(_statuses.EnemyStatuses, StatusEffect.Poison, AlchemistBrewLogic.PoisonTurns);
+				_enemyNameplate.UpdateStatuses(_statuses.EnemyStatuses);
+				label = "Brewed a Toxic Vial! Enemy poisoned.";
+				GD.Print("[BattleScene] Alchemist POISON enemy");
+				break;
+			}
+			case BrewResult.ShieldSelf:
+			{
+				StatusLogic.Apply(_statuses.PlayerStatuses, StatusEffect.Shield, AlchemistBrewLogic.ShieldTurns);
+				_battleHud.UpdateStatuses(_statuses.PlayerStatuses);
+				label = "Brewed an Aegis Tonic! Shielded.";
+				GD.Print("[BattleScene] Alchemist SHIELD self");
+				break;
+			}
+			case BrewResult.Backfire:
+			{
+				int amount = AlchemistBrewLogic.BackfireDamage(magic);
+				GameManager.Instance.HurtPlayer(amount);
+				label = $"The brew explodes! -{amount} HP";
+				CameraShake.ShakeNode(this, intensity: 3f, duration: 0.12f);
+				GD.Print($"[BattleScene] Alchemist BACKFIRE -{amount}");
+				break;
+			}
+			default: // Neutral
+			{
+				label = "The brew fizzles.";
+				GD.Print("[BattleScene] Alchemist neutral fizzle");
+				break;
+			}
+		}
+
+		SetBattleVar("hit_label",  label);
+		SetBattleVar("enemy_name", _enemy?.DisplayName ?? "???");
+		SetBattleVar("damage",     "0");
+		await RunBattleTimeline("res://dialog/timelines/battle_hit.dtl");
+
+		// Player is the only one who could die from a backfire.
+		if (GameManager.Instance.PlayerStats.CurrentHp <= 0)
+		{
+			await HandleDefeat();
+			return;
+		}
+		await RunEnemyTurn();
 	}
 
 	private void OnStrikeResolved(int gradeInt) => _ = DoStrikeResolved(gradeInt);

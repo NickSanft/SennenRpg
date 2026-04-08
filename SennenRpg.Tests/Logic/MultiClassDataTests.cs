@@ -135,6 +135,40 @@ public class MultiClassDataTests
     }
 
     [Test]
+    public void SwitchTo_Rogue_FromBard_CreatesNewEntryAndActivates()
+    {
+        _data.InitializeStartingClass(PlayerClass.Bard,
+            new ClassProgressionEntry { Class = PlayerClass.Bard, Level = 5 });
+
+        var result = _data.SwitchTo(PlayerClass.Rogue, cls => new ClassProgressionEntry
+        {
+            Class = cls, Level = 1, MaxHp = 18, Speed = 14, Luck = 11
+        });
+
+        Assert.That(_data.ActiveClass, Is.EqualTo(PlayerClass.Rogue));
+        Assert.That(result.Speed, Is.EqualTo(14));
+        Assert.That(result.Luck, Is.EqualTo(11));
+        Assert.That(_data.ClassEntries, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public void SwitchTo_Alchemist_FromBard_CreatesNewEntryAndActivates()
+    {
+        _data.InitializeStartingClass(PlayerClass.Bard,
+            new ClassProgressionEntry { Class = PlayerClass.Bard, Level = 5 });
+
+        var result = _data.SwitchTo(PlayerClass.Alchemist, cls => new ClassProgressionEntry
+        {
+            Class = cls, Level = 1, MaxHp = 15, Magic = 12, Luck = 13, MaxMp = 24
+        });
+
+        Assert.That(_data.ActiveClass, Is.EqualTo(PlayerClass.Alchemist));
+        Assert.That(result.Magic, Is.EqualTo(12));
+        Assert.That(result.Luck, Is.EqualTo(13));
+        Assert.That(result.MaxMp, Is.EqualTo(24));
+    }
+
+    [Test]
     public void ApplyFromSave_RestoresState()
     {
         var entries = new List<ClassProgressionEntry>

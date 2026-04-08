@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CharacterStats" format=3 uid="uid://class_alchemist_01"]
+
+[ext_resource type="Script" uid="uid://dqonjuygth0gq" path="res://core/data/CharacterStats.cs" id="1_cs"]
+
+[resource]
+script = ExtResource("1_cs")
+MaxHp = 15
+CurrentHp = 15
+Attack = 4
+Defense = 2
+Speed = 8
+Magic = 12
+Resistance = 5
+Luck = 13
+MaxMp = 24
+CurrentMp = 24
+Class = 5
+ClassName = "Alchemist"

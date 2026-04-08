@@ -32,5 +32,17 @@ public static class CrossClassBonusRegistry
             StatBonuses: new EquipmentBonuses(Magic: 5)),
         new(PlayerClass.Mage, 10, "Mage Lv10: +5 RES",
             StatBonuses: new EquipmentBonuses(Resistance: 5)),
+
+        // Rogue bonuses
+        new(PlayerClass.Rogue, 5, "Rogue Lv5: Lucky Forager (+1 forage roll quality)",
+            Tag: CrossClassBonus.LuckyForager),
+        new(PlayerClass.Rogue, 10, "Rogue Lv10: Backstab",
+            UnlockedSpellPath: "res://resources/spells/backstab.tres"),
+
+        // Alchemist bonuses
+        new(PlayerClass.Alchemist, 5, "Alchemist Lv5: Wealth Aura (+20% gold drops)",
+            Tag: CrossClassBonus.WealthAura),
+        new(PlayerClass.Alchemist, 10, "Alchemist Lv10: Master Brewer (cooking Perfect window widens)",
+            Tag: CrossClassBonus.MasterBrewer),
     ];
 }

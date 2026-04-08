@@ -5,5 +5,7 @@ public enum PlayerClass
     Bard,
     Fighter,
     Ranger,
-    Mage
+    Mage,
+    Rogue,
+    Alchemist
 }

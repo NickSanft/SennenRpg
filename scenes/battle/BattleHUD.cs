@@ -217,6 +217,12 @@ public static class BattleHints
 		$"{InputMapExtensions.HintFor("ui_left",  "←")} " +
 		$"{InputMapExtensions.HintFor("ui_right", "→")}  — trace the rune sequence";
 
+    public static string RogueCombo =>
+		$"{InputMapExtensions.HintFor("interact", "Strike")}  — three rapid windows; all-perfect steals";
+
+    public static string AlchemistBrew =>
+		$"{InputMapExtensions.HintFor("interact", "Brew")}  — stop on the sweet spot; Luck widens it";
+
     public static string Flee(int pct) =>
 		$"{InputMapExtensions.HintFor("interact", "Flee")}  — {pct}% escape chance";
 }

@@ -65,6 +65,9 @@
         <Compile Include="../core/data/CrossClassBonusRegistry.cs" />
         <Compile Include="../core/data/MultiClassLogic.cs" />
         <Compile Include="../core/data/MultiClassData.cs" />
+        <!-- Rogue / Alchemist Fight minigame logic — pure, no Godot runtime -->
+        <Compile Include="../core/data/RogueStealLogic.cs" />
+        <Compile Include="../core/data/AlchemistBrewLogic.cs" />
         <!-- Music metadata — pure logic, no Godot runtime -->
         <Compile Include="../core/data/MusicTrackInfo.cs" />
         <Compile Include="../core/data/MusicMetadata.cs" />

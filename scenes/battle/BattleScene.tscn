@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://cwp9xtb3hm6qe"]
+[gd_scene load_steps=14 format=3 uid="uid://cwp9xtb3hm6qe"]
 
 [ext_resource type="Script" path="res://scenes/battle/BattleScene.cs" uid="uid://cht04ieerben2" id="1_script"]
 [ext_resource type="PackedScene" uid="uid://dxc3n8mp1oqv5" path="res://scenes/battle/ActionMenu.tscn" id="2_actionmenu"]
@@ -10,6 +10,8 @@
 [ext_resource type="PackedScene" uid="uid://bpv3wqt8nxhk4" path="res://scenes/battle/FightBar.tscn" id="8_fightbar"]
 [ext_resource type="PackedScene" uid="uid://ranger_aim_scene" path="res://scenes/battle/RangerAim.tscn" id="9_rangeraim"]
 [ext_resource type="PackedScene" uid="uid://mage_rune_input_scene" path="res://scenes/battle/MageRuneInput.tscn" id="10_mageruneinput"]
+[ext_resource type="PackedScene" uid="uid://rogue_strike_minigame" path="res://scenes/battle/RogueStrikeMinigame.tscn" id="11_roguestrike"]
+[ext_resource type="PackedScene" uid="uid://alchemist_brew_minigame" path="res://scenes/battle/AlchemistBrewMinigame.tscn" id="12_alchemistbrew"]
 
 [node name="BattleScene" type="Node2D"]
 script = ExtResource("1_script")
@@ -99,6 +101,24 @@ offset_left = 426.0
 offset_top = 310.0
 offset_right = 726.0
 offset_bottom = 410.0
+visible = false
+
+[node name="RogueStrikeMinigame" parent="." instance=ExtResource("11_roguestrike")]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 416.0
+offset_top = 310.0
+offset_right = 736.0
+offset_bottom = 406.0
+visible = false
+
+[node name="AlchemistBrewMinigame" parent="." instance=ExtResource("12_alchemistbrew")]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 416.0
+offset_top = 366.0
+offset_right = 736.0
+offset_bottom = 398.0
 visible = false
 
 [node name="BattleHUD" parent="." instance=ExtResource("4_battlehud")]

@@ -39,7 +39,7 @@ public class CrossClassBonusTests
     }
 
     [Test]
-    public void Registry_AllFourClassesRepresented()
+    public void Registry_AllSixClassesRepresented()
     {
         var classes = CrossClassBonusRegistry.All
             .Select(b => b.SourceClass)
@@ -50,6 +50,8 @@ public class CrossClassBonusTests
         Assert.That(classes, Does.Contain(PlayerClass.Fighter));
         Assert.That(classes, Does.Contain(PlayerClass.Ranger));
         Assert.That(classes, Does.Contain(PlayerClass.Mage));
+        Assert.That(classes, Does.Contain(PlayerClass.Rogue));
+        Assert.That(classes, Does.Contain(PlayerClass.Alchemist));
     }
 
     [Test]
@@ -107,5 +109,74 @@ public class CrossClassBonusTests
             [PlayerClass.Ranger] = 99,
         };
         Assert.That(MultiClassLogic.HasTag(levels, "no_such_tag"), Is.False);
+    }
+
+    // ── Lucky Forager (Rogue Lv5) ─────────────────────────────────────
+
+    [Test]
+    public void Registry_LuckyForager_RogueLv5_Exists()
+    {
+        var matches = CrossClassBonusRegistry.All
+            .Where(b => b.Tag == CrossClassBonus.LuckyForager)
+            .ToList();
+
+        Assert.That(matches, Has.Count.EqualTo(1));
+        Assert.That(matches[0].SourceClass,   Is.EqualTo(PlayerClass.Rogue));
+        Assert.That(matches[0].RequiredLevel, Is.EqualTo(5));
+    }
+
+    [Test]
+    public void HasTag_LuckyForager_True_AtRogueLv5()
+    {
+        var levels = new System.Collections.Generic.Dictionary<PlayerClass, int>
+        {
+            [PlayerClass.Rogue] = 5,
+        };
+        Assert.That(MultiClassLogic.HasTag(levels, CrossClassBonus.LuckyForager), Is.True);
+    }
+
+    // ── Backstab spell (Rogue Lv10) ───────────────────────────────────
+
+    [Test]
+    public void GetCrossClassSpells_UnlocksBackstab_AtRogueLv10()
+    {
+        var levels = new System.Collections.Generic.Dictionary<PlayerClass, int>
+        {
+            [PlayerClass.Rogue] = 10,
+        };
+        var spells = MultiClassLogic.GetCrossClassSpells(levels);
+        Assert.That(spells, Does.Contain("res://resources/spells/backstab.tres"));
+    }
+
+    // ── Alchemist tags ────────────────────────────────────────────────
+
+    [Test]
+    public void HasTag_WealthAura_True_AtAlchemistLv5()
+    {
+        var levels = new System.Collections.Generic.Dictionary<PlayerClass, int>
+        {
+            [PlayerClass.Alchemist] = 5,
+        };
+        Assert.That(MultiClassLogic.HasTag(levels, CrossClassBonus.WealthAura), Is.True);
+    }
+
+    [Test]
+    public void HasTag_MasterBrewer_True_AtAlchemistLv10()
+    {
+        var levels = new System.Collections.Generic.Dictionary<PlayerClass, int>
+        {
+            [PlayerClass.Alchemist] = 10,
+        };
+        Assert.That(MultiClassLogic.HasTag(levels, CrossClassBonus.MasterBrewer), Is.True);
+    }
+
+    [Test]
+    public void HasTag_MasterBrewer_False_AtAlchemistLv5()
+    {
+        var levels = new System.Collections.Generic.Dictionary<PlayerClass, int>
+        {
+            [PlayerClass.Alchemist] = 5,
+        };
+        Assert.That(MultiClassLogic.HasTag(levels, CrossClassBonus.MasterBrewer), Is.False);
     }
 }
