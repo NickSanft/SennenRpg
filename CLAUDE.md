@@ -151,7 +151,7 @@ Access via `GetNode<T>("/root/AutoloadName")` or via static `Instance` property.
 | 4 | MinimapHud |
 | 10 | BattleHUD |
 | 50 | PauseMenu |
-| 51 | InventoryMenu, ShopMenu, EquipmentMenu, CookingMenu, ResidencyShopMenu |
+| 51 | InventoryMenu, ShopMenu, EquipmentMenu, CookingMenu, ResidencyShopMenu, PartyMenu |
 | 52 | StatsMenu, ClassChangeMenu, NpcInteractMenu |
 | 55 | SignReaderPopup |
 | 56 | JournalEntryPopup |
@@ -177,14 +177,41 @@ Victory → EXP/Gold display → GameManager.AddGold/AddExp → SceneTransition 
 ```
 
 ## Multi-Class System
-- Four classes: Bard, Fighter, Ranger, Mage (each with independent level, exp, base stats)
+- Six classes: Bard, Fighter, Ranger, Mage, Rogue, Alchemist (each with independent level, exp, base stats)
 - `GameManager.SwitchClass(PlayerClass)` snapshots current class, loads target class stats + growth rates
 - Per-class growth rates in `resources/characters/growth_rates_{class}.tres`
 - Cross-class bonuses (`CrossClassBonusRegistry`) grant stat boosts or spell unlocks at level thresholds
 - Class change available via Rork's NPC menu in MAPP Tavern
-- StatsMenu shows all class levels + earned cross-class bonuses
+- StatsMenu shows all class levels + earned cross-class bonuses (with scrolling list)
 - Save slot card shows current class name
 - Level-up screen shows class name + cross-class bonus unlocks
+- Rogue and Alchemist each have their own Fight minigame:
+  - Rogue: `RogueStrikeMinigame` (Pickpocket Combo) — three timing windows, all-perfect grants crit + steal
+  - Alchemist: `AlchemistBrewMinigame` (Potion Brew) — sweet-spot bar widened by Luck; 50% splash damage on top of brewing effect
+
+## Party System
+- Up to **6 active party members** (`PartyData.MaxMembers = 6`). All members are battle-active in v1; no separate reserve list.
+- `PartyMember` (plain C# DTO) holds identity, class, level, exp, HP/MP, base stats, equipment dicts, sprite paths, formation row.
+- Sen is the canonical leader. Sen's stats live in `PlayerCombatData` (mirrored to his PartyMember on save). Lily/Rain are *fully owned* by their PartyMember — no MultiClassData entry.
+- Recruitment: `NpcResidencyEntry` carries `PartyMemberId` / `JoinClass` / `StartingStats` / `OverworldSpritePath` / `JoinTimelinePath`. Hiring at Rork's residency menu calls `GameManager.RecruitPartyMember(...)` and queues the join cutscene to play after the menu closes.
+- `GameManager.PartyOrderChanged` signal fires from `SetPartyLeader` / `SwapPartyMembers`. WorldMap and OverworldBase listen and refresh the leader sprite + the follower chain in-place.
+- Followers: `PartyFollower` (code-only Node2D) with shared `OverworldSpriteFactory` / `FollowerTrail`. Spawn only on 16×16 sprite maps (WorldMap + dungeon floors). Towns / 32×32 maps render the leader alone — the recruit's town NPC stays visible.
+- `PartyMenu` (CanvasLayer 51) — list members, ←/→ formation toggle, → set leader, Confirm twice to swap rows.
+- `StatsMenu` and `EquipmentMenu` cycle members with ◀ ▶. Equipment per-member writes to `PartyMember.EquippedItemPaths` (with shared bag in `InventoryData`); Sen continues to use the existing GameManager facade.
+- `InventoryMenu` lists every party member's equipped items with the owner's name.
+
+## Multi-Actor Battle System
+- `EnemyInstance` (`core/data/EnemyInstance.cs`) wraps `EnemyData` with per-instance state (CurrentHp, status dict, visual node).
+- `BattleScene._enemies: List<EnemyInstance>` — every enemy in the encounter is spawned. Auto-target via `_targetIndex`; ←/→ during PlayerTurn cycles between living enemies.
+- `TurnQueue` (`core/data/TurnQueue.cs`) — pure logic, NUnit-tested. Builds a speed-sorted queue from `(speed, isKO)` arrays at the top of every round.
+- `BattleScene.BeginRound` ticks statuses, builds the queue, then `AdvanceTurn` walks through entries. Party members get their action menu via `BeginActorTurn`; enemies run a single rhythm phase via `RunSingleEnemyTurn`.
+- Per-actor stat routing: `ActorAttack` / `ActorMagic` / `ActorLuck` / `ActorClass` / `ActorHurt` / `ActorHeal` / `ActorUseMp` switch internally between Sen's GameManager facade and Lily/Rain's PartyMember fields.
+- Rhythm-phase damage is split evenly across living party members.
+- Game over only when **all** party members are KO'd (`PartyAllKO`). KO'd members still receive XP at victory.
+- Victory aggregates gold/exp/loot/kills across every defeated enemy. XP for non-Sen members is distributed via `PartyMemberLogic.DistributeXp`.
+- HUD: `BattleHUD._partyExtrasLabel` lists Lily/Rain HP/MP under Sen's main row. ★ marks the active actor.
+- Turn banner ("X's Turn") shown via `ShowPhaseCard` only when the party has more than one member.
+- Mixed encounters: `world_day_mixed.tres` / `world_night_mixed.tres` reference both Wisplet and Centiphantom; wired into `WorldMap.tscn` alongside the solo encounters.
 
 ## Cooking System
 - Recipes combine ingredients into food items via a rhythm minigame

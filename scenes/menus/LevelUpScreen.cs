@@ -232,9 +232,16 @@ public partial class LevelUpScreen : CanvasLayer
 
 	private async Task AnimateLevelUp(LevelUpResult result)
 	{
-		// Update header
-		_titleLabel.Text = "★  LEVEL UP!  ★";
-		string className = GameManager.Instance.ActiveClass.ToString();
+		// Update header — use the result's stamped MemberName when present (party
+		// system) and fall back to Sen's GameManager view for legacy paths.
+		string memberName = !string.IsNullOrEmpty(result.MemberName)
+			? result.MemberName
+			: GameManager.Instance.PlayerName;
+		string className = !string.IsNullOrEmpty(result.ClassName)
+			? result.ClassName
+			: GameManager.Instance.ActiveClass.ToString();
+
+		_titleLabel.Text = $"★  {memberName.ToUpper()} LEVEL UP!  ★";
 		_levelLabel.Text = $"{className}   Level {result.NewLevel - 1} → Level {result.NewLevel}";
 		_titleLabel.Modulate = ColourGold;
 

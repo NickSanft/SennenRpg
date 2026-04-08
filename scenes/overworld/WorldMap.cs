@@ -52,6 +52,7 @@ public partial class WorldMap : Node2D
 	// trail (instead of the leader's current position) means stepsBack=1 returns the
 	// tile directly behind the leader, not the leader's own tile.
 	private Vector2 _lastLeaderPos;
+	private bool _subscribedToPartyOrder;
 
 	public override void _Ready()
 	{
@@ -105,7 +106,12 @@ public partial class WorldMap : Node2D
 
 		// Refresh leader sprite + follower chain whenever the party order changes
 		// (e.g. via the Party Menu's set-leader / swap actions).
-		GameManager.Instance.PartyOrderChanged += OnPartyOrderChanged;
+		var gmForSig = GameManager.Instance;
+		if (gmForSig != null)
+		{
+			gmForSig.PartyOrderChanged += OnPartyOrderChanged;
+			_subscribedToPartyOrder = true;
+		}
 	}
 
 	private void OnPartyOrderChanged()
@@ -709,9 +715,12 @@ public partial class WorldMap : Node2D
 			_weatherOverlay.QueueFree();
 		_weatherOverlay = null;
 
-		// Unsubscribe from PartyOrderChanged so we don't leak handlers across scenes.
-		var gm = GameManager.Instance;
-		if (gm != null) gm.PartyOrderChanged -= OnPartyOrderChanged;
+		if (_subscribedToPartyOrder)
+		{
+			var gm = GameManager.Instance;
+			if (gm != null) gm.PartyOrderChanged -= OnPartyOrderChanged;
+			_subscribedToPartyOrder = false;
+		}
 	}
 
 	// ── Debug input ───────────────────────────────────────────────────────────

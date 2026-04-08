@@ -190,7 +190,10 @@ public partial class GameManager : Node
 		for (int i = 0; i < gained; i++)
 		{
 			_progression.IncrementLevel();
-			PendingLevelUps.Add(_combat.RollGrowth(PlayerLevel));
+			var result = _combat.RollGrowth(PlayerLevel);
+			result.MemberName = PlayerName;
+			result.ClassName  = _multiClass.ActiveClass.ToString();
+			PendingLevelUps.Add(result);
 		}
 
 		_multiClass.UpdateActiveClassProgression(PlayerLevel, Exp);

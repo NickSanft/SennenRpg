@@ -75,6 +75,7 @@
         <Compile Include="../core/data/PartyMemberLogic.cs" />
         <Compile Include="../core/data/FollowerTrail.cs" />
         <Compile Include="../core/data/PartyMemberStatsLogic.cs" />
+        <Compile Include="../core/data/TurnQueue.cs" />
         <!-- Music metadata — pure logic, no Godot runtime -->
         <Compile Include="../core/data/MusicTrackInfo.cs" />
         <Compile Include="../core/data/MusicMetadata.cs" />

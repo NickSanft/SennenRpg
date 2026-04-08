@@ -20,6 +20,9 @@ public partial class GameHud : CanvasLayer
 	private Control   _mpBarBg   = null!;
 	private ColorRect _mpBar     = null!;
 	private Label     _goldLabel = null!;
+	// Multiline label that lists every recruited party member's HP/MP under Sen's
+	// row. Hidden when the party only contains Sen.
+	private Label?    _partyExtrasLabel;
 	private Tween?    _hpTween;
 	private Tween?    _lowHpPulseTween;
 	private bool      _lowHpPulsing;
@@ -49,6 +52,16 @@ public partial class GameHud : CanvasLayer
 		_goldLabel.AddThemeFontSizeOverride("font_size", 10);
 		_goldLabel.AddThemeColorOverride("font_color", new Color(1f, 0.9f, 0.3f));
 		vbox.AddChild(_goldLabel);
+
+		// Multi-member party rows. Hidden until the player recruits Lily or Rain.
+		_partyExtrasLabel = new Label
+		{
+			Text     = "",
+			Visible  = false,
+			Modulate = new Color(0.95f, 0.95f, 1f, 0.95f),
+		};
+		_partyExtrasLabel.AddThemeFontSizeOverride("font_size", 9);
+		vbox.AddChild(_partyExtrasLabel);
 
 		// Key hints
 		var hintLabel = new Label { Text = "[Tab] Log  [Esc] Menu" };
@@ -89,6 +102,7 @@ public partial class GameHud : CanvasLayer
 		_nameLabel.Text = " " + GameManager.Instance.PlayerName;
 		_hpLabel.Text   = $"HP  {stats.CurrentHp} / {stats.MaxHp}";
 		_goldLabel.Text = $"G   {GameManager.Instance.Gold}";
+		RefreshPartyExtras();
 
 		float hpRatio  = stats.MaxHp > 0 ? (float)stats.CurrentHp / stats.MaxHp : 0f;
 		float hpTarget = Mathf.Max(0f, BarMaxWidth * hpRatio);
@@ -112,6 +126,8 @@ public partial class GameHud : CanvasLayer
 				.SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
 		}
 
+		// (party extras refreshed at the top of UpdateDisplay)
+
 		// Low HP pulse warning
 		bool isLowHp = stats.MaxHp > 0 && (float)stats.CurrentHp / stats.MaxHp < 0.25f && stats.CurrentHp > 0;
 		if (isLowHp && !_lowHpPulsing)
@@ -130,6 +146,43 @@ public partial class GameHud : CanvasLayer
 			_lowHpPulseTween = null;
 			_hpBar.Color = SettingsLogic.HpBarColor(
 				SettingsManager.Instance?.Current.ColorblindMode ?? ColorblindMode.Normal);
+		}
+	}
+
+	/// <summary>
+	/// Build a multiline label of every recruited party member's HP/MP. Hidden when
+	/// only Sen is in the party so the HUD looks identical pre-recruitment.
+	/// </summary>
+	private void RefreshPartyExtras()
+	{
+		if (_partyExtrasLabel == null) return;
+		if (GameManager.Instance == null) return;
+
+		var party = GameManager.Instance.Party;
+		if (party.Count <= 1)
+		{
+			_partyExtrasLabel.Visible = false;
+			_partyExtrasLabel.Text    = "";
+			return;
+		}
+
+		var lines = new System.Collections.Generic.List<string>();
+		foreach (var m in party.Members)
+		{
+			if (m.MemberId == "sen") continue; // Sen is already shown above by the main HUD
+			string ko = m.IsKO ? " (KO)" : "";
+			lines.Add($"{m.DisplayName,-7} HP {m.CurrentHp,3}/{m.MaxHp,-3}  MP {m.CurrentMp,2}/{m.MaxMp,-2}{ko}");
+		}
+
+		if (lines.Count == 0)
+		{
+			_partyExtrasLabel.Visible = false;
+			_partyExtrasLabel.Text    = "";
+		}
+		else
+		{
+			_partyExtrasLabel.Visible = true;
+			_partyExtrasLabel.Text    = string.Join("\n", lines);
 		}
 	}
 }

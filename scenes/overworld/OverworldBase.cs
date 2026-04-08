@@ -60,6 +60,9 @@ public partial class OverworldBase : Node2D
 	// trail (instead of the leader's current position) means stepsBack=1 returns the
 	// tile directly behind the leader, not the leader's own tile.
 	private Vector2 _lastLeaderPos;
+	/// <summary>True iff this scene actually subscribed to PartyOrderChanged. Prevents
+	/// double-unsubscribe in _ExitTree on scenes that never subscribed in the first place.</summary>
+	private bool _subscribedToPartyOrder;
 
 	private const float StepDistance = 32f; // pixels per "step" roll
 
@@ -127,7 +130,12 @@ public partial class OverworldBase : Node2D
 		{
 			ApplyLeaderSpriteToPlayer();
 			SpawnFollowers();
-			GameManager.Instance.PartyOrderChanged += OnPartyOrderChanged;
+			var gm = GameManager.Instance;
+			if (gm != null)
+			{
+				gm.PartyOrderChanged += OnPartyOrderChanged;
+				_subscribedToPartyOrder = true;
+			}
 		}
 
 		if (!string.IsNullOrEmpty(BgmPath))
@@ -168,13 +176,16 @@ public partial class OverworldBase : Node2D
 	/// </summary>
 	private void OnPlayerMoved(float distance)
 	{
+		if (GameManager.Instance == null) return;
 		if (GameManager.Instance.CurrentState != GameState.Overworld) return;
 
 		// Phase 4: push the leader's PREVIOUS position into the trail so a follower at
 		// stepsBack=1 lands one tile behind the leader. We track _lastLeaderPos locally
 		// because the Moved signal fires AFTER the move completes — by the time we get
 		// here _player.GlobalPosition is already the new tile centre.
-		if (_followerTrail != null && _player != null)
+		// Use IsInstanceValid to defend against the (rare) case where the player has
+		// been queue-freed during a scene transition mid-step.
+		if (_followerTrail != null && _player != null && IsInstanceValid(_player))
 		{
 			_followerTrail.Push(_lastLeaderPos);
 			_lastLeaderPos = _player.GlobalPosition;
@@ -289,9 +300,15 @@ public partial class OverworldBase : Node2D
 		if (LockWeather && WeatherManager.Instance != null)
 			WeatherManager.Instance.Locked = false;
 
-		// Unsubscribe from PartyOrderChanged so we don't leak handlers across scenes.
-		var gm = GameManager.Instance;
-		if (gm != null) gm.PartyOrderChanged -= OnPartyOrderChanged;
+		// Unsubscribe from PartyOrderChanged ONLY if we actually subscribed in _Ready
+		// (the subscribe is gated on UseSmallPlayer; an unconditional unsubscribe leaks
+		// no handlers but can throw on certain teardown ordering — be exact).
+		if (_subscribedToPartyOrder)
+		{
+			var gm = GameManager.Instance;
+			if (gm != null) gm.PartyOrderChanged -= OnPartyOrderChanged;
+			_subscribedToPartyOrder = false;
+		}
 	}
 
 	public override void _UnhandledInput(InputEvent @event)

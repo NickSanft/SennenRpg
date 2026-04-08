@@ -9,6 +9,11 @@ public sealed class LevelUpResult
 {
     public int NewLevel      { get; init; }
 
+    /// <summary>Display name of the party member who levelled up. Empty = legacy/Sen.</summary>
+    public string MemberName { get; set; } = "";
+    /// <summary>Class name shown alongside the member's name in the level-up title.</summary>
+    public string ClassName  { get; set; } = "";
+
     public int OldMaxHp      { get; init; }  public int NewMaxHp      { get; init; }
     public int OldAttack     { get; init; }  public int NewAttack     { get; init; }
     public int OldDefense    { get; init; }  public int NewDefense    { get; init; }

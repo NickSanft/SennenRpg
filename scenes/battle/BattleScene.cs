@@ -24,8 +24,323 @@ public partial class BattleScene : Node2D
 
 	private BattleState   _state;
 	private EncounterData? _encounter;
-	private EnemyData?    _enemy;
-	private int         _enemyCurrentHp;
+
+	// Phase 7a — multi-enemy support. _enemies holds every enemy spawned for the
+	// current encounter; _targetIndex points at the one currently being attacked.
+	// _enemy and _enemyCurrentHp are kept as compatibility accessors below so the
+	// rest of the file (which uses them in dozens of places) didn't need to be
+	// rewritten — they delegate through to the current target enemy.
+	private readonly System.Collections.Generic.List<EnemyInstance> _enemies = new();
+	private int _targetIndex;
+
+	// Phase 7b — multi-actor turn order. Speed-sorted queue rebuilt at the start
+	// of every round; AdvanceTurn() walks through it, dispatching to a party-member
+	// action menu or to a single enemy rhythm phase as appropriate.
+	private System.Collections.Generic.List<TurnQueueEntry> _turnQueue = new();
+	private int _turnQueueIdx;
+	/// <summary>Index of the party member whose turn is currently active. -1 if it's an enemy turn.</summary>
+	private int _currentActorMemberIdx = -1;
+
+	// Phase 7c — visible target cursor floated above whichever enemy is currently selected.
+	// Built code-only in SetupEnemySprite when the encounter has more than one enemy.
+	private Polygon2D? _targetCursor;
+	private EnemyInstance? Target =>
+		(_targetIndex >= 0 && _targetIndex < _enemies.Count) ? _enemies[_targetIndex] : null;
+	/// <summary>Backwards-compat read-only accessor for the current target's data.</summary>
+	private EnemyData? _enemy => Target?.Data;
+	/// <summary>Backwards-compat accessor for the current target's HP. Setter writes through.</summary>
+	private int _enemyCurrentHp
+	{
+		get => Target?.CurrentHp ?? 0;
+		set { if (Target != null) Target.CurrentHp = value; }
+	}
+	private bool AnyLivingEnemy()
+	{
+		foreach (var e in _enemies)
+			if (!e.IsKO) return true;
+		return false;
+	}
+	/// <summary>Move <see cref="_targetIndex"/> to the next living enemy. No-op when none remain.</summary>
+	private void AdvanceTargetIfDead()
+	{
+		if (Target != null && !Target.IsKO) return;
+		for (int i = 0; i < _enemies.Count; i++)
+		{
+			if (!_enemies[i].IsKO)
+			{
+				_targetIndex = i;
+				if (_enemyNameplate != null && Target != null)
+					_enemyNameplate.Setup(Target.DisplayName);
+				RefreshTargetCursor();
+				return;
+			}
+		}
+	}
+
+	/// <summary>
+	/// Cycle the targeting cursor to the next/previous living enemy.
+	/// Called by the player turn's left/right input. No-op for solo encounters.
+	/// </summary>
+	private void CycleTarget(int direction)
+	{
+		if (_enemies.Count <= 1) return;
+		int n = _enemies.Count;
+		int next = _targetIndex;
+		for (int step = 0; step < n; step++)
+		{
+			next = (next + direction + n) % n;
+			if (!_enemies[next].IsKO)
+			{
+				_targetIndex = next;
+				if (_enemyNameplate != null && Target != null)
+					_enemyNameplate.Setup(Target.DisplayName);
+				RefreshTargetCursor();
+				AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+				return;
+			}
+		}
+	}
+
+	public override void _Input(InputEvent e)
+	{
+		// Phase 7c: arrow keys cycle the target reticle when the active actor is
+		// looking at the action menu. We use _Input rather than _UnhandledInput because
+		// the action menu's focused button consumes ui_left / ui_right via Godot's GUI
+		// focus navigation before _UnhandledInput would fire — _Input runs first.
+		if (_state != BattleState.PlayerTurn) return;
+		if (_enemies.Count <= 1) return;
+		if (e.IsActionPressed("ui_left"))
+		{
+			CycleTarget(-1);
+			GetViewport().SetInputAsHandled();
+		}
+		else if (e.IsActionPressed("ui_right"))
+		{
+			CycleTarget(+1);
+			GetViewport().SetInputAsHandled();
+		}
+	}
+
+	// ── Phase 7b — per-actor stat / HP / MP routing ─────────────────────
+	// Sen flows through GameManager.PlayerStats / EffectiveStats and the existing
+	// HurtPlayer / HealPlayer / UseMp APIs (so all the existing code keeps working).
+	// Lily / Rain are read & mutated directly on their PartyMember, since they don't
+	// have a presence in PlayerCombatData / InventoryData.
+
+	private PartyMember? CurrentActor()
+	{
+		var party = GameManager.Instance.Party;
+		if (_currentActorMemberIdx < 0 || _currentActorMemberIdx >= party.Members.Count) return null;
+		return party.Members[_currentActorMemberIdx];
+	}
+
+	private bool CurrentActorIsSen() => CurrentActor()?.MemberId == "sen";
+
+	/// <summary>Effective Attack stat for whichever party member is currently acting.</summary>
+	private int ActorAttack()
+	{
+		var m = CurrentActor();
+		if (m == null) return 0;
+		if (CurrentActorIsSen()) return GameManager.Instance.EffectiveStats.Attack;
+		return m.Attack + SumActorEquipBonuses(m).Attack;
+	}
+
+	private int ActorMagic()
+	{
+		var m = CurrentActor();
+		if (m == null) return 0;
+		if (CurrentActorIsSen()) return GameManager.Instance.EffectiveStats.Magic;
+		return m.Magic + SumActorEquipBonuses(m).Magic;
+	}
+
+	private int ActorLuck()
+	{
+		var m = CurrentActor();
+		if (m == null) return 0;
+		if (CurrentActorIsSen()) return GameManager.Instance.EffectiveStats.Luck;
+		return m.Luck + SumActorEquipBonuses(m).Luck;
+	}
+
+	private int ActorMaxHp()
+	{
+		var m = CurrentActor();
+		if (m == null) return 1;
+		if (CurrentActorIsSen()) return GameManager.Instance.PlayerStats.MaxHp;
+		return m.MaxHp;
+	}
+
+	private int ActorCurrentHp()
+	{
+		var m = CurrentActor();
+		if (m == null) return 0;
+		if (CurrentActorIsSen()) return GameManager.Instance.PlayerStats.CurrentHp;
+		return m.CurrentHp;
+	}
+
+	private PlayerClass ActorClass()
+	{
+		var m = CurrentActor();
+		if (m == null) return PlayerClass.Bard;
+		if (CurrentActorIsSen()) return GameManager.Instance.PlayerStats.Class;
+		return m.PlayerClassEnum;
+	}
+
+	private string ActorDisplayName()
+	{
+		var m = CurrentActor();
+		return m?.DisplayName ?? GameManager.Instance.PlayerName;
+	}
+
+	private void ActorHurt(int amount)
+	{
+		var m = CurrentActor();
+		if (m == null) return;
+		if (CurrentActorIsSen())
+		{
+			GameManager.Instance.HurtPlayer(amount);
+		}
+		else
+		{
+			m.CurrentHp = System.Math.Max(0, m.CurrentHp - amount);
+		}
+	}
+
+	private void ActorHeal(int amount)
+	{
+		var m = CurrentActor();
+		if (m == null) return;
+		if (CurrentActorIsSen())
+		{
+			GameManager.Instance.HealPlayer(amount);
+		}
+		else
+		{
+			m.CurrentHp = System.Math.Min(m.MaxHp, m.CurrentHp + amount);
+		}
+	}
+
+	private bool ActorUseMp(int cost)
+	{
+		var m = CurrentActor();
+		if (m == null) return false;
+		if (CurrentActorIsSen()) return GameManager.Instance.UseMp(cost);
+		if (m.CurrentMp < cost) return false;
+		m.CurrentMp -= cost;
+		return true;
+	}
+
+	/// <summary>
+	/// Roll growth rates against a non-Sen party member's accumulated XP and apply
+	/// any level-ups directly onto their PartyMember.Level/Stats. Returns one
+	/// LevelUpResult per gained level so the existing LevelUpScreen can animate them.
+	/// </summary>
+	private System.Collections.Generic.List<LevelUpResult> RollLevelUpsForMember(PartyMember member)
+	{
+		var results = new System.Collections.Generic.List<LevelUpResult>();
+		if (member == null || member.MemberId == "sen") return results;
+
+		int gained = LevelData.CheckLevelUp(member.Exp, member.Level);
+		if (gained == 0) return results;
+
+		// Load this member's class growth rates from disk. Falls back to a flat 50%
+		// per stat if the resource is missing so the level-up still happens.
+		string growthPath = $"res://resources/characters/growth_rates_{member.Class.ToLower()}.tres";
+		GrowthRates? growth = null;
+		if (ResourceLoader.Exists(growthPath))
+			growth = GD.Load<GrowthRates>(growthPath);
+
+		for (int i = 0; i < gained; i++)
+		{
+			int oldHp  = member.MaxHp,      oldAtk = member.Attack,  oldDef = member.Defense,
+				oldSpd = member.Speed,       oldMag = member.Magic,   oldRes = member.Resistance,
+				oldLck = member.Luck;
+
+			int hpRate  = growth?.MaxHp      ?? 50;
+			int atkRate = growth?.Attack     ?? 50;
+			int defRate = growth?.Defense    ?? 50;
+			int spdRate = growth?.Speed      ?? 50;
+			int magRate = growth?.Magic      ?? 50;
+			int resRate = growth?.Resistance ?? 50;
+			int lckRate = growth?.Luck       ?? 50;
+
+			if (GD.RandRange(0, 99) < hpRate)  { member.MaxHp++; member.CurrentHp++; }
+			if (GD.RandRange(0, 99) < atkRate)  member.Attack++;
+			if (GD.RandRange(0, 99) < defRate)  member.Defense++;
+			if (GD.RandRange(0, 99) < spdRate)  member.Speed++;
+			if (GD.RandRange(0, 99) < magRate)  member.Magic++;
+			if (GD.RandRange(0, 99) < resRate)  member.Resistance++;
+			if (GD.RandRange(0, 99) < lckRate)  member.Luck++;
+
+			member.Level++;
+
+			results.Add(new LevelUpResult
+			{
+				NewLevel      = member.Level,
+				MemberName    = member.DisplayName,
+				ClassName     = member.Class,
+				OldMaxHp      = oldHp,  NewMaxHp      = member.MaxHp,
+				OldAttack     = oldAtk, NewAttack     = member.Attack,
+				OldDefense    = oldDef, NewDefense    = member.Defense,
+				OldSpeed      = oldSpd, NewSpeed      = member.Speed,
+				OldMagic      = oldMag, NewMagic      = member.Magic,
+				OldResistance = oldRes, NewResistance = member.Resistance,
+				OldLuck       = oldLck, NewLuck       = member.Luck,
+			});
+		}
+
+		GD.Print($"[BattleScene] {member.DisplayName} gained {gained} level(s) — now Lv {member.Level}.");
+		return results;
+	}
+
+	/// <summary>True when every party member has 0 HP — the multi-actor game-over check.</summary>
+	private bool PartyAllKO()
+	{
+		var party = GameManager.Instance.Party;
+		// Sen's HP lives in PlayerStats; everyone else's lives on PartyMember.
+		foreach (var m in party.Members)
+		{
+			if (m.MemberId == "sen")
+			{
+				if (GameManager.Instance.PlayerStats.CurrentHp > 0) return false;
+			}
+			else if (!m.IsKO)
+			{
+				return false;
+			}
+		}
+		return party.Members.Count > 0;
+	}
+
+	/// <summary>Sum static-equipment bonuses for a non-Sen party member from their EquippedItemPaths dict.</summary>
+	private static EquipmentBonuses SumActorEquipBonuses(PartyMember member)
+	{
+		var list = new System.Collections.Generic.List<EquipmentBonuses>();
+		foreach (var kv in member.EquippedItemPaths)
+		{
+			if (string.IsNullOrEmpty(kv.Value) || !ResourceLoader.Exists(kv.Value)) continue;
+			var data = GD.Load<EquipmentData>(kv.Value);
+			if (data == null) continue;
+			list.Add(data.Bonuses);
+		}
+		return EquipmentLogic.SumBonuses(list);
+	}
+
+	/// <summary>
+	/// Called after an attack lands. If the just-damaged target died, plays a quick
+	/// shrink+fade on its visual and advances the cursor to the next living enemy.
+	/// </summary>
+	private void HandleEnemyDeathIfApplicable(EnemyInstance? justHit)
+	{
+		if (justHit == null || !justHit.IsKO) return;
+		if (justHit.Visual is Node2D node)
+		{
+			var t = CreateTween().SetParallel();
+			t.TweenProperty(node, "scale", Vector2.Zero, 0.4f)
+				.SetEase(Tween.EaseType.In).SetTrans(Tween.TransitionType.Back);
+			t.TweenProperty(node, "modulate:a", 0f, 0.4f);
+		}
+		AdvanceTargetIfDead();
+	}
 	private SubMenuMode _subMenuMode;
 	private readonly System.Collections.Generic.List<int> _itemIndexMap = new();
 	private bool        _playerGoesFirst;
@@ -41,7 +356,8 @@ public partial class BattleScene : Node2D
 	private RhythmArena     _rhythmArena    = null!;
 	private RhythmStrike    _rhythmStrike   = null!;
 	private EnemyNameplate  _enemyNameplate = null!;
-	private Node2D          _enemyVisual    = null!;
+	/// <summary>Backwards-compat accessor for the current target's spawned visual node.</summary>
+	private Node2D? _enemyVisual => Target?.Visual;
 	private ShaderMaterial? _hitFlashMat;
 
 	private LevelUpScreen      _levelUpScreen      = null!;
@@ -150,14 +466,24 @@ public partial class BattleScene : Node2D
 		// Load encounter
 		var encounter = BattleRegistry.Instance.GetPendingEncounter();
 		_encounter = encounter;
-		if (encounter != null && encounter.Enemies.Count > 0)
-			_enemy = encounter.Enemies[0];
-		else
-			GD.PushWarning("[BattleScene] No pending encounter — using placeholder enemy.");
+		_enemies.Clear();
+		_targetIndex = 0;
 
 		_difficultyMultiplier = SettingsLogic.EnemyDifficultyMultiplier(
 			SettingsManager.Instance?.Current.BattleDifficulty ?? BattleDifficulty.Normal);
-		_enemyCurrentHp = Math.Max(1, (int)((_enemy?.Stats?.MaxHp ?? 10) * _difficultyMultiplier));
+
+		if (encounter != null && encounter.Enemies.Count > 0)
+		{
+			foreach (var data in encounter.Enemies)
+			{
+				if (data == null) continue;
+				_enemies.Add(new EnemyInstance(data, _difficultyMultiplier));
+			}
+		}
+		else
+		{
+			GD.PushWarning("[BattleScene] No pending encounter — using placeholder enemy.");
+		}
 
 		// Rhythm Memory: look up how this enemy has adapted to the player
 		string enemyId = _enemy?.EnemyId ?? "";
@@ -250,59 +576,117 @@ public partial class BattleScene : Node2D
 
 	private void SetupEnemySprite()
 	{
-		if (_enemy?.BattleSprite != null && _enemy.SpriteFrameCount > 0)
-		{
-			var tex = _enemy.BattleSprite;
-			int size = _enemy.SpriteFrameSize;
-			var frames = new SpriteFrames();
-			frames.AddAnimation("idle");
-			frames.SetAnimationLoop("idle", true);
-			frames.SetAnimationSpeed("idle", _enemy.SpriteAnimFps);
+		// Spawn one battle sprite per enemy in the encounter and lay them out
+		// horizontally so the player can see every target. Each visual is stored on
+		// its EnemyInstance so the rest of the battle code (crit shake, hit flash,
+		// victory shrink) can address the right enemy via the Target accessor.
+		if (_enemies.Count == 0) return;
 
-			for (int f = 0; f < _enemy.SpriteFrameCount; f++)
+		const float spacing = 192f; // pixels between enemies in the layout
+
+		// Compute the leftmost x so the row is centred on _enemyArea's local origin.
+		float totalWidth = (_enemies.Count - 1) * spacing;
+		float startX     = -totalWidth * 0.5f;
+
+		const string flashShaderPath = "res://assets/shaders/hit_flash.gdshader";
+		Shader? flashShader = ResourceLoader.Exists(flashShaderPath)
+			? GD.Load<Shader>(flashShaderPath) : null;
+
+		for (int i = 0; i < _enemies.Count; i++)
+		{
+			var instance = _enemies[i];
+			var data     = instance.Data;
+			Node2D? visual = null;
+
+			if (data?.BattleSprite != null && data.SpriteFrameCount > 0)
 			{
-				var atlas = new AtlasTexture
+				var tex  = data.BattleSprite;
+				int size = data.SpriteFrameSize;
+				var frames = new SpriteFrames();
+				frames.AddAnimation("idle");
+				frames.SetAnimationLoop("idle", true);
+				frames.SetAnimationSpeed("idle", data.SpriteAnimFps);
+
+				for (int f = 0; f < data.SpriteFrameCount; f++)
 				{
-					Atlas  = tex,
-					Region = new Rect2(f * size, 0, size, size),
+					var atlas = new AtlasTexture
+					{
+						Atlas  = tex,
+						Region = new Rect2(f * size, 0, size, size),
+					};
+					frames.AddFrame("idle", atlas);
+				}
+
+				var animated = new AnimatedSprite2D { SpriteFrames = frames };
+				animated.Play("idle");
+				visual = animated;
+			}
+			else if (data?.BattleSprite != null)
+			{
+				visual = new Sprite2D { Texture = data.BattleSprite };
+			}
+			else
+			{
+				visual = new Polygon2D
+				{
+					Polygon = [
+						new Vector2(-20, -28), new Vector2(20, -28),
+						new Vector2(20,  28),  new Vector2(-20, 28)
+					],
+					Color = new Color(0.55f, 0.3f, 0.85f, 1f),
 				};
-				frames.AddFrame("idle", atlas);
 			}
 
-			var animated = new AnimatedSprite2D { SpriteFrames = frames };
-			animated.Play("idle");
-			_enemyVisual = animated;
+			// Apply hit flash shader. Each enemy gets its own ShaderMaterial so
+			// flashing one doesn't tint the rest.
+			if (flashShader != null && visual is CanvasItem ci)
+				ci.Material = new ShaderMaterial { Shader = flashShader };
+
+			visual.Scale    = new Vector2(4f, 4f);
+			visual.Position = new Vector2(startX + i * spacing, 0f);
+
+			_enemyArea.AddChild(visual);
+			instance.Visual = visual;
 		}
-		else if (_enemy?.BattleSprite != null)
+
+		// Backwards compat: keep the old _hitFlashMat field pointing at whatever the
+		// current target's flash material is, so legacy FlashEnemy() still hits something.
+		if (Target?.Visual is CanvasItem targetCi && targetCi.Material is ShaderMaterial mat)
+			_hitFlashMat = mat;
+
+		// Phase 7c — spawn a small downward arrow cursor that floats over the active
+		// target. Only used when the encounter has more than one enemy; solo fights
+		// don't need a target indicator.
+		if (_enemies.Count > 1)
 		{
-			var sprite = new Sprite2D { Texture = _enemy.BattleSprite };
-			_enemyVisual = sprite;
-		}
-		else
-		{
-			var poly = new Polygon2D
+			_targetCursor = new Polygon2D
 			{
-				Polygon = [
-					new Vector2(-20, -28), new Vector2(20, -28),
-					new Vector2(20,  28),  new Vector2(-20, 28)
-				],
-				Color = new Color(0.55f, 0.3f, 0.85f, 1f)
+				Polygon = new[]
+				{
+					new Vector2(-6f, -8f),
+					new Vector2( 6f, -8f),
+					new Vector2( 0f,  4f),
+				},
+				Color = new Color(1f, 0.85f, 0.1f, 0.95f),
 			};
-			_enemyVisual = poly;
+			_enemyArea.AddChild(_targetCursor);
+			RefreshTargetCursor();
 		}
+	}
 
-		// Apply hit flash shader
-		const string flashShaderPath = "res://assets/shaders/hit_flash.gdshader";
-		if (ResourceLoader.Exists(flashShaderPath) && _enemyVisual is CanvasItem ci)
+	private void RefreshTargetCursor()
+	{
+		if (_targetCursor == null) return;
+		var t = Target;
+		if (t?.Visual == null)
 		{
-			_hitFlashMat = new ShaderMaterial { Shader = GD.Load<Shader>(flashShaderPath) };
-			ci.Material = _hitFlashMat;
+			_targetCursor.Visible = false;
+			return;
 		}
-
-		if (_enemyVisual is Node2D visual)
-			visual.Scale = new Vector2(4f, 4f);
-
-		_enemyArea.AddChild(_enemyVisual);
+		_targetCursor.Visible = true;
+		// Float the cursor 40 px above the enemy sprite — sprites are scaled 4× and
+		// drawn around the area origin, so the offset is generous enough to clear them.
+		_targetCursor.Position = t.Visual.Position + new Vector2(0f, -64f);
 	}
 
 	public override void _ExitTree()
@@ -370,7 +754,12 @@ public partial class BattleScene : Node2D
 	{
 		if (_damageNumberScene == null) return;
 		var num = _damageNumberScene.Instantiate<DamageNumber>();
-		num.Position = _enemyArea.Position + new Vector2((float)GD.RandRange(-16.0, 16.0), -30f);
+		// Spawn over the current target's visual when possible so multi-enemy fights
+		// place their damage numbers on the right enemy.
+		Vector2 anchor = _enemyArea.Position;
+		if (Target?.Visual != null)
+			anchor = _enemyArea.Position + Target.Visual.Position;
+		num.Position = anchor + new Vector2((float)GD.RandRange(-16.0, 16.0), -30f);
 		AddChild(num);
 		num.Play(damage, isCrit);
 	}
@@ -383,13 +772,20 @@ public partial class BattleScene : Node2D
 		Engine.TimeScale = 1.0;
 	}
 
-	/// <summary>Briefly flashes the enemy sprite white via the hit_flash shader.</summary>
+	/// <summary>Briefly flashes the current target enemy sprite white via the hit_flash shader.</summary>
 	private void FlashEnemy()
 	{
-		if (_hitFlashMat == null) return;
-		_hitFlashMat.SetShaderParameter("flash_amount", 1.0f);
+		// Look up the current target's flash material directly so we always flash the
+		// enemy that just took the hit, not whichever one happened to be cached at
+		// SetupEnemySprite time.
+		ShaderMaterial? mat = null;
+		if (Target?.Visual is CanvasItem ci && ci.Material is ShaderMaterial sm)
+			mat = sm;
+		mat ??= _hitFlashMat;
+		if (mat == null) return;
+		mat.SetShaderParameter("flash_amount", 1.0f);
 		var t = CreateTween();
-		t.TweenMethod(Callable.From<float>(v => _hitFlashMat.SetShaderParameter("flash_amount", v)),
+		t.TweenMethod(Callable.From<float>(v => mat.SetShaderParameter("flash_amount", v)),
 			1.0f, 0.0f, 0.08f);
 	}
 
@@ -427,23 +823,29 @@ public partial class BattleScene : Node2D
 	{
 		SetState(BattleState.Intro);
 
-		// Enemy intro zoom: start small, bounce to full size
-		if (_enemyVisual != null)
+		// Enemy intro zoom: every spawned visual starts small and bounces to full size
+		// in parallel. Run only the last tween's `Finished` signal as the gate so a
+		// single Wisplet behaves identically to a wisplet+centiphantom mixed encounter.
+		Tween? lastTween = null;
+		foreach (var inst in _enemies)
 		{
-			_enemyVisual.Scale = new Vector2(2f, 2f);
+			if (inst.Visual is not Node2D node) continue;
+			node.Scale = new Vector2(2f, 2f);
 			var zoomTween = CreateTween();
-			zoomTween.TweenProperty(_enemyVisual, "scale", new Vector2(4f, 4f), 0.3f)
+			zoomTween.TweenProperty(node, "scale", new Vector2(4f, 4f), 0.3f)
 				.SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Back);
-			await ToSignal(zoomTween, Tween.SignalName.Finished);
+			lastTween = zoomTween;
 		}
+		if (lastTween != null)
+			await ToSignal(lastTween, Tween.SignalName.Finished);
 
 		SetBattleVar("enemy_name", _enemy?.DisplayName ?? "???");
 		await RunBattleTimeline("res://dialog/timelines/battle_intro.dtl");
 
-		if (_playerGoesFirst)
-			await BeginPlayerTurn();
-		else
-			await RunEnemyTurn();
+		// Multi-actor flow: kick off the first round. The existing _playerGoesFirst
+		// boolean is no longer meaningful — turn order is now determined by the
+		// speed-sorted queue built inside BeginRound.
+		await BeginRound();
 	}
 
 	// ── Fight — routed by player class ───────────────────────────────
@@ -456,8 +858,8 @@ public partial class BattleScene : Node2D
 		SetState(BattleState.StrikePhase);
 		await RunBattleTimeline("res://dialog/timelines/battle_strike_prompt.dtl");
 
-		var playerClass = GameManager.Instance.PlayerStats.Class;
-		GD.Print($"[BattleScene] FIGHT selected. Class={playerClass}");
+		var playerClass = ActorClass();
+		GD.Print($"[BattleScene] FIGHT selected. Actor={ActorDisplayName()} Class={playerClass}");
 
 		switch (playerClass)
 		{
@@ -521,16 +923,18 @@ public partial class BattleScene : Node2D
 
 	private async Task DoRangerCrit()
 	{
-		int damage = BattleAttackResolver.ResolveRangerCrit(GameManager.Instance.EffectiveStats.Attack);
+		int damage = BattleAttackResolver.ResolveRangerCrit(ActorAttack());
+		var hit = Target;
 		_enemyCurrentHp -= damage;
 		CameraShake.ShakeNode(this, intensity: 5f, duration: 0.18f);
 		FlashEnemy();
 		SpawnDamageNumber(damage, isCrit: true);
 		SetBattleVar("hit_label",  "Bull's-eye!");
-		SetBattleVar("enemy_name", _enemy?.DisplayName ?? "???");
+		SetBattleVar("enemy_name", hit?.DisplayName ?? "???");
 		SetBattleVar("damage",     damage.ToString());
 		await RunBattleTimeline("res://dialog/timelines/battle_hit.dtl");
-		if (_enemyCurrentHp <= 0)
+		HandleEnemyDeathIfApplicable(hit);
+		if (!AnyLivingEnemy())
 			await HandleVictory();
 		else
 			await RunEnemyTurn();
@@ -560,9 +964,9 @@ public partial class BattleScene : Node2D
 
 		var (baseDamage, rolledCrit, hitLabel) = BattleAttackResolver.ResolveStrike(
 			grade,
-			GameManager.Instance.EffectiveStats.Attack,
+			ActorAttack(),
 			_enemy?.Stats?.Defense ?? 0,
-			GameManager.Instance.EffectiveStats.Luck);
+			ActorLuck());
 
 		int  damage = baseDamage;
 		bool isCrit = rolledCrit;
@@ -572,17 +976,18 @@ public partial class BattleScene : Node2D
 			isCrit = true;
 		}
 
+		var hit = Target;
 		_enemyCurrentHp -= damage;
 		CameraShake.ShakeNode(this, intensity: isCrit ? 5f : 2f, duration: isCrit ? 0.18f : 0.1f);
 		FlashEnemy();
 		if (isCrit) PlayCritSlowMotion();
 		SpawnDamageNumber(damage, isCrit);
 
-		// On a full PerfectSteal, roll the enemy loot table and pocket one item.
+		// On a full PerfectSteal, roll the (target enemy's) loot table and pocket one item.
 		string stolenLabel = "";
 		if (RogueStealLogic.ShouldSteal(outcome))
 		{
-			var lootEntries = (_enemy?.LootTable ?? System.Array.Empty<Resource>())
+			var lootEntries = (hit?.Data?.LootTable ?? System.Array.Empty<Resource>())
 				.OfType<LootEntry>().ToArray();
 			if (lootEntries.Length > 0)
 			{
@@ -601,14 +1006,15 @@ public partial class BattleScene : Node2D
 		}
 
 		string label = (outcome == RogueStrikeOutcome.PerfectSteal ? "Pickpocket!" : hitLabel) + stolenLabel;
-		GD.Print($"[BattleScene] Rogue {outcome} → grade={grade}, damage={damage}. Enemy HP: {_enemyCurrentHp}");
+		GD.Print($"[BattleScene] Rogue {outcome} → grade={grade}, damage={damage}. Enemy HP: {hit?.CurrentHp ?? 0}");
 
 		SetBattleVar("hit_label",   label);
-		SetBattleVar("enemy_name",  _enemy?.DisplayName ?? "???");
+		SetBattleVar("enemy_name",  hit?.DisplayName ?? "???");
 		SetBattleVar("damage",      damage.ToString());
 		await RunBattleTimeline("res://dialog/timelines/battle_hit.dtl");
 
-		if (_enemyCurrentHp <= 0)
+		HandleEnemyDeathIfApplicable(hit);
+		if (!AnyLivingEnemy())
 			await HandleVictory();
 		else
 			await RunEnemyTurn();
@@ -624,10 +1030,9 @@ public partial class BattleScene : Node2D
 
 	private async Task DoAlchemistResolved(float accuracy)
 	{
-		var stats  = GameManager.Instance.EffectiveStats;
-		int  luck   = stats.Luck;
-		int  magic  = stats.Magic;
-		var  result = AlchemistBrewLogic.Resolve(accuracy, luck, GD.Randf());
+		int luck  = ActorLuck();
+		int magic = ActorMagic();
+		var result = AlchemistBrewLogic.Resolve(accuracy, luck, GD.Randf());
 		string label;
 
 		// Every brew (except Backfire) lobs the flask at the enemy for ~50% of a normal
@@ -636,13 +1041,14 @@ public partial class BattleScene : Node2D
 		// chipping away even when the rolled effect is dull.
 		int  splashDamage = 0;
 		bool splashCrit   = false;
+		var splashHit = Target;
 		if (result != BrewResult.Backfire)
 		{
 			var splashGrade = result == BrewResult.Neutral ? HitGrade.Good : HitGrade.Perfect;
 			var (rawDamage, isCrit, _) = BattleAttackResolver.ResolveStrike(
 				splashGrade,
-				stats.Attack,
-				_enemy?.Stats?.Defense ?? 0,
+				ActorAttack(),
+				splashHit?.Data?.Stats?.Defense ?? 0,
 				luck);
 			splashDamage = System.Math.Max(1, rawDamage / 2);
 			splashCrit   = isCrit;
@@ -658,7 +1064,7 @@ public partial class BattleScene : Node2D
 			case BrewResult.Heal:
 			{
 				int amount = AlchemistBrewLogic.HealAmount(magic);
-				GameManager.Instance.HealPlayer(amount);
+				ActorHeal(amount);
 				label = $"Healing Draught! -{splashDamage} HP, +{amount} self";
 				GD.Print($"[BattleScene] Alchemist HEAL +{amount}, splash {splashDamage}");
 				break;
@@ -682,7 +1088,7 @@ public partial class BattleScene : Node2D
 			case BrewResult.Backfire:
 			{
 				int amount = AlchemistBrewLogic.BackfireDamage(magic);
-				GameManager.Instance.HurtPlayer(amount);
+				ActorHurt(amount);
 				label = $"The brew explodes! -{amount} HP";
 				CameraShake.ShakeNode(this, intensity: 3f, duration: 0.12f);
 				GD.Print($"[BattleScene] Alchemist BACKFIRE -{amount}");
@@ -697,18 +1103,19 @@ public partial class BattleScene : Node2D
 		}
 
 		SetBattleVar("hit_label",  label);
-		SetBattleVar("enemy_name", _enemy?.DisplayName ?? "???");
+		SetBattleVar("enemy_name", splashHit?.DisplayName ?? "???");
 		SetBattleVar("damage",     splashDamage.ToString());
 		await RunBattleTimeline("res://dialog/timelines/battle_hit.dtl");
 
-		// Player is the only one who could die from a backfire.
-		if (GameManager.Instance.PlayerStats.CurrentHp <= 0)
+		// Backfire might have KO'd the brewer. Game-over only when ALL members are KO'd.
+		if (PartyAllKO())
 		{
 			await HandleDefeat();
 			return;
 		}
 		// Splash damage may have killed the enemy.
-		if (_enemyCurrentHp <= 0)
+		HandleEnemyDeathIfApplicable(splashHit);
+		if (!AnyLivingEnemy())
 		{
 			await HandleVictory();
 			return;
@@ -723,25 +1130,27 @@ public partial class BattleScene : Node2D
 		var grade = (HitGrade)gradeInt;
 		_rhythmStrike.Visible = false;
 
+		var hit = Target;
 		var (damage, isCrit, hitLabel) = BattleAttackResolver.ResolveStrike(
 			grade,
-			GameManager.Instance.EffectiveStats.Attack,
-			_enemy?.Stats?.Defense ?? 0,
-			GameManager.Instance.EffectiveStats.Luck);
+			ActorAttack(),
+			hit?.Data?.Stats?.Defense ?? 0,
+			ActorLuck());
 		_enemyCurrentHp -= damage;
 		CameraShake.ShakeNode(this, intensity: isCrit ? 5f : 2f, duration: isCrit ? 0.18f : 0.1f);
 		FlashEnemy();
 		if (isCrit) PlayCritSlowMotion();
 
-		GD.Print($"[BattleScene] {hitLabel} grade={grade}, damage={damage}. Enemy HP: {_enemyCurrentHp}");
+		GD.Print($"[BattleScene] {hitLabel} grade={grade}, damage={damage}. Enemy HP: {hit?.CurrentHp ?? 0}");
 		SpawnDamageNumber(damage, isCrit);
 
 		SetBattleVar("hit_label",   hitLabel);
-		SetBattleVar("enemy_name",  _enemy?.DisplayName ?? "???");
+		SetBattleVar("enemy_name",  hit?.DisplayName ?? "???");
 		SetBattleVar("damage",      damage.ToString());
 		await RunBattleTimeline("res://dialog/timelines/battle_hit.dtl");
 
-		if (_enemyCurrentHp <= 0)
+		HandleEnemyDeathIfApplicable(hit);
+		if (!AnyLivingEnemy())
 			await HandleVictory();
 		else
 			await RunEnemyTurn();
@@ -984,10 +1393,11 @@ public partial class BattleScene : Node2D
 		}
 		else
 		{
+			var hit = Target;
 			var (damage, isCrit) = BattleAttackResolver.ResolveSpell(
 				grade, spell.BasePower,
 				GameManager.Instance.EffectiveStats.Magic,
-				_enemy?.Stats?.Resistance ?? 0);
+				hit?.Data?.Stats?.Resistance ?? 0);
 			_enemyCurrentHp -= damage;
 			CameraShake.ShakeNode(this, intensity: isCrit ? 5f : 2f, duration: isCrit ? 0.18f : 0.1f);
 			FlashEnemy();
@@ -1002,7 +1412,8 @@ public partial class BattleScene : Node2D
 			SetBattleVar("damage",       damage.ToString());
 			await RunBattleTimeline("res://dialog/timelines/spell_shadow_bolt_cast.dtl");
 
-			if (_enemyCurrentHp <= 0) { await HandleVictory(); return; }
+			HandleEnemyDeathIfApplicable(hit);
+			if (!AnyLivingEnemy()) { await HandleVictory(); return; }
 		}
 
 		await RunEnemyTurn();
@@ -1056,15 +1467,27 @@ public partial class BattleScene : Node2D
 		SetState(BattleState.PlayerTurn);
 	}
 
-	// ── BeginPlayerTurn — ticks statuses before showing the action menu ─
+	// ── Phase 7b — round / turn queue flow ───────────────────────────
 
-	private async Task BeginPlayerTurn()
+	/// <summary>
+	/// Start a fresh round: tick statuses (both sides), apply round-start poison
+	/// damage, build a speed-sorted queue from the living actors, then dispatch
+	/// the first entry. Called from RunIntro and from AdvanceTurn when the queue
+	/// is exhausted.
+	/// </summary>
+	private async Task BeginRound()
 	{
+		// Bail straight to victory/defeat if a previous round / poison tick / rhythm
+		// damage burst already finished the fight. This guards against AdvanceTurn
+		// looping forever when one side has no living actors left.
+		if (PartyAllKO()) { await HandleDefeat(); return; }
+		if (!AnyLivingEnemy()) { await HandleVictory(); return; }
+
 		// Tick all statuses (both sides) at the top of each round
 		_statuses.TickAll();
 		UpdateStatusHud();
 
-		// Apply player Poison
+		// Apply player Poison (Sen for now — Lily/Rain status effects ship in 7c)
 		if (_statuses.PlayerHasStatus(StatusEffect.Poison))
 		{
 			int dmg = _statuses.PlayerPoisonDamage(GameManager.Instance.PlayerStats.MaxHp);
@@ -1078,40 +1501,127 @@ public partial class BattleScene : Node2D
 			}
 		}
 
-		// Apply enemy Poison
+		// Apply enemy Poison — phase 7a only ticks the current target. A future
+		// per-enemy status pass (phase 7c) will tick every poisoned enemy.
 		if (_statuses.EnemyHasStatus(StatusEffect.Poison))
 		{
-			int dmg = _statuses.EnemyPoisonDamage(_enemy?.Stats?.MaxHp ?? 10);
+			var poisoned = Target;
+			int dmg = _statuses.EnemyPoisonDamage(poisoned?.Data?.Stats?.MaxHp ?? 10);
 			_enemyCurrentHp = Math.Max(0, _enemyCurrentHp - dmg);
 			SetBattleVar("damage", dmg.ToString());
 			await RunBattleTimeline("res://dialog/timelines/battle_poison_enemy.dtl");
-			if (_enemyCurrentHp <= 0)
+			HandleEnemyDeathIfApplicable(poisoned);
+			if (!AnyLivingEnemy())
 			{
 				await HandleVictory();
 				return;
 			}
 		}
 
-		// Player Stun: skip this turn
-		if (_statuses.PlayerHasStatus(StatusEffect.Stun))
+		// Build the speed-sorted queue from the current living actors.
+		var party = GameManager.Instance.Party;
+		var partySpeeds = new System.Collections.Generic.List<(int, bool)>(party.Members.Count);
+		foreach (var m in party.Members)
+		{
+			int spd = m.MemberId == "sen"
+				? GameManager.Instance.EffectiveStats.Speed
+				: m.Speed;
+			partySpeeds.Add((spd, m.IsKO));
+		}
+		var enemySpeeds = new System.Collections.Generic.List<(int, bool)>(_enemies.Count);
+		foreach (var e in _enemies)
+			enemySpeeds.Add((e.Data?.Stats?.Speed ?? 0, e.IsKO));
+
+		_turnQueue    = TurnQueue.BuildOrder(partySpeeds, enemySpeeds);
+		_turnQueueIdx = 0;
+
+		await AdvanceTurn();
+	}
+
+	/// <summary>
+	/// Walk the queue. Skip any entries whose actor died since the queue was built.
+	/// Dispatches to BeginActorTurn for party members or RunSingleEnemyTurn for enemies.
+	/// When the queue is exhausted, starts a new round.
+	/// </summary>
+	private async Task AdvanceTurn()
+	{
+		while (_turnQueueIdx < _turnQueue.Count)
+		{
+			var entry = _turnQueue[_turnQueueIdx];
+			_turnQueueIdx++;
+
+			if (entry.IsParty)
+			{
+				var party = GameManager.Instance.Party;
+				if (entry.Index >= party.Members.Count) continue;
+				var member = party.Members[entry.Index];
+				if (member.IsKO) continue;
+				_currentActorMemberIdx = entry.Index;
+				await BeginActorTurn();
+				return; // BeginActorTurn yields control to the action menu
+			}
+			else
+			{
+				if (entry.Index >= _enemies.Count) continue;
+				var enemy = _enemies[entry.Index];
+				if (enemy.IsKO) continue;
+				_targetIndex = entry.Index;
+				if (_enemyNameplate != null) _enemyNameplate.Setup(enemy.DisplayName);
+				await RunSingleEnemyTurn();
+				return; // RunSingleEnemyTurn yields to the rhythm phase
+			}
+		}
+
+		// Queue exhausted — top of next round.
+		await BeginRound();
+	}
+
+	/// <summary>
+	/// Start a single party member's turn. Sets the active actor, then shows the
+	/// action menu. Replaces the old single-actor BeginPlayerTurn flow.
+	/// </summary>
+	private async Task BeginActorTurn()
+	{
+		// Stun: skip this actor's turn entirely. Sen-only for now.
+		if (CurrentActorIsSen() && _statuses.PlayerHasStatus(StatusEffect.Stun))
 		{
 			await RunBattleTimeline("res://dialog/timelines/battle_stun_player.dtl");
-			await RunEnemyTurn();
+			await AdvanceTurn();
 			return;
 		}
+
+		_battleHud?.HighlightActor(_currentActorMemberIdx);
+
+		// Phase 7c: short "X's Turn" banner before the action menu pops, but only
+		// when the party has more than one member — solo Sen battles keep the same
+		// snappy feel as before.
+		if (GameManager.Instance.Party.Count > 1)
+			await ShowPhaseCard($"{ActorDisplayName()}'s Turn", new Color(1f, 0.85f, 0.1f));
 
 		SetState(BattleState.PlayerTurn);
 	}
 
+	/// <summary>
+	/// Backwards-compat shim. Older code paths called BeginPlayerTurn after recovering
+	/// from a sub-menu cancel — those still want "show the player's action menu", which
+	/// in the new flow is just BeginActorTurn for the current actor. We never re-run the
+	/// status tick here (that already happened at round start in BeginRound).
+	/// </summary>
+	private async Task BeginPlayerTurn() => await BeginActorTurn();
+
 	// ── Enemy turn ────────────────────────────────────────────────────
 
-	private async Task RunEnemyTurn()
+	/// <summary>
+	/// Run a single enemy's rhythm phase. The active enemy is whichever the
+	/// turn queue selected — already stored in <see cref="Target"/> via _targetIndex.
+	/// </summary>
+	private async Task RunSingleEnemyTurn()
 	{
 		// Enemy Stun: skip the rhythm phase this turn
 		if (_statuses.EnemyHasStatus(StatusEffect.Stun))
 		{
 			await RunBattleTimeline("res://dialog/timelines/battle_stun_enemy.dtl");
-			await BeginPlayerTurn();
+			await AdvanceTurn();
 			return;
 		}
 
@@ -1215,18 +1725,58 @@ public partial class BattleScene : Node2D
 		if (_state != BattleState.RhythmPhase) return;
 		GD.Print($"[BattleScene] Rhythm phase ended. Max combo: {_rhythmArena.MaxStreak}");
 		_battleHud.ShowPerformanceSummary(_performance);
-		_ = BeginPlayerTurn();
+		// Multi-actor flow: advance the queue. If the round is over this kicks BeginRound.
+		_ = AdvanceTurn();
 	}
+
+	/// <summary>
+	/// Backwards-compat shim. Older code paths called RunEnemyTurn() to "do whatever
+	/// happens after the player acted". In the multi-actor flow that now means
+	/// "advance the turn queue" — we delegate so every existing handler keeps working.
+	/// </summary>
+	private async Task RunEnemyTurn() => await AdvanceTurn();
 
 	private void OnPlayerHurt(int damage)
 	{
 		int scaledDamage = Math.Max(1, (int)(damage * _difficultyMultiplier));
-		GameManager.Instance.HurtPlayer(scaledDamage);
-		CameraShake.ShakeNode(this, intensity: 3f, duration: 0.12f);
-		int hp = GameManager.Instance.PlayerStats.CurrentHp;
-		GD.Print($"[BattleScene] Player hurt for {scaledDamage} (raw {damage}, diff ×{_difficultyMultiplier:F2}). HP: {hp}");
 
-		if (hp <= 0)
+		// Distribute rhythm-phase damage evenly across every LIVING party member.
+		// Sen routes through the existing GameManager.HurtPlayer (which writes into
+		// PlayerCombatData); Lily/Rain take damage on their PartyMember directly.
+		var party = GameManager.Instance.Party;
+		var living = new System.Collections.Generic.List<PartyMember>();
+		foreach (var m in party.Members)
+		{
+			bool ko = m.MemberId == "sen"
+				? GameManager.Instance.PlayerStats.CurrentHp <= 0
+				: m.IsKO;
+			if (!ko) living.Add(m);
+		}
+		if (living.Count == 0)
+		{
+			_rhythmArena.Visible = false;
+			_ = HandleDefeat();
+			return;
+		}
+
+		int share     = scaledDamage / living.Count;
+		int remainder = scaledDamage - share * living.Count;
+		for (int i = 0; i < living.Count; i++)
+		{
+			int slice = share + (i < remainder ? 1 : 0);
+			if (slice <= 0) continue;
+			var m = living[i];
+			if (m.MemberId == "sen")
+				GameManager.Instance.HurtPlayer(slice);
+			else
+				m.CurrentHp = Math.Max(0, m.CurrentHp - slice);
+		}
+
+		CameraShake.ShakeNode(this, intensity: 3f, duration: 0.12f);
+		GD.Print($"[BattleScene] Party hurt for {scaledDamage} (split across {living.Count}). " +
+			$"Sen HP: {GameManager.Instance.PlayerStats.CurrentHp}");
+
+		if (PartyAllKO())
 		{
 			_rhythmArena.Visible = false;
 			_ = HandleDefeat();
@@ -1241,24 +1791,37 @@ public partial class BattleScene : Node2D
 		RhythmClock.Instance.Stop();
 		AudioManager.Instance.StopBgm(fadeTime: 0.5f);
 
-		// Victory: enemy shrinks and fades out
-		if (_enemyVisual != null)
+		// Victory: every enemy that's still standing shrinks and fades out.
+		// (Already-killed enemies were faded out by HandleEnemyDeathIfApplicable.)
+		foreach (var inst in _enemies)
 		{
+			if (inst.Visual is not Node2D node) continue;
+			if (inst.IsKO) continue; // already shrunk
 			var shrinkTween = CreateTween().SetParallel();
-			shrinkTween.TweenProperty(_enemyVisual, "scale", Vector2.Zero, 0.5f)
+			shrinkTween.TweenProperty(node, "scale", Vector2.Zero, 0.5f)
 				.SetEase(Tween.EaseType.In).SetTrans(Tween.TransitionType.Back);
-			shrinkTween.TweenProperty(_enemyVisual, "modulate:a", 0f, 0.5f);
+			shrinkTween.TweenProperty(node, "modulate:a", 0f, 0.5f);
 		}
 
 		// Victory fanfare SFX
 		const string fanfarePath = "res://assets/audio/sfx/victory_fanfare.wav";
 		AudioManager.Instance?.PlaySfx(fanfarePath);
 
-		// Record kill and rhythm performance for quest/adaptation tracking
-		if (!string.IsNullOrEmpty(_enemy?.EnemyId))
+		// Record kill + rhythm performance for every enemy in the encounter, summing
+		// gold/exp/loot across all of them so multi-enemy fights pay out fully.
+		int baseGold = 0;
+		int baseExp  = 0;
+		foreach (var inst in _enemies)
 		{
-			GameManager.Instance.RecordKill(_enemy.EnemyId);
-			GameManager.Instance.RecordRhythmPerformance(_enemy.EnemyId, _performance);
+			var data = inst.Data;
+			if (data == null) continue;
+			if (!string.IsNullOrEmpty(data.EnemyId))
+			{
+				GameManager.Instance.RecordKill(data.EnemyId);
+				GameManager.Instance.RecordRhythmPerformance(data.EnemyId, _performance);
+			}
+			baseGold += data.GoldDrop;
+			baseExp  += data.ExpDrop;
 		}
 
 		// Boss encounters: flag the dungeon so the map can react on return.
@@ -1266,32 +1829,51 @@ public partial class BattleScene : Node2D
 			GameManager.Instance.SetFlag(Flags.DungeonBossDefeated, true);
 
 		// Apply Rhythm Memory bonus rewards
-		int baseGold = _enemy?.GoldDrop ?? 0;
-		int baseExp  = _enemy?.ExpDrop  ?? 0;
 		int gold = (int)(baseGold * (1f + _adaptation.BonusGoldPercent));
 		int exp  = (int)(baseExp  * (1f + _adaptation.BonusExpPercent));
 		GameManager.Instance.AddGold(gold);
+		// Sen still levels up via the existing GameManager.AddExp pipeline (which feeds
+		// PlayerCombatData growth rolls). For Lily / Rain we add the XP directly onto
+		// their PartyMember.Exp and roll their own level-ups against per-class growth
+		// rates loaded from disk.
 		GameManager.Instance.AddExp(exp);
+		var nonSen = new System.Collections.Generic.List<PartyMember>();
+		foreach (var m in GameManager.Instance.Party.Members)
+			if (m.MemberId != "sen") nonSen.Add(m);
+		if (nonSen.Count > 0)
+			PartyMemberLogic.DistributeXp(nonSen, exp);
+		// Apply per-member growth rolls and append the results to the same pending
+		// queue Sen uses, so the LevelUpScreen runs them all in sequence.
+		foreach (var m in nonSen)
+		{
+			var rolled = RollLevelUpsForMember(m);
+			if (rolled.Count > 0)
+				GameManager.Instance.PendingLevelUps.AddRange(rolled);
+		}
 
 		if (_adaptation.BonusGoldPercent > 0f || _adaptation.BonusExpPercent > 0f)
 			GD.Print($"[BattleScene] Rhythm Memory bonus: gold {baseGold}→{gold} (+{_adaptation.BonusGoldPercent:P0}), exp {baseExp}→{exp} (+{_adaptation.BonusExpPercent:P0})");
 
-		// Bonus loot roll
+		// Bonus loot roll — fired once per battle, against the first enemy with a bonus path.
 		if (_adaptation.BonusLootChance > 0f && GD.Randf() < _adaptation.BonusLootChance)
 		{
-			string lootPath = _enemy?.BonusLootItemPath ?? "";
-			if (!string.IsNullOrEmpty(lootPath) && ResourceLoader.Exists(lootPath))
+			foreach (var inst in _enemies)
 			{
-				GameManager.Instance.AddItem(lootPath);
-				GD.Print($"[BattleScene] Rhythm Memory bonus loot: {lootPath}");
+				string lootPath = inst.Data?.BonusLootItemPath ?? "";
+				if (!string.IsNullOrEmpty(lootPath) && ResourceLoader.Exists(lootPath))
+				{
+					GameManager.Instance.AddItem(lootPath);
+					GD.Print($"[BattleScene] Rhythm Memory bonus loot: {lootPath}");
+					break;
+				}
 			}
 		}
 
-		// Per-enemy LootTable roll — independent of the Rhythm Memory bonus.
-		// One item from the table is rolled per kill; empty tables grant nothing.
-		var lootEntries = (_enemy?.LootTable ?? []).OfType<LootEntry>().ToArray();
-		if (lootEntries.Length > 0)
+		// Per-enemy LootTable roll — one drop per defeated enemy.
+		foreach (var inst in _enemies)
 		{
+			var lootEntries = (inst.Data?.LootTable ?? []).OfType<LootEntry>().ToArray();
+			if (lootEntries.Length == 0) continue;
 			var paths      = lootEntries.Select(e => e.ItemPath).ToArray();
 			var weights    = lootEntries.Select(e => e.Weight).ToArray();
 			var guaranteed = lootEntries.Select(e => e.Guaranteed).ToArray();
@@ -1299,7 +1881,7 @@ public partial class BattleScene : Node2D
 			if (!string.IsNullOrEmpty(rolled) && ResourceLoader.Exists(rolled))
 			{
 				GameManager.Instance.AddItem(rolled);
-				GD.Print($"[BattleScene] LootTable drop: {rolled}");
+				GD.Print($"[BattleScene] LootTable drop ({inst.DisplayName}): {rolled}");
 			}
 		}
 
