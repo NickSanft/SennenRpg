@@ -87,6 +87,11 @@ public partial class WorldMap : Node2D
 		gm.SetLastMap("res://scenes/overworld/WorldMap.tscn");
 		gm.SetState(GameState.Overworld);
 
+		// Spawn the per-member overworld HUD on the world map too.
+		const string hudPath = "res://scenes/hud/GameHud.tscn";
+		if (ResourceLoader.Exists(hudPath))
+			AddChild(GD.Load<PackedScene>(hudPath).Instantiate());
+
 		// Spawn PauseMenu so ESC works on the world map
 		const string pausePath = "res://scenes/menus/PauseMenu.tscn";
 		if (ResourceLoader.Exists(pausePath))

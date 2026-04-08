@@ -1853,6 +1853,11 @@ public partial class BattleScene : Node2D
 		RhythmClock.Instance.Stop();
 		AudioManager.Instance.StopBgm(fadeTime: 0.5f);
 
+		// Hide the multi-enemy target reticle and the nameplate so they don't bleed
+		// over the victory dialog.
+		if (_targetCursor != null) _targetCursor.Visible = false;
+		if (_enemyNameplate != null) _enemyNameplate.Visible = false;
+
 		// Victory: every enemy that's still standing shrinks and fades out.
 		// (Already-killed enemies were faded out by HandleEnemyDeathIfApplicable.)
 		foreach (var inst in _enemies)

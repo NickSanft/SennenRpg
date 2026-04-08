@@ -234,30 +234,56 @@ public partial class SpellsMenu : CanvasLayer
 
     private async System.Threading.Tasks.Task PlayTeleportDissolveAndTransition(string targetScene)
     {
-        // Find the player sprite and apply dissolve shader
+        const string shaderPath = "res://assets/shaders/dissolve_vertical.gdshader";
+        Shader? shader = ResourceLoader.Exists(shaderPath) ? GD.Load<Shader>(shaderPath) : null;
+
+        // Collect every actor that should dissolve out: the leader plus every party
+        // follower currently on screen (only present on 16×16 sprite maps — towns
+        // and 32×32 maps spawn no followers, which is fine, they just dissolve solo).
+        var sprites = new System.Collections.Generic.List<AnimatedSprite2D>();
+
         var player = GetTree().GetFirstNodeInGroup("player") as Node2D;
-        var sprite = player?.GetNodeOrNull<AnimatedSprite2D>("Sprite");
+        var leaderSprite = player?.GetNodeOrNull<AnimatedSprite2D>("Sprite")
+                         ?? player?.GetNodeOrNull<AnimatedSprite2D>("AnimatedSprite2D");
+        if (leaderSprite != null) sprites.Add(leaderSprite);
 
-        if (sprite != null)
+        foreach (var node in GetTree().GetNodesInGroup("party_follower"))
         {
-            const string shaderPath = "res://assets/shaders/dissolve_vertical.gdshader";
-            if (ResourceLoader.Exists(shaderPath))
+            if (node is Node2D follower)
             {
-                var mat = new ShaderMaterial { Shader = GD.Load<Shader>(shaderPath) };
-                mat.SetShaderParameter("progress", 0.0f);
-                sprite.Material = mat;
-
-                // Dissolve out: bottom to top over 1.2s (slow and dramatic)
-                var tween = CreateTween();
-                tween.TweenMethod(
-                    Callable.From<float>(v => mat.SetShaderParameter("progress", v)),
-                    0.0f, 1.0f, 1.2f)
-                    .SetEase(Tween.EaseType.In).SetTrans(Tween.TransitionType.Quad);
-                await ToSignal(tween, Tween.SignalName.Finished);
-
-                // Brief hold after dissolve completes
-                await ToSignal(GetTree().CreateTimer(0.3f), SceneTreeTimer.SignalName.Timeout);
+                var followerSprite = follower.GetNodeOrNull<AnimatedSprite2D>("Sprite");
+                if (followerSprite != null) sprites.Add(followerSprite);
             }
+        }
+
+        if (shader != null && sprites.Count > 0)
+        {
+            // Apply the dissolve shader to each sprite. Each gets its own ShaderMaterial
+            // instance so the per-sprite progress parameter doesn't bleed across them
+            // (and the followers visually finish at slightly different times via the tween chain).
+            var materials = new System.Collections.Generic.List<ShaderMaterial>();
+            foreach (var s in sprites)
+            {
+                var mat = new ShaderMaterial { Shader = shader };
+                mat.SetShaderParameter("progress", 0.0f);
+                s.Material = mat;
+                materials.Add(mat);
+            }
+
+            // Tween every material's progress 0 → 1 in parallel.
+            var tween = CreateTween().SetParallel();
+            foreach (var mat in materials)
+            {
+                var captured = mat;
+                tween.TweenMethod(
+                        Callable.From<float>(v => captured.SetShaderParameter("progress", v)),
+                        0.0f, 1.0f, 1.2f)
+                    .SetEase(Tween.EaseType.In).SetTrans(Tween.TransitionType.Quad);
+            }
+            await ToSignal(tween, Tween.SignalName.Finished);
+
+            // Brief hold after dissolve completes
+            await ToSignal(GetTree().CreateTimer(0.3f), SceneTreeTimer.SignalName.Timeout);
         }
 
         await SceneTransition.Instance.GoToAsync(targetScene, TransitionType.PixelMosaic);

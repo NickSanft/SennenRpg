@@ -38,6 +38,11 @@ public partial class WorldMapPlayer : CharacterBody2D
 	{
 		if (Engine.IsEditorHint()) return;
 
+		// Join the "player" group like DungeonPlayer / Player do, so gameplay systems
+		// (e.g. the Teleport Home dissolve effect) can find the leader's sprite via
+		// GetFirstNodeInGroup("player") on the WorldMap too.
+		AddToGroup("player");
+
 		_sprite   = GetNodeOrNull<AnimatedSprite2D>("AnimatedSprite2D");
 
 		var gm = GameManager.Instance;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
 using SennenRpg.Core.Extensions;
+using SennenRpg.Scenes.Hud;
 
 namespace SennenRpg.Scenes.Battle;
 
@@ -23,17 +24,17 @@ public partial class BattleHUD : CanvasLayer
 	private const int HudCanvasLayer = 0; // below Dialogic (layer 1) so dialog overlaps the HUD bg
 
 	private record CardWidgets(
-		PanelContainer Root,
-		TextureRect    Portrait,
-		Label          Name,
-		Label          Lv,
-		Label          Hp,
-		ColorRect      HpBarBg,
-		ColorRect      HpBar,
-		Label          Mp,
-		ColorRect      MpBarBg,
-		ColorRect      MpBar,
-		HBoxContainer  StatusRow);
+		PanelContainer    Root,
+		AnimatedPortrait  Portrait,
+		Label             Name,
+		Label             Lv,
+		Label             Hp,
+		ColorRect         HpBarBg,
+		ColorRect         HpBar,
+		Label             Mp,
+		ColorRect         MpBarBg,
+		ColorRect         MpBar,
+		HBoxContainer     StatusRow);
 
 	private CenterContainer? _centerer;
 	private HBoxContainer?   _cardsRow;
@@ -162,28 +163,18 @@ public partial class BattleHUD : CanvasLayer
 		rootRow.AddThemeConstantOverride("separation", 6);
 		margin.AddChild(rootRow);
 
-		// Portrait — pulls the first 16×16 frame from the member's overworld sheet,
-		// scaled up via TextureRect's StretchMode so it reads at HUD scale.
-		var portrait = new TextureRect
+		// Animated portrait — loops the 2-frame overworld walk animation so the
+		// face on each card actually moves instead of being frozen on frame 0.
+		var portrait = new AnimatedPortrait
 		{
-			ExpandMode          = TextureRect.ExpandModeEnum.IgnoreSize,
-			StretchMode         = TextureRect.StretchModeEnum.KeepAspectCentered,
-			TextureFilter       = CanvasItem.TextureFilterEnum.Nearest,
-			CustomMinimumSize   = new Vector2(40f, 40f),
+			PortraitSize        = new Vector2(40f, 40f),
 			SizeFlagsVertical   = Control.SizeFlags.ShrinkCenter,
 		};
+		rootRow.AddChild(portrait);
 		string spritePath = string.IsNullOrEmpty(m.OverworldSpritePath)
 			? "res://assets/sprites/player/Sen_Overworld.png"
 			: m.OverworldSpritePath;
-		if (ResourceLoader.Exists(spritePath))
-		{
-			portrait.Texture = new AtlasTexture
-			{
-				Atlas  = GD.Load<Texture2D>(spritePath),
-				Region = new Rect2(0, 0, 16, 16),
-			};
-		}
-		rootRow.AddChild(portrait);
+		portrait.SetSpriteSheet(spritePath);
 
 		var vbox = new VBoxContainer
 		{

@@ -70,6 +70,9 @@ public partial class PartyFollower : Node2D
     public override void _Ready()
     {
         base._Ready();
+        // Group membership lets gameplay systems (e.g. the teleport dissolve spell)
+        // find every follower currently on screen without walking the whole tree.
+        AddToGroup("party_follower");
         // Apply the pending spawn position now that the parent transform is in place.
         // Setting GlobalPosition (rather than Position) means we land on the requested
         // world tile regardless of how the parent YSort / WorldMap is offset.

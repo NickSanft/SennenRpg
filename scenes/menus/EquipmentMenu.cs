@@ -32,8 +32,8 @@ public partial class EquipmentMenu : CanvasLayer
         { EquipmentSlot.Weapon, EquipmentSlot.Shield, EquipmentSlot.Gloves, EquipmentSlot.Accessory };
 
     // ── Node references ───────────────────────────────────────────────────────
-    private RichTextLabel _statsLabel    = null!;
-    private TextureRect?  _portraitRect;
+    private RichTextLabel               _statsLabel    = null!;
+    private SennenRpg.Scenes.Hud.AnimatedPortrait? _portrait;
 
     // Item picker (visible when choosing what to equip / unequip)
     private Control        _itemPickerPanel = null!;
@@ -170,8 +170,8 @@ public partial class EquipmentMenu : CanvasLayer
 
     private void BuildStatPanel(VBoxContainer parent)
     {
-        // Member portrait — refreshed with the current member's overworld sprite
-        // each time the cycler moves. Texture is set in RefreshPortrait().
+        // Member portrait — animated 2-frame loop using the member's overworld sheet.
+        // The sprite is set in RefreshPortrait() each time the cycler moves.
         var portraitContainer = new ColorRect
         {
             Color             = new Color(0.18f, 0.18f, 0.28f),
@@ -179,18 +179,15 @@ public partial class EquipmentMenu : CanvasLayer
         };
         parent.AddChild(portraitContainer);
 
-        _portraitRect = new TextureRect
+        _portrait = new SennenRpg.Scenes.Hud.AnimatedPortrait
         {
-            ExpandMode           = TextureRect.ExpandModeEnum.FitWidthProportional,
-            StretchMode          = TextureRect.StretchModeEnum.KeepAspectCentered,
-            TextureFilter        = CanvasItem.TextureFilterEnum.Nearest,
-            CustomMinimumSize    = new Vector2(48f, 48f),
+            PortraitSize         = new Vector2(48f, 48f),
             AnchorLeft           = 0.5f, AnchorRight = 0.5f,
             AnchorTop            = 0.5f, AnchorBottom = 0.5f,
             OffsetLeft           = -24f, OffsetRight = 24f,
             OffsetTop            = -24f, OffsetBottom = 24f,
         };
-        portraitContainer.AddChild(_portraitRect);
+        portraitContainer.AddChild(_portrait);
 
         // Stats text — RichTextLabel for BBCode colour support
         _statsLabel = new RichTextLabel
@@ -594,26 +591,16 @@ public partial class EquipmentMenu : CanvasLayer
     /// </summary>
     private void RefreshPortrait()
     {
-        if (_portraitRect == null) return;
+        if (_portrait == null) return;
 
         var member = CurrentMember;
         string path = member?.OverworldSpritePath ?? "";
         if (string.IsNullOrEmpty(path) || !ResourceLoader.Exists(path))
             path = "res://assets/sprites/player/Sen_Overworld.png";
 
-        if (!ResourceLoader.Exists(path))
-        {
-            _portraitRect.Texture = null;
-            return;
-        }
-
         // Lily / Rain / Sen overworld sheets are all 32×16 (two 16×16 frames).
-        // Pull the first frame as the portrait.
-        _portraitRect.Texture = new AtlasTexture
-        {
-            Atlas  = GD.Load<Texture2D>(path),
-            Region = new Rect2(0, 0, 16, 16),
-        };
+        // The animated portrait widget loops between both frames.
+        _portrait.SetSpriteSheet(path);
     }
 
     private void RefreshStatsLabel()
