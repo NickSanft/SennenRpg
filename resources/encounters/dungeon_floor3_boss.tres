@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="EncounterData" format=3 uid="uid://dungeon_boss_enc01"]
+[gd_resource type="Resource" script_class="EncounterData" format=3 uid="uid://r3yqg0f4veqn"]
 
-[ext_resource type="Script" uid="uid://c5d22rd36ltx4" path="res://core/data/EnemyData.cs" id="1_EnemyData"]
 [ext_resource type="Script" uid="uid://dgj4v4oe30iqr" path="res://core/data/EncounterData.cs" id="1_EncounterData"]
+[ext_resource type="Script" uid="uid://c5d22rd36ltx4" path="res://core/data/EnemyData.cs" id="1_EnemyData"]
 [ext_resource type="Resource" path="res://resources/enemies/centiphantom_quing.tres" id="2_boss"]
 
 [resource]

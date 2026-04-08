@@ -1,28 +1,25 @@
-[gd_resource type="Resource" script_class="EnemyData" format=3 uid="uid://bb71l4u04g6tm"]
+[gd_resource type="Resource" script_class="EnemyData" format=3 uid="uid://bxr1f806d4qsg"]
 
 [ext_resource type="Script" uid="uid://c5d22rd36ltx4" path="res://core/data/EnemyData.cs" id="1_EnemyData"]
 [ext_resource type="Script" uid="uid://dqonjuygth0gq" path="res://core/data/CharacterStats.cs" id="2_CharacterStats"]
 [ext_resource type="PackedScene" path="res://scenes/battle/rhythm/patterns/AllLanesPattern.tscn" id="3_pattern"]
-[ext_resource type="Texture2D" path="res://assets/sprites/enemies/CentiphantomQuing.png" id="4_sprite"]
-[ext_resource type="Script" path="res://core/data/LootEntry.cs" id="5_LootEntry"]
+[ext_resource type="Texture2D" uid="uid://cdtdujbkup7j3" path="res://assets/sprites/enemies/CentiphantomQuing.png" id="4_sprite"]
+[ext_resource type="Script" uid="uid://btode4yit2m1g" path="res://core/data/LootEntry.cs" id="5_LootEntry"]
 
 [sub_resource type="Resource" id="LootEntry_1"]
 script = ExtResource("5_LootEntry")
 ItemPath = "res://resources/items/ingredient_iron_shard.tres"
 Weight = 60
-Guaranteed = false
 
 [sub_resource type="Resource" id="LootEntry_2"]
 script = ExtResource("5_LootEntry")
 ItemPath = "res://resources/items/junk_gravi_shard.tres"
 Weight = 30
-Guaranteed = false
 
 [sub_resource type="Resource" id="LootEntry_3"]
 script = ExtResource("5_LootEntry")
 ItemPath = "res://resources/items/key_charged_bark.tres"
 Weight = 10
-Guaranteed = false
 
 [sub_resource type="Resource" id="CharacterStats_1"]
 script = ExtResource("2_CharacterStats")
@@ -43,8 +40,6 @@ FlavorText = "A stone sentinel bound to the dungeon since before memory. It reme
 Stats = SubResource("CharacterStats_1")
 BattleSprite = ExtResource("4_sprite")
 SpriteFrameCount = 8
-SpriteFrameSize = 32
-SpriteAnimFps = 6.0
 BattleBpm = 110.0
 BardicActOptions = PackedStringArray("Lullaby", "Dirge")
 ActOptions = PackedStringArray("Check", "Examine Cracks", "Speak")
