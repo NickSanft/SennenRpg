@@ -276,17 +276,31 @@ public partial class AudioManager : Node
 	}
 
 	/// <summary>
+	/// Returns the first-downbeat offset (seconds from sample 0 to beat 0) of the
+	/// currently playing track, sourced from MusicBeatData via MusicMetadata. Used
+	/// alongside <see cref="GetCurrentBgmBpm"/> when re-attaching the rhythm clock.
+	/// </summary>
+	public float GetCurrentBgmBeatOffsetSec()
+	{
+		if (string.IsNullOrEmpty(_currentBgmPath)) return 0f;
+		var info = MusicMetadata.Lookup(_currentBgmPath);
+		return info?.BeatOffsetSec ?? 0f;
+	}
+
+	/// <summary>
 	/// Re-binds <see cref="RhythmClock"/> to the active BGM player using the current
-	/// track's registered BPM. Use this from rhythm minigames that need to lock notes
-	/// to the live overworld track. Falls back to free-running mode if no BGM is playing.
+	/// track's registered BPM AND first-downbeat offset. Use this from rhythm minigames
+	/// that need to lock notes to the live overworld track. Falls back to free-running
+	/// mode if no BGM is playing.
 	/// </summary>
 	public void AttachRhythmClockToCurrentBgm()
 	{
 		float bpm    = GetCurrentBgmBpm();
+		float offset = GetCurrentBgmBeatOffsetSec();
 		var   active = _usingPlayerA ? _bgmPlayer : _bgmPlayerB;
 
 		if (active.Playing)
-			RhythmClock.Instance.AttachPlayer(active, bpm);
+			RhythmClock.Instance.AttachPlayer(active, bpm, offset);
 		else
 			RhythmClock.Instance.StartFreeRunning(bpm);
 	}
