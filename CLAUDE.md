@@ -290,10 +290,20 @@ Victory → EXP/Gold display → GameManager.AddGold/AddExp → SceneTransition 
 - Stops when healed above 25%
 
 ## Music Metadata
-- `MusicMetadata.Lookup(path)` → `MusicTrackInfo` (Artist, Album, TrackNumber, Title)
+- `MusicMetadata.Lookup(path)` → `MusicTrackInfo` (Artist, Album, TrackNumber, Title, Bpm, BeatOffsetSec, BeatConfidence)
 - `NowPlayingPopup` — top-left fade-in/out popup spawned by AudioManager on BGM change
 - Music files renamed to clean titles (e.g., `Carillion Forest.wav`)
 - BGM continuity: same track continues seamlessly across scene transitions (dungeon floors)
+
+## BGM Beat Sync
+- **Music bus** in `default_bus_layout.tres` carries an `AudioEffectSpectrumAnalyzer` (FFT 1024). All BGM AudioStreamPlayers route through it.
+- `RhythmClock.AttachPlayer(player, bpm, beatOffsetSec)` drives beat tracking off `AudioStreamPlayer.GetPlaybackPosition()` (no drift) with output-latency compensation.
+- **Auto-detection**: `SennenRpg.Tests/BeatAnalyzer/` (NWaves-based, NUnit `[Explicit]` runners) walks `assets/music/*.wav` and writes `assets/music/beat_data.json`. Algorithm: STFT → spectral flux → autocorrelation → parabolic-interpolated peak. Faster-bias tiebreaker on the half/double ambiguity (prefers ~140 BPM region). Tracks with confidence < 0.4 are omitted and fall back to free-running.
+- `MusicBeatData` (loader hook in `MusicBeatDataLoader`) reads `beat_data.json` then `beat_data.overrides.json` (override file always wins). `MusicMetadata.Lookup` overlays the JSON values onto the hardcoded `MusicTrackInfo`.
+- `AudioManager.PlayBgm` looks up the metadata and passes BPM + offset to `RhythmClock.AttachPlayer`. Unknown tracks or low-confidence entries fall back to `RhythmClock.StartFreeRunning(120f)`.
+- **Regenerating**: `dotnet test SennenRpg.Tests/SennenRpg.Tests.csproj --filter "FullyQualifiedName~Analyze_AllTracks"` to rewrite `beat_data.json` from scratch. `Verify_AgainstMusicMetadata` prints a side-by-side comparison.
+- **Debug overlay**: `BgmBeatDebugOverlay` autoload (CanvasLayer 99) toggled with **F9**. Top half: live spectrum bars from the Music bus. Bottom half: scrolling 4s beat timeline with a centre "now" marker that flashes white on each `RhythmClock.Beat`. Status pill shows `BPM/offset/confidence/track`.
+- **Hand-correction nudge keys** (active when overlay visible): `←/→` ±10 ms offset, `Shift+←/→` ±1 ms (fine), `↑/↓` ±0.1 BPM, `R` reset, `Shift+S` print JSON snippet to console for paste into `beat_data.overrides.json`. Nothing persists automatically — `Shift+S` is the explicit save step.
 
 ## CI/CD
 - `.github/workflows/test.yml` — NUnit tests on every push/PR to master

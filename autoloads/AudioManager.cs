@@ -36,8 +36,10 @@ public partial class AudioManager : Node
 		Instance    = this;
 		ProcessMode = ProcessModeEnum.Always;
 
-		_bgmPlayer  = new AudioStreamPlayer();
-		_bgmPlayerB = new AudioStreamPlayer();
+		EnsureMusicBus();
+
+		_bgmPlayer  = new AudioStreamPlayer { Bus = "Music" };
+		_bgmPlayerB = new AudioStreamPlayer { Bus = "Music" };
 		AddChild(_bgmPlayer);
 		AddChild(_bgmPlayerB);
 
@@ -49,6 +51,41 @@ public partial class AudioManager : Node
 		{
 			_sfxPool[i] = new AudioStreamPlayer();
 			AddChild(_sfxPool[i]);
+		}
+	}
+
+	/// <summary>
+	/// Adds a "Music" bus (sending to Master) with an
+	/// <see cref="AudioEffectSpectrumAnalyzer"/> if it doesn't already exist.
+	/// Configured at runtime so we don't depend on a project.godot [audio]
+	/// section / default_bus_layout.tres — Godot's autosave kept stripping
+	/// those out.
+	/// </summary>
+	private static void EnsureMusicBus()
+	{
+		int idx = AudioServer.GetBusIndex("Music");
+		if (idx < 0)
+		{
+			AudioServer.AddBus();
+			idx = AudioServer.BusCount - 1;
+			AudioServer.SetBusName(idx, "Music");
+			AudioServer.SetBusSend(idx, "Master");
+		}
+
+		// Make sure the spectrum analyzer is on the bus exactly once.
+		bool hasAnalyzer = false;
+		for (int i = 0; i < AudioServer.GetBusEffectCount(idx); i++)
+		{
+			if (AudioServer.GetBusEffect(idx, i) is AudioEffectSpectrumAnalyzer)
+			{
+				hasAnalyzer = true;
+				break;
+			}
+		}
+		if (!hasAnalyzer)
+		{
+			var fx = new AudioEffectSpectrumAnalyzer { FftSize = AudioEffectSpectrumAnalyzer.FftSizeEnum.Size1024 };
+			AudioServer.AddBusEffect(idx, fx);
 		}
 	}
 
@@ -97,9 +134,27 @@ public partial class AudioManager : Node
 		incoming.Play();
 
 		// Attach rhythm clock to the new player before the fade completes
-		// so beat tracking is accurate from the first frame.
-		float effectiveBpm = bpm > 0f ? bpm : RhythmConstants.DefaultBpm;
-		RhythmClock.Instance.AttachPlayer(incoming, effectiveBpm, beatOffsetSec);
+		// so beat tracking is accurate from the first frame. When the caller
+		// didn't pass explicit values, look them up from MusicMetadata, which
+		// is overlaid by MusicBeatData (the JSON sidecar with auto-detected
+		// BPM + first-downbeat offset). Tracks below the confidence floor or
+		// missing entirely fall back to free-running mode.
+		float effectiveBpm    = bpm;
+		float effectiveOffset = beatOffsetSec;
+		if (effectiveBpm <= 0f)
+		{
+			var info = MusicMetadata.Lookup(path);
+			if (info != null && info.Bpm > 0f && info.BeatConfidence >= 0.4f)
+			{
+				effectiveBpm    = info.Bpm;
+				effectiveOffset = info.BeatOffsetSec;
+			}
+		}
+
+		if (effectiveBpm > 0f)
+			RhythmClock.Instance.AttachPlayer(incoming, effectiveBpm, effectiveOffset);
+		else
+			RhythmClock.Instance.StartFreeRunning(RhythmConstants.DefaultBpm);
 
 		GD.Print($"[AudioManager] PlayBgm: {path} (force={forceRestart}, fade={fadeTime}s)");
 		SpawnNowPlayingPopup(path);

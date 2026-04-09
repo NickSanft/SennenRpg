@@ -1,0 +1,74 @@
+{
+  "res://assets/music/A Calm Rain in Argyre.wav": {
+    "bpm": 139.81085,
+    "first_beat_sec": 0,
+    "confidence": 0.68015134,
+    "beat_count": 346
+  },
+  "res://assets/music/Carillion Forest.wav": {
+    "bpm": 64.62532,
+    "first_beat_sec": 0,
+    "confidence": 1,
+    "beat_count": 208
+  },
+  "res://assets/music/Corruption Can Be Fun.wav": {
+    "bpm": 120.066315,
+    "first_beat_sec": 0.499229,
+    "confidence": 0.51739234,
+    "beat_count": 280
+  },
+  "res://assets/music/Drifting in the Astral Paring (Ambient).wav": {
+    "bpm": 86.62089,
+    "first_beat_sec": 0.20897959,
+    "confidence": 1,
+    "beat_count": 191
+  },
+  "res://assets/music/Drifting in the Astral Paring.wav": {
+    "bpm": 99.842285,
+    "first_beat_sec": 0.17414966,
+    "confidence": 1,
+    "beat_count": 191
+  },
+  "res://assets/music/Foggy Morning in Flas.wav": {
+    "bpm": 86.61937,
+    "first_beat_sec": 0.6849887,
+    "confidence": 0.78210056,
+    "beat_count": 231
+  },
+  "res://assets/music/Glimmersong Forest.wav": {
+    "bpm": 86.544266,
+    "first_beat_sec": 0.67337865,
+    "confidence": 0.63335025,
+    "beat_count": 194
+  },
+  "res://assets/music/Melancholy Conspectus.wav": {
+    "bpm": 140.03923,
+    "first_beat_sec": 0.41795918,
+    "confidence": 1,
+    "beat_count": 260
+  },
+  "res://assets/music/Mellyr Outpost.wav": {
+    "bpm": 144.20613,
+    "first_beat_sec": 0.4063492,
+    "confidence": 0.79209054,
+    "beat_count": 349
+  },
+  "res://assets/music/Origins Of The Gyre.wav": {
+    "bpm": 98.71433,
+    "first_beat_sec": 0.6037188,
+    "confidence": 0.70557606,
+    "beat_count": 363
+  },
+  "res://assets/music/Outpacing.wav": {
+    "bpm": 128.63406,
+    "first_beat_sec": 0,
+    "confidence": 0.5554029,
+    "beat_count": 249
+  },
+  "res://assets/music/Sozitek.wav": {
+    "bpm": 109.908585,
+    "first_beat_sec": 0,
+    "confidence": 1,
+    "beat_count": 299
+  }
+}

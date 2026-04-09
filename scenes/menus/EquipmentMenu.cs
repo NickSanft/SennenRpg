@@ -395,32 +395,45 @@ public partial class EquipmentMenu : CanvasLayer
             var data = GD.Load<EquipmentData>(path);
             if (data == null || data.Slot != slot) continue;
 
-            // Prevent equipping the same item on two members at once: skip when another
-            // party member already has this item equipped.
-            if (IsItemEquippedByAnotherMember(path, member)) continue;
-
             var captured = path;
             string bonusStr = FormatBonuses(data);
             AddPickerOption($"{data.DisplayName}{bonusStr}", () =>
             {
                 AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
-                if (isSen)
+                EquipFromBagOrTransfer(slot, captured, member, isSen, hasStaticEquipped, hasDynamicEquipped);
+                CloseItemPicker();
+            });
+            any = true;
+        }
+
+        // Items currently equipped by OTHER members — show with owner suffix and
+        // auto-transfer on pick. Without this, Sen takes everything during character
+        // setup and the other recruits see "No compatible items" on every slot.
+        foreach (var otherOwner in EnumerateItemOwnersForSlot(slot, excludeMember: member))
+        {
+            if (!ResourceLoader.Exists(otherOwner.Path)) continue;
+            var data = GD.Load<EquipmentData>(otherOwner.Path);
+            if (data == null) continue;
+
+            var capturedPath  = otherOwner.Path;
+            var capturedOwner = otherOwner.OwnerMember;
+            string bonusStr = FormatBonuses(data);
+            string ownerName = capturedOwner == null ? "Sen" : capturedOwner.DisplayName;
+            AddPickerOption($"{data.DisplayName}{bonusStr}  ({ownerName})", () =>
+            {
+                AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
+                // Step 1 — unequip from the current owner, returning to the bag.
+                if (capturedOwner == null)
                 {
-                    if (hasDynamicEquipped) gm.UnequipDynamic(slot);
-                    gm.Equip(slot, captured);
+                    gm.Unequip(slot); // Sen — also handles signal emission
                 }
                 else
                 {
-                    // If the slot was already occupied, return the previous item to the bag.
-                    if (member.EquippedItemPaths.TryGetValue(slot.ToString(), out string? prev)
-                        && !string.IsNullOrEmpty(prev))
-                    {
-                        gm.AddEquipment(prev);
-                    }
-                    // Move the picked item from the shared bag to this member's slot.
-                    gm.OwnedEquipmentPaths.Remove(captured);
-                    member.EquippedItemPaths[slot.ToString()] = captured;
+                    capturedOwner.EquippedItemPaths.Remove(slot.ToString());
+                    gm.AddEquipment(capturedPath);
                 }
+                // Step 2 — equip on the active member.
+                EquipFromBagOrTransfer(slot, capturedPath, member, isSen, hasStaticEquipped, hasDynamicEquipped);
                 CloseItemPicker();
             });
             any = true;
@@ -497,6 +510,69 @@ public partial class EquipmentMenu : CanvasLayer
                 if (kv.Value == path) return true;
         }
         return false;
+    }
+
+    /// <summary>
+    /// One entry in the "currently held by another member" list. <see cref="OwnerMember"/>
+    /// is null when the current owner is Sen (whose equipment lives on GameManager
+    /// rather than on a PartyMember).
+    /// </summary>
+    private readonly record struct ItemOwnership(string Path, PartyMember? OwnerMember);
+
+    /// <summary>
+    /// Walks every party member that isn't <paramref name="excludeMember"/> and yields
+    /// the items they currently have equipped in <paramref name="slot"/>. Used by the
+    /// item picker to make cross-member transfers possible.
+    /// </summary>
+    private static System.Collections.Generic.IEnumerable<ItemOwnership> EnumerateItemOwnersForSlot(
+        EquipmentSlot slot, PartyMember excludeMember)
+    {
+        var gm = GameManager.Instance;
+
+        // Sen — equipment dict lives on GameManager
+        if (excludeMember.MemberId != "sen")
+        {
+            if (gm.EquippedItemPaths.TryGetValue(slot, out var senPath) && !string.IsNullOrEmpty(senPath))
+                yield return new ItemOwnership(senPath, OwnerMember: null);
+        }
+
+        // Other recruits — each owns their own EquippedItemPaths dict
+        foreach (var m in gm.Party.Members)
+        {
+            if (m.MemberId == excludeMember.MemberId) continue;
+            if (m.MemberId == "sen") continue; // already handled above
+            if (m.EquippedItemPaths.TryGetValue(slot.ToString(), out string? p) && !string.IsNullOrEmpty(p))
+                yield return new ItemOwnership(p, OwnerMember: m);
+        }
+    }
+
+    /// <summary>
+    /// Apply an item from the shared bag to a slot on the active member. Mirrors
+    /// the inline logic that used to live in OnSlotPressed but factored out so
+    /// the cross-member transfer path can call it after unequipping the previous
+    /// owner.
+    /// </summary>
+    private static void EquipFromBagOrTransfer(
+        EquipmentSlot slot, string path, PartyMember member,
+        bool isSen, bool hasStaticEquipped, bool hasDynamicEquipped)
+    {
+        var gm = GameManager.Instance;
+        if (isSen)
+        {
+            if (hasDynamicEquipped) gm.UnequipDynamic(slot);
+            gm.Equip(slot, path);
+        }
+        else
+        {
+            // Return any currently-equipped item to the shared bag.
+            if (member.EquippedItemPaths.TryGetValue(slot.ToString(), out string? prev)
+                && !string.IsNullOrEmpty(prev))
+            {
+                gm.AddEquipment(prev);
+            }
+            gm.OwnedEquipmentPaths.Remove(path);
+            member.EquippedItemPaths[slot.ToString()] = path;
+        }
     }
 
     private void AddPickerOption(string text, System.Action action)

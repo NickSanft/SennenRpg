@@ -65,12 +65,26 @@ public static class MusicMetadata
     };
 
     /// <summary>
-    /// Look up track metadata by resource path.
-    /// Returns null if the path is not in the registry.
+    /// Look up track metadata by resource path. Auto-detected BPM/offset/
+    /// confidence from <see cref="MusicBeatData"/> are overlaid on top of the
+    /// hardcoded values — JSON wins; the hardcoded entry is the fallback.
+    /// Returns null if the path is not in the hardcoded registry.
     /// </summary>
     public static MusicTrackInfo? Lookup(string resourcePath)
     {
-        return Registry.GetValueOrDefault(resourcePath);
+        var info = Registry.GetValueOrDefault(resourcePath);
+        if (info == null) return null;
+
+        if (MusicBeatData.TryGet(resourcePath, out var beat))
+        {
+            return info with
+            {
+                Bpm            = beat.Bpm,
+                BeatOffsetSec  = beat.FirstBeatSec,
+                BeatConfidence = beat.Confidence,
+            };
+        }
+        return info;
     }
 
     /// <summary>Returns all registered tracks.</summary>

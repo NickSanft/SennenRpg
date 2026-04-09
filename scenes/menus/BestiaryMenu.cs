@@ -98,7 +98,16 @@ public partial class BestiaryMenu : CanvasLayer
             _spriteAtlas.Region = new Rect2(_spriteFrameIdx * sz, 0, sz, sz);
         }
 
-        _bpmPulse?.QueueRedraw();
+        // Guard against scene-tear-down: when the dungeon unloads, the
+        // BpmPulse Control may already be disposed while this _Process runs
+        // one more frame on its parent CanvasLayer.
+        if (_bpmPulse != null)
+        {
+            if (IsInstanceValid(_bpmPulse))
+                _bpmPulse.QueueRedraw();
+            else
+                _bpmPulse = null;
+        }
     }
 
     // ── UI build ─────────────────────────────────────────────────────────

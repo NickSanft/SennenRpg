@@ -137,6 +137,8 @@ public partial class GameManager : Node
 		ProcessMode = ProcessModeEnum.Always;
 		_combat.LoadDefaults();
 		UiTheme.ApplyGlobalTheme();
+		MusicBeatDataLoader.Install();
+		MusicBeatData.EnsureLoaded();
 	}
 
 	public override void _Input(InputEvent @event)

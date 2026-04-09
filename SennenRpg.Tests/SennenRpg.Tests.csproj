@@ -16,6 +16,8 @@
         <PackageReference Include="NUnit.Analyzers"        Version="4.4.0"  />
         <!-- GodotSharp provides Godot.Mathf etc. without needing a running engine -->
         <PackageReference Include="GodotSharp"             Version="4.6.1"  />
+        <!-- Phase 5 BGM beat sync — DSP for offline analyzer -->
+        <PackageReference Include="NWaves"                 Version="0.9.6"  />
     </ItemGroup>
 
     <!-- Include only the pure-logic source files we want to test.
@@ -102,6 +104,8 @@
         <Compile Include="../core/data/BestiaryRecordLogic.cs" />
         <!-- Phase 4 unique skills — pure logic, no Godot runtime -->
         <Compile Include="../core/data/SkillResolver.cs" />
+        <!-- BGM beat sync — JSON loader (Godot.FileAccess used at runtime only) -->
+        <Compile Include="../core/data/MusicBeatData.cs" />
     </ItemGroup>
 
 </Project>

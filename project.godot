@@ -15,6 +15,10 @@ run/main_scene="res://scenes/boot/Boot.tscn"
 config/features=PackedStringArray("4.6", "C#", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[audio]
+
+buses/default_bus_layout="uid://cfwpblgfgyh0u"
+
 [autoload]
 
 GameManager="*uid://dt7n460r0x1ba"
@@ -30,6 +34,7 @@ QuestManager="*res://autoloads/QuestManager.cs"
 SettingsManager="*res://autoloads/SettingsManager.cs"
 AccessibilityOverlay="*res://autoloads/AccessibilityOverlay.cs"
 WeatherManager="*res://autoloads/WeatherManager.cs"
+BgmBeatDebugOverlay="*res://autoloads/BgmBeatDebugOverlay.cs"
 
 [dialogic]
 
