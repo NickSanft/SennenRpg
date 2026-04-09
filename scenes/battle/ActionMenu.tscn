@@ -24,7 +24,7 @@ text = "STRIKE"
 [node name="ActButton" type="Button" parent="GridContainer"]
 layout_mode = 2
 custom_minimum_size = Vector2(140, 36)
-text = "PERFORM"
+text = "SKILLS"
 
 [node name="ItemButton" type="Button" parent="GridContainer"]
 layout_mode = 2

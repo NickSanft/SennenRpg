@@ -409,6 +409,7 @@ public partial class BattleScene : Node2D
 	private MageRuneInput         _mageRuneInput         = null!;
 	private RogueStrikeMinigame   _rogueStrike           = null!;
 	private AlchemistBrewMinigame _alchemistBrew         = null!;
+	private LilyWitherAndBloomMinigame _witherAndBloom   = null!;
 	private int                _currentSkillIndex;
 	private SpellData?         _currentSpell;
 	private List<SpellData>    _knownSpells        = new();
@@ -486,6 +487,12 @@ public partial class BattleScene : Node2D
 		_shadowBoltMinigame = InstantiateFullRect<ShadowBoltMinigame>(
 			"res://scenes/battle/rhythm/skills/ShadowBoltMinigame.tscn");
 		_shadowBoltMinigame.SkillCompleted += OnSpellMinigameCompleted;
+
+		// Lily's Wither and Bloom — hold-to-bloom skill, built code-only (no .tscn)
+		_witherAndBloom = new LilyWitherAndBloomMinigame { Visible = false };
+		_witherAndBloom.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+		AddChild(_witherAndBloom);
+		_witherAndBloom.Confirmed += OnWitherAndBloomConfirmed;
 
 		_charmMinigame.CharmCompleted += OnCharmCompleted;
 		foreach (var skill in _bardSkills)
@@ -953,6 +960,23 @@ public partial class BattleScene : Node2D
 	private void OnRangerConfirmed(float accuracy, bool isCrit)
 	{
 		_rangerAim.Visible = false;
+
+		// Phase 4 unique skills hijack the Ranger reticle when set.
+		if (_pendingUniqueSkillActor == "bhata")
+		{
+			_pendingUniqueSkillActor = "";
+			_ = DoUniqueRangerSkillResolved(accuracy, SkillResolver.GravityArrowMultiplier,
+				"Gravity Arrow!", new Color(0.7f, 0.4f, 0.95f));
+			return;
+		}
+		if (_pendingUniqueSkillActor == "rain")
+		{
+			_pendingUniqueSkillActor = "";
+			_ = DoUniqueRangerSkillResolved(accuracy, SkillResolver.DualClassMultiplier,
+				"Dual-Class strike!", new Color(0.6f, 0.95f, 1f));
+			return;
+		}
+
 		if (isCrit)
 		{
 			_ = DoRangerCrit();
@@ -1204,21 +1228,40 @@ public partial class BattleScene : Node2D
 
 	private void OnPerformSelected()
 	{
-		GD.Print("[BattleScene] PERFORM selected");
+		GD.Print("[BattleScene] SKILLS selected");
 		_subMenuMode = SubMenuMode.Perform;
 		_actionMenu.SlideOut();
 
-		string[] bardOptions = _enemy?.BardicActOptions is { Length: > 0 }
-			? _enemy.BardicActOptions
-			: DefaultBardSkillNames;
-
-		// Append "Spells ▶" if the player knows any spells
-		string[] options = _knownSpells.Count > 0
-			? bardOptions.Append("Spells ▶").ToArray()
-			: bardOptions;
-
+		string[] options = BuildSkillsMenuForCurrentActor();
 		_subMenu.Populate(options);
 		_subMenu.Visible = true;
+	}
+
+	/// <summary>
+	/// Build the Skills sub-menu options for whichever party member is currently acting.
+	/// Sen exposes the existing Bard skills; Lily / Rain / Bhata each get one unique skill.
+	/// Spells (when known) are still appended for Sen only.
+	/// </summary>
+	private string[] BuildSkillsMenuForCurrentActor()
+	{
+		string actorId = CurrentActor()?.MemberId ?? "sen";
+		switch (actorId)
+		{
+			case "lily":
+				return new[] { $"Wither and Bloom  ({SkillResolver.WitherAndBloomMpCost} MP)" };
+			case "rain":
+				return new[] { $"Dual-Class  ({SkillResolver.DualClassMpCost} MP)" };
+			case "bhata":
+				return new[] { $"Gravity Arrow  ({SkillResolver.GravityArrowMpCost} MP)" };
+			default:
+				// Sen — Bard skills + optional spells suffix
+				string[] bardOptions = _enemy?.BardicActOptions is { Length: > 0 }
+					? _enemy.BardicActOptions
+					: DefaultBardSkillNames;
+				return _knownSpells.Count > 0
+					? bardOptions.Append("Spells ▶").ToArray()
+					: bardOptions;
+		}
 	}
 
 	// ── Item ──────────────────────────────────────────────────────────
@@ -1243,11 +1286,17 @@ public partial class BattleScene : Node2D
 
 			// Only show Consumable and Repel items in battle
 			if (item.Type != ItemType.Consumable && item.Type != ItemType.Repel) continue;
-			if (item.HealAmount <= 0 && item.RepelSteps <= 0) continue;
+			if (item.HealAmount <= 0 && item.RestoreMp <= 0 && item.RepelSteps <= 0) continue;
 
-			string label = item.RepelSteps > 0
-				? $"{item.DisplayName} (Repel {item.RepelSteps} steps)"
-				: $"{item.DisplayName} (+{item.HealAmount} HP)";
+			string label;
+			if (item.RepelSteps > 0)
+				label = $"{item.DisplayName} (Repel {item.RepelSteps} steps)";
+			else if (item.HealAmount > 0 && item.RestoreMp > 0)
+				label = $"{item.DisplayName} (+{item.HealAmount} HP / +{item.RestoreMp} MP)";
+			else if (item.RestoreMp > 0)
+				label = $"{item.DisplayName} (+{item.RestoreMp} MP)";
+			else
+				label = $"{item.DisplayName} (+{item.HealAmount} HP)";
 
 			labels.Add(label);
 			_itemIndexMap.Add(i);
@@ -1330,6 +1379,14 @@ public partial class BattleScene : Node2D
 
 		if (_subMenuMode == SubMenuMode.Items) { await HandleItemOption(index); return; }
 
+		// ── Perform — non-Sen unique skills ───────────────────────────────
+		string actorId = CurrentActor()?.MemberId ?? "sen";
+		if (_subMenuMode == SubMenuMode.Perform && actorId != "sen")
+		{
+			await HandleUniqueSkillSelected(actorId);
+			return;
+		}
+
 		// ── Perform — bard skill ──────────────────────────────────────────
 		GD.Print($"[BattleScene] Skill option {index} selected");
 		_currentSkillIndex = index;
@@ -1394,6 +1451,178 @@ public partial class BattleScene : Node2D
 		await RunBattleTimeline("res://dialog/timelines/battle_charm_result.dtl");
 
 		await RunEnemyTurn();
+	}
+
+	// ── Unique per-actor Skills (Phase 4) ────────────────────────────────────
+
+	private string _pendingUniqueSkillActor = "";
+
+	/// <summary>
+	/// Routes a Skills-menu selection for non-Sen actors. Each recruit has exactly
+	/// one unique skill, so the index is irrelevant — actor identity decides which.
+	/// </summary>
+	private async Task HandleUniqueSkillSelected(string actorId)
+	{
+		switch (actorId)
+		{
+			case "lily":
+				if (!ActorUseMp(SkillResolver.WitherAndBloomMpCost))
+				{
+					await RunNoMpTimeline("Wither and Bloom", SkillResolver.WitherAndBloomMpCost);
+					return;
+				}
+				_pendingUniqueSkillActor = "lily";
+				SetState(BattleState.SkillPhase);
+				_witherAndBloom.Activate();
+				break;
+
+			case "rain":
+				if (!ActorUseMp(SkillResolver.DualClassMpCost))
+				{
+					await RunNoMpTimeline("Dual-Class", SkillResolver.DualClassMpCost);
+					return;
+				}
+				_pendingUniqueSkillActor = "rain";
+				_battleHud.SetHints(BattleHints.RangerAim);
+				SetState(BattleState.SkillPhase);
+				_rangerAim.Visible = true;
+				_rangerAim.Activate();
+				break;
+
+			case "bhata":
+				if (!ActorUseMp(SkillResolver.GravityArrowMpCost))
+				{
+					await RunNoMpTimeline("Gravity Arrow", SkillResolver.GravityArrowMpCost);
+					return;
+				}
+				_pendingUniqueSkillActor = "bhata";
+				_battleHud.SetHints(BattleHints.RangerAim);
+				SetState(BattleState.SkillPhase);
+				_rangerAim.Visible = true;
+				_rangerAim.Activate();
+				break;
+		}
+	}
+
+	private async Task RunNoMpTimeline(string skillName, int cost)
+	{
+		SetBattleVar("spell_name", skillName);
+		SetBattleVar("mp_cost",    cost.ToString());
+		await RunBattleTimeline("res://dialog/timelines/spell_no_mp.dtl");
+		SetState(BattleState.PlayerTurn);
+	}
+
+	private async Task DoUniqueRangerSkillResolved(float accuracy, float multiplier, string skillLabel, Color burstColor)
+	{
+		var hit = Target;
+		int dmg = SkillResolver.ResolveRangerSkillDamage(
+			ActorAttack(),
+			hit?.Data?.Stats?.Defense ?? 0,
+			accuracy,
+			multiplier);
+
+		_enemyCurrentHp -= dmg;
+		CameraShake.ShakeNode(this, intensity: 5f, duration: 0.18f);
+		FlashEnemy();
+		SpawnDamageNumber(dmg, isCrit: true);
+		SpawnParticleBurst(burstColor, _enemyArea?.GlobalPosition ?? Vector2.Zero);
+
+		SetBattleVar("hit_label",  skillLabel);
+		SetBattleVar("enemy_name", hit?.DisplayName ?? "???");
+		SetBattleVar("damage",     dmg.ToString());
+		await RunBattleTimeline("res://dialog/timelines/battle_hit.dtl");
+
+		HandleEnemyDeathIfApplicable(hit);
+		if (!AnyLivingEnemy())
+			await HandleVictory();
+		else
+			await RunEnemyTurn();
+	}
+
+	private void OnWitherAndBloomConfirmed(float fillRatio) => _ = DoWitherAndBloomResolved(fillRatio);
+
+	private async Task DoWitherAndBloomResolved(float fillRatio)
+	{
+		var hit = Target;
+		int dmg = SkillResolver.ResolveWitherDamage(
+			ActorMagic(),
+			hit?.Data?.Stats?.Defense ?? 0,
+			fillRatio);
+
+		_enemyCurrentHp -= dmg;
+		CameraShake.ShakeNode(this, intensity: 4f, duration: 0.16f);
+		FlashEnemy();
+		SpawnDamageNumber(dmg, isCrit: false);
+		SpawnParticleBurst(new Color(0.4f, 0.95f, 0.45f), _enemyArea?.GlobalPosition ?? Vector2.Zero);
+
+		// Heal split across living party
+		int healPool = SkillResolver.ResolveWitherHealPool(ActorMagic(), fillRatio);
+		var party    = GameManager.Instance.Party;
+		int living   = 0;
+		foreach (var m in party.Members)
+		{
+			bool alive = m.MemberId == "sen"
+				? GameManager.Instance.PlayerStats.CurrentHp > 0
+				: m.CurrentHp > 0;
+			if (alive) living++;
+		}
+		int per = SkillResolver.SplitHealEvenly(healPool, living);
+		if (per > 0)
+		{
+			foreach (var m in party.Members)
+			{
+				if (m.MemberId == "sen")
+				{
+					if (GameManager.Instance.PlayerStats.CurrentHp > 0)
+						GameManager.Instance.HealPlayer(per);
+				}
+				else if (m.CurrentHp > 0)
+				{
+					m.CurrentHp = System.Math.Min(m.MaxHp, m.CurrentHp + per);
+				}
+			}
+		}
+
+		SetBattleVar("hit_label",  $"Wither and Bloom! Party +{per} HP");
+		SetBattleVar("enemy_name", hit?.DisplayName ?? "???");
+		SetBattleVar("damage",     dmg.ToString());
+		await RunBattleTimeline("res://dialog/timelines/battle_hit.dtl");
+
+		HandleEnemyDeathIfApplicable(hit);
+		if (!AnyLivingEnemy())
+			await HandleVictory();
+		else
+			await RunEnemyTurn();
+	}
+
+	/// <summary>
+	/// Spawn a short-lived burst of colored particles at the given screen position.
+	/// Used by the Phase 4 unique skills for visual flair.
+	/// </summary>
+	private void SpawnParticleBurst(Color color, Vector2 worldPosition)
+	{
+		var burst = new CpuParticles2D
+		{
+			GlobalPosition  = worldPosition,
+			Emitting        = true,
+			OneShot         = true,
+			Amount          = 24,
+			Lifetime        = 0.6f,
+			Explosiveness   = 1f,
+			Direction       = new Vector2(0, -1),
+			Spread          = 180f,
+			InitialVelocityMin = 30f,
+			InitialVelocityMax = 80f,
+			Gravity         = new Vector2(0, 60f),
+			ScaleAmountMin  = 1.5f,
+			ScaleAmountMax  = 3f,
+			Color           = color,
+		};
+		AddChild(burst);
+		GetTree().CreateTimer(1.2f).Timeout += () =>
+		{
+			if (IsInstanceValid(burst)) burst.QueueFree();
+		};
 	}
 
 	// ── Spell handling ────────────────────────────────────────────────────────
@@ -1497,10 +1726,18 @@ public partial class BattleScene : Node2D
 			return;
 		}
 
-		GameManager.Instance.HealPlayer(item.HealAmount);
+		// Apply HP heal and / or MP restore. Items can carry both — Bhata's
+		// Bugman's Ale is RestoreMp = 20, HealAmount = 0; vanilla potions are
+		// HealAmount > 0, RestoreMp = 0.
+		if (item.HealAmount > 0) GameManager.Instance.HealPlayer(item.HealAmount);
+		if (item.RestoreMp  > 0) GameManager.Instance.RestoreMp(item.RestoreMp);
 
+		// `heal_amount` Dialogic var keeps the existing battle_item_used.dtl
+		// template working. Use HP heal first, fall back to the MP value when
+		// the item is MP-only.
+		int displayAmount = item.HealAmount > 0 ? item.HealAmount : item.RestoreMp;
 		SetBattleVar("item_name",   item.DisplayName);
-		SetBattleVar("heal_amount", item.HealAmount.ToString());
+		SetBattleVar("heal_amount", displayAmount.ToString());
 		await RunBattleTimeline("res://dialog/timelines/battle_item_used.dtl");
 		await RunEnemyTurn();
 	}

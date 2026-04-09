@@ -1,0 +1,5 @@
+join Bhata center
+Bhata: Welcome back. I imbued this with some of my gravity abilities.
+Bhata: I have no idea what this will do though, so beware!
+leave Bhata
+[signal arg="collect:bhata"]

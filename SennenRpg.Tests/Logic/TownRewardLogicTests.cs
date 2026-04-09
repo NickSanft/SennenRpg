@@ -110,4 +110,35 @@ public class TownRewardLogicTests
     [Test]
     public void HasPendingRewards_FalseWhenNothingPending()
         => Assert.That(TownRewardLogic.HasPendingRewards(0, 0), Is.False);
+
+    // ── Bhata ─────────────────────────────────────────────────────────────────
+
+    [Test]
+    public void Bhata_TicksWhenPurchased()
+    {
+        var result = TownRewardLogic.TryTick(9, false, 0, false, 0, 1, bhataPurchased: true, pendingBhataAles: 0);
+        Assert.That(result.BhataTicked, Is.True);
+        Assert.That(result.NewPendingBhataAles, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Bhata_DoesNotTickWhenNotPurchased()
+    {
+        var result = TownRewardLogic.TryTick(9, false, 0, false, 0, 1, bhataPurchased: false, pendingBhataAles: 0);
+        Assert.That(result.BhataTicked, Is.False);
+        Assert.That(result.NewPendingBhataAles, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void Bhata_RespectsHardCap()
+    {
+        int atCap = TownRewardLogic.MaxPendingBhataAles;
+        var result = TownRewardLogic.TryTick(9, false, 0, false, 0, 1, bhataPurchased: true, pendingBhataAles: atCap);
+        Assert.That(result.BhataTicked, Is.False);
+        Assert.That(result.NewPendingBhataAles, Is.EqualTo(atCap));
+    }
+
+    [Test]
+    public void HasPendingRewards_TrueWhenBhataAlesWaiting()
+        => Assert.That(TownRewardLogic.HasPendingRewards(0, 0, 2), Is.True);
 }

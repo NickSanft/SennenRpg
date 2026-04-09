@@ -15,14 +15,18 @@ namespace SennenRpg.Scenes.Overworld;
 public partial class MellyrOutpost : OverworldBase
 {
 	private const string BgmTrack     = "res://assets/music/Mellyr Outpost.wav";
-	private const string RainScene    = "res://scenes/overworld/objects/npcs/NpcRain.tscn";
-	private const string LilyScene    = "res://scenes/overworld/objects/npcs/NpcLily.tscn";
-	private const string RainTimeline = "res://dialog/timelines/npc_rain_town.dtl";
-	private const string LilyTimeline = "res://dialog/timelines/npc_lily_town.dtl";
-	private const string RainCharPath = "res://dialog/characters/Rain.dch";
-	private const string LilyCharPath = "res://dialog/characters/Lily.dch";
-	private const string CollectRain  = "collect:rain";
-	private const string CollectLily  = "collect:lily";
+	private const string RainScene     = "res://scenes/overworld/objects/npcs/NpcRain.tscn";
+	private const string LilyScene     = "res://scenes/overworld/objects/npcs/NpcLily.tscn";
+	private const string BhataScene    = "res://scenes/overworld/objects/npcs/NpcBhata.tscn";
+	private const string RainTimeline  = "res://dialog/timelines/npc_rain_town.dtl";
+	private const string LilyTimeline  = "res://dialog/timelines/npc_lily_town.dtl";
+	private const string BhataTimeline = "res://dialog/timelines/npc_bhata_town.dtl";
+	private const string RainCharPath  = "res://dialog/characters/Rain.dch";
+	private const string LilyCharPath  = "res://dialog/characters/Lily.dch";
+	private const string BhataCharPath = "res://dialog/characters/Bhata.dch";
+	private const string CollectRain   = "collect:rain";
+	private const string CollectLily   = "collect:lily";
+	private const string CollectBhata  = "collect:bhata";
 
 	public override void _Ready()
 	{
@@ -44,6 +48,9 @@ public partial class MellyrOutpost : OverworldBase
 
 		if (GameManager.Instance.GetFlag(Flags.NpcLilyPurchased))
 			SpawnResident(LilyScene, "lily_town", LilyTimeline, LilyCharPath, new Vector2(192, 112));
+
+		if (GameManager.Instance.GetFlag(Flags.NpcBhataPurchased))
+			SpawnResident(BhataScene, "bhata_town", BhataTimeline, BhataCharPath, new Vector2(160, 96));
 
 		DialogicBridge.Instance.DialogicSignalReceived += OnDialogicSignal;
 
@@ -133,8 +140,9 @@ public partial class MellyrOutpost : OverworldBase
 	{
 		switch (arg.AsString())
 		{
-			case CollectRain: OnCollectRain(); break;
-			case CollectLily: OnCollectLily(); break;
+			case CollectRain:  OnCollectRain();  break;
+			case CollectLily:  OnCollectLily();  break;
+			case CollectBhata: OnCollectBhata(); break;
 		}
 	}
 
@@ -154,6 +162,16 @@ public partial class MellyrOutpost : OverworldBase
 		string msg = items.Count == 0
 			? "Lily hasn't finished anything yet — come back after some exploring!"
 			: $"Lily forged {string.Join(", ", items.Select(i => i.DisplayName))} at the outpost!";
+		DialogicBridge.Instance.SetVariable("reward_message", msg);
+		DialogicBridge.Instance.StartTimeline("res://dialog/timelines/mellyr_reward.dtl");
+	}
+
+	private void OnCollectBhata()
+	{
+		int count = GameManager.Instance.CollectBhataRewards();
+		string msg = count == 0
+			? "Bhata hasn't brewed anything yet — come back after some exploring!"
+			: $"Bhata handed you {count} Bugman's Ale{(count == 1 ? "" : "s")}!";
 		DialogicBridge.Instance.SetVariable("reward_message", msg);
 		DialogicBridge.Instance.StartTimeline("res://dialog/timelines/mellyr_reward.dtl");
 	}

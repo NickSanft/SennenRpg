@@ -72,7 +72,7 @@ res://
 │   │   ├── PlayerCombatData.cs        # HP, MP, stats, growth (owned by GameManager)
 │   │   ├── InventoryData.cs           # Items, spells, equipment (owned by GameManager)
 │   │   ├── WorldStateData.cs          # Map state, spawn points (owned by GameManager)
-│   │   └── MellyrRewardData.cs        # Rain gold, Lily recipes (owned by GameManager)
+│   │   └── MellyrRewardData.cs        # Rain gold, Lily recipes, Bhata ales (owned by GameManager)
 │   ├── interfaces/               # IInteractable
 │   └── extensions/               # NodeExtensions.cs, CameraShake.cs
 ├── scenes/
@@ -163,7 +163,7 @@ Access via `GetNode<T>("/root/AutoloadName")` or via static `Instance` property.
 ```
 PlayerTurn
   → Fight selected   → RhythmStrike minigame → damage calc → EnemyTurn
-  → Perform selected → show Bard skills sub-menu → skill/charm minigame → EnemyTurn
+  → Skills selected  → per-actor sub-menu (Sen: Bard skills + Spells; Lily/Rain/Bhata: unique skill) → EnemyTurn
   → Item selected    → apply effect → EnemyTurn
   → Flee selected    → 50% escape chance → fled result or EnemyTurn
 
@@ -192,7 +192,7 @@ Victory → EXP/Gold display → GameManager.AddGold/AddExp → SceneTransition 
 ## Party System
 - Up to **6 active party members** (`PartyData.MaxMembers = 6`). All members are battle-active in v1; no separate reserve list.
 - `PartyMember` (plain C# DTO) holds identity, class, level, exp, HP/MP, base stats, equipment dicts, sprite paths, formation row.
-- Sen is the canonical leader. Sen's stats live in `PlayerCombatData` (mirrored to his PartyMember on save). Lily/Rain are *fully owned* by their PartyMember — no MultiClassData entry.
+- Sen is the canonical leader. Sen's stats live in `PlayerCombatData` (mirrored to his PartyMember on save). Lily / Rain / Bhata are *fully owned* by their PartyMember — no MultiClassData entry.
 - Recruitment: `NpcResidencyEntry` carries `PartyMemberId` / `JoinClass` / `StartingStats` / `OverworldSpritePath` / `JoinTimelinePath`. Hiring at Rork's residency menu calls `GameManager.RecruitPartyMember(...)` and queues the join cutscene to play after the menu closes.
 - `GameManager.PartyOrderChanged` signal fires from `SetPartyLeader` / `SwapPartyMembers`. WorldMap and OverworldBase listen and refresh the leader sprite + the follower chain in-place.
 - Followers: `PartyFollower` (code-only Node2D) with shared `OverworldSpriteFactory` / `FollowerTrail`. Spawn only on 16×16 sprite maps (WorldMap + dungeon floors). Towns / 32×32 maps render the leader alone — the recruit's town NPC stays visible.
@@ -205,11 +205,12 @@ Victory → EXP/Gold display → GameManager.AddGold/AddExp → SceneTransition 
 - `BattleScene._enemies: List<EnemyInstance>` — every enemy in the encounter is spawned. Auto-target via `_targetIndex`; ←/→ during PlayerTurn cycles between living enemies.
 - `TurnQueue` (`core/data/TurnQueue.cs`) — pure logic, NUnit-tested. Builds a speed-sorted queue from `(speed, isKO)` arrays at the top of every round.
 - `BattleScene.BeginRound` ticks statuses, builds the queue, then `AdvanceTurn` walks through entries. Party members get their action menu via `BeginActorTurn`; enemies run a single rhythm phase via `RunSingleEnemyTurn`.
-- Per-actor stat routing: `ActorAttack` / `ActorMagic` / `ActorLuck` / `ActorClass` / `ActorHurt` / `ActorHeal` / `ActorUseMp` switch internally between Sen's GameManager facade and Lily/Rain's PartyMember fields.
+- Per-actor stat routing: `ActorAttack` / `ActorMagic` / `ActorLuck` / `ActorClass` / `ActorHurt` / `ActorHeal` / `ActorUseMp` switch internally between Sen's GameManager facade and Lily/Rain/Bhata's PartyMember fields.
+- **Skills menu** (formerly "Perform"): per-actor sub-menu populated by `BattleScene.BuildSkillsMenuForCurrentActor`. Sen → existing Bard skills + Spells. Lily → "Wither and Bloom" (hold-the-button bloom, magic damage + party heal split, 8 MP). Rain → "Dual-Class" (Ranger Aim, ×2 damage, 6 MP). Bhata → "Gravity Arrow" (Ranger Aim, ×2 damage, 6 MP). Damage / heal calc lives in `core/data/SkillResolver.cs` (NUnit-tested).
 - Rhythm-phase damage is split evenly across living party members.
 - Game over only when **all** party members are KO'd (`PartyAllKO`). KO'd members still receive XP at victory.
 - Victory aggregates gold/exp/loot/kills across every defeated enemy. XP for non-Sen members is distributed via `PartyMemberLogic.DistributeXp`.
-- HUD: `BattleHUD._partyExtrasLabel` lists Lily/Rain HP/MP under Sen's main row. ★ marks the active actor.
+- HUD: `BattleHUD._partyExtrasLabel` lists non-Sen members' HP/MP under Sen's main row. ★ marks the active actor.
 - Turn banner ("X's Turn") shown via `ShowPhaseCard` only when the party has more than one member.
 - Mixed encounters: `world_day_mixed.tres` / `world_night_mixed.tres` reference both Wisplet and Centiphantom; wired into `WorldMap.tscn` alongside the solo encounters.
 

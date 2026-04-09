@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://dd4js4g2ge105" path="res://core/data/NpcResidencyEntry.cs" id="5_residency_entry"]
 [ext_resource type="Resource" path="res://resources/characters/rain_stats.tres" id="6_rain_stats"]
 [ext_resource type="Resource" path="res://resources/characters/lily_stats.tres" id="7_lily_stats"]
+[ext_resource type="Resource" path="res://resources/characters/bhata_stats.tres" id="8_bhata_stats"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_rl83k"]
 texture = ExtResource("3_dby7a")
@@ -97,6 +98,18 @@ StartingStats = ExtResource("7_lily_stats")
 OverworldSpritePath = "res://assets/sprites/player/Lily_Overworld.png"
 JoinTimelinePath = "res://dialog/timelines/lily_joins.dtl"
 
+[sub_resource type="Resource" id="ResidencyEntry_Bhata"]
+script = ExtResource("5_residency_entry")
+DisplayName = "Bhata"
+Description = "High-grav brewer. Joins the party as a Ranger."
+FlagKey = "npc_bhata_purchased"
+Price = 180
+PartyMemberId = "bhata"
+JoinClass = 2
+StartingStats = ExtResource("8_bhata_stats")
+OverworldSpritePath = "res://assets/sprites/player/Bhata_Overworld.png"
+JoinTimelinePath = "res://dialog/timelines/bhata_joins.dtl"
+
 [node name="MellyrOutpost" unique_id=1522034536 instance=ExtResource("1_mellyr01")]
 script = ExtResource("2_mellyr02")
 
@@ -106,7 +119,7 @@ tile_set = SubResource("TileSet_3rdkb")
 
 [node name="RorkTown" parent="YSort" parent_id_path=PackedInt32Array(598468964) index="0" unique_id=1572445456 instance=ExtResource("3_rork_town")]
 position = Vector2(160, 128)
-ResidencyStock = [SubResource("ResidencyEntry_Rain"), SubResource("ResidencyEntry_Lily")]
+ResidencyStock = [SubResource("ResidencyEntry_Rain"), SubResource("ResidencyEntry_Lily"), SubResource("ResidencyEntry_Bhata")]
 
 [node name="Exit" parent="." index="6" unique_id=96641642 instance=ExtResource("4_exit")]
 position = Vector2(160, 200)

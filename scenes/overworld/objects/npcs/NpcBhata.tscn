@@ -65,6 +65,10 @@ animations = [{
 
 [node name="NpcBhata" unique_id=1686585218 instance=ExtResource("1_bhata")]
 DisplayName = "Bhata"
+NpcId = "bhata_mellyr"
+TimelinePath = "res://dialog/timelines/npc_bhata.dtl"
+AltRequiredFlags = PackedStringArray("talked_to_bhata_mellyr")
+AltTimelinePaths = PackedStringArray("res://dialog/timelines/npc_bhata_again.dtl")
 
 [node name="Sprite" parent="." index="0" unique_id=1912760606]
 sprite_frames = SubResource("SpriteFrames_282bm")

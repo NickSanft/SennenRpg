@@ -219,9 +219,12 @@ public partial class WorldMap : Node2D
 			gm.PendingRainGold,
 			gm.GetFlag(Flags.NpcLilyPurchased),
 			gm.PendingLilyRecipes.Count,
-			gm.PlayerLevel);
-		gm.TownStepCounter = tick.NewCounter;
-		gm.PendingRainGold = tick.NewPendingRainGold;
+			gm.PlayerLevel,
+			gm.GetFlag(Flags.NpcBhataPurchased),
+			gm.PendingBhataAles);
+		gm.TownStepCounter  = tick.NewCounter;
+		gm.PendingRainGold  = tick.NewPendingRainGold;
+		gm.PendingBhataAles = tick.NewPendingBhataAles;
 		if (tick.LilyRecipe != null)
 			gm.PendingLilyRecipes.Add(tick.LilyRecipe);
 

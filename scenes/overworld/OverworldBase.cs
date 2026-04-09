@@ -331,10 +331,13 @@ public partial class OverworldBase : Node2D
 			gm.PendingRainGold,
 			gm.GetFlag(Flags.NpcLilyPurchased),
 			gm.PendingLilyRecipes.Count,
-			gm.PlayerLevel);
+			gm.PlayerLevel,
+			gm.GetFlag(Flags.NpcBhataPurchased),
+			gm.PendingBhataAles);
 
-		gm.TownStepCounter = result.NewCounter;
-		gm.PendingRainGold = result.NewPendingRainGold;
+		gm.TownStepCounter  = result.NewCounter;
+		gm.PendingRainGold  = result.NewPendingRainGold;
+		gm.PendingBhataAles = result.NewPendingBhataAles;
 		if (result.LilyRecipe != null)
 			gm.PendingLilyRecipes.Add(result.LilyRecipe);
 	}

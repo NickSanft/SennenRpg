@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CharacterStats" format=3 uid="uid://bhata_stats_01"]
+
+[ext_resource type="Script" uid="uid://dqonjuygth0gq" path="res://core/data/CharacterStats.cs" id="1_cs"]
+
+[resource]
+script = ExtResource("1_cs")
+MaxHp = 20
+CurrentHp = 20
+Attack = 11
+Defense = 4
+Speed = 13
+Magic = 5
+Resistance = 3
+Luck = 9
+MaxMp = 14
+CurrentMp = 14
+Class = 2
+ClassName = "Ranger"

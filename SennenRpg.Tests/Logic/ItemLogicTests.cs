@@ -89,4 +89,67 @@ public sealed class ItemLogicTests
         Assert.That(current + actual, Is.EqualTo(applied),
             "ActualHeal + currentHp must equal ApplyHeal.");
     }
+
+    // ── RestoreMp / ApplyMpRestore / ActualMpRestore ─────────────────────────
+
+    [Test]
+    public void CanUseItem_MpItem_BelowMaxMp_ReturnsTrue()
+        => Assert.That(ItemLogic.CanUseItem(
+            healAmount: 0, restoreMp: 20,
+            currentHp: 20, maxHp: 20,
+            currentMp: 5,  maxMp: 30), Is.True);
+
+    [Test]
+    public void CanUseItem_MpItem_AtMaxMp_ReturnsFalse()
+        => Assert.That(ItemLogic.CanUseItem(
+            healAmount: 0, restoreMp: 20,
+            currentHp: 20, maxHp: 20,
+            currentMp: 30, maxMp: 30), Is.False);
+
+    [Test]
+    public void CanUseItem_HybridHealAndMpItem_FullHpButLowMp_ReturnsTrue()
+        => Assert.That(ItemLogic.CanUseItem(
+            healAmount: 10, restoreMp: 20,
+            currentHp: 20,  maxHp: 20,    // full HP
+            currentMp: 5,   maxMp: 30),    // low MP
+            Is.True);
+
+    [Test]
+    public void CanUseItem_HybridHealAndMpItem_LowHpFullMp_ReturnsTrue()
+        => Assert.That(ItemLogic.CanUseItem(
+            healAmount: 10, restoreMp: 20,
+            currentHp: 5,   maxHp: 20,    // low HP
+            currentMp: 30,  maxMp: 30),    // full MP
+            Is.True);
+
+    [Test]
+    public void CanUseItem_NoHealNoMp_ReturnsFalse()
+        => Assert.That(ItemLogic.CanUseItem(
+            healAmount: 0, restoreMp: 0,
+            currentHp: 5,  maxHp: 20,
+            currentMp: 5,  maxMp: 30), Is.False);
+
+    [Test]
+    public void ApplyMpRestore_SimpleAdd()
+        => Assert.That(ItemLogic.ApplyMpRestore(restoreMp: 20, currentMp: 5, maxMp: 30), Is.EqualTo(25));
+
+    [Test]
+    public void ApplyMpRestore_ClampsAtMax()
+        => Assert.That(ItemLogic.ApplyMpRestore(restoreMp: 100, currentMp: 25, maxMp: 30), Is.EqualTo(30));
+
+    [Test]
+    public void ApplyMpRestore_AtMaxAlready_ReturnsMax()
+        => Assert.That(ItemLogic.ApplyMpRestore(restoreMp: 20, currentMp: 30, maxMp: 30), Is.EqualTo(30));
+
+    [Test]
+    public void ActualMpRestore_LessWhenNearMax()
+        => Assert.That(ItemLogic.ActualMpRestore(restoreMp: 20, currentMp: 25, maxMp: 30), Is.EqualTo(5));
+
+    [Test]
+    public void ActualMpRestore_FullWhenLow()
+        => Assert.That(ItemLogic.ActualMpRestore(restoreMp: 20, currentMp: 5, maxMp: 30), Is.EqualTo(20));
+
+    [Test]
+    public void ActualMpRestore_ZeroAtMax()
+        => Assert.That(ItemLogic.ActualMpRestore(restoreMp: 20, currentMp: 30, maxMp: 30), Is.EqualTo(0));
 }

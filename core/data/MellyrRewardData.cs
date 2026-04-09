@@ -12,6 +12,7 @@ public class MellyrRewardData
 	public int          TownStepCounter    { get; set; } = 0;
 	public int          PendingRainGold    { get; set; } = 0;
 	public List<string> PendingLilyRecipes { get; }      = new();
+	public int          PendingBhataAles   { get; set; } = 0;
 
 	/// <summary>
 	/// Transfers all pending Rain gold. Returns the amount collected (0 if nothing was pending).
@@ -24,6 +25,17 @@ public class MellyrRewardData
 		return amount;
 	}
 
+	/// <summary>
+	/// Transfers all pending Bhata ales. Returns the count collected.
+	/// Does NOT add items to inventory — the caller is responsible for that.
+	/// </summary>
+	public int CollectBhataRewards()
+	{
+		int count = PendingBhataAles;
+		PendingBhataAles = 0;
+		return count;
+	}
+
 	// ── Lifecycle ─────────────────────────────────────────────────────────────
 
 	public void Reset()
@@ -31,6 +43,7 @@ public class MellyrRewardData
 		TownStepCounter = 0;
 		PendingRainGold = 0;
 		PendingLilyRecipes.Clear();
+		PendingBhataAles = 0;
 	}
 
 	public void ApplyFromSave(SaveData data)
@@ -39,5 +52,6 @@ public class MellyrRewardData
 		PendingRainGold = data.PendingRainGold;
 		PendingLilyRecipes.Clear();
 		PendingLilyRecipes.AddRange(data.PendingLilyRecipes);
+		PendingBhataAles = data.PendingBhataAles;
 	}
 }

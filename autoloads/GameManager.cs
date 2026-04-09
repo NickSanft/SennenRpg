@@ -127,6 +127,7 @@ public partial class GameManager : Node
 	public int          TownStepCounter          { get => _mellyr.TownStepCounter;      set => _mellyr.TownStepCounter = value; }
 	public int          PendingRainGold          { get => _mellyr.PendingRainGold;      set => _mellyr.PendingRainGold = value; }
 	public List<string> PendingLilyRecipes       => _mellyr.PendingLilyRecipes;
+	public int          PendingBhataAles         { get => _mellyr.PendingBhataAles;     set => _mellyr.PendingBhataAles = value; }
 
 	// ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -331,8 +332,17 @@ public partial class GameManager : Node
 	public List<DynamicEquipmentSave> CollectLilyRewards()
 		=> _inventory.CollectLilyRewards(_mellyr.PendingLilyRecipes);
 
-	public (int gold, List<DynamicEquipmentSave> items) CollectAllTownRewards()
-		=> (CollectRainRewards(), CollectLilyRewards());
+	public int CollectBhataRewards()
+	{
+		int count = _mellyr.CollectBhataRewards();
+		const string alePath = "res://resources/items/consumable_bugmans_ale.tres";
+		for (int i = 0; i < count; i++)
+			AddItem(alePath);
+		return count;
+	}
+
+	public (int gold, List<DynamicEquipmentSave> items, int ales) CollectAllTownRewards()
+		=> (CollectRainRewards(), CollectLilyRewards(), CollectBhataRewards());
 
 	// ── Flags & kill tracking ─────────────────────────────────────────────────
 

@@ -302,10 +302,7 @@ public partial class InventoryMenu : CanvasLayer
 		if (item.Type == ItemType.Consumable || item.Type == ItemType.Repel)
 		{
 			var useButton = new Button { Text = "USE", Name = "UseButton" };
-			useButton.Disabled = !ItemLogic.CanUseItem(
-				item.HealAmount,
-				GameManager.Instance.PlayerStats.CurrentHp,
-				GameManager.Instance.PlayerStats.MaxHp);
+			useButton.Disabled = FindBestTarget(item) == null;
 			useButton.Pressed      += () => OnUseItem(item, path);
 			useButton.FocusEntered += () => { ShowDesc(item); AudioManager.Instance?.PlaySfx(UiSfx.Cursor); };
 			row.AddChild(useButton);
@@ -388,18 +385,90 @@ public partial class InventoryMenu : CanvasLayer
 		_descLabel.Text = !string.IsNullOrEmpty(item.Description) ? item.Description : item.DisplayName;
 	}
 
+	/// <summary>
+	/// Returns the party member who would benefit most from this item, or null
+	/// if nobody can use it. Picks the member with the largest combined HP+MP
+	/// deficit relative to the item's effects.
+	/// </summary>
+	private PartyMember? FindBestTarget(ItemData item)
+	{
+		var gm = GameManager.Instance;
+		PartyMember? best = null;
+		int bestDeficit = 0;
+
+		foreach (var m in gm.Party.Members)
+		{
+			GetMemberHpMp(m, out int curHp, out int maxHp, out int curMp, out int maxMp);
+
+			bool canHeal    = item.HealAmount > 0 && curHp < maxHp;
+			bool canRestore = item.RestoreMp  > 0 && curMp < maxMp;
+			if (!canHeal && !canRestore) continue;
+
+			int deficit = (canHeal ? maxHp - curHp : 0) + (canRestore ? maxMp - curMp : 0);
+			if (best == null || deficit > bestDeficit)
+			{
+				best = m;
+				bestDeficit = deficit;
+			}
+		}
+		return best;
+	}
+
+	private static void GetMemberHpMp(PartyMember m, out int curHp, out int maxHp, out int curMp, out int maxMp)
+	{
+		if (m.MemberId == "sen")
+		{
+			var s = GameManager.Instance.PlayerStats;
+			curHp = s.CurrentHp; maxHp = s.MaxHp;
+			curMp = s.CurrentMp; maxMp = s.MaxMp;
+		}
+		else
+		{
+			curHp = m.CurrentHp; maxHp = m.MaxHp;
+			curMp = m.CurrentMp; maxMp = m.MaxMp;
+		}
+	}
+
 	private void OnUseItem(ItemData item, string path)
 	{
-		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
-		int actual = ItemLogic.ActualHeal(
-			item.HealAmount,
-			GameManager.Instance.PlayerStats.CurrentHp,
-			GameManager.Instance.PlayerStats.MaxHp);
+		var target = FindBestTarget(item);
+		if (target == null)
+		{
+			ShowFeedback("No effect.");
+			return;
+		}
 
-		GameManager.Instance.HealPlayer(item.HealAmount);
+		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
+		GetMemberHpMp(target, out int curHp, out int maxHp, out int curMp, out int maxMp);
+
+		int actualHp = item.HealAmount > 0
+			? ItemLogic.ActualHeal(item.HealAmount, curHp, maxHp)
+			: 0;
+		int actualMp = item.RestoreMp > 0
+			? ItemLogic.ActualMpRestore(item.RestoreMp, curMp, maxMp)
+			: 0;
+
+		if (target.MemberId == "sen")
+		{
+			if (item.HealAmount > 0) GameManager.Instance.HealPlayer(item.HealAmount);
+			if (item.RestoreMp  > 0) GameManager.Instance.RestoreMp(item.RestoreMp);
+		}
+		else
+		{
+			if (actualHp > 0) target.CurrentHp = System.Math.Min(target.MaxHp, target.CurrentHp + actualHp);
+			if (actualMp > 0) target.CurrentMp = System.Math.Min(target.MaxMp, target.CurrentMp + actualMp);
+		}
 		GameManager.Instance.RemoveItem(path);
 
-		ShowFeedback($"+{actual} HP");
+		string who = target.DisplayName;
+		string feedback = (actualHp, actualMp) switch
+		{
+			( > 0,  > 0) => $"{who} +{actualHp} HP, +{actualMp} MP",
+			( > 0, _  )  => $"{who} +{actualHp} HP",
+			(_,     > 0) => $"{who} +{actualMp} MP",
+			_            => "No effect.",
+		};
+		ShowFeedback(feedback);
 		Refresh();
 	}
 
