@@ -667,6 +667,16 @@ public partial class BattleScene : Node2D
 				var animated = new AnimatedSprite2D { SpriteFrames = frames };
 				animated.Play("idle");
 				visual = animated;
+
+				// Beat-sync the enemy idle to the battle BGM. Scaled mode keeps
+				// long attack cycles smooth (no strobe at high BPMs).
+				var enemyBeatSync = new SennenRpg.Scenes.Fx.BeatSyncTrigger
+				{
+					Mode          = SennenRpg.Core.Data.BeatSyncMode.Scaled,
+					BaselineBpm   = 120f,
+					FramesPerBeat = 1.0f,
+				};
+				animated.AddChild(enemyBeatSync);
 			}
 			else if (data?.BattleSprite != null)
 			{

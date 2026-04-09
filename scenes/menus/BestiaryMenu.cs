@@ -40,6 +40,8 @@ public partial class BestiaryMenu : CanvasLayer
     private BpmPulse?          _bpmPulse;
     private float              _spriteAccum;
     private int                _spriteFrameIdx;
+    private float              _spriteBeatScale = 1f;
+    private SennenRpg.Scenes.Fx.BeatSyncTrigger? _spriteBeatSync;
     private readonly System.Collections.Generic.List<Button> _entryButtons = new();
 
     public override void _Ready()
@@ -55,6 +57,22 @@ public partial class BestiaryMenu : CanvasLayer
         _selectedIndex  = 0;
         _spriteFrameIdx = 0;
         _spriteAccum    = 0f;
+
+        // Sync the preview's frame rate to whatever BGM is currently playing.
+        // The trigger calls back with a scale factor that we multiply against
+        // the per-frame delta in _Process. Baseline = 120 BPM (so at 120 the
+        // preview plays at the enemy's native fps; at 60 it's half speed).
+        if (_spriteBeatSync == null)
+        {
+            _spriteBeatSync = SennenRpg.Scenes.Fx.BeatSyncTrigger.Attach(
+                this,
+                SennenRpg.Core.Data.BeatSyncMode.Scaled,
+                totalFrames: 1,
+                framesPerBeat: 1.0f,
+                baselineBpm: 120f,
+                customScaleSetter: s => _spriteBeatScale = s);
+        }
+
         BuildUi();
         UiTheme.ApplyPixelFontToAll(this);
         UiTheme.ApplyToAllButtons(this);
@@ -76,6 +94,12 @@ public partial class BestiaryMenu : CanvasLayer
         AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
         Visible = false;
         EmitSignal(SignalName.Closed);
+
+        // Drop the beat-sync trigger so it doesn't keep ticking while the menu
+        // is hidden. It'll be re-attached on the next Open().
+        if (_spriteBeatSync != null && IsInstanceValid(_spriteBeatSync))
+            _spriteBeatSync.QueueFree();
+        _spriteBeatSync = null;
     }
 
     // ── Per-frame: animate sprite + BPM pulse ────────────────────────────
@@ -87,7 +111,7 @@ public partial class BestiaryMenu : CanvasLayer
         var enemy = CurrentEnemy();
         if (enemy?.BattleSprite != null && enemy.SpriteFrameCount > 0 && _spriteAtlas != null)
         {
-            _spriteAccum += (float)delta;
+            _spriteAccum += (float)delta * _spriteBeatScale;
             float frameDur = 1f / Mathf.Max(0.1f, enemy.SpriteAnimFps);
             while (_spriteAccum >= frameDur)
             {

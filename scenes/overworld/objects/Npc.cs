@@ -87,6 +87,20 @@ public partial class Npc : CharacterBody2D, IInteractable
 	{
 		_sprite = GetNodeOrNull<AnimatedSprite2D>("Sprite");
 
+		// Beat-sync the NPC walk cycle to whatever BGM is playing.
+		// Scaled mode + 0.5 frames-per-beat matches the player so they feel
+		// in step with each other on the same track.
+		if (!Engine.IsEditorHint() && _sprite != null)
+		{
+			var beatSync = new SennenRpg.Scenes.Fx.BeatSyncTrigger
+			{
+				Mode          = SennenRpg.Core.Data.BeatSyncMode.Scaled,
+				BaselineBpm   = 120f,
+				FramesPerBeat = 0.5f,
+			};
+			_sprite.AddChild(beatSync);
+		}
+
 		if (!Engine.IsEditorHint())
 			AddToGroup("interactable");
 

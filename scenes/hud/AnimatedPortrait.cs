@@ -1,4 +1,6 @@
 using Godot;
+using SennenRpg.Core.Data;
+using SennenRpg.Scenes.Fx;
 
 namespace SennenRpg.Scenes.Hud;
 
@@ -26,6 +28,7 @@ public partial class AnimatedPortrait : Control
     private AtlasTexture? _frame1;
     private bool _showingFrame1;
     private float _accumulator;
+    private BeatSyncTrigger? _beatSync;
 
     public override void _Ready()
     {
@@ -47,7 +50,35 @@ public partial class AnimatedPortrait : Control
         if (_frame0 != null)
             _texRect.Texture = _frame0;
 
+        // Hand the frame swap off to the beat-sync registry. Snap mode with a
+        // 2-frame cycle every 2 beats — at common BPMs (90–140) this gives a
+        // visibly in-time portrait pulse without strobing. The custom frame
+        // setter is used because AnimatedPortrait is a Control, not an
+        // AnimatedSprite2D.
+        _beatSync = BeatSyncTrigger.Attach(
+            this,
+            BeatSyncMode.Snap,
+            totalFrames: 2,
+            framesPerBeat: 0.5f,
+            customFrameSetter: i => SetFrame(i == 1));
+
+        // Process is only needed for the legacy delta path when no BGM is playing
+        // (BeatSyncRegistry will call RestoreNative() and SetProcess(true) is
+        // toggled below).
         SetProcess(_frame1 != null);
+    }
+
+    public override void _ExitTree()
+    {
+        _beatSync?.QueueFree();
+        _beatSync = null;
+    }
+
+    private void SetFrame(bool useFrame1)
+    {
+        if (_texRect == null) return;
+        _showingFrame1 = useFrame1;
+        _texRect.Texture = useFrame1 ? _frame1 : _frame0;
     }
 
     /// <summary>
@@ -80,6 +111,13 @@ public partial class AnimatedPortrait : Control
     public override void _Process(double delta)
     {
         if (_frame0 == null || _frame1 == null || _texRect == null) return;
+
+        // Free-running fallback: when no BGM is playing or RhythmClock has no
+        // BPM (track unknown / low confidence), drop back to the legacy fixed
+        // FrameInterval cadence so portraits still animate.
+        var rc = SennenRpg.Autoloads.RhythmClock.Instance;
+        if (rc != null && rc.Bpm > 0f)
+            return; // BeatSyncTrigger drives the frame swaps
 
         _accumulator += (float)delta;
         if (_accumulator < FrameInterval) return;

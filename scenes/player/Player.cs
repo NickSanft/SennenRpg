@@ -1,8 +1,10 @@
 using Godot;
 using System.Collections.Generic;
 using SennenRpg.Autoloads;
+using SennenRpg.Core.Data;
 using SennenRpg.Core.Extensions;
 using SennenRpg.Core.Interfaces;
+using SennenRpg.Scenes.Fx;
 
 namespace SennenRpg.Scenes.Player;
 
@@ -16,6 +18,7 @@ public partial class Player : CharacterBody2D
 	[Export] public float InteractRadius { get; set; } = 32f;
 
 	private AnimatedSprite2D _sprite = null!;
+	private BeatSyncTrigger? _beatSync;
 	private Area2D _interactRange = null!;
 	private readonly HashSet<IInteractable> _candidates = new();
 	private IInteractable? _nearbyInteractable;
@@ -54,6 +57,17 @@ public partial class Player : CharacterBody2D
 		}
 
 		_lastPosition = GlobalPosition;
+
+		// Beat-sync the walk cycle to whatever BGM is playing. Scaled mode
+		// (default) keeps frame transitions smooth — the running multiplier
+		// is layered on top via SetUserMultiplier in _PhysicsProcess.
+		_beatSync = new BeatSyncTrigger
+		{
+			Mode          = BeatSyncMode.Scaled,
+			BaselineBpm   = 120f,
+			FramesPerBeat = 0.5f, // 4-frame walk cycle = 1 frame per 2 beats at 120 BPM
+		};
+		_sprite.AddChild(_beatSync);
 
 		// Teleport arrival: play dissolve-in (reform) animation
 		if (gm.TeleportArriving)
@@ -97,8 +111,9 @@ public partial class Player : CharacterBody2D
 		if (direction != Vector2.Zero)
 		{
 			UpdateAnimation(direction);
-			if (_sprite.SpriteFrames != null)
-				_sprite.SpeedScale = running ? 1.5f : 1.0f;
+			// Layer the running multiplier on top of the beat-derived scale.
+			// The trigger combines this with the BPM/baseline ratio.
+			_beatSync?.SetUserMultiplier(running ? 1.5f : 1.0f);
 		}
 		else
 		{
@@ -179,7 +194,9 @@ public partial class Player : CharacterBody2D
 		string target = $"walk_{_lastFacingDir}";
 		if (_sprite.Animation != target)
 			PlayIfExists(target);
-		_sprite.SpeedScale = 0.6f;
+		// Idle sway runs slower than walking. Layer the 0.6× user multiplier
+		// on top of the beat-sync scale (so the sway still feels in time).
+		_beatSync?.SetUserMultiplier(0.6f);
 	}
 
 	private void PlayIfExists(string animationName)

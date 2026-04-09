@@ -305,6 +305,16 @@ Victory → EXP/Gold display → GameManager.AddGold/AddExp → SceneTransition 
 - **Debug overlay**: `BgmBeatDebugOverlay` autoload (CanvasLayer 99) toggled with **F9**. Top half: live spectrum bars from the Music bus. Bottom half: scrolling 4s beat timeline with a centre "now" marker that flashes white on each `RhythmClock.Beat`. Status pill shows `BPM/offset/confidence/track`.
 - **Hand-correction nudge keys** (active when overlay visible): `←/→` ±10 ms offset, `Shift+←/→` ±1 ms (fine), `↑/↓` ±0.1 BPM, `R` reset, `Shift+S` print JSON snippet to console for paste into `beat_data.overrides.json`. Nothing persists automatically — `Shift+S` is the explicit save step.
 
+## Sprite Beat Sync
+- **`BeatSyncRegistry` autoload** is the single subscriber to `RhythmClock.Beat` for sprite animations. Per-sprite `BeatSyncTrigger` Nodes register at `_Ready`, deregister at `_ExitTree`. When `RhythmClock.Bpm <= 0` (track unknown / low confidence) the registry calls `RestoreNative()` on every trigger and idles until BPM returns.
+- **`BeatSyncTrigger`** is a small `Node` added as a child of any `AnimatedSprite2D` (or attached from code via `BeatSyncTrigger.Attach()` for custom widgets). Exports: `Mode` (`None`/`Snap`/`Scaled`), `FramesPerBeat`, `BaselineBpm`, `Animation` (optional — only sync while this anim is current).
+- **Snap mode** advances the sprite's frame on each beat (`AnimatedSprite2D.Frame = SnappedFrame(...)`, sprite is paused so Godot's clock doesn't fight). Strong "choreographed" effect; only suitable for cycles ≤4 frames. Used as opt-in for directed effects.
+- **Scaled mode** multiplies `SpeedScale` by `currentBpm / baselineBpm × framesPerBeat`. No frame-snapping, smooth at any tempo. The default for Player walks, NPC walks, and battle enemy idles.
+- **Pure logic** lives in `core/data/BeatSyncLogic.cs` (`SnappedFrame`, `ScaleFactor`, `CombineScales`) — fully NUnit-tested in `BeatSyncLogicTests.cs`.
+- **User multiplier layering**: `BeatSyncTrigger.SetUserMultiplier(m)` lets callers stack their own scale on top of the beat-derived scale. Used by `Player` to layer the running boost (1.5×) and idle sway (0.6×) on top of the BPM ratio.
+- **Custom-callback path**: `Attach(parent, mode, totalFrames, framesPerBeat, baselineBpm, customFrameSetter, customScaleSetter)` lets non-AnimatedSprite2D widgets (e.g. `AnimatedPortrait`, `BestiaryMenu` enemy preview) hook into the same registry without needing a Sprite parent. The frame setter receives the next frame index (Snap mode); the scale setter receives the new scale factor (Scaled mode).
+- **Currently wired**: `Player` (Scaled, 0.5 frames/beat), `Npc` (Scaled, 0.5), `BattleScene.SetupEnemySprite` (Scaled, 1.0), `AnimatedPortrait` (Snap, 0.5), `BestiaryMenu` enemy preview (Scaled, 1.0). Furniture / decorative tile animations and cutscene-driven walks are intentionally left untouched.
+
 ## CI/CD
 - `.github/workflows/test.yml` — NUnit tests on every push/PR to master
 - `.github/workflows/release.yml` — on `v*` tags: tests → Godot export → GitHub Release with zip
