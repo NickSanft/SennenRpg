@@ -1,74 +1,74 @@
 {
   "res://assets/music/A Calm Rain in Argyre.wav": {
-    "bpm": 139.81085,
+    "bpm": 140,
     "first_beat_sec": 0,
-    "confidence": 0.68015134,
+    "confidence": 0.7302935,
     "beat_count": 346
   },
   "res://assets/music/Carillion Forest.wav": {
-    "bpm": 64.62532,
-    "first_beat_sec": 0,
-    "confidence": 1,
-    "beat_count": 208
+    "bpm": 108,
+    "first_beat_sec": 0.5340589,
+    "confidence": 0.89917487,
+    "beat_count": 348
   },
   "res://assets/music/Corruption Can Be Fun.wav": {
-    "bpm": 120.066315,
-    "first_beat_sec": 0.499229,
-    "confidence": 0.51739234,
-    "beat_count": 280
+    "bpm": 179,
+    "first_beat_sec": 0.31346938,
+    "confidence": 0.5201366,
+    "beat_count": 417
   },
   "res://assets/music/Drifting in the Astral Paring (Ambient).wav": {
-    "bpm": 86.62089,
-    "first_beat_sec": 0.20897959,
+    "bpm": 130,
+    "first_beat_sec": 0.42956915,
     "confidence": 1,
-    "beat_count": 191
+    "beat_count": 288
   },
   "res://assets/music/Drifting in the Astral Paring.wav": {
-    "bpm": 99.842285,
+    "bpm": 100,
     "first_beat_sec": 0.17414966,
     "confidence": 1,
-    "beat_count": 191
+    "beat_count": 192
   },
   "res://assets/music/Foggy Morning in Flas.wav": {
-    "bpm": 86.61937,
-    "first_beat_sec": 0.6849887,
-    "confidence": 0.78210056,
-    "beat_count": 231
+    "bpm": 130,
+    "first_beat_sec": 0.22058956,
+    "confidence": 0.89479536,
+    "beat_count": 347
   },
   "res://assets/music/Glimmersong Forest.wav": {
-    "bpm": 86.544266,
-    "first_beat_sec": 0.67337865,
-    "confidence": 0.63335025,
-    "beat_count": 194
+    "bpm": 130,
+    "first_beat_sec": 0.20897959,
+    "confidence": 0.7574338,
+    "beat_count": 292
   },
   "res://assets/music/Melancholy Conspectus.wav": {
-    "bpm": 140.03923,
+    "bpm": 140,
     "first_beat_sec": 0.41795918,
     "confidence": 1,
     "beat_count": 260
   },
   "res://assets/music/Mellyr Outpost.wav": {
-    "bpm": 144.20613,
+    "bpm": 144,
     "first_beat_sec": 0.4063492,
-    "confidence": 0.79209054,
-    "beat_count": 349
+    "confidence": 0.96231574,
+    "beat_count": 348
   },
   "res://assets/music/Origins Of The Gyre.wav": {
-    "bpm": 98.71433,
-    "first_beat_sec": 0.6037188,
-    "confidence": 0.70557606,
-    "beat_count": 363
+    "bpm": 148,
+    "first_beat_sec": 0.3947392,
+    "confidence": 0.7093266,
+    "beat_count": 544
   },
   "res://assets/music/Outpacing.wav": {
-    "bpm": 128.63406,
+    "bpm": 128,
     "first_beat_sec": 0,
-    "confidence": 0.5554029,
-    "beat_count": 249
+    "confidence": 0.9067554,
+    "beat_count": 248
   },
   "res://assets/music/Sozitek.wav": {
-    "bpm": 109.908585,
+    "bpm": 110,
     "first_beat_sec": 0,
-    "confidence": 1,
-    "beat_count": 299
+    "confidence": 0.86327463,
+    "beat_count": 300
   }
 }

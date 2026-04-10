@@ -28,6 +28,11 @@ public partial class AudioManager : Node
 	private Tween? _bgmTween;
 	private string _currentBgmPath = "";
 
+	/// <summary>Resource path of the BGM currently playing (or fading out → in).
+	/// Empty if no BGM is active. Used by debug overlays and HUD widgets that
+	/// need to know what's playing without guessing from BPM.</summary>
+	public string CurrentBgmPath => _currentBgmPath;
+
 	private float BgmTargetDb => SettingsLogic.LinearToDb(_masterLinear * _bgmLinear);
 	private float SfxTargetDb => SettingsLogic.LinearToDb(_masterLinear * _sfxLinear);
 
@@ -107,6 +112,11 @@ public partial class AudioManager : Node
 			GD.PushWarning($"[AudioManager] Failed to load BGM '{path}' — keeping current track.");
 			return;
 		}
+
+		// BGM looping is configured at import time via edit/loop_mode=1 in each
+		// .wav.import file (see assets/music/*.wav.import). We deliberately do
+		// NOT mutate the loaded AudioStreamWav at runtime — that turned out to
+		// reliably break playback on some imported assets in Godot 4.6.
 
 		// If the same track is already playing, keep it going seamlessly
 		// (e.g. transitioning between dungeon floors with the same BGM).

@@ -202,22 +202,23 @@ public partial class BgmBeatDebugOverlay : CanvasLayer
         string off  = rc != null ? $"{rc.BeatOffsetSec:F3}s" : "—";
         string conf = "—";
 
-        // Pull track name + confidence from MusicMetadata if we can
+        // Resolve the currently-playing track straight from AudioManager. The old
+        // BPM-matching heuristic was wrong whenever a battle scene passed an
+        // explicit override BPM, or when two tracks coincidentally agreed on
+        // tempo (e.g. Corruption / A Calm Rain both detected at 140 from JSON).
         string trackName = "(free-running)";
-        // Hacky: AudioManager doesn't expose currently-playing path. Look at all
-        // tracks and find the one whose BPM matches RhythmClock; close-enough.
-        if (rc != null && rc.Bpm > 0f)
+        var am = AudioManager.Instance;
+        if (am != null && !string.IsNullOrEmpty(am.CurrentBgmPath))
         {
-            foreach (var kv in MusicMetadata.All)
+            var info = MusicMetadata.Lookup(am.CurrentBgmPath);
+            if (info != null)
             {
-                var info = MusicMetadata.Lookup(kv.Key);
-                if (info != null && Mathf.Abs(info.Bpm - rc.Bpm) < 0.05f
-                                 && Mathf.Abs(info.BeatOffsetSec - rc.BeatOffsetSec) < 0.001f)
-                {
-                    trackName = info.Title;
-                    conf      = $"{info.BeatConfidence:F2}";
-                    break;
-                }
+                trackName = info.Title;
+                conf      = $"{info.BeatConfidence:F2}";
+            }
+            else
+            {
+                trackName = System.IO.Path.GetFileNameWithoutExtension(am.CurrentBgmPath);
             }
         }
 
@@ -256,21 +257,10 @@ public partial class BgmBeatDebugOverlay : CanvasLayer
 
     private void PrintOverrideJson()
     {
-        // Best-effort track lookup — same as UpdateStatus
-        string match = "<unknown>";
-        var rc = RhythmClock.Instance;
-        if (rc != null)
-        {
-            foreach (var kv in MusicMetadata.All)
-            {
-                var info = MusicMetadata.Lookup(kv.Key);
-                if (info != null && info.Bpm > 0f)
-                {
-                    match = kv.Key;
-                    break;
-                }
-            }
-        }
+        // Use AudioManager's current path directly so the printed snippet is
+        // unambiguous even when multiple tracks share a tempo.
+        var am = AudioManager.Instance;
+        string match = !string.IsNullOrEmpty(am?.CurrentBgmPath) ? am!.CurrentBgmPath : "<unknown>";
 
         GD.Print("[BgmBeatDebug] Paste into assets/music/beat_data.overrides.json:");
         GD.Print($"  \"{match}\": {{");

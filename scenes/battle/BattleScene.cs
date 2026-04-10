@@ -570,11 +570,28 @@ public partial class BattleScene : Node2D
 		if (string.IsNullOrEmpty(bgmPath))
 			bgmPath = DefaultBattleBgmPath;
 
-		float bpm = (encounter?.BattleBpm ?? 0f) > 0f ? encounter!.BattleBpm
-				  : (_enemy?.BattleBpm ?? 0f) > 0f    ? _enemy!.BattleBpm
-				  : RhythmConstants.DefaultBpm;
-
-		float beatOffset = (_enemy?.BattleBeatOffsetSec ?? 0f);
+		// Prefer the auto-detected BPM/offset from MusicMetadata (which overlays
+		// beat_data.json) whenever the analyzer was confident about the track.
+		// The hardcoded encounter/enemy BattleBpm values were a workaround from
+		// before the analyzer existed and don't always match the actual track
+		// (e.g. encounters had Corruption Can Be Fun pinned at 140 while it's
+		// actually 179). The .tres values now act as a fallback for tracks the
+		// analyzer can't lock onto.
+		float bpm        = 0f;
+		float beatOffset = 0f;
+		var trackInfo = MusicMetadata.Lookup(bgmPath);
+		if (trackInfo != null && trackInfo.Bpm > 0f && trackInfo.BeatConfidence >= 0.4f)
+		{
+			bpm        = trackInfo.Bpm;
+			beatOffset = trackInfo.BeatOffsetSec;
+		}
+		else
+		{
+			bpm = (encounter?.BattleBpm ?? 0f) > 0f ? encounter!.BattleBpm
+				: (_enemy?.BattleBpm ?? 0f) > 0f    ? _enemy!.BattleBpm
+				: RhythmConstants.DefaultBpm;
+			beatOffset = (_enemy?.BattleBeatOffsetSec ?? 0f);
+		}
 
 		if (ResourceLoader.Exists(bgmPath))
 		{
