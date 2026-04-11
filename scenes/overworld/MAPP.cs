@@ -78,8 +78,9 @@ public partial class MAPP : OverworldBase
 		if (GameManager.Instance.GetFlag(Flags.BhataFalafelAppeared))
 			InstantiateFalafel(FalafelWorldPosition(), withPoof: false);
 
-		// Restore Kriora crystals on re-entry
-		if (GameManager.Instance.GetFlag(Flags.KrioraCrystalsAppeared))
+		// Restore Kriora crystals on re-entry (skip if Arises cutscene already played)
+		if (GameManager.Instance.GetFlag(Flags.KrioraCrystalsAppeared)
+			&& !GameManager.Instance.GetFlag(Flags.AllAltDialogsDone))
 			SpawnKrioraCrystals(KrioraWorldPosition(), withPoof: false);
 
 		// Restore Gus frog on re-entry

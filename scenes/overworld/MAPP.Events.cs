@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
@@ -8,6 +9,7 @@ namespace SennenRpg.Scenes.Overworld;
 // Event handlers and helper methods split from MAPP.cs for size management.
 public partial class MAPP
 {
+	private readonly List<Node2D> _krioraCrystalNodes = new();
 	// ── Horse event ────────────────────────────────────────────────────────────
 
 	private void OnBrixHorseSignal()
@@ -284,6 +286,7 @@ public partial class MAPP
 			};
 			AddChild(crystal);
 			crystal.GlobalPosition = worldPos + offset;
+			_krioraCrystalNodes.Add(crystal);
 
 			if (withPoof)
 			{
@@ -336,6 +339,7 @@ public partial class MAPP
 			AddChild(highlight);
 			highlight.GlobalPosition = crystal.GlobalPosition;
 			highlight.Rotation       = a;
+			_krioraCrystalNodes.Add(highlight);
 		}
 	}
 
@@ -638,6 +642,22 @@ public partial class MAPP
 		// Drop the ambience ~40% to sell "the tavern falls silent" as a real world change.
 		// -12 dB is the normal level; -20 dB is roughly 40% quieter in perceived loudness.
 		AudioManager.Instance.FadeAmbienceTo(-20f, 3f);
+
+		// Fade out and remove Kriora's crystals — they've served their narrative purpose.
+		RemoveKrioraCrystals();
+	}
+
+	private void RemoveKrioraCrystals()
+	{
+		foreach (var node in _krioraCrystalNodes)
+		{
+			if (!IsInstanceValid(node)) continue;
+			var tween = CreateTween();
+			tween.TweenProperty(node, "modulate:a", 0f, 0.8f)
+				.SetTrans(Tween.TransitionType.Sine);
+			tween.TweenCallback(Callable.From(node.QueueFree));
+		}
+		_krioraCrystalNodes.Clear();
 	}
 
 	/// <summary>Returns a world position just to the right of Brix.</summary>
