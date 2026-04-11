@@ -39,6 +39,7 @@ public sealed class FlagsTests
             Flags.LilyAltDone,
             Flags.RainAltDone,
             Flags.AllAltDialogsDone,
+            Flags.NpcKrioraPurchased,
         ];
         Assert.That(all, Is.Unique, "Each Flags constant must map to a distinct string.");
     }
@@ -77,6 +78,10 @@ public sealed class FlagsTests
     public void AllAltDialogsDone_HasExpectedValue()
         => Assert.That(Flags.AllAltDialogsDone, Is.EqualTo("all_alt_dialogs_done"));
 
+    [Test]
+    public void NpcKrioraPurchased_HasExpectedValue()
+        => Assert.That(Flags.NpcKrioraPurchased, Is.EqualTo("npc_kriora_purchased"));
+
     // ── Constants match signal-event convention ───────────────────────────────
     // Timeline signal events use the format: [signal arg="flag:{value}"]
     // Values must be lowercase_snake_case so the Dialogic signal handler can
@@ -92,6 +97,7 @@ public sealed class FlagsTests
     [TestCase(Flags.LilyAltDone)]
     [TestCase(Flags.RainAltDone)]
     [TestCase(Flags.AllAltDialogsDone)]
+    [TestCase(Flags.NpcKrioraPurchased)]
     public void Constant_IsLowercaseSnakeCase(string value)
     {
         Assert.That(value, Is.EqualTo(value.ToLowerInvariant()),

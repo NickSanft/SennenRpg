@@ -13,6 +13,7 @@ public class MellyrRewardData
 	public int          PendingRainGold    { get; set; } = 0;
 	public List<string> PendingLilyRecipes { get; }      = new();
 	public int          PendingBhataAles   { get; set; } = 0;
+	public List<string> PendingKrioraRecipes { get; }    = new();
 
 	/// <summary>
 	/// Transfers all pending Rain gold. Returns the amount collected (0 if nothing was pending).
@@ -36,6 +37,17 @@ public class MellyrRewardData
 		return count;
 	}
 
+	/// <summary>
+	/// Transfers all pending Kriora crystal weapon recipes. Returns the recipe list.
+	/// Does NOT resolve or add items — the caller is responsible for that.
+	/// </summary>
+	public List<string> CollectKrioraRewards()
+	{
+		var recipes = new List<string>(PendingKrioraRecipes);
+		PendingKrioraRecipes.Clear();
+		return recipes;
+	}
+
 	// ── Lifecycle ─────────────────────────────────────────────────────────────
 
 	public void Reset()
@@ -44,6 +56,7 @@ public class MellyrRewardData
 		PendingRainGold = 0;
 		PendingLilyRecipes.Clear();
 		PendingBhataAles = 0;
+		PendingKrioraRecipes.Clear();
 	}
 
 	public void ApplyFromSave(SaveData data)
@@ -53,5 +66,7 @@ public class MellyrRewardData
 		PendingLilyRecipes.Clear();
 		PendingLilyRecipes.AddRange(data.PendingLilyRecipes);
 		PendingBhataAles = data.PendingBhataAles;
+		PendingKrioraRecipes.Clear();
+		PendingKrioraRecipes.AddRange(data.PendingKrioraRecipes);
 	}
 }

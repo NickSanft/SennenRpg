@@ -141,4 +141,39 @@ public class TownRewardLogicTests
     [Test]
     public void HasPendingRewards_TrueWhenBhataAlesWaiting()
         => Assert.That(TownRewardLogic.HasPendingRewards(0, 0, 2), Is.True);
+
+    // ── Kriora ────────────────────────────────────────────────────────────────
+
+    [Test]
+    public void Kriora_TicksWhenPurchased()
+    {
+        var result = TownRewardLogic.TryTick(9, false, 0, false, 0, 1,
+            krioraPurchased: true, pendingKrioraCount: 0);
+        Assert.That(result.KrioraTicked, Is.True);
+        Assert.That(result.KrioraRecipe, Is.Not.Null.And.Not.Empty);
+        Assert.That(result.NewPendingKrioraCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Kriora_DoesNotTickWhenNotPurchased()
+    {
+        var result = TownRewardLogic.TryTick(9, false, 0, false, 0, 1,
+            krioraPurchased: false, pendingKrioraCount: 0);
+        Assert.That(result.KrioraTicked, Is.False);
+        Assert.That(result.KrioraRecipe, Is.Null);
+    }
+
+    [Test]
+    public void Kriora_RespectsHardCap()
+    {
+        int atCap = TownRewardLogic.MaxPendingKrioraItems;
+        var result = TownRewardLogic.TryTick(9, false, 0, false, 0, 1,
+            krioraPurchased: true, pendingKrioraCount: atCap);
+        Assert.That(result.KrioraTicked, Is.False);
+        Assert.That(result.NewPendingKrioraCount, Is.EqualTo(atCap));
+    }
+
+    [Test]
+    public void HasPendingRewards_TrueWhenKrioraItemsWaiting()
+        => Assert.That(TownRewardLogic.HasPendingRewards(0, 0, 0, 2), Is.True);
 }

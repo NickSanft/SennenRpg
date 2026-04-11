@@ -1036,7 +1036,15 @@ public partial class BattleScene : Node2D
 	private void OnMageCompleted(int correctCount)
 	{
 		_mageRuneInput.Visible = false;
-		_ = DoStrikeResolved((int)BattleAttackResolver.ResolveMageGrade(correctCount));
+		if (_pendingUniqueSkillActor == "kriora")
+		{
+			_pendingUniqueSkillActor = "";
+			_ = DoCrystalKnifeResolved(correctCount);
+		}
+		else
+		{
+			_ = DoStrikeResolved((int)BattleAttackResolver.ResolveMageGrade(correctCount));
+		}
 	}
 
 	// ── Rogue — pickpocket combo result ───────────────────────────────
@@ -1280,6 +1288,8 @@ public partial class BattleScene : Node2D
 				return new[] { $"Dual-Class  ({SkillResolver.DualClassMpCost} MP)" };
 			case "bhata":
 				return new[] { $"Gravity Arrow  ({SkillResolver.GravityArrowMpCost} MP)" };
+			case "kriora":
+				return new[] { $"Crystal Knife  ({SkillResolver.CrystalKnifeMpCost} MP)" };
 			default:
 				// Sen — Bard skills + optional spells suffix
 				string[] bardOptions = _enemy?.BardicActOptions is { Length: > 0 }
@@ -1528,6 +1538,19 @@ public partial class BattleScene : Node2D
 				_rangerAim.Visible = true;
 				_rangerAim.Activate();
 				break;
+
+			case "kriora":
+				if (!ActorUseMp(SkillResolver.CrystalKnifeMpCost))
+				{
+					await RunNoMpTimeline("Crystal Knife", SkillResolver.CrystalKnifeMpCost);
+					return;
+				}
+				_pendingUniqueSkillActor = "kriora";
+				_battleHud.SetHints(BattleHints.MageRunes);
+				SetState(BattleState.SkillPhase);
+				_mageRuneInput.Visible = true;
+				_mageRuneInput.Activate();
+				break;
 		}
 	}
 
@@ -1560,6 +1583,65 @@ public partial class BattleScene : Node2D
 		await RunBattleTimeline("res://dialog/timelines/battle_hit.dtl");
 
 		HandleEnemyDeathIfApplicable(hit);
+		if (!AnyLivingEnemy())
+			await HandleVictory();
+		else
+			await RunEnemyTurn();
+	}
+
+	// ── Crystal Knife — Kriora AoE skill ─────────────────────────────
+
+	private async Task DoCrystalKnifeResolved(int correctCount)
+	{
+		int magic = ActorMagic();
+		int totalDamage = 0;
+		bool isPerfect  = correctCount >= 3;
+		var crystalBlue = new Color(0.5f, 0.85f, 1.0f);
+
+		CameraShake.ShakeNode(this, intensity: 6f, duration: 0.25f);
+
+		foreach (var enemy in _enemies)
+		{
+			if (enemy.IsKO) continue;
+			int dmg = SkillResolver.ResolveCrystalKnifeDamage(
+				magic, enemy.Data?.Stats?.Defense ?? 0, correctCount);
+			enemy.CurrentHp -= dmg;
+			totalDamage += dmg;
+
+			// Per-enemy VFX
+			if (enemy.Visual is CanvasItem ci && ci.Material is ShaderMaterial sm)
+			{
+				sm.SetShaderParameter("flash_amount", 1.0f);
+				var flashTween = CreateTween();
+				flashTween.TweenMethod(
+					Callable.From<float>(v => sm.SetShaderParameter("flash_amount", v)),
+					1.0f, 0.0f, 0.08f);
+			}
+			Vector2 burstPos = enemy.Visual is Node2D vis
+				? _enemyArea.GlobalPosition + vis.Position
+				: _enemyArea?.GlobalPosition ?? Vector2.Zero;
+			SpawnParticleBurst(crystalBlue, burstPos);
+
+			// Damage number anchored to this enemy
+			if (_damageNumberScene != null)
+			{
+				var num = _damageNumberScene.Instantiate<DamageNumber>();
+				num.Position = (enemy.Visual is Node2D vn
+					? _enemyArea.Position + vn.Position
+					: _enemyArea.Position)
+					+ new Vector2((float)GD.RandRange(-16.0, 16.0), -30f);
+				AddChild(num);
+				num.Play(dmg, isPerfect);
+			}
+
+			HandleEnemyDeathIfApplicable(enemy);
+		}
+
+		SetBattleVar("hit_label",  "Crystal Knife!");
+		SetBattleVar("enemy_name", "all enemies");
+		SetBattleVar("damage",     totalDamage.ToString());
+		await RunBattleTimeline("res://dialog/timelines/battle_hit.dtl");
+
 		if (!AnyLivingEnemy())
 			await HandleVictory();
 		else

@@ -68,6 +68,8 @@ public record SaveData
 	public List<string> PendingLilyRecipes      { get; init; } = new();
 	/// <summary>Bhata-brewed ales pending collection. Hard cap: 5.</summary>
 	public int          PendingBhataAles        { get; init; } = 0;
+	/// <summary>Kriora crystal weapon recipe strings pending collection. Hard cap: 3.</summary>
+	public List<string> PendingKrioraRecipes    { get; init; } = new();
 	/// <summary>Lily-generated equipment in the player's unequipped pool.</summary>
 	public List<SennenRpg.Core.Data.DynamicEquipmentSave> DynamicEquipmentInventory { get; init; } = new();
 	/// <summary>Slot name → dynamic equipment ID for currently equipped Lily items.</summary>

@@ -101,6 +101,14 @@ public class InventoryData
 		return items;
 	}
 
+	public List<DynamicEquipmentSave> CollectKrioraRewards(List<string> pendingRecipes)
+	{
+		var items = pendingRecipes.Select(KrioraForgeLogic.Resolve).ToList();
+		foreach (var item in items)
+			DynamicEquipmentInventory.Add(item);
+		return items;
+	}
+
 	// ── Lifecycle ─────────────────────────────────────────────────────────────
 
 	public void Reset()

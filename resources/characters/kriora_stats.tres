@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CharacterStats" format=3 uid="uid://kriora_stats_01"]
+
+[ext_resource type="Script" uid="uid://dqonjuygth0gq" path="res://core/data/CharacterStats.cs" id="1_cs"]
+
+[resource]
+script = ExtResource("1_cs")
+MaxHp = 14
+CurrentHp = 14
+Attack = 4
+Defense = 2
+Speed = 8
+Magic = 16
+Resistance = 6
+Luck = 8
+MaxMp = 28
+CurrentMp = 28
+Class = 3
+ClassName = "Mage"

@@ -333,13 +333,17 @@ public partial class OverworldBase : Node2D
 			gm.PendingLilyRecipes.Count,
 			gm.PlayerLevel,
 			gm.GetFlag(Flags.NpcBhataPurchased),
-			gm.PendingBhataAles);
+			gm.PendingBhataAles,
+			gm.GetFlag(Flags.NpcKrioraPurchased),
+			gm.PendingKrioraRecipes.Count);
 
 		gm.TownStepCounter  = result.NewCounter;
 		gm.PendingRainGold  = result.NewPendingRainGold;
 		gm.PendingBhataAles = result.NewPendingBhataAles;
 		if (result.LilyRecipe != null)
 			gm.PendingLilyRecipes.Add(result.LilyRecipe);
+		if (result.KrioraRecipe != null)
+			gm.PendingKrioraRecipes.Add(result.KrioraRecipe);
 	}
 
 	// ── Helpers ───────────────────────────────────────────────────────

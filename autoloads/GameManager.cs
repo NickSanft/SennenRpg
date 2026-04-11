@@ -128,6 +128,7 @@ public partial class GameManager : Node
 	public int          PendingRainGold          { get => _mellyr.PendingRainGold;      set => _mellyr.PendingRainGold = value; }
 	public List<string> PendingLilyRecipes       => _mellyr.PendingLilyRecipes;
 	public int          PendingBhataAles         { get => _mellyr.PendingBhataAles;     set => _mellyr.PendingBhataAles = value; }
+	public List<string> PendingKrioraRecipes     => _mellyr.PendingKrioraRecipes;
 
 	// ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -343,8 +344,11 @@ public partial class GameManager : Node
 		return count;
 	}
 
-	public (int gold, List<DynamicEquipmentSave> items, int ales) CollectAllTownRewards()
-		=> (CollectRainRewards(), CollectLilyRewards(), CollectBhataRewards());
+	public List<DynamicEquipmentSave> CollectKrioraRewards()
+		=> _inventory.CollectKrioraRewards(_mellyr.CollectKrioraRewards());
+
+	public (int gold, List<DynamicEquipmentSave> items, int ales, List<DynamicEquipmentSave> crystalWeapons) CollectAllTownRewards()
+		=> (CollectRainRewards(), CollectLilyRewards(), CollectBhataRewards(), CollectKrioraRewards());
 
 	// ── Flags & kill tracking ─────────────────────────────────────────────────
 

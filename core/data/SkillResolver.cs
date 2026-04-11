@@ -7,17 +7,20 @@ namespace SennenRpg.Core.Data;
 /// Skills:
 /// - Bhata "Gravity Arrow"   — Ranger Aim minigame, ×2 base damage, 6 MP
 /// - Rain  "Dual-Class"      — Ranger Aim minigame, ×2 base damage, 6 MP
-/// - Lily  "Wither and Bloom" — hold-the-button bloom, deals damage to a target
-///                              and splits a heal across the living party. 8 MP.
+/// - Lily   "Wither and Bloom" — hold-the-button bloom, deals damage to a target
+///                               and splits a heal across the living party. 8 MP.
+/// - Kriora "Crystal Knife"    — MageRuneInput minigame, ×2 magic damage to ALL enemies. 10 MP.
 /// </summary>
 public static class SkillResolver
 {
     public const int GravityArrowMpCost   = 6;
     public const int DualClassMpCost      = 6;
     public const int WitherAndBloomMpCost = 8;
+    public const int CrystalKnifeMpCost   = 10;
 
     public const float GravityArrowMultiplier = 2.0f;
     public const float DualClassMultiplier    = 2.0f;
+    public const float CrystalKnifeMultiplier = 2.0f;
 
     /// <summary>
     /// Damage dealt by a Ranger-aim style skill that doubles the base attack.
@@ -67,5 +70,23 @@ public static class SkillResolver
         if (livingMemberCount <= 0 || healPool <= 0) return 0;
         int per = healPool / livingMemberCount;
         return per < 1 ? 1 : per;
+    }
+
+    /// <summary>
+    /// Crystal Knife damage per enemy. Magic-based with a 2× multiplier.
+    /// The MageRuneInput correctCount (0..3) maps to an accuracy scalar.
+    /// Hits ALL enemies — the caller loops over the enemy list.
+    /// </summary>
+    public static int ResolveCrystalKnifeDamage(int actorMagic, int targetDefence, int correctCount)
+    {
+        float accuracy = correctCount switch
+        {
+            >= 3 => 1.0f,
+               2 => 0.8f,
+               1 => 0.6f,
+               _ => 0.4f,
+        };
+        int raw = (int)(actorMagic * CrystalKnifeMultiplier * accuracy) - targetDefence;
+        return raw < 1 ? 1 : raw;
     }
 }

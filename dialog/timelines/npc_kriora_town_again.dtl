@@ -1,0 +1,5 @@
+join Kriora center
+Kriora: I trimmed off some of my crystals.
+Kriora: I have made some random stuff out of them. They might help? I dunno.
+leave Kriora
+[signal arg="collect:kriora"]

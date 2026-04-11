@@ -115,11 +115,51 @@ public sealed class SkillResolverTests
 
     // ── Constants sanity ─────────────────────────────────────────────────────
 
+    // ── Crystal Knife — Kriora AoE skill ────────────────────────────────────
+
+    [Test]
+    public void CrystalKnife_PerfectCountGivesFullMultiplier()
+    {
+        // 16 mag × 2.0 × 1.0 = 32, − 5 def = 27
+        int dmg = SkillResolver.ResolveCrystalKnifeDamage(actorMagic: 16, targetDefence: 5, correctCount: 3);
+        Assert.That(dmg, Is.EqualTo(27));
+    }
+
+    [Test]
+    public void CrystalKnife_DamageScalesWithCorrectCount()
+    {
+        int dmg3 = SkillResolver.ResolveCrystalKnifeDamage(20, 2, 3);
+        int dmg2 = SkillResolver.ResolveCrystalKnifeDamage(20, 2, 2);
+        int dmg1 = SkillResolver.ResolveCrystalKnifeDamage(20, 2, 1);
+        int dmg0 = SkillResolver.ResolveCrystalKnifeDamage(20, 2, 0);
+        Assert.That(dmg3, Is.GreaterThan(dmg2));
+        Assert.That(dmg2, Is.GreaterThan(dmg1));
+        Assert.That(dmg1, Is.GreaterThan(dmg0));
+    }
+
+    [Test]
+    public void CrystalKnife_NeverBelowOne()
+    {
+        int dmg = SkillResolver.ResolveCrystalKnifeDamage(actorMagic: 1, targetDefence: 999, correctCount: 0);
+        Assert.That(dmg, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void CrystalKnife_ZeroCorrectStillDeals()
+    {
+        // 20 × 2.0 × 0.4 = 16, − 2 = 14
+        int dmg = SkillResolver.ResolveCrystalKnifeDamage(20, 2, 0);
+        Assert.That(dmg, Is.EqualTo(14));
+    }
+
+    // ── Constants sanity ─────────────────────────────────────────────────────
+
     [Test]
     public void MpCosts_AreReasonable()
     {
         Assert.That(SkillResolver.GravityArrowMpCost,   Is.EqualTo(6));
         Assert.That(SkillResolver.DualClassMpCost,      Is.EqualTo(6));
         Assert.That(SkillResolver.WitherAndBloomMpCost, Is.EqualTo(8));
+        Assert.That(SkillResolver.CrystalKnifeMpCost,   Is.EqualTo(10));
     }
 }

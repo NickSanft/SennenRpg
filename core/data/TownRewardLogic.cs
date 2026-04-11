@@ -11,7 +11,8 @@ public static class TownRewardLogic
 	public const int RainGoldPerTick     = 10;
 	public const int MaxPendingRainGold  = 200;
 	public const int MaxPendingLilyItems = 5;
-	public const int MaxPendingBhataAles = 5;
+	public const int MaxPendingBhataAles   = 5;
+	public const int MaxPendingKrioraItems = 3;
 
 	/// <summary>
 	/// Processes one step on a qualifying map.
@@ -25,20 +26,24 @@ public static class TownRewardLogic
 		bool lilyPurchased,
 		int  pendingLilyCount,
 		int  playerLevel,
-		bool bhataPurchased    = false,
-		int  pendingBhataAles  = 0)
+		bool bhataPurchased      = false,
+		int  pendingBhataAles    = 0,
+		bool krioraPurchased     = false,
+		int  pendingKrioraCount  = 0)
 	{
 		stepCounter++;
 		if (stepCounter < TickEvery)
-			return new TownTickResult(stepCounter, pendingRainGold, pendingLilyCount, pendingBhataAles, false, false, false, null);
+			return new TownTickResult(stepCounter, pendingRainGold, pendingLilyCount, pendingBhataAles, pendingKrioraCount, false, false, false, null, false, null);
 
 		// Reset counter
 		stepCounter = 0;
 
-		bool rainTicked  = false;
-		bool lilyTicked  = false;
-		bool bhataTicked = false;
-		string? lilyRecipe = null;
+		bool rainTicked   = false;
+		bool lilyTicked   = false;
+		bool bhataTicked  = false;
+		bool krioraTicked = false;
+		string? lilyRecipe   = null;
+		string? krioraRecipe = null;
 
 		if (rainPurchased && pendingRainGold < MaxPendingRainGold)
 		{
@@ -59,12 +64,19 @@ public static class TownRewardLogic
 			bhataTicked = true;
 		}
 
-		return new TownTickResult(stepCounter, pendingRainGold, pendingLilyCount, pendingBhataAles, rainTicked, lilyTicked, bhataTicked, lilyRecipe);
+		if (krioraPurchased && pendingKrioraCount < MaxPendingKrioraItems)
+		{
+			krioraRecipe = KrioraForgeLogic.GenerateRecipe(playerLevel);
+			pendingKrioraCount++;
+			krioraTicked = true;
+		}
+
+		return new TownTickResult(stepCounter, pendingRainGold, pendingLilyCount, pendingBhataAles, pendingKrioraCount, rainTicked, lilyTicked, bhataTicked, lilyRecipe, krioraTicked, krioraRecipe);
 	}
 
 	/// <summary>Returns true if any resident has rewards waiting to be collected.</summary>
-	public static bool HasPendingRewards(int pendingRainGold, int pendingLilyCount, int pendingBhataAles = 0)
-		=> pendingRainGold > 0 || pendingLilyCount > 0 || pendingBhataAles > 0;
+	public static bool HasPendingRewards(int pendingRainGold, int pendingLilyCount, int pendingBhataAles = 0, int pendingKrioraCount = 0)
+		=> pendingRainGold > 0 || pendingLilyCount > 0 || pendingBhataAles > 0 || pendingKrioraCount > 0;
 }
 
 /// <summary>Result of a single <see cref="TownRewardLogic.TryTick"/> call.</summary>
@@ -73,7 +85,10 @@ public record TownTickResult(
 	int     NewPendingRainGold,
 	int     NewPendingLilyCount,
 	int     NewPendingBhataAles,
+	int     NewPendingKrioraCount,
 	bool    RainTicked,
 	bool    LilyTicked,
 	bool    BhataTicked,
-	string? LilyRecipe);
+	string? LilyRecipe,
+	bool    KrioraTicked,
+	string? KrioraRecipe);

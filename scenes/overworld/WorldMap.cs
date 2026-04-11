@@ -221,12 +221,16 @@ public partial class WorldMap : Node2D
 			gm.PendingLilyRecipes.Count,
 			gm.PlayerLevel,
 			gm.GetFlag(Flags.NpcBhataPurchased),
-			gm.PendingBhataAles);
+			gm.PendingBhataAles,
+			gm.GetFlag(Flags.NpcKrioraPurchased),
+			gm.PendingKrioraRecipes.Count);
 		gm.TownStepCounter  = tick.NewCounter;
 		gm.PendingRainGold  = tick.NewPendingRainGold;
 		gm.PendingBhataAles = tick.NewPendingBhataAles;
 		if (tick.LilyRecipe != null)
 			gm.PendingLilyRecipes.Add(tick.LilyRecipe);
+		if (tick.KrioraRecipe != null)
+			gm.PendingKrioraRecipes.Add(tick.KrioraRecipe);
 
 		// 4. Day/Night flip
 		if (DayNightLogic.ShouldFlip(gm.TilesWalkedOnWorldMap))

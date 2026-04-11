@@ -110,6 +110,7 @@ public partial class SaveManager : Node
 			PendingRainGold          = gm.PendingRainGold,
 			PendingLilyRecipes       = new System.Collections.Generic.List<string>(gm.PendingLilyRecipes),
 			PendingBhataAles         = gm.PendingBhataAles,
+			PendingKrioraRecipes     = new System.Collections.Generic.List<string>(gm.PendingKrioraRecipes),
 			DynamicEquipmentInventory = new System.Collections.Generic.List<SennenRpg.Core.Data.DynamicEquipmentSave>(gm.DynamicEquipmentInventory),
 			EquippedDynamicItemIds   = SerialiseDynamicEquipped(gm.EquippedDynamicItemIds),
 			// Multi-class progression

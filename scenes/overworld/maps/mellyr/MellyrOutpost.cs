@@ -17,16 +17,20 @@ public partial class MellyrOutpost : OverworldBase
 	private const string BgmTrack     = "res://assets/music/Mellyr Outpost.wav";
 	private const string RainScene     = "res://scenes/overworld/objects/npcs/NpcRain.tscn";
 	private const string LilyScene     = "res://scenes/overworld/objects/npcs/NpcLily.tscn";
-	private const string BhataScene    = "res://scenes/overworld/objects/npcs/NpcBhata.tscn";
-	private const string RainTimeline  = "res://dialog/timelines/npc_rain_town.dtl";
-	private const string LilyTimeline  = "res://dialog/timelines/npc_lily_town.dtl";
-	private const string BhataTimeline = "res://dialog/timelines/npc_bhata_town.dtl";
-	private const string RainCharPath  = "res://dialog/characters/Rain.dch";
-	private const string LilyCharPath  = "res://dialog/characters/Lily.dch";
-	private const string BhataCharPath = "res://dialog/characters/Bhata.dch";
-	private const string CollectRain   = "collect:rain";
-	private const string CollectLily   = "collect:lily";
-	private const string CollectBhata  = "collect:bhata";
+	private const string BhataScene     = "res://scenes/overworld/objects/npcs/NpcBhata.tscn";
+	private const string KrioraScene    = "res://scenes/overworld/objects/npcs/NpcKriora.tscn";
+	private const string RainTimeline   = "res://dialog/timelines/npc_rain_town.dtl";
+	private const string LilyTimeline   = "res://dialog/timelines/npc_lily_town.dtl";
+	private const string BhataTimeline  = "res://dialog/timelines/npc_bhata_town.dtl";
+	private const string KrioraTimeline = "res://dialog/timelines/npc_kriora_town.dtl";
+	private const string RainCharPath   = "res://dialog/characters/Rain.dch";
+	private const string LilyCharPath   = "res://dialog/characters/Lily.dch";
+	private const string BhataCharPath  = "res://dialog/characters/Bhata.dch";
+	private const string KrioraCharPath = "res://dialog/characters/Kriora.dch";
+	private const string CollectRain    = "collect:rain";
+	private const string CollectLily    = "collect:lily";
+	private const string CollectBhata   = "collect:bhata";
+	private const string CollectKriora  = "collect:kriora";
 
 	public override void _Ready()
 	{
@@ -51,6 +55,9 @@ public partial class MellyrOutpost : OverworldBase
 
 		if (GameManager.Instance.GetFlag(Flags.NpcBhataPurchased))
 			SpawnResident(BhataScene, "bhata_town", BhataTimeline, BhataCharPath, new Vector2(160, 96));
+
+		if (GameManager.Instance.GetFlag(Flags.NpcKrioraPurchased))
+			SpawnResident(KrioraScene, "kriora_town", KrioraTimeline, KrioraCharPath, new Vector2(128, 96));
 
 		DialogicBridge.Instance.DialogicSignalReceived += OnDialogicSignal;
 
@@ -142,7 +149,8 @@ public partial class MellyrOutpost : OverworldBase
 		{
 			case CollectRain:  OnCollectRain();  break;
 			case CollectLily:  OnCollectLily();  break;
-			case CollectBhata: OnCollectBhata(); break;
+			case CollectBhata:  OnCollectBhata();  break;
+			case CollectKriora: OnCollectKriora(); break;
 		}
 	}
 
@@ -172,6 +180,16 @@ public partial class MellyrOutpost : OverworldBase
 		string msg = count == 0
 			? "Bhata hasn't brewed anything yet — come back after some exploring!"
 			: $"Bhata handed you {count} Bugman's Ale{(count == 1 ? "" : "s")}!";
+		DialogicBridge.Instance.SetVariable("reward_message", msg);
+		DialogicBridge.Instance.StartTimeline("res://dialog/timelines/mellyr_reward.dtl");
+	}
+
+	private void OnCollectKriora()
+	{
+		var items = GameManager.Instance.CollectKrioraRewards();
+		string msg = items.Count == 0
+			? "Kriora hasn't found anything yet — come back after some exploring!"
+			: $"Kriora found {string.Join(", ", items.Select(i => i.DisplayName))} in the crystal veins!";
 		DialogicBridge.Instance.SetVariable("reward_message", msg);
 		DialogicBridge.Instance.StartTimeline("res://dialog/timelines/mellyr_reward.dtl");
 	}
