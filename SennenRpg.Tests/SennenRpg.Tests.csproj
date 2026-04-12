@@ -68,6 +68,9 @@
         <Compile Include="../core/data/CrossClassBonusRegistry.cs" />
         <Compile Include="../core/data/MultiClassLogic.cs" />
         <Compile Include="../core/data/MultiClassData.cs" />
+        <Compile Include="../core/data/CharacterMilestone.cs" />
+        <Compile Include="../core/data/CharacterMilestoneRegistry.cs" />
+        <Compile Include="../core/data/CharacterMilestoneLogic.cs" />
         <!-- Rogue / Alchemist Fight minigame logic — pure, no Godot runtime -->
         <Compile Include="../core/data/RogueStealLogic.cs" />
         <Compile Include="../core/data/AlchemistBrewLogic.cs" />

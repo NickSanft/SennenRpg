@@ -52,16 +52,22 @@ public static class CookingLogic
     /// Perfect: >= 80% hit AND >= 50% of hits are Perfect-grade.
     /// Normal: >= 50% hit.
     /// Burnt: less than 50% hit.
+    /// When <paramref name="hasBrewMaster"/> is true (Lily Lv15 milestone),
+    /// thresholds are relaxed: Perfect needs 70% hit and 40% perfect ratio.
     /// </summary>
     public static CookingQuality DetermineQuality(
-        int perfectCount, int goodCount, int totalNotes)
+        int perfectCount, int goodCount, int totalNotes, bool hasBrewMaster = false)
     {
         if (totalNotes <= 0) return CookingQuality.Burnt;
 
         int totalHits = perfectCount + goodCount;
         float hitRate = (float)totalHits / totalNotes;
 
-        if (hitRate >= 0.8f && totalHits > 0 && (float)perfectCount / totalHits >= 0.5f)
+        float perfectHitThreshold   = hasBrewMaster ? 0.70f : 0.80f;
+        float perfectRatioThreshold = hasBrewMaster ? 0.40f : 0.50f;
+
+        if (hitRate >= perfectHitThreshold && totalHits > 0
+            && (float)perfectCount / totalHits >= perfectRatioThreshold)
             return CookingQuality.Perfect;
         if (hitRate >= 0.5f)
             return CookingQuality.Normal;

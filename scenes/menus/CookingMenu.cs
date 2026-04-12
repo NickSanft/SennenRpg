@@ -251,7 +251,9 @@ public partial class CookingMenu : CanvasLayer
 
     private void OnCookingCompleted(int perfects, int goods, int misses, int totalNotes)
     {
-        var quality = CookingLogic.DetermineQuality(perfects, goods, totalNotes);
+        bool hasBrewMaster = CharacterMilestoneLogic.HasTag(
+            GameManager.Instance.Party.AllMembers, CharacterMilestone.LilyBrewMaster);
+        var quality = CookingLogic.DetermineQuality(perfects, goods, totalNotes, hasBrewMaster);
         string outputPath = CookingLogic.QualityItemPath(_activeRecipe!.OutputItemPath, quality);
 
         // Fall back to normal if quality variant doesn't exist

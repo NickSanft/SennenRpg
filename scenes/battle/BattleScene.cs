@@ -169,13 +169,22 @@ public partial class BattleScene : Node2D
 
 	private bool CurrentActorIsSen() => CurrentActor()?.MemberId == "sen";
 
+	/// <summary>Combined equipment + milestone bonuses for a non-Sen party member.</summary>
+	private EquipmentBonuses SumActorAllBonuses(PartyMember m)
+	{
+		var equip = SumActorEquipBonuses(m);
+		var milestones = CharacterMilestoneLogic.SumAllMilestoneBonuses(
+			m.MemberId, m.Level, GameManager.Instance.Party.AllMembers);
+		return EquipmentLogic.SumBonuses(new[] { equip, milestones });
+	}
+
 	/// <summary>Effective Attack stat for whichever party member is currently acting.</summary>
 	private int ActorAttack()
 	{
 		var m = CurrentActor();
 		if (m == null) return 0;
 		if (CurrentActorIsSen()) return GameManager.Instance.EffectiveStats.Attack;
-		return m.Attack + SumActorEquipBonuses(m).Attack;
+		return m.Attack + SumActorAllBonuses(m).Attack;
 	}
 
 	private int ActorMagic()
@@ -183,7 +192,7 @@ public partial class BattleScene : Node2D
 		var m = CurrentActor();
 		if (m == null) return 0;
 		if (CurrentActorIsSen()) return GameManager.Instance.EffectiveStats.Magic;
-		return m.Magic + SumActorEquipBonuses(m).Magic;
+		return m.Magic + SumActorAllBonuses(m).Magic;
 	}
 
 	private int ActorLuck()
@@ -191,7 +200,7 @@ public partial class BattleScene : Node2D
 		var m = CurrentActor();
 		if (m == null) return 0;
 		if (CurrentActorIsSen()) return GameManager.Instance.EffectiveStats.Luck;
-		return m.Luck + SumActorEquipBonuses(m).Luck;
+		return m.Luck + SumActorAllBonuses(m).Luck;
 	}
 
 	private int ActorMaxHp()
@@ -343,6 +352,7 @@ public partial class BattleScene : Node2D
 			results.Add(new LevelUpResult
 			{
 				NewLevel      = member.Level,
+				MemberId      = member.MemberId,
 				MemberName    = member.DisplayName,
 				ClassName     = member.Class,
 				OldMaxHp      = oldHp,  NewMaxHp      = member.MaxHp,
@@ -1857,9 +1867,13 @@ public partial class BattleScene : Node2D
 		if (item.RepelSteps > 0)
 		{
 			GameManager.Instance.RemoveItem(path);
-			GameManager.Instance.RepelStepsRemaining += item.RepelSteps;
+			int repelSteps = item.RepelSteps;
+			// Bhata Lv15 milestone: Repel items last 50% longer
+			if (CharacterMilestoneLogic.HasTag(GameManager.Instance.Party.AllMembers, CharacterMilestone.BhataRepelExtend))
+				repelSteps = (int)(repelSteps * 1.5f);
+			GameManager.Instance.RepelStepsRemaining += repelSteps;
 			SetBattleVar("item_name",   item.DisplayName);
-			SetBattleVar("heal_amount", item.RepelSteps.ToString());
+			SetBattleVar("heal_amount", repelSteps.ToString());
 			await RunBattleTimeline("res://dialog/timelines/battle_item_repel.dtl");
 			await RunEnemyTurn();
 			return;
@@ -2268,12 +2282,23 @@ public partial class BattleScene : Node2D
 			return;
 		}
 
+		// Kriora Lv15 milestone: 15% chance to negate each hit slice
+		bool hasShieldWall = CharacterMilestoneLogic.HasTag(
+			GameManager.Instance.Party.AllMembers, CharacterMilestone.KrioraShieldWall);
+
 		int share     = scaledDamage / living.Count;
 		int remainder = scaledDamage - share * living.Count;
 		for (int i = 0; i < living.Count; i++)
 		{
 			int slice = share + (i < remainder ? 1 : 0);
 			if (slice <= 0) continue;
+
+			if (hasShieldWall && GD.Randf() < 0.15f)
+			{
+				GD.Print($"[BattleScene] Kriora's Shield Wall blocked {slice} damage for {living[i].DisplayName}!");
+				continue; // damage negated
+			}
+
 			var m = living[i];
 			if (m.MemberId == "sen")
 				GameManager.Instance.HurtPlayer(slice);
@@ -2345,6 +2370,11 @@ public partial class BattleScene : Node2D
 		// Apply Rhythm Memory bonus rewards
 		int gold = (int)(baseGold * (1f + _adaptation.BonusGoldPercent));
 		int exp  = (int)(baseExp  * (1f + _adaptation.BonusExpPercent));
+
+		// Rain Lv15 milestone: +25% gold from battles
+		if (CharacterMilestoneLogic.HasTag(GameManager.Instance.Party.AllMembers, CharacterMilestone.RainGoldBonus))
+			gold = (int)(gold * 1.25f);
+
 		GameManager.Instance.AddGold(gold);
 		// Sen still levels up via the existing GameManager.AddExp pipeline (which feeds
 		// PlayerCombatData growth rolls). For Lily / Rain we add the XP directly onto

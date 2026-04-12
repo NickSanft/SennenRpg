@@ -11,6 +11,8 @@ public sealed class LevelUpResult
 
     /// <summary>Display name of the party member who levelled up. Empty = legacy/Sen.</summary>
     public string MemberName { get; set; } = "";
+    /// <summary>Stable member ID for milestone/bonus lookup. Empty = legacy (defaults to "sen").</summary>
+    public string MemberId   { get; set; } = "";
     /// <summary>Class name shown alongside the member's name in the level-up title.</summary>
     public string ClassName  { get; set; } = "";
 

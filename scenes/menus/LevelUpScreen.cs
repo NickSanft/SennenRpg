@@ -295,10 +295,24 @@ public partial class LevelUpScreen : CanvasLayer
 			.Where(b => b.SourceClass == activeClass && b.RequiredLevel == result.NewLevel)
 			.ToList();
 
-		if (unlocked.Count > 0)
+		// Check for newly unlocked character milestones at this level
+		string levelUpMemberId = !string.IsNullOrEmpty(result.MemberId) ? result.MemberId : "sen";
+		var milestones = CharacterMilestoneLogic.GetMilestonesAtLevel(levelUpMemberId, result.NewLevel);
+
+		if (unlocked.Count > 0 || milestones.Count > 0)
 		{
-			var descriptions = unlocked.Select(b => b.Description);
-			_bonusLabel.Text = "★ " + string.Join("\n★ ", descriptions);
+			var allDescriptions = new System.Collections.Generic.List<string>();
+
+			foreach (var b in unlocked)
+				allDescriptions.Add(b.Description);
+
+			foreach (var m in milestones)
+			{
+				string scope = m.IsPartyWide ? "(Party)" : !string.IsNullOrEmpty(m.Tag) ? "(Passive)" : "(Self)";
+				allDescriptions.Add($"{scope} {m.Description}");
+			}
+
+			_bonusLabel.Text = "★ " + string.Join("\n★ ", allDescriptions);
 			_bonusLabel.Visible = true;
 			_bonusLabel.Modulate = ColourGold;
 

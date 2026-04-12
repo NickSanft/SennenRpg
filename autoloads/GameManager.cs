@@ -195,6 +195,7 @@ public partial class GameManager : Node
 		{
 			_progression.IncrementLevel();
 			var result = _combat.RollGrowth(PlayerLevel);
+			result.MemberId   = "sen";
 			result.MemberName = PlayerName;
 			result.ClassName  = _multiClass.ActiveClass.ToString();
 			PendingLevelUps.Add(result);
@@ -303,11 +304,19 @@ public partial class GameManager : Node
 	}
 
 	public CharacterStats EffectiveStats
-		=> _combat.ComputeEffectiveStats(
-			_inventory.EquippedItemPaths,
-			_inventory.EquippedDynamicItemIds,
-			_inventory.DynamicEquipmentInventory,
-			MultiClassLogic.SumCrossClassBonuses(_multiClass.GetAllClassLevels()));
+	{
+		get
+		{
+			var crossClass  = MultiClassLogic.SumCrossClassBonuses(_multiClass.GetAllClassLevels());
+			var milestones  = CharacterMilestoneLogic.SumAllMilestoneBonuses("sen", PlayerLevel, _party.AllMembers);
+			var combined    = EquipmentLogic.SumBonuses(new[] { crossClass, milestones });
+			return _combat.ComputeEffectiveStats(
+				_inventory.EquippedItemPaths,
+				_inventory.EquippedDynamicItemIds,
+				_inventory.DynamicEquipmentInventory,
+				combined);
+		}
+	}
 
 	// ── Dynamic equipment ─────────────────────────────────────────────────────
 

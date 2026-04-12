@@ -308,7 +308,10 @@ public partial class StatsMenu : CanvasLayer
             lv        = member.Level;
             currentXp = member.Exp;
 
-            var bonuses = SumBonusesForMember(member);
+            var equipBonuses = SumBonusesForMember(member);
+            var milestoneBonuses = CharacterMilestoneLogic.SumAllMilestoneBonuses(
+                member.MemberId, member.Level, gm.Party.AllMembers);
+            var bonuses = EquipmentLogic.SumBonuses(new[] { equipBonuses, milestoneBonuses });
             var eff     = PartyMemberStatsLogic.ComputeEffective(member, bonuses);
 
             baseHp = member.MaxHp;      effHp  = eff.MaxHp;
@@ -354,9 +357,10 @@ public partial class StatsMenu : CanvasLayer
         if (isSen) RefreshClassInfo(gm);
         else        _classLabel.Text = $"Class: {member.Class}  (locked)";
 
-        // Cross-class bonuses (only Sen accumulates them — Lily/Rain show none).
+        // Cross-class bonuses + character milestones
         if (isSen) RefreshBonuses(gm);
-        else        _bonusLabel.Text = "—";
+        else        _bonusLabel.Text = "";
+        RefreshMilestones(member, gm.Party.AllMembers, isSen);
     }
 
     /// <summary>
@@ -405,6 +409,49 @@ public partial class StatsMenu : CanvasLayer
         }
 
         _bonusLabel.Text = lines.Count > 0 ? string.Join("\n", lines) : "None yet.";
+    }
+
+    private void RefreshMilestones(PartyMember member, IReadOnlyList<PartyMember> allMembers, bool isSen)
+    {
+        var lines = new List<string>();
+
+        if (isSen)
+            lines.Add(""); // separator after cross-class bonuses
+
+        lines.Add("-- Character Milestones --");
+
+        foreach (var m in CharacterMilestoneRegistry.All)
+        {
+            if (m.MemberId != member.MemberId) continue;
+            bool earned = member.Level >= m.RequiredLevel;
+            string mark = earned ? "[Y]" : "[ ]";
+            string scope = m.IsPartyWide ? "(Party)" : !string.IsNullOrEmpty(m.Tag) ? "(Passive)" : "(Self)";
+            lines.Add($"{mark} Lv{m.RequiredLevel} {scope}: {m.Description}");
+        }
+
+        // Show active party auras from other members
+        var auraLines = new List<string>();
+        foreach (var other in allMembers)
+        {
+            if (other.MemberId == member.MemberId) continue;
+            foreach (var m in CharacterMilestoneRegistry.All)
+            {
+                if (m.MemberId != other.MemberId || !m.IsPartyWide) continue;
+                if (other.Level < m.RequiredLevel) continue;
+                auraLines.Add($"  {other.DisplayName}: {m.Description}");
+            }
+        }
+        if (auraLines.Count > 0)
+        {
+            lines.Add("");
+            lines.Add("-- Active Auras --");
+            lines.AddRange(auraLines);
+        }
+
+        string existing = _bonusLabel.Text;
+        _bonusLabel.Text = string.IsNullOrEmpty(existing)
+            ? string.Join("\n", lines)
+            : existing + "\n" + string.Join("\n", lines);
     }
 
     private static string StatRow(string name, int baseVal, int effVal)

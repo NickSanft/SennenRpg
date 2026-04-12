@@ -713,7 +713,10 @@ public partial class EquipmentMenu : CanvasLayer
         }
         else
         {
-            var bonuses = SumBonusesForMember(member);
+            var equipBonuses = SumBonusesForMember(member);
+            var milestoneBonuses = CharacterMilestoneLogic.SumAllMilestoneBonuses(
+                member.MemberId, member.Level, GameManager.Instance.Party.AllMembers);
+            var bonuses = EquipmentLogic.SumBonuses(new[] { equipBonuses, milestoneBonuses });
             var eff     = PartyMemberStatsLogic.ComputeEffective(member, bonuses);
             _statsLabel.Text =
                 $"{member.DisplayName}  LV {member.Level}\n" +
