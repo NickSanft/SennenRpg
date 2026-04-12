@@ -343,6 +343,42 @@ public partial class BattleHUD : CanvasLayer
 		}
 	}
 
+	private static readonly Color CardBorderTarget = new(0.3f, 1f, 0.4f, 1f);
+
+	/// <summary>Highlights a party member's card with a green target border for item targeting.</summary>
+	public void SetTargetHighlight(int memberIdx, bool on)
+	{
+		var party = GameManager.Instance.Party;
+		if (memberIdx < 0 || memberIdx >= party.Members.Count) return;
+		var m = party.Members[memberIdx];
+		if (!_cards.TryGetValue(m.MemberId, out var card)) return;
+
+		var style = new StyleBoxFlat
+		{
+			BgColor                = CardBg,
+			BorderColor            = on ? CardBorderTarget : CardBorder,
+			BorderWidthTop         = 2, BorderWidthBottom = 2,
+			BorderWidthLeft        = 2, BorderWidthRight  = 2,
+			CornerRadiusTopLeft    = 4, CornerRadiusTopRight = 4,
+			CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
+			ContentMarginLeft      = 6, ContentMarginRight  = 6,
+			ContentMarginTop       = 4, ContentMarginBottom = 4,
+		};
+		card.Root.AddThemeStyleboxOverride("panel", style);
+	}
+
+	/// <summary>Clear all target highlights and restore normal styling.</summary>
+	public void ClearTargetHighlights()
+	{
+		var party = GameManager.Instance.Party;
+		for (int i = 0; i < party.Members.Count; i++)
+		{
+			var m = party.Members[i];
+			if (!_cards.TryGetValue(m.MemberId, out var card)) continue;
+			ApplyCardStyle(card.Root, active: i == _activeMemberIdx);
+		}
+	}
+
 	/// <summary>Updates the contextual hint bar at the bottom of the HUD.</summary>
 	public void SetHints(string text)
 	{

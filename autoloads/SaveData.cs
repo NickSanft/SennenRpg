@@ -109,6 +109,11 @@ public record SaveData
 	public List<SennenRpg.Core.Data.PartyMember> Party { get; init; } = new();
 	/// <summary>Index of the current party leader within <see cref="Party"/>. Defaults to 0.</summary>
 	public int PartyLeaderIndex { get; init; } = 0;
+	/// <summary>
+	/// Number of active party members (first N in <see cref="Party"/> are active,
+	/// rest are reserve). Defaults to -1 for legacy saves (all active, capped to 4).
+	/// </summary>
+	public int ActivePartyCount { get; init; } = -1;
 
 	// ── Slot metadata ─────────────────────────────────────────────────────────
 	/// <summary>Player's chosen name (displayed on the slot card).</summary>

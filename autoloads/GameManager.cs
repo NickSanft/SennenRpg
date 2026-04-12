@@ -487,6 +487,27 @@ public partial class GameManager : Node
 	}
 
 	/// <summary>
+	/// Swap one active member with one reserve member. Emits <see cref="PartyOrderChanged"/>.
+	/// </summary>
+	public bool SwapActiveReserve(int activeIdx, int reserveIdx)
+	{
+		if (!_party.SwapActiveReserve(activeIdx, reserveIdx)) return false;
+		EmitSignal(SignalName.PartyOrderChanged);
+		return true;
+	}
+
+	/// <summary>
+	/// Move a party member between active and reserve. Emits <see cref="PartyOrderChanged"/>.
+	/// </summary>
+	public bool MovePartyMember(string memberId, bool toActive)
+	{
+		bool ok = toActive ? _party.MoveToActive(memberId) : _party.MoveToReserve(memberId);
+		if (!ok) return false;
+		EmitSignal(SignalName.PartyOrderChanged);
+		return true;
+	}
+
+	/// <summary>
 	/// Add a recruited member to the active party. No-op if a member with the same id
 	/// already exists or if the party is full. Emits <see cref="PartyMemberRecruited"/>
 	/// on success.
@@ -596,7 +617,7 @@ public partial class GameManager : Node
 		_party.Clear();
 		if (data.Party != null && data.Party.Count > 0)
 		{
-			_party.ReplaceAll(data.Party, data.PartyLeaderIndex);
+			_party.ReplaceAll(data.Party, data.PartyLeaderIndex, data.ActivePartyCount);
 		}
 		else
 		{

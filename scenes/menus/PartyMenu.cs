@@ -6,15 +6,11 @@ using System.Collections.Generic;
 namespace SennenRpg.Scenes.Menus;
 
 /// <summary>
-/// Party management menu opened from the pause menu.
-/// Lists every member with their class / level / HP / MP, lets the player promote
-/// a different leader, swap two members in marching order, and toggle each member's
-/// formation row (Front / Back). Selecting a row sets <see cref="GameManager.SelectedMemberId"/>
-/// so the Stats and Equipment menus can read which member to display when those go
-/// party-aware in Phase 6.
+/// Party management menu with two sections: ACTIVE (up to 4, used in battle/overworld)
+/// and RESERVE (benched members). Cross-section confirm swaps a member between active
+/// and reserve. Within-section confirm swaps reorder active members.
 ///
-/// Code-built UI following the StatsMenu / ClassChangeMenu pattern. CanvasLayer 51,
-/// matching the existing menu layer convention.
+/// Code-built UI following the StatsMenu / ClassChangeMenu pattern. CanvasLayer 51.
 /// </summary>
 public partial class PartyMenu : CanvasLayer
 {
@@ -23,13 +19,15 @@ public partial class PartyMenu : CanvasLayer
     private static Color Gold        => UiTheme.Gold;
     private static Color SubtleGrey  => UiTheme.SubtleGrey;
     private static Color ActiveGreen => UiTheme.HaveGreen;
+    private static Color ReserveColor => new(0.6f, 0.5f, 0.7f);
 
     private VBoxContainer  _outer  = null!;
-    private VBoxContainer  _rowList = null!;
+    private VBoxContainer  _activeRows = null!;
+    private VBoxContainer  _reserveRows = null!;
     private Label          _hintLabel = null!;
-    private readonly List<Button> _memberButtons = new();
-    private int _focusedIndex;
-    private int _swapAnchor = -1; // -1 = no anchor; otherwise index to swap with on next confirm
+    private readonly List<Button> _allButtons = new(); // active buttons first, then reserve
+    private int _focusedIndex; // index into _allButtons
+    private int _swapAnchor = -1;
 
     public override void _Ready()
     {
@@ -57,21 +55,18 @@ public partial class PartyMenu : CanvasLayer
         }
         if (e.IsActionPressed("ui_left"))
         {
-            // Toggle formation row of focused member
             ToggleRow(_focusedIndex);
             GetViewport().SetInputAsHandled();
             return;
         }
         if (e.IsActionPressed("ui_right"))
         {
-            // Promote focused member to leader
             PromoteToLeader(_focusedIndex);
             GetViewport().SetInputAsHandled();
             return;
         }
         if (e.IsActionPressed("interact") || e.IsActionPressed("ui_accept"))
         {
-            // Begin / commit a two-step swap
             HandleSwapPress(_focusedIndex);
             GetViewport().SetInputAsHandled();
         }
@@ -84,11 +79,13 @@ public partial class PartyMenu : CanvasLayer
         EmitSignal(SignalName.Closed);
     }
 
+    // ── UI construction ──────────────────────────────────────────────
+
     private void BuildUI()
     {
         foreach (var child in GetChildren())
             if (child is Node n) n.QueueFree();
-        _memberButtons.Clear();
+        _allButtons.Clear();
 
         var overlay = new ColorRect
         {
@@ -134,10 +131,34 @@ public partial class PartyMenu : CanvasLayer
 
         _outer.AddChild(new HSeparator());
 
-        // Member rows
-        _rowList = new VBoxContainer();
-        _rowList.AddThemeConstantOverride("separation", 4);
-        _outer.AddChild(_rowList);
+        // Active section
+        var activeHeader = new Label
+        {
+            Text                = "ACTIVE",
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Modulate            = ActiveGreen,
+        };
+        activeHeader.AddThemeFontSizeOverride("font_size", 13);
+        _outer.AddChild(activeHeader);
+
+        _activeRows = new VBoxContainer();
+        _activeRows.AddThemeConstantOverride("separation", 4);
+        _outer.AddChild(_activeRows);
+
+        // Reserve section
+        _outer.AddChild(new HSeparator());
+        var reserveHeader = new Label
+        {
+            Text                = "RESERVE",
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Modulate            = ReserveColor,
+        };
+        reserveHeader.AddThemeFontSizeOverride("font_size", 13);
+        _outer.AddChild(reserveHeader);
+
+        _reserveRows = new VBoxContainer();
+        _reserveRows.AddThemeConstantOverride("separation", 4);
+        _outer.AddChild(_reserveRows);
 
         BuildMemberRows();
 
@@ -153,113 +174,167 @@ public partial class PartyMenu : CanvasLayer
         _hintLabel.AddThemeFontSizeOverride("font_size", 12);
         _outer.AddChild(_hintLabel);
 
-        if (_memberButtons.Count > 0)
-            _memberButtons[0].CallDeferred(Control.MethodName.GrabFocus);
+        if (_allButtons.Count > 0)
+            _allButtons[0].CallDeferred(Control.MethodName.GrabFocus);
     }
 
     private void BuildMemberRows()
     {
-        foreach (var child in _rowList.GetChildren())
+        foreach (var child in _activeRows.GetChildren())
             if (child is Node n) n.QueueFree();
-        _memberButtons.Clear();
+        foreach (var child in _reserveRows.GetChildren())
+            if (child is Node n) n.QueueFree();
+        _allButtons.Clear();
 
         var party = GameManager.Instance.Party;
+
+        // Active members
         for (int i = 0; i < party.Members.Count; i++)
         {
-            var member = party.Members[i];
-            bool isLeader = i == party.LeaderIndex;
-            bool isAnchor = i == _swapAnchor;
-
-            string leaderMark   = isLeader ? "★" : " ";
-            string rowLabel     = member.Row == FormationRow.Front ? "FRONT" : "BACK ";
-            string anchorMark   = isAnchor ? " «" : "";
-
-            string text =
-                $"{leaderMark} {member.DisplayName,-10}  {member.Class,-10}  Lv{member.Level,2}  " +
-                $"HP {member.CurrentHp,3}/{member.MaxHp,-3}  MP {member.CurrentMp,2}/{member.MaxMp,-2}  [{rowLabel}]{anchorMark}";
-
-            var btn = new Button
-            {
-                Text              = text,
-                CustomMinimumSize = new Vector2(0f, 30f),
-            };
-            btn.AddThemeFontSizeOverride("font_size", 11);
-            if (isLeader) btn.Modulate = ActiveGreen;
-
-            int captured = i;
-            btn.FocusEntered += () =>
-            {
-                _focusedIndex = captured;
-                AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
-                GameManager.Instance.SelectedMemberId = GameManager.Instance.Party.Members[captured].MemberId;
-                _hintLabel.Text = HintText();
-            };
-
-            _rowList.AddChild(btn);
-            _memberButtons.Add(btn);
+            var btn = MakeMemberButton(party.Members[i], i, isActive: true, party.LeaderIndex);
+            _activeRows.AddChild(btn);
+            _allButtons.Add(btn);
         }
 
         if (party.Members.Count == 0)
         {
             var empty = new Label
             {
-                Text                = "No party members.",
+                Text                = "No active members.",
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Modulate            = SubtleGrey,
             };
             empty.AddThemeFontSizeOverride("font_size", 12);
-            _rowList.AddChild(empty);
+            _activeRows.AddChild(empty);
+        }
+
+        // Reserve members
+        for (int i = 0; i < party.ReserveMembers.Count; i++)
+        {
+            var btn = MakeMemberButton(party.ReserveMembers[i], i, isActive: false, -1);
+            _reserveRows.AddChild(btn);
+            _allButtons.Add(btn);
+        }
+
+        if (party.ReserveMembers.Count == 0)
+        {
+            var empty = new Label
+            {
+                Text                = "Empty.",
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Modulate            = SubtleGrey,
+            };
+            empty.AddThemeFontSizeOverride("font_size", 12);
+            _reserveRows.AddChild(empty);
         }
     }
 
-    // ── Actions ───────────────────────────────────────────────────────
+    private Button MakeMemberButton(PartyMember member, int sectionIdx, bool isActive, int leaderIdx)
+    {
+        bool isLeader = isActive && sectionIdx == leaderIdx;
+        int globalIdx = isActive ? sectionIdx : GameManager.Instance.Party.ActiveCount + sectionIdx;
+        bool isAnchor = globalIdx == _swapAnchor;
 
-    private void HandleSwapPress(int idx)
+        string leaderMark = isLeader ? "★" : " ";
+        string rowLabel   = member.Row == FormationRow.Front ? "FRONT" : "BACK ";
+        string anchorMark = isAnchor ? " «" : "";
+        string section    = isActive ? "" : " [RSV]";
+
+        string text =
+            $"{leaderMark} {member.DisplayName,-10}  {member.Class,-10}  Lv{member.Level,2}  " +
+            $"HP {member.CurrentHp,3}/{member.MaxHp,-3}  MP {member.CurrentMp,2}/{member.MaxMp,-2}  [{rowLabel}]{anchorMark}{section}";
+
+        var btn = new Button
+        {
+            Text              = text,
+            CustomMinimumSize = new Vector2(0f, 30f),
+        };
+        btn.AddThemeFontSizeOverride("font_size", 11);
+
+        if (isLeader) btn.Modulate = ActiveGreen;
+        else if (!isActive) btn.Modulate = ReserveColor;
+
+        int capturedGlobal = globalIdx;
+        btn.FocusEntered += () =>
+        {
+            _focusedIndex = capturedGlobal;
+            AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+            // Resolve to memberId for stats/equipment menu selection
+            var m = GetMemberAtGlobal(capturedGlobal);
+            if (m != null) GameManager.Instance.SelectedMemberId = m.MemberId;
+            _hintLabel.Text = HintText();
+        };
+
+        return btn;
+    }
+
+    // ── Actions ──────────────────────────────────────────────────────
+
+    private void HandleSwapPress(int globalIdx)
     {
         var party = GameManager.Instance.Party;
-        if (idx < 0 || idx >= party.Members.Count) return;
+        if (GetMemberAtGlobal(globalIdx) == null) return;
 
         if (_swapAnchor == -1)
         {
-            // First press — anchor this row.
-            _swapAnchor = idx;
+            _swapAnchor = globalIdx;
             AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
             RefreshRows();
             return;
         }
-        if (_swapAnchor == idx)
+        if (_swapAnchor == globalIdx)
         {
-            // Cancel anchor.
             _swapAnchor = -1;
             AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
             RefreshRows();
             return;
         }
-        // Second press — perform the swap. Route through GameManager so the
-        // PartyOrderChanged signal fires and the overworld scene refreshes followers.
-        GameManager.Instance.SwapPartyMembers(_swapAnchor, idx);
+
+        bool anchorIsActive = _swapAnchor < party.ActiveCount;
+        bool targetIsActive = globalIdx < party.ActiveCount;
+
+        if (anchorIsActive && targetIsActive)
+        {
+            // Both active — reorder swap
+            GameManager.Instance.SwapPartyMembers(_swapAnchor, globalIdx);
+        }
+        else if (anchorIsActive != targetIsActive)
+        {
+            // Cross-section swap
+            int activeIdx  = anchorIsActive ? _swapAnchor : globalIdx;
+            int reserveIdx = anchorIsActive
+                ? globalIdx - party.ActiveCount
+                : _swapAnchor - party.ActiveCount;
+
+            if (!GameManager.Instance.SwapActiveReserve(activeIdx, reserveIdx))
+            {
+                AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
+                _swapAnchor = -1;
+                RefreshRows();
+                return;
+            }
+        }
+        // Reserve-reserve swap: no-op (not useful)
+
         _swapAnchor = -1;
         AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
         RefreshRows();
     }
 
-    private void PromoteToLeader(int idx)
+    private void PromoteToLeader(int globalIdx)
     {
         var party = GameManager.Instance.Party;
-        if (idx < 0 || idx >= party.Members.Count) return;
-        if (idx == party.LeaderIndex) return;
-        // Route through GameManager so PartyOrderChanged fires and the overworld
-        // scene refreshes the leader's sprite + the follower chain.
-        GameManager.Instance.SetPartyLeader(party.Members[idx].MemberId);
+        if (globalIdx < 0 || globalIdx >= party.ActiveCount) return; // only active can be leader
+        if (globalIdx == party.LeaderIndex) return;
+        GameManager.Instance.SetPartyLeader(party.Members[globalIdx].MemberId);
         AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
         RefreshRows();
     }
 
-    private void ToggleRow(int idx)
+    private void ToggleRow(int globalIdx)
     {
-        var party = GameManager.Instance.Party;
-        if (idx < 0 || idx >= party.Members.Count) return;
-        var member = party.Members[idx];
+        var member = GetMemberAtGlobal(globalIdx);
+        if (member == null) return;
         member.Row = member.Row == FormationRow.Front ? FormationRow.Back : FormationRow.Front;
         AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
         RefreshRows();
@@ -268,19 +343,39 @@ public partial class PartyMenu : CanvasLayer
     private void RefreshRows()
     {
         BuildMemberRows();
-        UiTheme.ApplyPixelFontToAll(_rowList);
-        UiTheme.ApplyToAllButtons(_rowList);
+        UiTheme.ApplyPixelFontToAll(_activeRows);
+        UiTheme.ApplyToAllButtons(_activeRows);
+        UiTheme.ApplyPixelFontToAll(_reserveRows);
+        UiTheme.ApplyToAllButtons(_reserveRows);
         _hintLabel.Text = HintText();
-        // Restore focus to the row at _focusedIndex if possible.
-        int idx = System.Math.Clamp(_focusedIndex, 0, _memberButtons.Count - 1);
-        if (idx >= 0 && idx < _memberButtons.Count)
-            _memberButtons[idx].CallDeferred(Control.MethodName.GrabFocus);
+        int idx = System.Math.Clamp(_focusedIndex, 0, _allButtons.Count - 1);
+        if (idx >= 0 && idx < _allButtons.Count)
+            _allButtons[idx].CallDeferred(Control.MethodName.GrabFocus);
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────
+
+    private static PartyMember? GetMemberAtGlobal(int globalIdx)
+    {
+        var party = GameManager.Instance.Party;
+        if (globalIdx < 0) return null;
+        if (globalIdx < party.ActiveCount)
+            return party.Members[globalIdx];
+        int reserveIdx = globalIdx - party.ActiveCount;
+        if (reserveIdx < party.ReserveMembers.Count)
+            return party.ReserveMembers[reserveIdx];
+        return null;
     }
 
     private string HintText()
     {
-        return _swapAnchor == -1
-            ? "[←] Toggle Front/Back   [→] Set Leader   [Confirm] Swap   [Esc] Back"
-            : "Pick a row to swap with…   [Confirm again] Cancel   [Esc] Back";
+        if (_swapAnchor != -1)
+            return "Pick a row to swap with...   [Confirm again] Cancel   [Esc] Back";
+
+        var party = GameManager.Instance.Party;
+        bool onActive = _focusedIndex < party.ActiveCount;
+        return onActive
+            ? "[←] Front/Back   [→] Set Leader   [Confirm] Swap   [Esc] Back"
+            : "[←] Front/Back   [Confirm] Swap to Active   [Esc] Back";
     }
 }

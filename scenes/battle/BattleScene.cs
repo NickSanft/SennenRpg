@@ -20,7 +20,7 @@ public enum BattleState { Intro, PlayerTurn, EnemyTurn, RhythmPhase, StrikePhase
 /// </summary>
 public partial class BattleScene : Node2D
 {
-	private enum SubMenuMode { Perform, Items, Spells }
+	private enum SubMenuMode { Perform, Items, Spells, ItemTarget }
 
 	private BattleState   _state;
 	private EncounterData? _encounter;
@@ -109,11 +109,38 @@ public partial class BattleScene : Node2D
 
 	public override void _Input(InputEvent e)
 	{
+		if (_state != BattleState.PlayerTurn) return;
+
+		// Item target selection mode: ←/→ cycle party members, Confirm applies, Cancel goes back
+		if (_subMenuMode == SubMenuMode.ItemTarget)
+		{
+			if (e.IsActionPressed("ui_left"))
+			{
+				CycleItemTarget(-1);
+				GetViewport().SetInputAsHandled();
+			}
+			else if (e.IsActionPressed("ui_right"))
+			{
+				CycleItemTarget(+1);
+				GetViewport().SetInputAsHandled();
+			}
+			else if (e.IsActionPressed("interact") || e.IsActionPressed("ui_accept"))
+			{
+				_ = CommitItemUse();
+				GetViewport().SetInputAsHandled();
+			}
+			else if (e.IsActionPressed("ui_cancel"))
+			{
+				CancelItemTarget();
+				GetViewport().SetInputAsHandled();
+			}
+			return;
+		}
+
 		// Phase 7c: arrow keys cycle the target reticle when the active actor is
 		// looking at the action menu. We use _Input rather than _UnhandledInput because
 		// the action menu's focused button consumes ui_left / ui_right via Godot's GUI
 		// focus navigation before _UnhandledInput would fire — _Input runs first.
-		if (_state != BattleState.PlayerTurn) return;
 		if (_enemies.Count <= 1) return;
 		if (e.IsActionPressed("ui_left"))
 		{
@@ -384,6 +411,11 @@ public partial class BattleScene : Node2D
 	private SubMenuMode _subMenuMode;
 	private readonly System.Collections.Generic.List<int> _itemIndexMap = new();
 	private bool        _playerGoesFirst;
+
+	// Item target selection state
+	private string?   _pendingItemPath;
+	private ItemData? _pendingItemData;
+	private int       _itemTargetIdx;
 	private float           _difficultyMultiplier = 1f;
 	private AdaptationResult _adaptation = RhythmMemoryLogic.ComputeAdaptation(null);
 	private bool            _adaptedDialogShown;
@@ -1804,7 +1836,6 @@ public partial class BattleScene : Node2D
 	private async Task HandleItemOption(int index)
 	{
 		var inv = GameManager.Instance.InventoryItemPaths;
-		// Map filtered sub-menu index back to actual inventory index
 		int realIndex = index < _itemIndexMap.Count ? _itemIndexMap[index] : -1;
 		if (realIndex < 0 || realIndex >= inv.Count)
 		{
@@ -1822,11 +1853,10 @@ public partial class BattleScene : Node2D
 			return;
 		}
 
-		GameManager.Instance.RemoveItem(path);
-
-		// Repel item: grants world-map encounter immunity for several steps
+		// Repel item: skip target selection, apply immediately
 		if (item.RepelSteps > 0)
 		{
+			GameManager.Instance.RemoveItem(path);
 			GameManager.Instance.RepelStepsRemaining += item.RepelSteps;
 			SetBattleVar("item_name",   item.DisplayName);
 			SetBattleVar("heal_amount", item.RepelSteps.ToString());
@@ -1835,18 +1865,89 @@ public partial class BattleScene : Node2D
 			return;
 		}
 
-		// Apply HP heal and / or MP restore. Items can carry both — Bhata's
-		// Bugman's Ale is RestoreMp = 20, HealAmount = 0; vanilla potions are
-		// HealAmount > 0, RestoreMp = 0.
-		if (item.HealAmount > 0) GameManager.Instance.HealPlayer(item.HealAmount);
-		if (item.RestoreMp  > 0) GameManager.Instance.RestoreMp(item.RestoreMp);
+		// HP/MP items: enter target selection mode
+		_pendingItemPath = path;
+		_pendingItemData = item;
+		_itemTargetIdx   = 0;
+		_subMenuMode     = SubMenuMode.ItemTarget;
 
-		// `heal_amount` Dialogic var keeps the existing battle_item_used.dtl
-		// template working. Use HP heal first, fall back to the MP value when
-		// the item is MP-only.
+		// Highlight first target and show hint
+		_battleHud.ClearTargetHighlights();
+		_battleHud.SetTargetHighlight(_itemTargetIdx, true);
+
+		var party = GameManager.Instance.Party;
+		if (party.Members.Count > 0)
+		{
+			string targetName = party.Members[_itemTargetIdx].DisplayName;
+			_battleHud.SetHints($"Use {item.DisplayName} on: ◀ {targetName} ▶   [Confirm] Use   [Cancel] Back");
+		}
+	}
+
+	private void CycleItemTarget(int dir)
+	{
+		var party = GameManager.Instance.Party;
+		if (party.Members.Count <= 1) return;
+
+		_battleHud.SetTargetHighlight(_itemTargetIdx, false);
+		_itemTargetIdx = (_itemTargetIdx + dir + party.Members.Count) % party.Members.Count;
+		_battleHud.SetTargetHighlight(_itemTargetIdx, true);
+
+		string targetName = party.Members[_itemTargetIdx].DisplayName;
+		string itemName = _pendingItemData?.DisplayName ?? "Item";
+		_battleHud.SetHints($"Use {itemName} on: ◀ {targetName} ▶   [Confirm] Use   [Cancel] Back");
+	}
+
+	private void CancelItemTarget()
+	{
+		_battleHud.ClearTargetHighlights();
+		_battleHud.HighlightActor(_currentActorMemberIdx);
+		_pendingItemPath = null;
+		_pendingItemData = null;
+		_subMenuMode = SubMenuMode.Items;
+		_subMenu.Visible = true;
+		_battleHud.SetHints("");
+	}
+
+	private async Task CommitItemUse()
+	{
+		if (_pendingItemData == null || _pendingItemPath == null) return;
+
+		var party = GameManager.Instance.Party;
+		if (_itemTargetIdx < 0 || _itemTargetIdx >= party.Members.Count) return;
+
+		var target = party.Members[_itemTargetIdx];
+		var item = _pendingItemData;
+		string path = _pendingItemPath;
+
+		// Clear highlight state
+		_battleHud.ClearTargetHighlights();
+		_battleHud.HighlightActor(_currentActorMemberIdx);
+		_subMenuMode = SubMenuMode.Items; // reset mode
+		_battleHud.SetHints("");
+
+		GameManager.Instance.RemoveItem(path);
+
+		// Apply to the selected target
+		if (target.MemberId == "sen")
+		{
+			if (item.HealAmount > 0) GameManager.Instance.HealPlayer(item.HealAmount);
+			if (item.RestoreMp  > 0) GameManager.Instance.RestoreMp(item.RestoreMp);
+		}
+		else
+		{
+			if (item.HealAmount > 0)
+				target.CurrentHp = System.Math.Min(target.MaxHp, target.CurrentHp + item.HealAmount);
+			if (item.RestoreMp > 0)
+				target.CurrentMp = System.Math.Min(target.MaxMp, target.CurrentMp + item.RestoreMp);
+		}
+
 		int displayAmount = item.HealAmount > 0 ? item.HealAmount : item.RestoreMp;
 		SetBattleVar("item_name",   item.DisplayName);
 		SetBattleVar("heal_amount", displayAmount.ToString());
+
+		_pendingItemPath = null;
+		_pendingItemData = null;
+
 		await RunBattleTimeline("res://dialog/timelines/battle_item_used.dtl");
 		await RunEnemyTurn();
 	}

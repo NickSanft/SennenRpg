@@ -243,8 +243,9 @@ public partial class EquipmentMenu : CanvasLayer
         // Honour the cursor set by PartyMenu so the same member appears here.
         var party = GameManager.Instance.Party;
         _currentMemberIndex = 0;
-        for (int i = 0; i < party.Members.Count; i++)
-            if (party.Members[i].MemberId == GameManager.Instance.SelectedMemberId)
+        var allMembers = party.AllMembers;
+        for (int i = 0; i < allMembers.Count; i++)
+            if (allMembers[i].MemberId == GameManager.Instance.SelectedMemberId)
             {
                 _currentMemberIndex = i;
                 break;
@@ -267,12 +268,12 @@ public partial class EquipmentMenu : CanvasLayer
         if (!_itemPickerPanel.Visible)
         {
             var party = GameManager.Instance.Party;
-            if (party.Count > 1)
+            if (party.TotalCount > 1)
             {
                 if (e.IsActionPressed("ui_left"))
                 {
-                    _currentMemberIndex = (_currentMemberIndex - 1 + party.Count) % party.Count;
-                    GameManager.Instance.SelectedMemberId = party.Members[_currentMemberIndex].MemberId;
+                    _currentMemberIndex = (_currentMemberIndex - 1 + party.TotalCount) % party.TotalCount;
+                    GameManager.Instance.SelectedMemberId = party.AllMembers[_currentMemberIndex].MemberId;
                     AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
                     RefreshAll();
                     GetViewport().SetInputAsHandled();
@@ -280,8 +281,8 @@ public partial class EquipmentMenu : CanvasLayer
                 }
                 if (e.IsActionPressed("ui_right"))
                 {
-                    _currentMemberIndex = (_currentMemberIndex + 1) % party.Count;
-                    GameManager.Instance.SelectedMemberId = party.Members[_currentMemberIndex].MemberId;
+                    _currentMemberIndex = (_currentMemberIndex + 1) % party.TotalCount;
+                    GameManager.Instance.SelectedMemberId = party.AllMembers[_currentMemberIndex].MemberId;
                     AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
                     RefreshAll();
                     GetViewport().SetInputAsHandled();
@@ -305,8 +306,9 @@ public partial class EquipmentMenu : CanvasLayer
         {
             var party = GameManager.Instance.Party;
             if (party.IsEmpty) return null;
-            int idx = System.Math.Clamp(_currentMemberIndex, 0, party.Count - 1);
-            return party.Members[idx];
+            var all = party.AllMembers;
+            int idx = System.Math.Clamp(_currentMemberIndex, 0, all.Count - 1);
+            return all[idx];
         }
     }
 

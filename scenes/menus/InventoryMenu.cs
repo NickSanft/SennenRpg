@@ -26,6 +26,15 @@ public partial class InventoryMenu : CanvasLayer
 	private HBoxContainer   _tabRow        = null!;
 	private ItemType?       _activeFilter;
 
+	// Target selection sub-state for consumable items
+	private bool            _targetSelectMode;
+	private ItemData?       _pendingItem;
+	private string?         _pendingItemPath;
+	private int             _targetIndex;
+	private PanelContainer? _targetPanel;
+	private VBoxContainer?  _targetRows;
+	private readonly List<Button> _targetButtons = new();
+
 	public override void _Ready()
 	{
 		Layer   = 51;
@@ -117,6 +126,22 @@ public partial class InventoryMenu : CanvasLayer
 	public override void _UnhandledInput(InputEvent @event)
 	{
 		if (!Visible) return;
+		if (_targetSelectMode)
+		{
+			if (@event.IsActionPressed("ui_cancel"))
+			{
+				CloseTargetSelect();
+				GetViewport().SetInputAsHandled();
+				return;
+			}
+			if (@event.IsActionPressed("interact") || @event.IsActionPressed("ui_accept"))
+			{
+				ConfirmTargetSelect();
+				GetViewport().SetInputAsHandled();
+				return;
+			}
+			return; // Let button focus handle up/down navigation
+		}
 		if (@event.IsActionPressed("menu") || @event.IsActionPressed("ui_cancel"))
 		{
 			Close();
@@ -207,7 +232,7 @@ public partial class InventoryMenu : CanvasLayer
 				}
 
 				// Lily / Rain / future recruits — read static equipment from each PartyMember.
-				foreach (var member in gm.Party.Members)
+				foreach (var member in gm.Party.AllMembers)
 				{
 					if (member.MemberId == "sen") continue; // Sen handled above
 					foreach (var kv in member.EquippedItemPaths)
@@ -396,7 +421,7 @@ public partial class InventoryMenu : CanvasLayer
 		PartyMember? best = null;
 		int bestDeficit = 0;
 
-		foreach (var m in gm.Party.Members)
+		foreach (var m in gm.Party.AllMembers)
 		{
 			GetMemberHpMp(m, out int curHp, out int maxHp, out int curMp, out int maxMp);
 
@@ -431,34 +456,144 @@ public partial class InventoryMenu : CanvasLayer
 
 	private void OnUseItem(ItemData item, string path)
 	{
-		var target = FindBestTarget(item);
-		if (target == null)
+		// Enter target selection mode — let the player choose who to use it on.
+		_pendingItem     = item;
+		_pendingItemPath = path;
+		OpenTargetSelect(item);
+	}
+
+	private void OpenTargetSelect(ItemData item)
+	{
+		_targetSelectMode = true;
+		_targetButtons.Clear();
+
+		// Build a small overlay panel for target selection
+		_targetPanel?.QueueFree();
+		_targetPanel = new PanelContainer
+		{
+			CustomMinimumSize = new Vector2(300f, 0f),
+		};
+		UiTheme.ApplyPanelTheme(_targetPanel);
+
+		var margin = new MarginContainer();
+		margin.AddThemeConstantOverride("margin_left",   12);
+		margin.AddThemeConstantOverride("margin_right",  12);
+		margin.AddThemeConstantOverride("margin_top",    8);
+		margin.AddThemeConstantOverride("margin_bottom", 8);
+		_targetPanel.AddChild(margin);
+
+		var vbox = new VBoxContainer();
+		vbox.AddThemeConstantOverride("separation", 4);
+		margin.AddChild(vbox);
+
+		var header = new Label
+		{
+			Text = $"Use {item.DisplayName} on...",
+			HorizontalAlignment = HorizontalAlignment.Center,
+			Modulate = UiTheme.Gold,
+		};
+		header.AddThemeFontSizeOverride("font_size", 12);
+		vbox.AddChild(header);
+
+		_targetRows = new VBoxContainer();
+		_targetRows.AddThemeConstantOverride("separation", 2);
+		vbox.AddChild(_targetRows);
+
+		var gm = GameManager.Instance;
+		var allMembers = gm.Party.AllMembers;
+		int bestIdx = 0;
+
+		// Find best default target
+		var best = FindBestTarget(item);
+
+		for (int i = 0; i < allMembers.Count; i++)
+		{
+			var m = allMembers[i];
+			GetMemberHpMp(m, out int curHp, out int maxHp, out int curMp, out int maxMp);
+
+			bool canUse = ItemLogic.CanUseItem(item.HealAmount, item.RestoreMp, curHp, maxHp, curMp, maxMp);
+
+			string text = $"{m.DisplayName,-10}  HP {curHp,3}/{maxHp,-3}  MP {curMp,2}/{maxMp,-2}";
+			var btn = new Button
+			{
+				Text = text,
+				CustomMinimumSize = new Vector2(0f, 24f),
+				Disabled = !canUse,
+			};
+			btn.AddThemeFontSizeOverride("font_size", 10);
+
+			if (m.IsKO) btn.Modulate = new Color(0.6f, 0.4f, 0.4f);
+
+			int captured = i;
+			btn.FocusEntered += () =>
+			{
+				_targetIndex = captured;
+				AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+			};
+
+			_targetRows.AddChild(btn);
+			_targetButtons.Add(btn);
+
+			if (best != null && m.MemberId == best.MemberId)
+				bestIdx = i;
+		}
+
+		// Position the panel centered on screen
+		var centerer = new CenterContainer
+		{
+			AnchorRight  = 1f,
+			AnchorBottom = 1f,
+			Name         = "TargetCenterer",
+		};
+		centerer.AddChild(_targetPanel);
+		AddChild(centerer);
+
+		UiTheme.ApplyPixelFontToAll(centerer);
+		UiTheme.ApplyToAllButtons(centerer);
+
+		_targetIndex = bestIdx;
+		if (_targetButtons.Count > bestIdx)
+			_targetButtons[bestIdx].CallDeferred(Control.MethodName.GrabFocus);
+	}
+
+	private void ConfirmTargetSelect()
+	{
+		if (_pendingItem == null || _pendingItemPath == null) return;
+
+		var gm = GameManager.Instance;
+		var allMembers = gm.Party.AllMembers;
+		if (_targetIndex < 0 || _targetIndex >= allMembers.Count) return;
+
+		var target = allMembers[_targetIndex];
+		GetMemberHpMp(target, out int curHp, out int maxHp, out int curMp, out int maxMp);
+
+		if (!ItemLogic.CanUseItem(_pendingItem.HealAmount, _pendingItem.RestoreMp, curHp, maxHp, curMp, maxMp))
 		{
 			ShowFeedback("No effect.");
+			CloseTargetSelect();
 			return;
 		}
 
 		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
-		GetMemberHpMp(target, out int curHp, out int maxHp, out int curMp, out int maxMp);
 
-		int actualHp = item.HealAmount > 0
-			? ItemLogic.ActualHeal(item.HealAmount, curHp, maxHp)
+		int actualHp = _pendingItem.HealAmount > 0
+			? ItemLogic.ActualHeal(_pendingItem.HealAmount, curHp, maxHp)
 			: 0;
-		int actualMp = item.RestoreMp > 0
-			? ItemLogic.ActualMpRestore(item.RestoreMp, curMp, maxMp)
+		int actualMp = _pendingItem.RestoreMp > 0
+			? ItemLogic.ActualMpRestore(_pendingItem.RestoreMp, curMp, maxMp)
 			: 0;
 
 		if (target.MemberId == "sen")
 		{
-			if (item.HealAmount > 0) GameManager.Instance.HealPlayer(item.HealAmount);
-			if (item.RestoreMp  > 0) GameManager.Instance.RestoreMp(item.RestoreMp);
+			if (_pendingItem.HealAmount > 0) gm.HealPlayer(_pendingItem.HealAmount);
+			if (_pendingItem.RestoreMp  > 0) gm.RestoreMp(_pendingItem.RestoreMp);
 		}
 		else
 		{
 			if (actualHp > 0) target.CurrentHp = System.Math.Min(target.MaxHp, target.CurrentHp + actualHp);
 			if (actualMp > 0) target.CurrentMp = System.Math.Min(target.MaxMp, target.CurrentMp + actualMp);
 		}
-		GameManager.Instance.RemoveItem(path);
+		gm.RemoveItem(_pendingItemPath);
 
 		string who = target.DisplayName;
 		string feedback = (actualHp, actualMp) switch
@@ -469,7 +604,23 @@ public partial class InventoryMenu : CanvasLayer
 			_            => "No effect.",
 		};
 		ShowFeedback(feedback);
+		CloseTargetSelect();
 		Refresh();
+	}
+
+	private void CloseTargetSelect()
+	{
+		_targetSelectMode = false;
+		_pendingItem      = null;
+		_pendingItemPath  = null;
+		_targetButtons.Clear();
+
+		var centerer = GetNodeOrNull("TargetCenterer");
+		centerer?.QueueFree();
+		_targetPanel = null;
+		_targetRows  = null;
+
+		AudioManager.Instance?.PlaySfx(UiSfx.Cancel);
 	}
 
 	private void ShowFeedback(string text)

@@ -212,8 +212,9 @@ public partial class StatsMenu : CanvasLayer
         // Honour the cursor set by PartyMenu (if any) so the same member appears here.
         var party = GameManager.Instance.Party;
         _currentMemberIndex = 0;
-        for (int i = 0; i < party.Members.Count; i++)
-            if (party.Members[i].MemberId == GameManager.Instance.SelectedMemberId)
+        var allMembers = party.AllMembers;
+        for (int i = 0; i < allMembers.Count; i++)
+            if (allMembers[i].MemberId == GameManager.Instance.SelectedMemberId)
             {
                 _currentMemberIndex = i;
                 break;
@@ -230,12 +231,12 @@ public partial class StatsMenu : CanvasLayer
 
         // Cycle members with ←/→ when the menu is open.
         var party = GameManager.Instance.Party;
-        if (party.Count > 1)
+        if (party.TotalCount > 1)
         {
             if (e.IsActionPressed("ui_left"))
             {
-                _currentMemberIndex = (_currentMemberIndex - 1 + party.Count) % party.Count;
-                GameManager.Instance.SelectedMemberId = party.Members[_currentMemberIndex].MemberId;
+                _currentMemberIndex = (_currentMemberIndex - 1 + party.TotalCount) % party.TotalCount;
+                GameManager.Instance.SelectedMemberId = party.AllMembers[_currentMemberIndex].MemberId;
                 AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
                 Refresh();
                 GetViewport().SetInputAsHandled();
@@ -243,8 +244,8 @@ public partial class StatsMenu : CanvasLayer
             }
             if (e.IsActionPressed("ui_right"))
             {
-                _currentMemberIndex = (_currentMemberIndex + 1) % party.Count;
-                GameManager.Instance.SelectedMemberId = party.Members[_currentMemberIndex].MemberId;
+                _currentMemberIndex = (_currentMemberIndex + 1) % party.TotalCount;
+                GameManager.Instance.SelectedMemberId = party.AllMembers[_currentMemberIndex].MemberId;
                 AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
                 Refresh();
                 GetViewport().SetInputAsHandled();
@@ -270,12 +271,12 @@ public partial class StatsMenu : CanvasLayer
             _headerLabel.Text = "(no party)";
             return;
         }
-        if (_currentMemberIndex < 0 || _currentMemberIndex >= party.Count)
+        if (_currentMemberIndex < 0 || _currentMemberIndex >= party.TotalCount)
             _currentMemberIndex = 0;
 
-        var member  = party.Members[_currentMemberIndex];
+        var member  = party.AllMembers[_currentMemberIndex];
         bool isSen  = member.MemberId == "sen";
-        bool canCycle = party.Count > 1;
+        bool canCycle = party.TotalCount > 1;
         string left  = canCycle ? "◀ " : "  ";
         string right = canCycle ? " ▶" : "  ";
 
