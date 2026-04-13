@@ -144,11 +144,28 @@ public partial class SettingsManager : Node
     private void ApplyTextSize(SettingsData s)
     {
         int fontSize = SettingsLogic.FontSizePx(s.TextSize);
-        WalkNodes(GetTree().Root, node =>
+
+        // Update the global fallback so labels that DON'T have an explicit
+        // AddThemeFontSizeOverride automatically pick up the new size.
+        ThemeDB.FallbackFontSize = fontSize;
+
+        // Also update the default theme's per-type font sizes (set by
+        // UiTheme.ApplyGlobalTheme) so dynamically-created labels inherit
+        // the setting's text size instead of the hardcoded 12px.
+        var theme = GetTree().Root.Theme;
+        if (theme != null)
         {
-            if (node is Label label)
-                label.AddThemeFontSizeOverride("font_size", fontSize);
-        });
+            foreach (var type in new[] { "Label", "Button", "RichTextLabel", "LineEdit",
+                "TextEdit", "OptionButton", "CheckButton", "ItemList", "TabBar" })
+            {
+                theme.SetFontSize("font_size", type, fontSize);
+            }
+            theme.SetFontSize("normal_font_size", "RichTextLabel", fontSize);
+        }
+
+        // DO NOT walk all Label nodes and override their font_size — that
+        // would destroy the per-label sizes set by menu BuildUI code (18px
+        // titles, 10px item names, 8px descriptions, etc.).
     }
 
     // ── Colorblind mode ───────────────────────────────────────────────────
@@ -176,9 +193,19 @@ public partial class SettingsManager : Node
         WalkNodes(GetTree().Root, node =>
         {
             if (node is not Label label) return;
-            // Create a LabelSettings if the label doesn't have one so the outline is visible.
-            // A default LabelSettings with font/font_size = null/0 leaves all other styling intact.
-            label.LabelSettings          ??= new LabelSettings();
+
+            if (label.LabelSettings == null)
+            {
+                if (outlineSize <= 0) return; // nothing to do
+
+                // Create a LabelSettings that preserves the label's current effective
+                // font size so we don't accidentally override theme-based sizing.
+                // LabelSettings.FontSize defaults to 16 in Godot, which would replace
+                // the label's theme font size — so we explicitly copy it.
+                int currentSize = label.GetThemeFontSize("font_size");
+                label.LabelSettings = new LabelSettings { FontSize = currentSize };
+            }
+
             label.LabelSettings.OutlineSize  = outlineSize;
             label.LabelSettings.OutlineColor = outlineColor;
         });
