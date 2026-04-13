@@ -2315,6 +2315,7 @@ public partial class BattleScene : Node2D
 		ResetEnemyReactions();
 		GD.Print($"[BattleScene] Rhythm phase ended. Max combo: {_rhythmArena.MaxStreak}");
 		_battleHud.ShowPerformanceSummary(_performance);
+		ShowRhythmSummaryCard();
 
 		// Counterattack reward: deal 10% of current enemy's max HP as bonus damage
 		if (_rhythmCounterDamage)
@@ -2332,6 +2333,88 @@ public partial class BattleScene : Node2D
 
 		// Multi-actor flow: advance the queue. If the round is over this kicks BeginRound.
 		_ = AdvanceTurn();
+	}
+
+	/// <summary>
+	/// Non-blocking visual summary card shown briefly after each rhythm phase.
+	/// Displays perfect count, total notes, and rank grade, then fades out.
+	/// </summary>
+	private void ShowRhythmSummaryCard()
+	{
+		int perfects = _rhythmArena.TotalPerfects;
+		int goods    = _rhythmArena.TotalGoods;
+		int misses   = _rhythmArena.TotalMisses;
+		int total    = perfects + goods + misses;
+		if (total == 0) return;
+
+		var rank = BestiaryPracticeLogic.GradeRun(perfects, goods, misses);
+
+		// Rank colour: gold for S/A, white for B/C, grey for D
+		Color rankColor = rank switch
+		{
+			BestiaryPracticeLogic.PracticeRank.S => UiTheme.Gold,
+			BestiaryPracticeLogic.PracticeRank.A => UiTheme.Gold,
+			BestiaryPracticeLogic.PracticeRank.D => UiTheme.SubtleGrey,
+			_ => Colors.White,
+		};
+
+		// Build the card
+		var panel = new PanelContainer();
+		UiTheme.ApplyPanelTheme(panel);
+
+		var margin = new MarginContainer();
+		margin.AddThemeConstantOverride("margin_left", 14);
+		margin.AddThemeConstantOverride("margin_right", 14);
+		margin.AddThemeConstantOverride("margin_top", 6);
+		margin.AddThemeConstantOverride("margin_bottom", 6);
+		panel.AddChild(margin);
+
+		var hbox = new HBoxContainer { Alignment = BoxContainer.AlignmentMode.Center };
+		hbox.AddThemeConstantOverride("separation", 8);
+		margin.AddChild(hbox);
+
+		var statsLabel = new Label
+		{
+			Text = $"{perfects}/{total} Perfect",
+		};
+		statsLabel.AddThemeFontSizeOverride("font_size", 11);
+		hbox.AddChild(statsLabel);
+
+		var separator = new Label { Text = "\u2014" }; // em-dash
+		separator.AddThemeFontSizeOverride("font_size", 11);
+		separator.AddThemeColorOverride("font_color", UiTheme.SubtleGrey);
+		hbox.AddChild(separator);
+
+		var rankLabel = new Label
+		{
+			Text = $"Rank {rank}",
+		};
+		rankLabel.AddThemeFontSizeOverride("font_size", 11);
+		rankLabel.AddThemeColorOverride("font_color", rankColor);
+		hbox.AddChild(rankLabel);
+
+		// Position at bottom-centre of viewport
+		panel.Modulate = Colors.Transparent;
+		AddChild(panel);
+
+		// Wait one frame so the panel's layout pass resolves its Size,
+		// then position it and start the fade tween.
+		Callable.From(() =>
+		{
+			if (!IsInstanceValid(panel)) return;
+			var viewport = GetViewportRect().Size;
+			float panelW = panel.Size.X > 0 ? panel.Size.X : 200f;
+			panel.Position = new Vector2(
+				(viewport.X - panelW) * 0.5f,
+				viewport.Y - 80f
+			);
+
+			var tween = CreateTween();
+			tween.TweenProperty(panel, "modulate:a", 1f, 0.15f);
+			tween.TweenInterval(1.2f);
+			tween.TweenProperty(panel, "modulate:a", 0f, 0.3f);
+			tween.TweenCallback(Callable.From(panel.QueueFree));
+		}).CallDeferred();
 	}
 
 	private void OnStreakReward(string rewardId)

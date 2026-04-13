@@ -569,6 +569,17 @@ public partial class RhythmArena : Node2D
         var t = CreateTween();
         t.TweenProperty(_laneFlash[clampedLane], "color", Colors.Transparent, 0.12f);
 
+        // Pitch-shifted hit SFX: pitch rises with combo for impactful streaks
+        if (grade == HitGrade.Perfect || grade == HitGrade.Good)
+        {
+            float pitch = 1.0f + Mathf.Min(_currentStreak * 0.04f, 0.5f);
+            AudioManager.Instance?.PlaySfxPitched(UiSfx.Confirm, pitch);
+        }
+        else
+        {
+            AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
+        }
+
         // Screen shake on miss
         if (grade == HitGrade.Miss)
         {

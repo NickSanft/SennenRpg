@@ -256,6 +256,17 @@ public partial class AudioManager : Node
 		player.Play();
 	}
 
+	/// <summary>Play a one-shot SFX at a specific pitch scale (e.g. 1.2 = 20% higher).</summary>
+	public void PlaySfxPitched(string path, float pitchScale)
+	{
+		if (!ResourceLoader.Exists(path)) return;
+		var player = _sfxPool[_sfxPoolIndex % SfxPoolSize];
+		_sfxPoolIndex++;
+		player.Stream     = GD.Load<AudioStream>(path);
+		player.PitchScale = pitchScale;
+		player.Play();
+	}
+
 	/// <summary>Play a one-shot SFX with random pitch variation for organic feel.</summary>
 	/// <param name="path">Resource path to the audio file.</param>
 	/// <param name="pitchRange">Max deviation from 1.0 (e.g. 0.1 = ±10%).</param>

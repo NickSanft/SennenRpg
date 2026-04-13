@@ -13,6 +13,11 @@ public partial class PracticeArena : CanvasLayer
 {
     [Signal] public delegate void ClosedEventHandler();
 
+    private static readonly float[] SpeedOptions = { 0.75f, 1.0f, 1.25f };
+    private static readonly string[] SpeedLabels = { "0.75x", "1.0x", "1.25x" };
+    private static readonly float[] DensityOptions = { 0.6f, 1.0f, 1.4f };
+    private static readonly string[] DensityLabels = { "Light", "Normal", "Heavy" };
+
     private EnemyData? _enemy;
     private RhythmArena _arena = null!;
     private Label _perfectLabel = null!;
@@ -24,6 +29,13 @@ public partial class PracticeArena : CanvasLayer
     private Control _resultsOverlay = null!;
     private bool _phaseRunning;
     private bool _showingResults;
+
+    private float _speedMult = 1.0f;
+    private float _densityMult = 1.0f;
+    private int _speedIndex = 1;   // default Normal
+    private int _densityIndex = 1; // default Normal
+    private readonly Button[] _speedButtons = new Button[3];
+    private readonly Button[] _densityButtons = new Button[3];
 
     public override void _Ready()
     {
@@ -44,13 +56,6 @@ public partial class PracticeArena : CanvasLayer
         UiTheme.ApplyPixelFontToAll(this);
         UiTheme.ApplyToAllButtons(this);
         Visible = true;
-
-        // Start the rhythm clock for this enemy's BPM
-        float bpm = enemy.BattleBpm > 0f ? enemy.BattleBpm : 120f;
-        RhythmClock.Instance.StartFreeRunning(bpm);
-
-        // Start the rhythm phase after a brief delay so the player can see the arena
-        GetTree().CreateTimer(0.8f).Timeout += StartPracticePhase;
     }
 
     private void BuildUi()
@@ -103,16 +108,84 @@ public partial class PracticeArena : CanvasLayer
         modeLabel.AddThemeFontSizeOverride("font_size", 11);
         titleRow.AddChild(modeLabel);
 
-        // "Get Ready!" label (shown before phase starts)
-        var readyLabel = new Label
+        // Speed / Density options row
+        var optionsRow = new HBoxContainer
         {
-            Text = "Get Ready!",
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Modulate = Colors.White,
-            Name = "ReadyLabel",
+            Alignment = BoxContainer.AlignmentMode.Center,
         };
-        readyLabel.AddThemeFontSizeOverride("font_size", 14);
-        mainVbox.AddChild(readyLabel);
+        optionsRow.AddThemeConstantOverride("separation", 20);
+        mainVbox.AddChild(optionsRow);
+
+        // Speed group
+        var speedGroup = new HBoxContainer();
+        speedGroup.AddThemeConstantOverride("separation", 4);
+        optionsRow.AddChild(speedGroup);
+
+        var speedLbl = new Label
+        {
+            Text = "SPEED:",
+            Modulate = UiTheme.SubtleGrey,
+        };
+        speedLbl.AddThemeFontSizeOverride("font_size", 10);
+        speedGroup.AddChild(speedLbl);
+
+        for (int i = 0; i < SpeedOptions.Length; i++)
+        {
+            int idx = i; // capture for lambda
+            var btn = new Button
+            {
+                Text = SpeedLabels[i],
+                CustomMinimumSize = new Vector2(60f, 24f),
+                FocusMode = Control.FocusModeEnum.None,
+            };
+            btn.AddThemeFontSizeOverride("font_size", 10);
+            btn.Pressed += () => SelectSpeed(idx);
+            speedGroup.AddChild(btn);
+            _speedButtons[i] = btn;
+        }
+
+        // Density group
+        var densityGroup = new HBoxContainer();
+        densityGroup.AddThemeConstantOverride("separation", 4);
+        optionsRow.AddChild(densityGroup);
+
+        var densityLbl = new Label
+        {
+            Text = "NOTES:",
+            Modulate = UiTheme.SubtleGrey,
+        };
+        densityLbl.AddThemeFontSizeOverride("font_size", 10);
+        densityGroup.AddChild(densityLbl);
+
+        for (int i = 0; i < DensityOptions.Length; i++)
+        {
+            int idx = i;
+            var btn = new Button
+            {
+                Text = DensityLabels[i],
+                CustomMinimumSize = new Vector2(60f, 24f),
+                FocusMode = Control.FocusModeEnum.None,
+            };
+            btn.AddThemeFontSizeOverride("font_size", 10);
+            btn.Pressed += () => SelectDensity(idx);
+            densityGroup.AddChild(btn);
+            _densityButtons[i] = btn;
+        }
+
+        UpdateOptionButtonHighlights();
+
+        // START button — lets the player adjust options before beginning
+        var startBtn = new Button
+        {
+            Text = "START",
+            Name = "StartButton",
+            SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
+            CustomMinimumSize = new Vector2(140f, 36f),
+        };
+        startBtn.AddThemeFontSizeOverride("font_size", 14);
+        UiTheme.ApplyButtonTheme(startBtn);
+        startBtn.Pressed += OnStartPressed;
+        mainVbox.AddChild(startBtn);
 
         // Arena container (centred)
         var arenaHolder = new CenterContainer
@@ -190,16 +263,30 @@ public partial class PracticeArena : CanvasLayer
         return lbl;
     }
 
+    private void OnStartPressed()
+    {
+        AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
+
+        // Hide the START button
+        var startBtn = FindChild("StartButton", recursive: true) as Button;
+        if (startBtn != null) startBtn.Visible = false;
+
+        StartPracticePhase();
+    }
+
     private void StartPracticePhase()
     {
         if (!Visible || _enemy == null) return;
 
-        // Hide the "Get Ready!" label
-        var readyLabel = FindChild("ReadyLabel", recursive: true) as Label;
-        if (readyLabel != null) readyLabel.Visible = false;
+        // Disable option buttons once the phase begins
+        SetOptionButtonsDisabled(true);
+
+        // Start the rhythm clock with the selected speed multiplier
+        float bpm = _enemy.BattleBpm > 0f ? _enemy.BattleBpm : 120f;
+        RhythmClock.Instance.StartFreeRunning(bpm * _speedMult);
 
         _phaseRunning = true;
-        _arena.ObstacleDensityMult = 1.0f;
+        _arena.ObstacleDensityMult = _densityMult;
         _arena.Visible = true;
         _arena.StartPhase(_enemy.AttackPatternScene, totalMeasures: 4);
     }
@@ -325,6 +412,9 @@ public partial class PracticeArena : CanvasLayer
         AddResultLine(resultVbox, $"Perfect Rate: {perfectRate:F1}%");
         AddResultLine(resultVbox, $"Accuracy: {accuracy:F1}%");
         AddResultLine(resultVbox, $"Best Combo: {_arena.MaxStreak}");
+        AddResultLine(resultVbox,
+            $"Speed: {SpeedLabels[_speedIndex]}  Notes: {DensityLabels[_densityIndex]}",
+            UiTheme.SubtleGrey);
 
         if (m == 0 && g == 0 && p > 0)
             AddResultLine(resultVbox, "* FLAWLESS RUN! *", UiTheme.Gold);
@@ -355,6 +445,44 @@ public partial class PracticeArena : CanvasLayer
         };
         lbl.AddThemeFontSizeOverride("font_size", 12);
         parent.AddChild(lbl);
+    }
+
+    private void SelectSpeed(int index)
+    {
+        _speedIndex = index;
+        _speedMult = SpeedOptions[index];
+        UpdateOptionButtonHighlights();
+        AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+    }
+
+    private void SelectDensity(int index)
+    {
+        _densityIndex = index;
+        _densityMult = DensityOptions[index];
+        UpdateOptionButtonHighlights();
+        AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+    }
+
+    private void UpdateOptionButtonHighlights()
+    {
+        for (int i = 0; i < _speedButtons.Length; i++)
+        {
+            if (_speedButtons[i] == null) continue;
+            _speedButtons[i].Modulate = i == _speedIndex ? UiTheme.Gold : UiTheme.SubtleGrey;
+        }
+        for (int i = 0; i < _densityButtons.Length; i++)
+        {
+            if (_densityButtons[i] == null) continue;
+            _densityButtons[i].Modulate = i == _densityIndex ? UiTheme.Gold : UiTheme.SubtleGrey;
+        }
+    }
+
+    private void SetOptionButtonsDisabled(bool disabled)
+    {
+        foreach (var btn in _speedButtons)
+            if (btn != null) btn.Disabled = disabled;
+        foreach (var btn in _densityButtons)
+            if (btn != null) btn.Disabled = disabled;
     }
 
     public override void _UnhandledInput(InputEvent e)
