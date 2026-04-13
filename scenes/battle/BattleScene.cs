@@ -430,6 +430,10 @@ public partial class BattleScene : Node2D
 	private AdaptationResult _adaptation = RhythmMemoryLogic.ComputeAdaptation(null);
 	private bool            _adaptedDialogShown;
 
+	// Rhythm streak reward state
+	private bool _rhythmShieldActive;
+	private bool _rhythmCounterDamage;
+
 	// ── Node references ───────────────────────────────────────────────
 	private Node2D          _enemyArea      = null!;
 	private ActionMenu      _actionMenu     = null!;
@@ -498,6 +502,7 @@ public partial class BattleScene : Node2D
 		_rhythmStrike.StrikeResolved += OnStrikeResolved;
 		_rhythmArena.PhaseEnded      += OnRhythmPhaseEnded;
 		_rhythmArena.PlayerHurt      += OnPlayerHurt;
+		_rhythmArena.StreakReward     += OnStreakReward;
 
 		// Wire class-specific Fight minigames
 		_fightBar      = GetNode<FightBar>("FightBar");
@@ -2218,6 +2223,18 @@ public partial class BattleScene : Node2D
 		_rhythmArena.SlideIn();
 		_rhythmArena.StartPhase(patternScene, totalMeasures: totalMeasures);
 
+		// Dynamic arena skin based on current enemy
+		var currentEnemy = Target;
+		if (currentEnemy != null)
+		{
+			_rhythmArena.ArenaBackgroundTint = GetArenaTint(currentEnemy.Data.EnemyId);
+			_rhythmArena.ArenaBorderTint = GetArenaBorderTint(currentEnemy.Data.EnemyId);
+		}
+
+		// Reset streak reward flags for this phase
+		_rhythmShieldActive = false;
+		_rhythmCounterDamage = false;
+
 		GD.Print($"[BattleScene] RhythmPhase started. Pattern: {patternScene?.ResourcePath ?? "none"}, measures: {totalMeasures}, density: {_adaptation.ObstacleDensityMult:F2}");
 	}
 
@@ -2248,9 +2265,56 @@ public partial class BattleScene : Node2D
 		if (_state != BattleState.RhythmPhase) return;
 		GD.Print($"[BattleScene] Rhythm phase ended. Max combo: {_rhythmArena.MaxStreak}");
 		_battleHud.ShowPerformanceSummary(_performance);
+
+		// Counterattack reward: deal 10% of current enemy's max HP as bonus damage
+		if (_rhythmCounterDamage)
+		{
+			_rhythmCounterDamage = false;
+			if (Target != null && !Target.IsKO)
+			{
+				int bonus = Math.Max(1, Target.Data.Stats?.MaxHp / 10 ?? 1);
+				Target.CurrentHp -= bonus;
+				GD.Print($"[BattleScene] Counterattack! Dealt {bonus} bonus damage to {Target.Data.DisplayName}");
+				SpawnDamageNumber(bonus, isCrit: false);
+				HandleEnemyDeathIfApplicable(Target);
+			}
+		}
+
 		// Multi-actor flow: advance the queue. If the round is over this kicks BeginRound.
 		_ = AdvanceTurn();
 	}
+
+	private void OnStreakReward(string rewardId)
+	{
+		switch (rewardId)
+		{
+			case "shield":
+				_rhythmShieldActive = true;
+				GD.Print("[BattleScene] Rhythm Shield activated — next miss at 50% damage");
+				break;
+			case "counter":
+				_rhythmCounterDamage = true;
+				GD.Print("[BattleScene] Counter activated — bonus damage at phase end");
+				break;
+			// "flow" is handled purely in RhythmArena (cosmetic feedback)
+		}
+	}
+
+	private static Color GetArenaTint(string enemyId) => enemyId switch
+	{
+		"wisplet" => new Color(0.06f, 0.04f, 0.14f),           // deep purple-blue (ghostly)
+		"centiphantom" => new Color(0.04f, 0.10f, 0.10f),       // deep sea teal
+		"centiphantom_quing" => new Color(0.08f, 0.07f, 0.06f), // stone grey
+		_ => new Color(0.06f, 0.06f, 0.10f),                    // default dark blue
+	};
+
+	private static Color GetArenaBorderTint(string enemyId) => enemyId switch
+	{
+		"wisplet" => new Color(0.6f, 0.5f, 1.0f),              // pale purple
+		"centiphantom" => new Color(0.3f, 0.8f, 0.8f),         // cyan-teal
+		"centiphantom_quing" => new Color(0.7f, 0.65f, 0.55f), // warm stone
+		_ => Colors.White,
+	};
 
 	/// <summary>
 	/// Backwards-compat shim. Older code paths called RunEnemyTurn() to "do whatever
@@ -2262,6 +2326,14 @@ public partial class BattleScene : Node2D
 	private void OnPlayerHurt(int damage)
 	{
 		int scaledDamage = Math.Max(1, (int)(damage * _difficultyMultiplier));
+
+		// Rhythm Shield: halve the first hit after a 10-streak
+		if (_rhythmShieldActive)
+		{
+			scaledDamage = Math.Max(1, scaledDamage / 2);
+			_rhythmShieldActive = false;
+			GD.Print("[BattleScene] Rhythm Shield absorbed half the damage!");
+		}
 
 		// Distribute rhythm-phase damage evenly across every LIVING party member.
 		// Sen routes through the existing GameManager.HurtPlayer (which writes into

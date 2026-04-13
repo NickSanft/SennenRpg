@@ -7,12 +7,12 @@ namespace SennenRpg.Scenes.Battle;
 
 /// <summary>
 /// Horizontal note-highway arena.
-/// Four lanes scroll left → right. The player presses lane_0–lane_3
+/// Four lanes scroll left -> right. The player presses lane_0-lane_3
 /// when notes reach the HitZone on the right side.
 ///
 /// Arena centred at its Node2D origin.
-///   Width  = 224 px  (ArenaHalfW × 2)
-///   Height = 144 px  (4 lanes × 36 px)
+///   Width  = 224 px  (ArenaHalfW x 2)
+///   Height = 144 px  (4 lanes x 36 px)
 ///   HitZone at X = +90   Spawn at X = -96
 /// </summary>
 public partial class RhythmArena : Node2D
@@ -20,8 +20,9 @@ public partial class RhythmArena : Node2D
     [Signal] public delegate void PhaseEndedEventHandler();
     [Signal] public delegate void PlayerHurtEventHandler(int damage);
     [Signal] public delegate void NoteHitEventHandler(int grade);
+    [Signal] public delegate void StreakRewardEventHandler(string rewardId);
 
-    // ── Arena geometry constants ──────────────────────────────────────
+    // -- Arena geometry constants --
     public const float ArenaHalfW  = 112f;
     public const float ArenaHalfH  = 72f;
     public const float HitZoneX    = 90f;
@@ -32,7 +33,7 @@ public partial class RhythmArena : Node2D
     /// <summary>Y-centre of each lane relative to arena centre.</summary>
     public static readonly float[] LaneCenterY = { -54f, -18f, 18f, 54f };
 
-    // ── Hit-window constants (pixels) ─────────────────────────────────
+    // -- Hit-window constants (pixels) --
     // Base values used when SettingsManager is unavailable (editor, tests).
     private const float BaseGoodWindowPx    = 22f;
     private const float BasePerfectWindowPx = 9f;
@@ -49,10 +50,10 @@ public partial class RhythmArena : Node2D
 
     private bool IsAutoHit => TimingWindow == AutoHit;
 
-    // ── Node references ───────────────────────────────────────────────
+    // -- Node references --
     public Node2D ObstacleContainer { get; private set; } = null!;
 
-    // ── State ─────────────────────────────────────────────────────────
+    // -- State --
     private bool               _running;
     private RhythmPatternBase? _activePattern;
     private Label?             _comboLabel;
@@ -69,11 +70,34 @@ public partial class RhythmArena : Node2D
     private int _currentStreak;
     private int _maxStreak;
 
+    // Streak reward flags (reset each phase)
+    private bool _shieldGranted;  // combo 10 reward
+    private bool _flowGranted;    // combo 20 reward
+    private bool _counterGranted; // combo 30 reward
+
     // Lane flash overlays for hit/miss feedback
     private readonly ColorRect[] _laneFlash = new ColorRect[4];
 
-    /// <summary>Maximum consecutive hit streak this phase — read by BattleScene after phase ends.</summary>
+    // -- Combo glow --
+    private float _comboGlow;
+    private float _comboGlowTarget;
+
+    // -- Phase hit/miss counters --
+    private int _totalPerfects;
+    private int _totalGoods;
+    private int _totalMisses;
+
+    /// <summary>Maximum consecutive hit streak this phase -- read by BattleScene after phase ends.</summary>
     public int MaxStreak => _maxStreak;
+
+    /// <summary>Total perfects this phase.</summary>
+    public int TotalPerfects => _totalPerfects;
+
+    /// <summary>Total goods this phase.</summary>
+    public int TotalGoods => _totalGoods;
+
+    /// <summary>Total misses this phase.</summary>
+    public int TotalMisses => _totalMisses;
 
     /// <summary>
     /// Multiplier for obstacle spawn density. Set by BattleScene before StartPhase.
@@ -81,7 +105,19 @@ public partial class RhythmArena : Node2D
     /// </summary>
     public float ObstacleDensityMult { get; set; } = 1.0f;
 
-    // ── Setup ─────────────────────────────────────────────────────────
+    /// <summary>
+    /// Tint colour for the arena background, set from EnemyData or BattleScene.
+    /// Defaults to the standard dark blue.
+    /// </summary>
+    public Color ArenaBackgroundTint { get; set; } = new Color(0.06f, 0.06f, 0.10f, 1f);
+
+    /// <summary>
+    /// Tint colour for the arena border, set from BattleScene per-enemy.
+    /// Defaults to white.
+    /// </summary>
+    public Color ArenaBorderTint { get; set; } = Colors.White;
+
+    // -- Setup --
 
     public override void _Ready()
     {
@@ -130,7 +166,7 @@ public partial class RhythmArena : Node2D
         Visible = false;
     }
 
-    // ── Public API ────────────────────────────────────────────────────
+    // -- Public API --
 
     /// <summary>Slide arena in from the right before starting the phase.</summary>
     public void SlideIn()
@@ -147,10 +183,25 @@ public partial class RhythmArena : Node2D
 
     public void StartPhase(PackedScene? patternScene, int totalMeasures = 2)
     {
-        _running       = true;
-        _currentStreak = 0;
-        _maxStreak     = 0;
-        Visible        = true;
+        _running        = true;
+        _currentStreak  = 0;
+        _maxStreak      = 0;
+        _totalPerfects  = 0;
+        _totalGoods     = 0;
+        _totalMisses    = 0;
+        _comboGlow      = 0f;
+        _comboGlowTarget = 0f;
+
+        // Reset arena skin to defaults (callers may override before StartPhase)
+        ArenaBackgroundTint = new Color(0.06f, 0.06f, 0.10f, 1f);
+        ArenaBorderTint     = Colors.White;
+
+        // Reset streak reward flags
+        _shieldGranted  = false;
+        _flowGranted    = false;
+        _counterGranted = false;
+
+        Visible         = true;
         QueueRedraw();
 
         if (patternScene != null)
@@ -195,11 +246,15 @@ public partial class RhythmArena : Node2D
         ObstacleContainer.AddChild(obs);
     }
 
-    // ── Per-frame processing ──────────────────────────────────────────
+    // -- Per-frame processing --
 
     public override void _Process(double delta)
     {
         if (!_running) return;
+
+        // Lerp combo glow towards target
+        _comboGlow = Mathf.Lerp(_comboGlow, _comboGlowTarget, (float)delta * 8f);
+
         QueueRedraw();
 
         float dt    = (float)delta;
@@ -217,7 +272,7 @@ public partial class RhythmArena : Node2D
 
             if (_laneHoldElapsed[lane] >= hObs.FullHoldTime)
             {
-                // Full hold — auto-complete as Perfect
+                // Full hold -- auto-complete as Perfect
                 _laneHeldObstacles[lane] = null;
                 hObs.Resolve(HitGrade.Perfect);
                 EmitSignal(SignalName.NoteHit, (int)HitGrade.Perfect);
@@ -253,6 +308,7 @@ public partial class RhythmArena : Node2D
                 int   dmg        = System.Math.Max(1, (int)(obs.Damage * mult));
                 bool  hadStreak  = _currentStreak >= 3;
                 _currentStreak   = 0;
+                _comboGlowTarget = 0f;
                 UpdateComboDisplay(hadStreak);
                 EmitSignal(SignalName.PlayerHurt, dmg);
                 obs.Resolve(HitGrade.Miss);
@@ -324,15 +380,23 @@ public partial class RhythmArena : Node2D
         }
     }
 
-    // ── Visuals ───────────────────────────────────────────────────────
+    // -- Visuals --
 
     public override void _Draw()
     {
         var halfV = new Vector2(ArenaHalfW, ArenaHalfH);
         var bg    = new Rect2(-halfV, halfV * 2f);
 
-        DrawRect(bg, new Color(0.06f, 0.06f, 0.10f, 1f));
-        DrawRect(bg, Colors.White, filled: false, width: 2f);
+        DrawRect(bg, ArenaBackgroundTint);
+        DrawRect(bg, ArenaBorderTint, filled: false, width: 2f);
+
+        // Subtle background brightness pulse on beat
+        float bgPulse = Mathf.Max(0f, 1f - RhythmClock.Instance.BeatPhase * 3f);
+        if (bgPulse > 0f)
+        {
+            var brightOverlay = new Color(1f, 1f, 1f, bgPulse * 0.04f);
+            DrawRect(bg, brightOverlay);
+        }
 
         // Lane dividers
         for (int i = 1; i < LaneCenterY.Length; i++)
@@ -361,6 +425,39 @@ public partial class RhythmArena : Node2D
             DrawLine(new Vector2(HitZoneX - tickLen, cy), new Vector2(HitZoneX + tickLen, cy),
                      crosshairColor, 2f);
 
+        // Approach warning: glow crosshair when obstacle is close
+        foreach (Node child in ObstacleContainer.GetChildren())
+        {
+            if (child is not ObstacleBase obs || obs.IsResolved) continue;
+            float dist = HitZoneX - obs.Position.X;
+            if (dist > 0f && dist < 40f)
+            {
+                float intensity = 1f - (dist / 40f);
+                int clampedLane = Mathf.Clamp(obs.Lane, 0, 3);
+                var warnColor = ObstacleBase.LaneColors[clampedLane] with { A = intensity * 0.5f };
+                float cy = LaneCenterY[clampedLane];
+                DrawCircle(new Vector2(HitZoneX, cy), 8f + intensity * 4f, warnColor);
+            }
+        }
+
+        // Combo glow overlay
+        if (_comboGlow > 0.01f)
+        {
+            // Hit zone glow intensifies with combo
+            var glowColor = new Color(1f, 0.7f, 0.1f, _comboGlow * 0.4f);
+            DrawLine(new Vector2(HitZoneX, -ArenaHalfH), new Vector2(HitZoneX, ArenaHalfH),
+                     glowColor, 4f + _comboGlow * 6f);
+
+            // At high combo, crosshairs turn gold and pulse
+            if (_comboGlow >= 0.5f)
+            {
+                float pulse2 = 0.7f + 0.3f * Mathf.Sin((float)Time.GetTicksMsec() / 150f);
+                var goldCross = new Color(1f, 0.85f, 0.1f, _comboGlow * pulse2);
+                foreach (float cy in LaneCenterY)
+                    DrawCircle(new Vector2(HitZoneX, cy), 5f + _comboGlow * 3f, goldCross);
+            }
+        }
+
         // Beat pulse
         float pulse = Mathf.Max(0f, 1f - RhythmClock.Instance.BeatPhase * 4f);
         if (pulse > 0f)
@@ -380,20 +477,40 @@ public partial class RhythmArena : Node2D
         }
     }
 
-    // ── Internal helpers ──────────────────────────────────────────────
+    // -- Internal helpers --
 
     private void RecordHit(HitGrade grade)
     {
-        if (grade != HitGrade.Miss)
+        if (grade == HitGrade.Perfect)
         {
+            _totalPerfects++;
             _currentStreak++;
             if (_currentStreak > _maxStreak) _maxStreak = _currentStreak;
+            _comboGlowTarget = _currentStreak >= 20 ? 1.0f
+                             : _currentStreak >= 10 ? 0.6f
+                             : _currentStreak >= 5  ? 0.3f
+                             : 0f;
             UpdateComboDisplay(false);
+            CheckStreakRewards();
+        }
+        else if (grade == HitGrade.Good)
+        {
+            _totalGoods++;
+            _currentStreak++;
+            if (_currentStreak > _maxStreak) _maxStreak = _currentStreak;
+            _comboGlowTarget = _currentStreak >= 20 ? 1.0f
+                             : _currentStreak >= 10 ? 0.6f
+                             : _currentStreak >= 5  ? 0.3f
+                             : 0f;
+            UpdateComboDisplay(false);
+            CheckStreakRewards();
         }
         else
         {
+            _totalMisses++;
             bool hadStreak = _currentStreak >= 3;
             _currentStreak = 0;
+            _comboGlowTarget = 0f;
             UpdateComboDisplay(hadStreak);
         }
     }
@@ -413,7 +530,7 @@ public partial class RhythmArena : Node2D
 
         if (_currentStreak >= 3)
         {
-            _comboLabel.Text    = $"COMBO ×{_currentStreak}";
+            _comboLabel.Text    = $"COMBO x{_currentStreak}";
             _comboLabel.Visible = true;
         }
         else
@@ -444,6 +561,46 @@ public partial class RhythmArena : Node2D
         _laneFlash[clampedLane].Color = flashColor;
         var t = CreateTween();
         t.TweenProperty(_laneFlash[clampedLane], "color", Colors.Transparent, 0.12f);
+
+        // Screen shake on miss
+        if (grade == HitGrade.Miss)
+        {
+            var origPos = Position;
+            var shakeTween = CreateTween();
+            shakeTween.TweenProperty(this, "position", origPos + new Vector2(3f, 0f), 0.03f);
+            shakeTween.TweenProperty(this, "position", origPos + new Vector2(-3f, 0f), 0.03f);
+            shakeTween.TweenProperty(this, "position", origPos, 0.03f);
+        }
+    }
+
+    private void CheckStreakRewards()
+    {
+        if (_currentStreak == 10 && !_shieldGranted)
+        {
+            _shieldGranted = true;
+            ShowStreakReward("RHYTHM SHIELD!", new Color(0.4f, 0.7f, 1f));
+            EmitSignal(SignalName.StreakReward, "shield");
+        }
+        else if (_currentStreak == 20 && !_flowGranted)
+        {
+            _flowGranted = true;
+            ShowStreakReward("PERFECT FLOW!", new Color(0.3f, 1f, 0.4f));
+            EmitSignal(SignalName.StreakReward, "flow");
+        }
+        else if (_currentStreak == 30 && !_counterGranted)
+        {
+            _counterGranted = true;
+            ShowStreakReward("COUNTERATTACK!", new Color(1f, 0.85f, 0.1f));
+            EmitSignal(SignalName.StreakReward, "counter");
+        }
+    }
+
+    private void ShowStreakReward(string text, Color color)
+    {
+        var lbl = new HitFeedbackLabel();
+        AddChild(lbl);
+        lbl.Play(text, color, new Vector2(-60f, -ArenaHalfH - 40f));
+        AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
     }
 
     private void OnPatternFinished()
@@ -469,7 +626,18 @@ public partial class RhythmArena : Node2D
         foreach (Node child in ObstacleContainer.GetChildren())
             child.QueueFree();
 
-        GD.Print($"[RhythmArena] Phase ended. Max combo streak: {_maxStreak}");
+        // Flawless check
+        if (_totalMisses == 0 && _totalGoods == 0 && _totalPerfects > 0)
+        {
+            var flawless = new HitFeedbackLabel();
+            AddChild(flawless);
+            flawless.Play("* FLAWLESS *", new Color(1f, 0.95f, 0.3f),
+                          new Vector2(-40f, -ArenaHalfH - 30f));
+            AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
+        }
+
+        GD.Print($"[RhythmArena] Phase ended. Max combo streak: {_maxStreak} " +
+                 $"(P:{_totalPerfects} G:{_totalGoods} M:{_totalMisses})");
         Visible = false;
         EmitSignal(SignalName.PhaseEnded);
     }

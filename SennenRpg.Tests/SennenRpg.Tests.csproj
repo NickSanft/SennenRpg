@@ -106,6 +106,8 @@
         <Compile Include="../core/data/BestiaryLogic.cs" />
         <Compile Include="../core/data/BestiaryEntry.cs" />
         <Compile Include="../core/data/BestiaryRecordLogic.cs" />
+        <!-- Bestiary practice — pure logic, no Godot runtime -->
+        <Compile Include="../core/data/BestiaryPracticeLogic.cs" />
         <!-- Phase 4 unique skills — pure logic, no Godot runtime -->
         <Compile Include="../core/data/SkillResolver.cs" />
         <!-- BGM beat sync — JSON loader (Godot.FileAccess used at runtime only) -->
