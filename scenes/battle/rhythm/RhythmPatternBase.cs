@@ -52,6 +52,13 @@ public abstract partial class RhythmPatternBase : Node
     /// <summary>Obstacle density multiplier from the arena's Rhythm Memory adaptation.</summary>
     protected float DensityMult => Arena.ObstacleDensityMult;
 
+    /// <summary>
+    /// Lanes spawned into on the current beat. Patterns call <see cref="SpawnObstacle"/>
+    /// which records the lane here; the density bonus avoids these lanes so two notes
+    /// never overlap in the same lane on the same beat.
+    /// </summary>
+    private readonly bool[] _lanesUsedThisBeat = new bool[4];
+
     private void OnBeatInternal(int absoluteBeat)
     {
         if (_finished) return;
@@ -74,14 +81,47 @@ public abstract partial class RhythmPatternBase : Node
             return;
         }
 
+        // Reset per-beat lane tracking
+        _lanesUsedThisBeat[0] = false;
+        _lanesUsedThisBeat[1] = false;
+        _lanesUsedThisBeat[2] = false;
+        _lanesUsedThisBeat[3] = false;
+
         SpawnOnBeat(beatInMeasure, _beatsSinceStart);
 
-        // Adapted enemies spawn extra obstacles (density > 1.0)
+        // Adapted enemies spawn extra obstacles (density > 1.0).
+        // Pick a lane that wasn't already used this beat to avoid
+        // two overlapping notes the player can't both hit.
         if (DensityMult > 1.0f && GD.Randf() < (DensityMult - 1.0f))
-            Arena.CreateObstacle((int)GD.RandRange(0, 3), RhythmArena.BeatsUntilArrival, 1);
+        {
+            int freeLane = PickFreeLane();
+            if (freeLane >= 0)
+                Arena.CreateObstacle(freeLane, RhythmArena.BeatsUntilArrival, 1);
+        }
 
         _beatsSinceStart++;
         FinishIfDone();
+    }
+
+    /// <summary>Returns a random lane not used this beat, or -1 if all lanes are taken.</summary>
+    private int PickFreeLane()
+    {
+        // Count free lanes
+        int freeCount = 0;
+        for (int i = 0; i < 4; i++)
+            if (!_lanesUsedThisBeat[i]) freeCount++;
+
+        if (freeCount == 0) return -1;
+
+        // Pick the Nth free lane
+        int pick = (int)(GD.Randf() * freeCount);
+        for (int i = 0; i < 4; i++)
+        {
+            if (_lanesUsedThisBeat[i]) continue;
+            if (pick == 0) return i;
+            pick--;
+        }
+        return -1; // unreachable
     }
 
     private void FinishIfDone()
@@ -103,5 +143,9 @@ public abstract partial class RhythmPatternBase : Node
 
     /// <summary>Convenience helper — spawn a StandardObstacle in the given lane.</summary>
     protected void SpawnObstacle(int lane, int damage = 1, int beatsUntilArrival = RhythmArena.BeatsUntilArrival)
-        => Arena.CreateObstacle(lane, beatsUntilArrival, damage);
+    {
+        if (lane >= 0 && lane < 4)
+            _lanesUsedThisBeat[lane] = true;
+        Arena.CreateObstacle(lane, beatsUntilArrival, damage);
+    }
 }
