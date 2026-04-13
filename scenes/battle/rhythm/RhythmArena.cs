@@ -99,6 +99,12 @@ public partial class RhythmArena : Node2D
     /// <summary>Total misses this phase.</summary>
     public int TotalMisses => _totalMisses;
 
+    /// <summary>Current consecutive hit streak this phase — read by BattleScene for enemy reactions.</summary>
+    public int CurrentCombo => _currentStreak;
+
+    /// <summary>Total notes resolved this phase (perfects + goods + misses).</summary>
+    public int TotalNotes => _totalPerfects + _totalGoods + _totalMisses;
+
     /// <summary>
     /// Multiplier for obstacle spawn density. Set by BattleScene before StartPhase.
     /// Values > 1.0 add extra obstacles; values &lt; 1.0 skip beats (cocky enemies).

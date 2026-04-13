@@ -2,6 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using SennenRpg.Autoloads;
 using SennenRpg.Core.Data;
+using SennenRpg.Scenes.Battle;
 
 namespace SennenRpg.Scenes.Menus;
 
@@ -43,6 +44,7 @@ public partial class BestiaryMenu : CanvasLayer
     private float              _spriteBeatScale = 1f;
     private SennenRpg.Scenes.Fx.BeatSyncTrigger? _spriteBeatSync;
     private readonly System.Collections.Generic.List<Button> _entryButtons = new();
+    private PracticeArena? _practiceArena;
 
     public override void _Ready()
     {
@@ -349,6 +351,21 @@ public partial class BestiaryMenu : CanvasLayer
                 BuildStudiedBody(enemy, kills);
                 break;
         }
+
+        // Practice button — shown when eligible and enemy has an attack pattern
+        if (BestiaryPracticeLogic.CanPractice(kills) && enemy.AttackPatternScene != null)
+        {
+            AddSeparator();
+            var practiceBtn = new Button
+            {
+                Text = "PRACTICE",
+                SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
+                CustomMinimumSize = new Vector2(140f, 32f),
+            };
+            UiTheme.ApplyButtonTheme(practiceBtn);
+            practiceBtn.Pressed += () => OpenPractice(enemy);
+            _detailVbox.AddChild(practiceBtn);
+        }
     }
 
     private TextureRect BuildSpriteView(EnemyData enemy, BestiaryLogic.EntryTier tier)
@@ -478,6 +495,38 @@ public partial class BestiaryMenu : CanvasLayer
             string bonusName = ItemDisplayName(enemy.BonusLootItemPath);
             AddLine($"Bonus loot: {bonusName} (Rhythm Memory)", new Color(0.7f, 0.85f, 1f));
         }
+    }
+
+    // ── Practice Arena ────────────────────────────────────────────────────
+
+    private void OpenPractice(EnemyData enemy)
+    {
+        AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
+
+        // Hide the bestiary while practice is open (both are CanvasLayers)
+        Visible = false;
+
+        _practiceArena = new PracticeArena();
+        GetTree().Root.AddChild(_practiceArena);
+        _practiceArena.Closed += OnPracticeClosed;
+        _practiceArena.Open(enemy);
+    }
+
+    private void OnPracticeClosed()
+    {
+        if (_practiceArena != null)
+        {
+            _practiceArena.Closed -= OnPracticeClosed;
+            if (IsInstanceValid(_practiceArena))
+                _practiceArena.QueueFree();
+            _practiceArena = null;
+        }
+
+        // Re-show the bestiary
+        Visible = true;
+        // Re-focus the current entry button
+        if (_selectedIndex >= 0 && _selectedIndex < _entryButtons.Count)
+            _entryButtons[_selectedIndex].CallDeferred(Control.MethodName.GrabFocus);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────

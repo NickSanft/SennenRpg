@@ -434,6 +434,14 @@ public partial class BattleScene : Node2D
 	private bool _rhythmShieldActive;
 	private bool _rhythmCounterDamage;
 
+	// ── Enemy reaction visuals during rhythm phase ────────────────────
+	private Tween? _enemyReactionTween;
+	private bool   _enemyWorriedActive;   // trembling at combo >= 5
+	private bool   _enemyTauntTriggered;  // taunt bounce at 3+ misses
+	private bool   _enemySRankTintActive; // red tint when all-perfect >= 5
+	private Vector2 _enemyReactionBasePos; // original Position before shake offset
+	private Color   _enemyReactionBaseModulate = Colors.White; // original Modulate
+
 	// ── Node references ───────────────────────────────────────────────
 	private Node2D          _enemyArea      = null!;
 	private ActionMenu      _actionMenu     = null!;
@@ -555,6 +563,10 @@ public partial class BattleScene : Node2D
 		// Performance tracking
 		_rhythmArena.NoteHit    += grade => _performance.Record((HitGrade)grade);
 		_rhythmArena.PlayerHurt += _ => _performance.Record(HitGrade.Miss);
+
+		// Enemy reaction visuals during rhythm phase
+		_rhythmArena.NoteHit += OnNoteHitEnemyReaction;
+		_rhythmArena.PlayerHurt += _ => OnNoteHitEnemyReaction((int)HitGrade.Miss);
 		_rhythmStrike.StrikeResolved += grade => _performance.Record((HitGrade)grade);
 
 		// Load encounter
@@ -2209,6 +2221,7 @@ public partial class BattleScene : Node2D
 	private async Task DoBeginRhythmPhase()
 	{
 		SetState(BattleState.RhythmPhase);
+		ResetEnemyReactions();
 
 		if (_adaptation.Tier >= AdaptationTier.Hardened)
 			await ShowPhaseCard("⚠  DODGE!  ⚠  (INTENSIFIED)", new Color(1f, 0.15f, 0.15f));
@@ -2263,6 +2276,7 @@ public partial class BattleScene : Node2D
 	private void OnRhythmPhaseEnded()
 	{
 		if (_state != BattleState.RhythmPhase) return;
+		ResetEnemyReactions();
 		GD.Print($"[BattleScene] Rhythm phase ended. Max combo: {_rhythmArena.MaxStreak}");
 		_battleHud.ShowPerformanceSummary(_performance);
 
@@ -2570,5 +2584,143 @@ public partial class BattleScene : Node2D
 		// Per-enemy: nameplate shows the current target's status badges.
 		_enemyNameplate.UpdateStatuses(Target?.Statuses
 			?? new System.Collections.Generic.Dictionary<StatusEffect, int>());
+	}
+
+	// ── Enemy reaction visuals during rhythm phase ────────────────────
+
+	/// <summary>
+	/// Get the first living enemy's visual node for reaction animations.
+	/// Falls back to the current target, then any living enemy.
+	/// </summary>
+	private Node2D? GetReactionEnemyVisual()
+	{
+		if (Target?.Visual != null && !Target.IsKO) return Target.Visual;
+		foreach (var e in _enemies)
+			if (!e.IsKO && e.Visual != null) return e.Visual;
+		return null;
+	}
+
+	/// <summary>
+	/// Reset all enemy reaction visual state. Called at the start and end
+	/// of each rhythm phase so tweens don't bleed between turns.
+	/// </summary>
+	private void ResetEnemyReactions()
+	{
+		_enemyReactionTween?.Kill();
+		_enemyReactionTween = null;
+		_enemyWorriedActive   = false;
+		_enemyTauntTriggered  = false;
+		_enemySRankTintActive = false;
+
+		// Restore every enemy visual to default scale/modulate/position
+		foreach (var e in _enemies)
+		{
+			if (e.Visual == null) continue;
+			e.Visual.Scale    = new Vector2(4f, 4f);
+			e.Visual.Modulate = Colors.White;
+		}
+	}
+
+	/// <summary>
+	/// Called on every NoteHit during the rhythm phase. Reads the arena's
+	/// public counters and applies visual reactions to the first living enemy.
+	/// </summary>
+	private void OnNoteHitEnemyReaction(int _grade)
+	{
+		if (_state != BattleState.RhythmPhase) return;
+		var visual = GetReactionEnemyVisual();
+		if (visual == null) return;
+
+		int combo     = _rhythmArena.CurrentCombo;
+		int misses    = _rhythmArena.TotalMisses;
+		int perfects  = _rhythmArena.TotalPerfects;
+		int totalNotes = _rhythmArena.TotalNotes;
+		var grade     = (HitGrade)_grade;
+
+		// --- Flinch on each Perfect hit ---
+		if (grade == HitGrade.Perfect)
+		{
+			// Kill any running flinch tween so they don't stack
+			_enemyReactionTween?.Kill();
+			visual.Scale = new Vector2(4f, 4f); // ensure clean baseline
+
+			_enemyReactionTween = CreateTween();
+			_enemyReactionTween.TweenProperty(visual, "scale",
+				new Vector2(3.6f, 4.4f), 0.07f)
+				.SetTrans(Tween.TransitionType.Sine);
+			_enemyReactionTween.TweenProperty(visual, "scale",
+				new Vector2(4f, 4f), 0.08f)
+				.SetTrans(Tween.TransitionType.Bounce);
+		}
+
+		// --- Worried trembling at combo >= 5 ---
+		if (combo >= 5 && !_enemyWorriedActive)
+		{
+			_enemyWorriedActive = true;
+			_enemyReactionBasePos = visual.Position;
+			StartWorriedTremble(visual);
+		}
+		else if (combo < 5 && _enemyWorriedActive)
+		{
+			_enemyWorriedActive = false;
+			visual.Position = _enemyReactionBasePos;
+		}
+
+		// --- Taunt bounce at 3+ misses (fires once per phase) ---
+		if (misses >= 3 && !_enemyTauntTriggered)
+		{
+			_enemyTauntTriggered = true;
+			PlayTauntBounce(visual);
+		}
+
+		// --- S-rank red tint: all notes Perfect so far, count >= 5 ---
+		bool allPerfect = perfects == totalNotes && totalNotes >= 5;
+		if (allPerfect && !_enemySRankTintActive)
+		{
+			_enemySRankTintActive = true;
+			var tint = CreateTween();
+			tint.TweenProperty(visual, "modulate",
+				new Color(1f, 0.55f, 0.55f, 1f), 0.3f);
+		}
+		else if (!allPerfect && _enemySRankTintActive)
+		{
+			_enemySRankTintActive = false;
+			var tint = CreateTween();
+			tint.TweenProperty(visual, "modulate", Colors.White, 0.2f);
+		}
+	}
+
+	/// <summary>
+	/// Start a looping positional tremble on the enemy visual. Runs until
+	/// the worried flag is cleared or ResetEnemyReactions is called.
+	/// </summary>
+	private async void StartWorriedTremble(Node2D visual)
+	{
+		while (_enemyWorriedActive && IsInstanceValid(visual) && _state == BattleState.RhythmPhase)
+		{
+			float offsetX = (float)(GD.Randf() * 4f - 2f);
+			float offsetY = (float)(GD.Randf() * 2f - 1f);
+			visual.Position = _enemyReactionBasePos + new Vector2(offsetX, offsetY);
+			await ToSignal(GetTree().CreateTimer(0.04f), SceneTreeTimer.SignalName.Timeout);
+		}
+		// Snap back when done
+		if (IsInstanceValid(visual))
+			visual.Position = _enemyReactionBasePos;
+	}
+
+	/// <summary>
+	/// Quick scale bounce (1.0 -> 1.15 -> 1.0 of base) to taunt the player.
+	/// </summary>
+	private void PlayTauntBounce(Node2D visual)
+	{
+		var taunt = CreateTween();
+		taunt.TweenProperty(visual, "scale",
+			new Vector2(4.6f, 4.6f), 0.12f)
+			.SetTrans(Tween.TransitionType.Back)
+			.SetEase(Tween.EaseType.Out);
+		taunt.TweenProperty(visual, "scale",
+			new Vector2(4f, 4f), 0.15f)
+			.SetTrans(Tween.TransitionType.Bounce)
+			.SetEase(Tween.EaseType.Out);
 	}
 }
