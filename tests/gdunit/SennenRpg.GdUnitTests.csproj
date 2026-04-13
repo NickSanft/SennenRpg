@@ -10,23 +10,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
         <PackageReference Include="gdUnit4.api"          Version="5.0.0" />
         <PackageReference Include="gdUnit4.test.adapter" Version="3.0.0" />
         <!-- GodotSharp satisfies Godot.* type references in the test files -->
         <PackageReference Include="GodotSharp"           Version="4.6.1" />
     </ItemGroup>
 
-    <!--
-        Tests marked [RequireGodotRuntime] run INSIDE the Godot editor via the
-        GdUnit4 panel and cannot run with `dotnet test`.
-
-        To run from the editor:
-          1. Open the GdUnit4 panel (bottom dock in Godot)
-          2. Right-click this folder → Run Tests
-
-        To run headless:
-          godot --headless -s addons/gdUnit4/bin/GdUnitCmdTool.gd -d res://tests/gdunit/
-    -->
+    <!-- Tests marked [RequireGodotRuntime] need the Godot editor (GdUnit4 panel)
+         or headless mode (see test file doc comments for the exact command). -->
 
 </Project>
