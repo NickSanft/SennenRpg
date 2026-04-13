@@ -174,6 +174,8 @@ public partial class SettingsMenu : CanvasLayer
 			SettingsLogic.WindowScaleLabel(WindowScale.Scale2x),
 			SettingsLogic.WindowScaleLabel(WindowScale.Scale3x),
 			SettingsLogic.WindowScaleLabel(WindowScale.Scale4x),
+			SettingsLogic.WindowScaleLabel(WindowScale.Scale1440p),
+			SettingsLogic.WindowScaleLabel(WindowScale.ScaleUltrawide),
 			SettingsLogic.WindowScaleLabel(WindowScale.Fullscreen));
 		_vsyncCheck        = AddCheckRow(tab,  "VSync");
 		_textSizeOption    = AddOptionRow(tab, "Text Size",       "Small", "Medium", "Large");

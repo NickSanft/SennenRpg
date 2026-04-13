@@ -10,7 +10,7 @@ public enum BattleDifficulty   { Easy, Normal, Hard }
 public enum EncounterRateMode  { Normal, Low, Off }
 public enum RhythmTimingWindow { Tight, Normal, Forgiving, AutoHit }
 public enum BattleTextSpeed    { Slow, Normal, Fast, Instant }
-public enum WindowScale        { Scale1x, Scale2x, Scale3x, Scale4x, Fullscreen }
+public enum WindowScale        { Scale1x, Scale2x, Scale3x, Scale4x, Scale1440p, ScaleUltrawide, Fullscreen }
 
 /// <summary>
 /// Immutable record holding all player settings.

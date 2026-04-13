@@ -136,22 +136,26 @@ public static class SettingsLogic
     /// <summary>Returns the window size in pixels for the given scale.</summary>
     public static Vector2I WindowSize(WindowScale scale) => scale switch
     {
-        WindowScale.Scale1x    => new Vector2I(640, 360),
-        WindowScale.Scale2x    => new Vector2I(1280, 720),
-        WindowScale.Scale3x    => new Vector2I(1600, 900),
-        WindowScale.Scale4x    => new Vector2I(1920, 1080),
-        WindowScale.Fullscreen => new Vector2I(1920, 1080),
+        WindowScale.Scale1x       => new Vector2I(640, 360),
+        WindowScale.Scale2x       => new Vector2I(1280, 720),
+        WindowScale.Scale3x       => new Vector2I(1600, 900),
+        WindowScale.Scale4x       => new Vector2I(1920, 1080),
+        WindowScale.Scale1440p    => new Vector2I(2560, 1440),
+        WindowScale.ScaleUltrawide => new Vector2I(3440, 1440),
+        WindowScale.Fullscreen    => new Vector2I(1920, 1080),
         _ => new Vector2I(1280, 720),
     };
 
     /// <summary>Display name for each window scale option.</summary>
     public static string WindowScaleLabel(WindowScale scale) => scale switch
     {
-        WindowScale.Scale1x    => "640x360 (Small)",
-        WindowScale.Scale2x    => "1280x720 (HD)",
-        WindowScale.Scale3x    => "1600x900 (HD+)",
-        WindowScale.Scale4x    => "1920x1080 (Full HD)",
-        WindowScale.Fullscreen => "Fullscreen",
+        WindowScale.Scale1x       => "640x360 (Small)",
+        WindowScale.Scale2x       => "1280x720 (HD)",
+        WindowScale.Scale3x       => "1600x900 (HD+)",
+        WindowScale.Scale4x       => "1920x1080 (Full HD)",
+        WindowScale.Scale1440p    => "2560x1440 (QHD)",
+        WindowScale.ScaleUltrawide => "3440x1440 (Ultrawide)",
+        WindowScale.Fullscreen    => "Fullscreen",
         _ => "1280x720 (HD)",
     };
 
