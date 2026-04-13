@@ -57,6 +57,9 @@ public partial class GameManager : Node
 	/// <summary>Per-enemy rhythm performance history for the Rhythm Memory adaptation system.</summary>
 	public System.Collections.Generic.Dictionary<string, EnemyRhythmHistory> RhythmMemory { get; } = new();
 
+	/// <summary>Best practice mode rank per enemy — enemy id → rank string (S/A/B/C/D).</summary>
+	public System.Collections.Generic.Dictionary<string, string> PracticeBestRanks { get; } = new();
+
 	/// <summary>
 	/// Current Perfect-streak counter for the foraging minigame. Increments on a Perfect grade,
 	/// resets to zero on anything else. Persisted in <see cref="SaveData.ForageStreak"/>.
@@ -392,6 +395,21 @@ public partial class GameManager : Node
 			$"{updated.TotalEncounters} encounters (P:{updated.TotalPerfects} G:{updated.TotalGoods} M:{updated.TotalMisses}, best streak:{updated.BestMaxStreak})");
 	}
 
+	/// <summary>Record a practice run result, keeping only the best rank.</summary>
+	public void RecordPracticeRank(string enemyId, string rankStr)
+	{
+		if (PracticeBestRanks.TryGetValue(enemyId, out var existing))
+		{
+			// Only update if new rank is better (S < A < B < C < D alphabetically works for S,A,B,C,D)
+			if (string.CompareOrdinal(rankStr, existing) < 0)
+				PracticeBestRanks[enemyId] = rankStr;
+		}
+		else
+		{
+			PracticeBestRanks[enemyId] = rankStr;
+		}
+	}
+
 	// ── Character customization ───────────────────────────────────────────────
 
 	public void ApplyCharacterCustomization(CharacterStats stats, Color[] sourceColors, Color[] targetColors)
@@ -613,6 +631,9 @@ public partial class GameManager : Node
 		ForageStreak = data.ForageStreak;
 		_forageCodex.ReplaceAll(data.ForageCodex);
 		_bestiary.ReplaceAll(data.Bestiary);
+
+		PracticeBestRanks.Clear();
+		foreach (var kv in data.PracticeBestRanks) PracticeBestRanks[kv.Key] = kv.Value;
 
 		WeatherManager.Instance?.LoadFromSave(data.Weather, data.WeatherStepCounter);
 

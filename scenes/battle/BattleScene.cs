@@ -476,6 +476,7 @@ public partial class BattleScene : Node2D
 		{ "Bardic Inspiration", "Lullaby", "War Cry", "Serenade", "Dissonance" };
 
 	private PackedScene? _damageNumberScene;
+	private Label _battleComboLabel = null!;
 
 	public override void _Ready()
 	{
@@ -568,6 +569,26 @@ public partial class BattleScene : Node2D
 		_rhythmArena.NoteHit += OnNoteHitEnemyReaction;
 		_rhythmArena.PlayerHurt += _ => OnNoteHitEnemyReaction((int)HitGrade.Miss);
 		_rhythmStrike.StrikeResolved += grade => _performance.Record((HitGrade)grade);
+
+		// Combo counter label — positioned below the arena, right-aligned
+		_battleComboLabel = new Label
+		{
+			Text                = "",
+			HorizontalAlignment = HorizontalAlignment.Right,
+			Visible             = false,
+		};
+		_battleComboLabel.AddThemeFontSizeOverride("font_size", 14);
+		var comboFont = UiTheme.LoadPixelFont();
+		if (comboFont != null)
+			_battleComboLabel.AddThemeFontOverride("font", comboFont);
+		_battleComboLabel.AddThemeColorOverride("font_color", UiTheme.Gold);
+		// Arena is at (576, 200), half-size 112x72, so bottom-right is (688, 272)
+		_battleComboLabel.Position = new Vector2(588f, 274f);
+		_battleComboLabel.Size     = new Vector2(100f, 24f);
+		AddChild(_battleComboLabel);
+
+		_rhythmArena.NoteHit += OnNoteHitUpdateComboLabel;
+		_rhythmArena.PlayerHurt += _ => OnNoteHitUpdateComboLabel(0);
 
 		// Load encounter
 		var encounter = BattleRegistry.Instance.GetPendingEncounter();
@@ -2273,9 +2294,24 @@ public partial class BattleScene : Node2D
 		label.QueueFree();
 	}
 
+	private void OnNoteHitUpdateComboLabel(int _grade)
+	{
+		int combo = _rhythmArena.CurrentCombo;
+		if (combo >= 3)
+		{
+			_battleComboLabel.Text    = $"x{combo}";
+			_battleComboLabel.Visible = true;
+		}
+		else
+		{
+			_battleComboLabel.Visible = false;
+		}
+	}
+
 	private void OnRhythmPhaseEnded()
 	{
 		if (_state != BattleState.RhythmPhase) return;
+		_battleComboLabel.Visible = false;
 		ResetEnemyReactions();
 		GD.Print($"[BattleScene] Rhythm phase ended. Max combo: {_rhythmArena.MaxStreak}");
 		_battleHud.ShowPerformanceSummary(_performance);

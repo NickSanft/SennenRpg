@@ -101,6 +101,10 @@ public record SaveData
 	/// <summary>Bestiary entries — enemy id → kill record with first-defeated timestamp.</summary>
 	public Dictionary<string, SennenRpg.Core.Data.BestiaryEntry>            Bestiary           { get; init; } = new();
 
+	// ── Practice best ranks ──────────────────────────────────────────────────
+	/// <summary>Best practice rank per enemy — enemy id → rank name (S/A/B/C/D).</summary>
+	public Dictionary<string, string>                                       PracticeBestRanks  { get; init; } = new();
+
 	// ── Party (Phase 2) ──────────────────────────────────────────────────────
 	/// <summary>
 	/// All party members in order. Empty for legacy saves — auto-migrated on load

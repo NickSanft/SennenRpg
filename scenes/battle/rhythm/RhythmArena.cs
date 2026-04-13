@@ -378,7 +378,8 @@ public partial class RhythmArena : Node2D
                     var   grade         = RhythmConstants.GradeDeviationScaled(deviationSec, timingScale);
                     best.Resolve(grade);
                     EmitSignal(SignalName.NoteHit, (int)grade);
-                    ShowFeedback(grade, lane);
+                    bool isEarly = best.Position.X > HitZoneX;
+                    ShowFeedback(grade, lane, grade == HitGrade.Good ? isEarly : null);
                     RecordHit(grade);
                 }
                 GetViewport().SetInputAsHandled();
@@ -545,12 +546,12 @@ public partial class RhythmArena : Node2D
         }
     }
 
-    private void ShowFeedback(HitGrade grade, int lane)
+    private void ShowFeedback(HitGrade grade, int lane, bool? isEarly = null)
     {
         (string text, Color color) = grade switch
         {
             HitGrade.Perfect => ("PERFECT!", Colors.Yellow),
-            HitGrade.Good    => ("GOOD",     Colors.White),
+            HitGrade.Good    => ("GOOD" + (isEarly.HasValue ? (isEarly.Value ? " EARLY" : " LATE") : ""), Colors.White),
             _                => ("MISS",     Colors.Red),
         };
         var lbl = new HitFeedbackLabel();

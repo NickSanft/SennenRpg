@@ -124,6 +124,8 @@ public partial class SaveManager : Node
 			WeatherStepCounter       = WeatherManager.Instance?.StepCounter ?? 0,
 			// Bestiary
 			Bestiary                 = new System.Collections.Generic.Dictionary<string, SennenRpg.Core.Data.BestiaryEntry>(gm.Bestiary.Entries),
+			// Practice best ranks
+			PracticeBestRanks        = new System.Collections.Generic.Dictionary<string, string>(gm.PracticeBestRanks),
 			// Party (Phase 2)
 			Party                    = new System.Collections.Generic.List<SennenRpg.Core.Data.PartyMember>(gm.Party.AllMembers),
 			PartyLeaderIndex         = gm.Party.LeaderIndex,

@@ -356,9 +356,12 @@ public partial class BestiaryMenu : CanvasLayer
         if (BestiaryPracticeLogic.CanPractice(kills) && enemy.AttackPatternScene != null)
         {
             AddSeparator();
+            string btnText = GameManager.Instance.PracticeBestRanks.TryGetValue(enemy.EnemyId, out var savedRank)
+                ? $"PRACTICE (Best: {savedRank})"
+                : "PRACTICE";
             var practiceBtn = new Button
             {
-                Text = "PRACTICE",
+                Text = btnText,
                 SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
                 CustomMinimumSize = new Vector2(140f, 32f),
             };
@@ -455,6 +458,10 @@ public partial class BestiaryMenu : CanvasLayer
         // Personal best rhythm streak from Rhythm Memory.
         if (GameManager.Instance.RhythmMemory.TryGetValue(enemy.EnemyId, out var mem))
             AddLine($"Best streak: {mem.BestMaxStreak}", SubtleGrey);
+
+        // Practice best rank
+        if (GameManager.Instance.PracticeBestRanks.TryGetValue(enemy.EnemyId, out var bestRank))
+            AddLine($"Practice Best: {bestRank}", UiTheme.Gold);
     }
 
     private void BuildDropsSection(EnemyData enemy)

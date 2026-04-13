@@ -249,6 +249,13 @@ public partial class PracticeArena : CanvasLayer
         float perfectRate = BestiaryPracticeLogic.PerfectRate(p, g, m);
         float accuracy = BestiaryPracticeLogic.Accuracy(p, g, m);
 
+        // Check if this is a new personal best before persisting
+        bool isNewBest = true;
+        if (GameManager.Instance.PracticeBestRanks.TryGetValue(_enemy!.EnemyId, out var prevBest))
+            isNewBest = string.CompareOrdinal(rank.ToString(), prevBest) < 0;
+        // Persist best rank
+        GameManager.Instance.RecordPracticeRank(_enemy.EnemyId, rank.ToString());
+
         // Results overlay
         _resultsOverlay = new Control { AnchorRight = 1f, AnchorBottom = 1f };
         AddChild(_resultsOverlay);
@@ -299,6 +306,19 @@ public partial class PracticeArena : CanvasLayer
         };
         gradeLbl.AddThemeFontSizeOverride("font_size", 22);
         resultVbox.AddChild(gradeLbl);
+
+        // "NEW BEST!" indicator when the player improved their rank
+        if (isNewBest && prevBest != null)
+        {
+            var newBestLbl = new Label
+            {
+                Text = "NEW BEST!",
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Modulate = UiTheme.Gold,
+            };
+            newBestLbl.AddThemeFontSizeOverride("font_size", 14);
+            resultVbox.AddChild(newBestLbl);
+        }
 
         // Stats
         AddResultLine(resultVbox, $"Perfect: {p}    Good: {g}    Miss: {m}");
