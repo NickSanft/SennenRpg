@@ -67,6 +67,21 @@ public partial class InventoryMenu : CanvasLayer
 
 		var vbox = GetNode<VBoxContainer>("Overlay/Panel/VBox");
 
+		// Wrap ItemRows in a ScrollContainer so large inventories can't push the
+		// panel off-screen (it's anchored to center and grows in both directions).
+		int itemRowsIdx = _itemRows.GetIndex();
+		vbox.RemoveChild(_itemRows);
+		var scroll = new ScrollContainer
+		{
+			CustomMinimumSize    = new Vector2(240f, 260f),
+			SizeFlagsHorizontal  = Control.SizeFlags.Expand | Control.SizeFlags.Fill,
+			HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+		};
+		_itemRows.SizeFlagsHorizontal = Control.SizeFlags.Expand | Control.SizeFlags.Fill;
+		scroll.AddChild(_itemRows);
+		vbox.AddChild(scroll);
+		vbox.MoveChild(scroll, itemRowsIdx);
+
 		// Category tabs inserted at the top (after any existing title)
 		_tabRow = new HBoxContainer();
 		_tabRow.AddThemeConstantOverride("separation", 4);
