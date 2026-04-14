@@ -11,15 +11,18 @@ namespace SennenRpg.Scenes.Battle;
 public partial class EnemyNameplate : Control
 {
 	private Label _nameLabel   = null!;
-	private Label _statusLabel = null!;
+	private StatusIconStrip _statusStrip = null!;
 
 	public override void _Ready()
 	{
 		_nameLabel = GetNode<Label>("VBox/NameLabel");
 
-		// Status label created dynamically — no .tscn edit required.
-		_statusLabel = new Label { Text = "" };
-		GetNode<VBoxContainer>("VBox").AddChild(_statusLabel);
+		// Status strip created dynamically — no .tscn edit required.
+		_statusStrip = new StatusIconStrip
+		{
+			Alignment = BoxContainer.AlignmentMode.Center,
+		};
+		GetNode<VBoxContainer>("VBox").AddChild(_statusStrip);
 	}
 
 	public void Setup(string enemyName)
@@ -32,14 +35,6 @@ public partial class EnemyNameplate : Control
 	/// <summary>Updates the status icon row beneath the enemy name.</summary>
 	public void UpdateStatuses(Dictionary<StatusEffect, int> statuses)
 	{
-		if (statuses.Count == 0)
-		{
-			_statusLabel.Text = "";
-			return;
-		}
-		var parts = new List<string>();
-		foreach (var (effect, turns) in statuses)
-			parts.Add($"{StatusLogic.IconText(effect)}({turns})");
-		_statusLabel.Text = string.Join(" ", parts);
+		_statusStrip.SetStatuses(statuses);
 	}
 }

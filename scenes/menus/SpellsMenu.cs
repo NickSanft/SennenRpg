@@ -142,17 +142,18 @@ public partial class SpellsMenu : CanvasLayer
             nameLabel.AddThemeFontSizeOverride("font_size", 12);
             row.AddChild(nameLabel);
 
+            bool affordable = gm.PlayerStats.CurrentMp >= spell.MpCost;
             var mpLabel = new Label
             {
                 Text = $"{spell.MpCost} MP",
-                Modulate = MpBlue,
+                Modulate = affordable ? MpBlue : new Color(0.8f, 0.3f, 0.3f),
             };
             mpLabel.AddThemeFontSizeOverride("font_size", 16);
             row.AddChild(mpLabel);
 
             if (spell.OverworldUsable)
             {
-                bool canAfford = gm.PlayerStats.CurrentMp >= spell.MpCost;
+                bool canAfford = affordable;
                 var castBtn = new Button
                 {
                     Text = "CAST",

@@ -15,8 +15,27 @@ public partial class InventoryMenu : CanvasLayer
 {
 	[Signal] public delegate void ClosedEventHandler();
 
-	private static readonly Color TabActiveColor  = new(1.0f, 0.85f, 0.1f);
-	private static readonly Color TabInactiveColor = new(0.55f, 0.55f, 0.55f);
+	// Tab filter entry. null Filter = ALL; "equipment" virtual filter uses IsEquipment flag.
+	private readonly struct TabEntry
+	{
+		public readonly string Label;
+		public readonly ItemType? Filter;
+		public readonly bool IsEquipment;
+		public TabEntry(string label, ItemType? filter, bool isEquipment = false)
+		{
+			Label = label; Filter = filter; IsEquipment = isEquipment;
+		}
+	}
+
+	private static readonly TabEntry[] Tabs =
+	{
+		new("ALL",        null),
+		new("CONSUMABLE", ItemType.Consumable),
+		new("INGREDIENT", ItemType.Ingredient),
+		new("EQUIPMENT",  null, isEquipment: true),
+		new("KEY",        ItemType.KeyItem),
+		new("REPEL",      ItemType.Repel),
+	};
 
 	private Label           _emptyLabel    = null!;
 	private VBoxContainer   _itemRows      = null!;
@@ -24,7 +43,8 @@ public partial class InventoryMenu : CanvasLayer
 	private Button          _backButton    = null!;
 	private Label           _descLabel     = null!;
 	private HBoxContainer   _tabRow        = null!;
-	private ItemType?       _activeFilter;
+	private int             _activeTabIndex;
+	private readonly List<Button> _tabButtons = new();
 
 	// Target selection sub-state for consumable items
 	private bool            _targetSelectMode;
@@ -81,45 +101,47 @@ public partial class InventoryMenu : CanvasLayer
 
 	private void BuildCategoryTabs()
 	{
-		AddTab("ALL", null);
-		AddTab("CONSUMABLE", ItemType.Consumable);
-		AddTab("INGREDIENT", ItemType.Ingredient);
-		AddTab("KEY ITEM", ItemType.KeyItem);
-		AddTab("JUNK", ItemType.Junk);
+		_tabButtons.Clear();
+		for (int i = 0; i < Tabs.Length; i++)
+		{
+			int captured = i;
+			var btn = new Button
+			{
+				Text = Tabs[i].Label,
+				ToggleMode = true,
+				ButtonPressed = i == _activeTabIndex,
+				FocusMode = Control.FocusModeEnum.None,
+			};
+			btn.AddThemeFontSizeOverride("font_size", 9);
+			btn.Modulate = i == _activeTabIndex ? UiTheme.Gold : UiTheme.SubtleGrey;
+			btn.Pressed += () => SetActiveTab(captured);
+			_tabRow.AddChild(btn);
+			_tabButtons.Add(btn);
+		}
 	}
 
-	private void AddTab(string label, ItemType? filter)
+	private void SetActiveTab(int index)
 	{
-		var btn = new Button
-		{
-			Text = label,
-			ToggleMode = true,
-			ButtonPressed = filter == _activeFilter,
-		};
-		btn.AddThemeFontSizeOverride("font_size", 9);
-		btn.Modulate = filter == _activeFilter ? TabActiveColor : TabInactiveColor;
-		btn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
-		btn.Pressed += () =>
-		{
-			_activeFilter = filter;
-			UpdateTabVisuals();
-			Refresh();
-		};
-		_tabRow.AddChild(btn);
+		if (index < 0) index = Tabs.Length - 1;
+		if (index >= Tabs.Length) index = 0;
+		if (index == _activeTabIndex) return;
+		_activeTabIndex = index;
+		AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+		UpdateTabVisuals();
+		Refresh();
+	}
+
+	private void CycleTab(int delta)
+	{
+		SetActiveTab(_activeTabIndex + delta);
 	}
 
 	private void UpdateTabVisuals()
 	{
-		int idx = 0;
-		ItemType?[] filters = [null, ItemType.Consumable, ItemType.Ingredient, ItemType.KeyItem, ItemType.Junk];
-		foreach (var child in _tabRow.GetChildren())
+		for (int i = 0; i < _tabButtons.Count; i++)
 		{
-			if (child is Button btn && idx < filters.Length)
-			{
-				btn.ButtonPressed = filters[idx] == _activeFilter;
-				btn.Modulate = filters[idx] == _activeFilter ? TabActiveColor : TabInactiveColor;
-				idx++;
-			}
+			_tabButtons[i].ButtonPressed = i == _activeTabIndex;
+			_tabButtons[i].Modulate      = i == _activeTabIndex ? UiTheme.Gold : UiTheme.SubtleGrey;
 		}
 	}
 
@@ -145,6 +167,25 @@ public partial class InventoryMenu : CanvasLayer
 		if (@event.IsActionPressed("menu") || @event.IsActionPressed("ui_cancel"))
 		{
 			Close();
+			GetViewport().SetInputAsHandled();
+			return;
+		}
+
+		// Tab cycling: Left/Right arrows or Q/E
+		if (@event is InputEventKey key && key.Pressed && !key.Echo)
+		{
+			if (key.Keycode == Key.Q) { CycleTab(-1); GetViewport().SetInputAsHandled(); return; }
+			if (key.Keycode == Key.E) { CycleTab(+1); GetViewport().SetInputAsHandled(); return; }
+		}
+		if (@event.IsActionPressed("ui_left"))
+		{
+			CycleTab(-1);
+			GetViewport().SetInputAsHandled();
+			return;
+		}
+		if (@event.IsActionPressed("ui_right"))
+		{
+			CycleTab(+1);
 			GetViewport().SetInputAsHandled();
 		}
 	}
@@ -178,32 +219,39 @@ public partial class InventoryMenu : CanvasLayer
 		bool focusGrabbed = false;
 		int  itemCount    = 0;
 
+		var tab           = Tabs[_activeTabIndex];
+		bool showItems    = !tab.IsEquipment;           // hide item list on EQUIPMENT tab
+		bool showEquip    = tab.IsEquipment || tab.Filter == null; // show equip on ALL + EQUIPMENT
+
 		// Stack items by path and count duplicates
 		var stacked = CountItems(paths);
 
-		foreach (var (path, count) in stacked)
+		if (showItems)
 		{
-			if (!ResourceLoader.Exists(path)) continue;
-			var resource = GD.Load<Resource>(path);
-			if (resource is not ItemData item) continue;
-
-			// Apply category filter
-			if (_activeFilter.HasValue && item.Type != _activeFilter.Value) continue;
-
-			var row = BuildItemRow(item, path, count);
-			_itemRows.AddChild(row);
-			itemCount++;
-
-			if (!focusGrabbed)
+			foreach (var (path, count) in stacked)
 			{
-				var btn = row.GetNodeOrNull<Button>("UseButton") ?? row.GetNodeOrNull<Button>("InfoButton");
-				btn?.CallDeferred(Control.MethodName.GrabFocus);
-				focusGrabbed = true;
+				if (!ResourceLoader.Exists(path)) continue;
+				var resource = GD.Load<Resource>(path);
+				if (resource is not ItemData item) continue;
+
+				// Apply category filter (null = ALL, show everything)
+				if (tab.Filter.HasValue && item.Type != tab.Filter.Value) continue;
+
+				var row = BuildItemRow(item, path, count);
+				_itemRows.AddChild(row);
+				itemCount++;
+
+				if (!focusGrabbed)
+				{
+					var btn = row.GetNodeOrNull<Button>("UseButton") ?? row.GetNodeOrNull<Button>("InfoButton");
+					btn?.CallDeferred(Control.MethodName.GrabFocus);
+					focusGrabbed = true;
+				}
 			}
 		}
 
-		// Equipment section (only in ALL tab)
-		if (!_activeFilter.HasValue)
+		// Equipment section
+		if (showEquip)
 		{
 			var ownedEquip    = gm.OwnedEquipmentPaths;
 			var equippedPaths = gm.EquippedItemPaths;

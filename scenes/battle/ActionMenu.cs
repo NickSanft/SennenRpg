@@ -14,6 +14,16 @@ public partial class ActionMenu : Control
     [Signal] public delegate void ItemSelectedEventHandler();
     [Signal] public delegate void FleeSelectedEventHandler();
 
+    /// <summary>Emitted whenever the highlighted menu option changes. -1 = none focused.</summary>
+    [Signal] public delegate void OptionFocusChangedEventHandler(int optionIndex);
+
+    /// <summary>Option index for <see cref="OptionFocusChanged"/>.</summary>
+    public const int OptionFight   = 0;
+    public const int OptionPerform = 1;
+    public const int OptionItem    = 2;
+    public const int OptionFlee    = 3;
+    public const int OptionNone    = -1;
+
     private Button _fightButton   = null!;
     private Button _performButton = null!;
     private Button _itemButton    = null!;
@@ -38,10 +48,16 @@ public partial class ActionMenu : Control
         _fleeButton.Pressed    += () => { AudioManager.Instance?.PlaySfx(UiSfx.Confirm); EmitSignal(SignalName.FleeSelected); };
 
         // Cursor SFX on focus
-        _fightButton.FocusEntered   += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
-        _performButton.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
-        _itemButton.FocusEntered    += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
-        _fleeButton.FocusEntered    += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+        _fightButton.FocusEntered   += () => { AudioManager.Instance?.PlaySfx(UiSfx.Cursor); EmitSignal(SignalName.OptionFocusChanged, OptionFight); };
+        _performButton.FocusEntered += () => { AudioManager.Instance?.PlaySfx(UiSfx.Cursor); EmitSignal(SignalName.OptionFocusChanged, OptionPerform); };
+        _itemButton.FocusEntered    += () => { AudioManager.Instance?.PlaySfx(UiSfx.Cursor); EmitSignal(SignalName.OptionFocusChanged, OptionItem); };
+        _fleeButton.FocusEntered    += () => { AudioManager.Instance?.PlaySfx(UiSfx.Cursor); EmitSignal(SignalName.OptionFocusChanged, OptionFlee); };
+
+        // When focus leaves the menu entirely, emit "none" so listeners hide overlays.
+        _fightButton.FocusExited   += MaybeEmitFocusNone;
+        _performButton.FocusExited += MaybeEmitFocusNone;
+        _itemButton.FocusExited    += MaybeEmitFocusNone;
+        _fleeButton.FocusExited    += MaybeEmitFocusNone;
 
         // Apply SNES theme
         UiTheme.ApplyToAllButtons(this);
@@ -49,6 +65,26 @@ public partial class ActionMenu : Control
     }
 
     public void FocusFirst() => _fightButton.GrabFocus();
+
+    /// <summary>
+    /// Fires OptionFocusChanged(OptionNone) if, after a focus-exit, none of our buttons
+    /// currently holds focus. Deferred so Godot's incoming FocusEntered has time to arrive.
+    /// </summary>
+    private void MaybeEmitFocusNone()
+    {
+        CallDeferred(MethodName.EmitFocusNoneIfIdle);
+    }
+
+    private void EmitFocusNoneIfIdle()
+    {
+        var vp = GetViewport();
+        if (vp == null) return;
+        var focused = vp.GuiGetFocusOwner();
+        if (focused == _fightButton || focused == _performButton
+            || focused == _itemButton || focused == _fleeButton)
+            return;
+        EmitSignal(SignalName.OptionFocusChanged, OptionNone);
+    }
 
     /// <summary>Overrides the Flee button label text (e.g. "Flee (72%)").</summary>
     public void SetFleeLabel(string text) => _fleeButton.Text = text;

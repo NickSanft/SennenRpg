@@ -77,6 +77,40 @@ public static class SkillResolver
     /// The MageRuneInput correctCount (0..3) maps to an accuracy scalar.
     /// Hits ALL enemies — the caller loops over the enemy list.
     /// </summary>
+    /// <summary>
+    /// Estimate damage range for a Ranger-aim style skill (Dual-Class, Gravity Arrow).
+    /// Low = poor-accuracy (0.2 scalar), High = perfect aim (1.0).
+    /// </summary>
+    public static (int minDmg, int maxDmg) EstimateRangerSkillDamageRange(int actorAttack, int targetDefence, float multiplier)
+    {
+        int low  = ResolveRangerSkillDamage(actorAttack, targetDefence, 0.2f, multiplier);
+        int high = ResolveRangerSkillDamage(actorAttack, targetDefence, 1.0f, multiplier);
+        if (high < low) high = low;
+        return (low, high);
+    }
+
+    /// <summary>
+    /// Estimate damage range for Lily's Wither and Bloom (magic-scaled, fillRatio 0..1).
+    /// </summary>
+    public static (int minDmg, int maxDmg) EstimateWitherDamageRange(int actorMagic, int targetDefence)
+    {
+        int low  = ResolveWitherDamage(actorMagic, targetDefence, 0f);
+        int high = ResolveWitherDamage(actorMagic, targetDefence, 1f);
+        if (high < low) high = low;
+        return (low, high);
+    }
+
+    /// <summary>
+    /// Estimate per-enemy damage range for Crystal Knife (magic AoE, correctCount 0..3).
+    /// </summary>
+    public static (int minDmg, int maxDmg) EstimateCrystalKnifeDamageRange(int actorMagic, int targetDefence)
+    {
+        int low  = ResolveCrystalKnifeDamage(actorMagic, targetDefence, 0);
+        int high = ResolveCrystalKnifeDamage(actorMagic, targetDefence, 3);
+        if (high < low) high = low;
+        return (low, high);
+    }
+
     public static int ResolveCrystalKnifeDamage(int actorMagic, int targetDefence, int correctCount)
     {
         float accuracy = correctCount switch

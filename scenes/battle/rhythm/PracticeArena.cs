@@ -37,6 +37,10 @@ public partial class PracticeArena : CanvasLayer
     private readonly Button[] _speedButtons = new Button[3];
     private readonly Button[] _densityButtons = new Button[3];
 
+    private bool _ghostMode;
+    private bool _ranAsGhost;
+    private Button _ghostButton = null!;
+
     public override void _Ready()
     {
         Layer = 52;
@@ -174,6 +178,34 @@ public partial class PracticeArena : CanvasLayer
 
         UpdateOptionButtonHighlights();
 
+        // Ghost mode toggle row
+        var ghostRow = new VBoxContainer();
+        ghostRow.AddThemeConstantOverride("separation", 2);
+        mainVbox.AddChild(ghostRow);
+
+        _ghostButton = new Button
+        {
+            Text = "GHOST: OFF",
+            Name = "GhostButton",
+            SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
+            CustomMinimumSize = new Vector2(140f, 26f),
+            FocusMode = Control.FocusModeEnum.None,
+        };
+        _ghostButton.AddThemeFontSizeOverride("font_size", 10);
+        _ghostButton.Pressed += OnGhostTogglePressed;
+        ghostRow.AddChild(_ghostButton);
+
+        var ghostHint = new Label
+        {
+            Text = "Watch pattern only — no scoring saved",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Modulate = UiTheme.SubtleGrey,
+        };
+        ghostHint.AddThemeFontSizeOverride("font_size", 9);
+        ghostRow.AddChild(ghostHint);
+
+        UpdateGhostButtonVisual();
+
         // START button — lets the player adjust options before beginning
         var startBtn = new Button
         {
@@ -285,10 +317,36 @@ public partial class PracticeArena : CanvasLayer
         float bpm = _enemy.BattleBpm > 0f ? _enemy.BattleBpm : 120f;
         RhythmClock.Instance.StartFreeRunning(bpm * _speedMult);
 
+        // Capture ghost mode at start so later toggle changes can't affect results
+        _ranAsGhost = _ghostMode;
+
         _phaseRunning = true;
         _arena.ObstacleDensityMult = _densityMult;
+        _arena.GhostMode = _ranAsGhost;
         _arena.Visible = true;
-        _arena.StartPhase(_enemy.AttackPatternScene, totalMeasures: 4);
+        _arena.StartPhase(_enemy.AttackPatternScene, totalMeasures: 4, leadInBeats: 2);
+    }
+
+    private void OnGhostTogglePressed()
+    {
+        _ghostMode = !_ghostMode;
+        AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+        UpdateGhostButtonVisual();
+    }
+
+    private void UpdateGhostButtonVisual()
+    {
+        if (_ghostButton == null) return;
+        if (_ghostMode)
+        {
+            _ghostButton.Text = "GHOST: ON";
+            _ghostButton.Modulate = UiTheme.Gold;
+        }
+        else
+        {
+            _ghostButton.Text = "GHOST: OFF";
+            _ghostButton.Modulate = UiTheme.SubtleGrey;
+        }
     }
 
     private void OnNoteHit(int grade)
@@ -338,10 +396,18 @@ public partial class PracticeArena : CanvasLayer
 
         // Check if this is a new personal best before persisting
         bool isNewBest = true;
-        if (GameManager.Instance.PracticeBestRanks.TryGetValue(_enemy!.EnemyId, out var prevBest))
-            isNewBest = string.CompareOrdinal(rank.ToString(), prevBest) < 0;
-        // Persist best rank
-        GameManager.Instance.RecordPracticeRank(_enemy.EnemyId, rank.ToString());
+        string? prevBest = null;
+        if (!_ranAsGhost)
+        {
+            if (GameManager.Instance.PracticeBestRanks.TryGetValue(_enemy!.EnemyId, out prevBest))
+                isNewBest = string.CompareOrdinal(rank.ToString(), prevBest) < 0;
+            // Persist best rank (only for non-ghost runs)
+            GameManager.Instance.RecordPracticeRank(_enemy.EnemyId, rank.ToString());
+        }
+        else
+        {
+            isNewBest = false;
+        }
 
         // Results overlay
         _resultsOverlay = new Control { AnchorRight = 1f, AnchorBottom = 1f };
@@ -376,35 +442,58 @@ public partial class PracticeArena : CanvasLayer
 
         resultVbox.AddChild(new HSeparator());
 
-        // Grade (big, centred)
-        Color gradeColor = rank switch
+        // Grade (big, centred) — ghost mode shows unscored placeholder instead
+        if (_ranAsGhost)
         {
-            BestiaryPracticeLogic.PracticeRank.S => new Color(1f, 0.95f, 0.2f),
-            BestiaryPracticeLogic.PracticeRank.A => new Color(0.3f, 1f, 0.4f),
-            BestiaryPracticeLogic.PracticeRank.B => new Color(0.4f, 0.7f, 1f),
-            BestiaryPracticeLogic.PracticeRank.C => Colors.White,
-            _ => new Color(0.7f, 0.7f, 0.7f),
-        };
-        var gradeLbl = new Label
-        {
-            Text = $"RANK: {rank}",
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Modulate = gradeColor,
-        };
-        gradeLbl.AddThemeFontSizeOverride("font_size", 22);
-        resultVbox.AddChild(gradeLbl);
-
-        // "NEW BEST!" indicator when the player improved their rank
-        if (isNewBest && prevBest != null)
-        {
-            var newBestLbl = new Label
+            var ghostLbl = new Label
             {
-                Text = "NEW BEST!",
+                Text = "GHOST MODE",
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Modulate = UiTheme.Gold,
             };
-            newBestLbl.AddThemeFontSizeOverride("font_size", 14);
-            resultVbox.AddChild(newBestLbl);
+            ghostLbl.AddThemeFontSizeOverride("font_size", 22);
+            resultVbox.AddChild(ghostLbl);
+
+            var unscoredLbl = new Label
+            {
+                Text = "Not scored",
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Modulate = UiTheme.SubtleGrey,
+            };
+            unscoredLbl.AddThemeFontSizeOverride("font_size", 12);
+            resultVbox.AddChild(unscoredLbl);
+        }
+        else
+        {
+            Color gradeColor = rank switch
+            {
+                BestiaryPracticeLogic.PracticeRank.S => new Color(1f, 0.95f, 0.2f),
+                BestiaryPracticeLogic.PracticeRank.A => new Color(0.3f, 1f, 0.4f),
+                BestiaryPracticeLogic.PracticeRank.B => new Color(0.4f, 0.7f, 1f),
+                BestiaryPracticeLogic.PracticeRank.C => Colors.White,
+                _ => new Color(0.7f, 0.7f, 0.7f),
+            };
+            var gradeLbl = new Label
+            {
+                Text = $"RANK: {rank}",
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Modulate = gradeColor,
+            };
+            gradeLbl.AddThemeFontSizeOverride("font_size", 22);
+            resultVbox.AddChild(gradeLbl);
+
+            // "NEW BEST!" indicator when the player improved their rank
+            if (isNewBest && prevBest != null)
+            {
+                var newBestLbl = new Label
+                {
+                    Text = "NEW BEST!",
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Modulate = UiTheme.Gold,
+                };
+                newBestLbl.AddThemeFontSizeOverride("font_size", 14);
+                resultVbox.AddChild(newBestLbl);
+            }
         }
 
         // Stats
@@ -483,6 +572,7 @@ public partial class PracticeArena : CanvasLayer
             if (btn != null) btn.Disabled = disabled;
         foreach (var btn in _densityButtons)
             if (btn != null) btn.Disabled = disabled;
+        if (_ghostButton != null) _ghostButton.Disabled = disabled;
     }
 
     public override void _UnhandledInput(InputEvent e)

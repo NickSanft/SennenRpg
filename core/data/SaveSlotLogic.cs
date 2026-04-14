@@ -40,5 +40,6 @@ public record SaveSlotInfo(
     string PlayerName,
     int    PlayTimeSeconds,
     string Timestamp,
-    string ClassName = "Bard"
+    string ClassName = "Bard",
+    string MapName   = "Unknown"
 );

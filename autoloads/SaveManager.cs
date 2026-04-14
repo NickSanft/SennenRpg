@@ -55,7 +55,8 @@ public partial class SaveManager : Node
 			data.PlayerName,
 			data.PlayTimeSeconds,
 			data.Timestamp,
-			data.ActiveClassName ?? data.PlayerClassName ?? "Bard"
+			data.ActiveClassName ?? data.PlayerClassName ?? "Bard",
+			SennenRpg.Core.Data.MapDisplayNames.ForPath(data.LastMapPath)
 		);
 	}
 

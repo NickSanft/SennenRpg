@@ -38,6 +38,7 @@ public partial class EquipmentMenu : CanvasLayer
     // Item picker (visible when choosing what to equip / unequip)
     private Control        _itemPickerPanel = null!;
     private Label          _itemPickerTitle = null!;
+    private RichTextLabel  _itemPickerPreview = null!;
     private VBoxContainer  _itemPickerList  = null!;
 
     private readonly Dictionary<EquipmentSlot, EquipmentSlotButton> _slotButtons = new();
@@ -219,6 +220,17 @@ public partial class EquipmentMenu : CanvasLayer
         _itemPickerTitle.AddThemeFontSizeOverride("font_size", 12);
         _itemPickerPanel.AddChild(_itemPickerTitle);
 
+        // Stat-delta preview — updated when a picker option gains focus
+        _itemPickerPreview = new RichTextLabel
+        {
+            BbcodeEnabled     = true,
+            FitContent        = true,
+            ScrollActive      = false,
+            CustomMinimumSize = new Vector2(0f, 48f),
+        };
+        _itemPickerPreview.AddThemeFontSizeOverride("normal_font_size", 10);
+        _itemPickerPanel.AddChild(_itemPickerPreview);
+
         _itemPickerPanel.AddChild(new HSeparator());
 
         var scroll = new ScrollContainer
@@ -344,6 +356,7 @@ public partial class EquipmentMenu : CanvasLayer
         bool isEquipped = hasStaticEquipped || hasDynamicEquipped;
 
         _itemPickerTitle.Text = $"{slot}";
+        if (_itemPickerPreview != null) _itemPickerPreview.Text = "";
 
         // Clear previous list
         foreach (var child in _itemPickerList.GetChildren())
@@ -374,7 +387,7 @@ public partial class EquipmentMenu : CanvasLayer
                         gm.AddEquipment(returningPath);
                 }
                 CloseItemPicker();
-            });
+            }, hoverBonuses: default(EquipmentBonuses));
         }
         else if (hasDynamicEquipped && isSen)
         {
@@ -386,7 +399,7 @@ public partial class EquipmentMenu : CanvasLayer
                 AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
                 gm.UnequipDynamic(slot);
                 CloseItemPicker();
-            });
+            }, hoverBonuses: default(EquipmentBonuses));
         }
 
         // Static .tres equipment available for this slot — shared bag for all members.
@@ -404,7 +417,7 @@ public partial class EquipmentMenu : CanvasLayer
                 AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
                 EquipFromBagOrTransfer(slot, captured, member, isSen, hasStaticEquipped, hasDynamicEquipped);
                 CloseItemPicker();
-            });
+            }, hoverBonuses: data.Bonuses);
             any = true;
         }
 
@@ -437,7 +450,7 @@ public partial class EquipmentMenu : CanvasLayer
                 // Step 2 — equip on the active member.
                 EquipFromBagOrTransfer(slot, capturedPath, member, isSen, hasStaticEquipped, hasDynamicEquipped);
                 CloseItemPicker();
-            });
+            }, hoverBonuses: data.Bonuses);
             any = true;
         }
 
@@ -457,7 +470,7 @@ public partial class EquipmentMenu : CanvasLayer
                     if (hasStaticEquipped) gm.Unequip(slot);
                     gm.EquipDynamic(slot, captured);
                     CloseItemPicker();
-                });
+                }, hoverBonuses: DynamicBonuses(dynItem));
                 any = true;
             }
         }
@@ -577,7 +590,7 @@ public partial class EquipmentMenu : CanvasLayer
         }
     }
 
-    private void AddPickerOption(string text, System.Action action)
+    private void AddPickerOption(string text, System.Action action, EquipmentBonuses? hoverBonuses = null)
     {
         var btn = new Button
         {
@@ -588,8 +601,102 @@ public partial class EquipmentMenu : CanvasLayer
         };
         btn.AddThemeFontSizeOverride("font_size", 9);
         btn.Pressed += action;
-        btn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+        btn.FocusEntered += () =>
+        {
+            AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+            UpdatePreviewForHover(hoverBonuses);
+        };
         _itemPickerList.AddChild(btn);
+    }
+
+    /// <summary>
+    /// Compute the stat delta between the current-equipped item in the active slot and
+    /// the hovered candidate, then render a coloured ATK/DEF/... table into
+    /// <see cref="_itemPickerPreview"/>. Pass <see cref="EquipmentBonuses"/> default
+    /// (all zeros) to preview "Unequip". Pass <c>null</c> to clear the preview.
+    /// </summary>
+    private void UpdatePreviewForHover(EquipmentBonuses? hoverBonuses)
+    {
+        if (_itemPickerPreview == null) return;
+        if (hoverBonuses == null || !_activeSlot.HasValue)
+        {
+            _itemPickerPreview.Text = "";
+            return;
+        }
+
+        var current = GetCurrentSlotBonuses(_activeSlot.Value);
+        var hovered = hoverBonuses.Value;
+
+        string Row(string label, int cur, int hov)
+        {
+            int newVal = cur + (hov - cur); // hov already replaces cur; write plainly
+            int effectiveNew = hov;
+            int delta = effectiveNew - cur;
+            string arrow = $"{label}: {cur} → {effectiveNew}";
+            if (delta > 0) return $"[color=#4CFF66]{arrow} (+{delta})[/color]";
+            if (delta < 0) return $"[color=#FF5555]{arrow} ({delta})[/color]";
+            return $"[color=#888888]{arrow}[/color]";
+        }
+
+        _itemPickerPreview.Text =
+            Row("HP",  current.MaxHp,      hovered.MaxHp)      + "\n" +
+            Row("ATK", current.Attack,     hovered.Attack)     + "\n" +
+            Row("DEF", current.Defense,    hovered.Defense)    + "\n" +
+            Row("MAG", current.Magic,      hovered.Magic)      + "\n" +
+            Row("RES", current.Resistance, hovered.Resistance) + "\n" +
+            Row("SPD", current.Speed,      hovered.Speed)      + "\n" +
+            Row("LCK", current.Luck,       hovered.Luck);
+    }
+
+    /// <summary>
+    /// Returns the EquipmentBonuses of whatever the active member currently has
+    /// equipped in <paramref name="slot"/>. Returns all-zero bonuses when nothing
+    /// is equipped (or the item .tres cannot be loaded). Handles Sen's static and
+    /// dynamic equipment as well as the per-PartyMember dict.
+    /// </summary>
+    private EquipmentBonuses GetCurrentSlotBonuses(EquipmentSlot slot)
+    {
+        var gm = GameManager.Instance;
+        var member = CurrentMember;
+        if (member == null) return default;
+
+        if (IsCurrentSen)
+        {
+            if (gm.EquippedItemPaths.TryGetValue(slot, out string? path)
+                && !string.IsNullOrEmpty(path)
+                && ResourceLoader.Exists(path))
+            {
+                var data = GD.Load<EquipmentData>(path);
+                if (data != null) return data.Bonuses;
+            }
+            if (gm.EquippedDynamicItemIds.TryGetValue(slot, out string? dynId))
+            {
+                var dyn = gm.DynamicEquipmentInventory.Find(e => e.Id == dynId);
+                if (dyn != null)
+                {
+                    return new EquipmentBonuses(
+                        dyn.BonusMaxHp, dyn.BonusAttack, dyn.BonusDefense,
+                        dyn.BonusMagic, 0, dyn.BonusSpeed, dyn.BonusLuck);
+                }
+            }
+            return default;
+        }
+
+        if (member.EquippedItemPaths.TryGetValue(slot.ToString(), out string? mp)
+            && !string.IsNullOrEmpty(mp)
+            && ResourceLoader.Exists(mp))
+        {
+            var data = GD.Load<EquipmentData>(mp);
+            if (data != null) return data.Bonuses;
+        }
+        return default;
+    }
+
+    private static EquipmentBonuses DynamicBonuses(DynamicEquipmentSave? d)
+    {
+        if (d == null) return default;
+        return new EquipmentBonuses(d.BonusMaxHp, d.BonusAttack, d.BonusDefense,
+            d.BonusMagic, 0, d.BonusSpeed, d.BonusLuck);
     }
 
     private void CloseItemPicker()

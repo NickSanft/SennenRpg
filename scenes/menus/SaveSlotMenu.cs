@@ -117,6 +117,13 @@ public partial class SaveSlotMenu : Node2D
             var nameLabel = new Label { Text = $"Slot {slot} — {info.PlayerName}  (Lv {info.Level} {info.ClassName})" };
             nameLabel.AddThemeFontSizeOverride("font_size", 14);
 
+            var mapLabel = new Label
+            {
+                Text     = info.MapName,
+                Modulate = UiTheme.SubtleGrey,
+            };
+            mapLabel.AddThemeFontSizeOverride("font_size", 10);
+
             var timeLabel = new Label
             {
                 Text     = $"Play time: {SaveSlotLogic.FormatPlayTime(info.PlayTimeSeconds)}",
@@ -130,6 +137,7 @@ public partial class SaveSlotMenu : Node2D
             };
 
             infoCol.AddChild(nameLabel);
+            infoCol.AddChild(mapLabel);
             infoCol.AddChild(timeLabel);
             infoCol.AddChild(dateLabel);
         }

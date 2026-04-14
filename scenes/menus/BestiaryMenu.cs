@@ -32,6 +32,10 @@ public partial class BestiaryMenu : CanvasLayer
     private static Color NeedRed    => UiTheme.NeedRed;
 
     // ── State ────────────────────────────────────────────────────────────
+    private enum SortMode { Name, Kills, Encounter }
+    private SortMode _sortMode = SortMode.Name;
+    private Label? _sortModeLabel;
+
     private System.Collections.Generic.IReadOnlyList<EnemyData> _allEnemies = System.Array.Empty<EnemyData>();
     private int                _selectedIndex;
     private VBoxContainer      _entryListVbox = null!;
@@ -56,6 +60,7 @@ public partial class BestiaryMenu : CanvasLayer
     public void Open()
     {
         _allEnemies     = BattleRegistry.Instance.AllEnemies();
+        ApplySort();
         _selectedIndex  = 0;
         _spriteFrameIdx = 0;
         _spriteAccum    = 0f;
@@ -86,9 +91,103 @@ public partial class BestiaryMenu : CanvasLayer
     public override void _UnhandledInput(InputEvent e)
     {
         if (!Visible) return;
-        if (!e.IsActionPressed("ui_cancel")) return;
-        GetViewport().SetInputAsHandled();
-        Close();
+        if (e.IsActionPressed("ui_cancel"))
+        {
+            GetViewport().SetInputAsHandled();
+            Close();
+            return;
+        }
+        if (e is InputEventKey ke && ke.Pressed && !ke.Echo && ke.Keycode == Key.S)
+        {
+            GetViewport().SetInputAsHandled();
+            CycleSortMode();
+        }
+    }
+
+    private void CycleSortMode()
+    {
+        _sortMode = _sortMode switch
+        {
+            SortMode.Name      => SortMode.Kills,
+            SortMode.Kills     => SortMode.Encounter,
+            SortMode.Encounter => SortMode.Name,
+            _                  => SortMode.Name,
+        };
+        AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+
+        // Remember currently-highlighted enemy so we can restore selection after re-sort
+        string? prevId = CurrentEnemy()?.EnemyId;
+        ApplySort();
+        if (prevId != null)
+        {
+            for (int i = 0; i < _allEnemies.Count; i++)
+            {
+                if (_allEnemies[i].EnemyId == prevId) { _selectedIndex = i; break; }
+            }
+        }
+
+        if (_sortModeLabel != null) _sortModeLabel.Text = SortModeDisplay();
+        BuildEntryList();
+        BuildDetailPanel();
+        if (_selectedIndex >= 0 && _selectedIndex < _entryButtons.Count)
+            _entryButtons[_selectedIndex].CallDeferred(Control.MethodName.GrabFocus);
+    }
+
+    private string SortModeDisplay() => _sortMode switch
+    {
+        SortMode.Name      => "SORT: BY NAME",
+        SortMode.Kills     => "SORT: BY KILLS",
+        SortMode.Encounter => "SORT: BY ENCOUNTER",
+        _                  => "SORT: BY NAME",
+    };
+
+    private void ApplySort()
+    {
+        var killCounts = GameManager.Instance.KillCounts;
+        var entries    = GameManager.Instance.Bestiary.Entries;
+        var baseOrder  = BattleRegistry.Instance.AllEnemies();
+
+        // Build index map for original encounter order (fallback tiebreaker).
+        var originalIndex = new System.Collections.Generic.Dictionary<string, int>();
+        for (int i = 0; i < baseOrder.Count; i++)
+            originalIndex[baseOrder[i].EnemyId] = i;
+
+        var list = new System.Collections.Generic.List<EnemyData>(baseOrder);
+
+        // Undiscovered = 0 kills → always sort last.
+        int DiscoveredRank(EnemyData e) => killCounts.GetValueOrDefault(e.EnemyId, 0) > 0 ? 0 : 1;
+
+        list.Sort((a, b) =>
+        {
+            int ra = DiscoveredRank(a), rb = DiscoveredRank(b);
+            if (ra != rb) return ra - rb;
+
+            switch (_sortMode)
+            {
+                case SortMode.Kills:
+                    int ka = killCounts.GetValueOrDefault(a.EnemyId, 0);
+                    int kb = killCounts.GetValueOrDefault(b.EnemyId, 0);
+                    if (ka != kb) return kb - ka; // descending
+                    break;
+                case SortMode.Encounter:
+                    var ea = entries.GetValueOrDefault(a.EnemyId);
+                    var eb = entries.GetValueOrDefault(b.EnemyId);
+                    var ta = ea?.FirstDefeatedUtc ?? System.DateTime.MaxValue;
+                    var tb = eb?.FirstDefeatedUtc ?? System.DateTime.MaxValue;
+                    int cmp = ta.CompareTo(tb);
+                    if (cmp != 0) return cmp;
+                    break;
+                case SortMode.Name:
+                    int nc = string.Compare(a.DisplayName, b.DisplayName, System.StringComparison.OrdinalIgnoreCase);
+                    if (nc != 0) return nc;
+                    break;
+            }
+            // Stable fallback: original registry order
+            return originalIndex.GetValueOrDefault(a.EnemyId, 0)
+                 - originalIndex.GetValueOrDefault(b.EnemyId, 0);
+        });
+
+        _allEnemies = list;
     }
 
     private void Close()
@@ -184,6 +283,16 @@ public partial class BestiaryMenu : CanvasLayer
         };
         title.AddThemeFontSizeOverride("font_size", 18);
         rootVbox.AddChild(title);
+
+        _sortModeLabel = new Label
+        {
+            Text                = SortModeDisplay(),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Modulate            = SubtleGrey,
+        };
+        _sortModeLabel.AddThemeFontSizeOverride("font_size", 11);
+        rootVbox.AddChild(_sortModeLabel);
+
         rootVbox.AddChild(new HSeparator());
 
         // Two-panel body: entry list (left) + detail (right)
@@ -221,7 +330,7 @@ public partial class BestiaryMenu : CanvasLayer
         rootVbox.AddChild(new HSeparator());
         var hint = new Label
         {
-            Text                = "[↑↓] Browse  [Esc] Back",
+            Text                = "[↑↓] Browse  [S] Sort  [Esc] Back",
             HorizontalAlignment = HorizontalAlignment.Center,
             Modulate            = SubtleGrey,
         };

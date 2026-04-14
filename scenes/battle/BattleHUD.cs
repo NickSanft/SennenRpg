@@ -405,40 +405,15 @@ public partial class BattleHUD : CanvasLayer
 
 	private void ApplyStatusBadges(HBoxContainer row, Dictionary<StatusEffect, int> statuses)
 	{
+		// Clear any previous content (old text badges or prior StatusIconStrip).
 		foreach (var child in row.GetChildren())
 			if (child is Node n) n.QueueFree();
 
-		foreach (var (effect, turns) in statuses)
-		{
-			Color badgeColor = effect switch
-			{
-				StatusEffect.Poison  => new Color(0.2f, 0.85f, 0.3f),
-				StatusEffect.Stun    => new Color(1.0f, 0.85f, 0.1f),
-				StatusEffect.Shield  => new Color(0.3f, 0.6f, 1.0f),
-				StatusEffect.Silence => new Color(0.7f, 0.3f, 0.9f),
-				_                    => Colors.Gray,
-			};
-
-			var badge = new PanelContainer();
-			var style = new StyleBoxFlat
-			{
-				BgColor                = badgeColor,
-				CornerRadiusTopLeft    = 2, CornerRadiusTopRight = 2,
-				CornerRadiusBottomLeft = 2, CornerRadiusBottomRight = 2,
-				ContentMarginLeft      = 3, ContentMarginRight = 3,
-				ContentMarginTop       = 1, ContentMarginBottom = 1,
-			};
-			badge.AddThemeStyleboxOverride("panel", style);
-
-			var lbl = new Label
-			{
-				Text     = $"{StatusLogic.IconText(effect)} {turns}",
-				Modulate = Colors.White,
-			};
-			lbl.AddThemeFontSizeOverride("font_size", 8);
-			badge.AddChild(lbl);
-			row.AddChild(badge);
-		}
+		var strip = new StatusIconStrip();
+		row.AddChild(strip);
+		// SetStatuses relies on _Ready being called first (separation override);
+		// HBoxContainer still renders correctly before _Ready, so this is safe.
+		strip.SetStatuses(statuses);
 	}
 
 	/// <summary>Brief performance summary toast that fades in then out above the HUD.</summary>

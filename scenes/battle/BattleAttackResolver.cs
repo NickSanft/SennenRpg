@@ -56,6 +56,22 @@ public static class BattleAttackResolver
 	/// <summary>Compute Ranger bull's-eye crit damage (bypasses defence).</summary>
 	public static int ResolveRangerCrit(int attack) => attack;
 
+	/// <summary>
+	/// Estimate the damage range for a basic Fight attack against an enemy.
+	/// The low bound uses the Miss grade multiplier; the high bound uses the Perfect grade
+	/// multiplier (non-crit, for a conservative upper bound the player can reliably hit).
+	/// Used by the battle HUD damage preview.
+	/// </summary>
+	public static (int minDmg, int maxDmg) EstimateFightDamageRange(int attack, int enemyDefense)
+	{
+		int low  = BattleFormulas.PhysicalDamage(attack, enemyDefense,
+			RhythmConstants.GradeMultiplier(HitGrade.Miss));
+		int high = BattleFormulas.PhysicalDamage(attack, enemyDefense,
+			RhythmConstants.GradeMultiplier(HitGrade.Perfect));
+		if (high < low) high = low;
+		return (low, high);
+	}
+
 	/// <summary>Compute spell damage from grade and stats.</summary>
 	public static (int damage, bool isCrit) ResolveSpell(
 		HitGrade grade, int basePower, int magic, int resistance)

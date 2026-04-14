@@ -99,6 +99,7 @@ public partial class BattleScene : Node2D
 				{
 					_enemyNameplate.Setup(Target.DisplayName);
 					_enemyNameplate.UpdateStatuses(Target.Statuses);
+					RefreshDamagePreview();
 				}
 				RefreshTargetCursor();
 				AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
@@ -450,6 +451,16 @@ public partial class BattleScene : Node2D
 	private RhythmArena     _rhythmArena    = null!;
 	private RhythmStrike    _rhythmStrike   = null!;
 	private EnemyNameplate  _enemyNameplate = null!;
+
+	/// <summary>
+	/// Damage-preview label shown above the targeted enemy's nameplate while the player
+	/// has Fight or a damaging Skill highlighted in the action menu.
+	/// </summary>
+	private Label?          _damagePreviewLabel;
+	private enum PreviewSource { None, Fight, SkillIndex }
+	private PreviewSource   _previewSource = PreviewSource.None;
+	private int             _previewSkillIndex = -1;
+
 	/// <summary>Backwards-compat accessor for the current target's spawned visual node.</summary>
 	private Node2D? _enemyVisual => Target?.Visual;
 	private ShaderMaterial? _hitFlashMat;
@@ -477,6 +488,7 @@ public partial class BattleScene : Node2D
 
 	private PackedScene? _damageNumberScene;
 	private Label _battleComboLabel = null!;
+	private TurnOrderMinibar? _turnOrderMinibar;
 
 	public override void _Ready()
 	{
@@ -500,12 +512,30 @@ public partial class BattleScene : Node2D
 		_actionMenu.PerformSelected += OnPerformSelected;
 		_actionMenu.ItemSelected    += OnItemSelected;
 		_actionMenu.FleeSelected    += OnFleeSelected;
+		_actionMenu.OptionFocusChanged += OnActionMenuFocusChanged;
+
+		// Damage preview label — created code-only, positioned over the nameplate each update.
+		_damagePreviewLabel = new Label
+		{
+			Name             = "DamagePreviewLabel",
+			Text             = "",
+			Visible          = false,
+			MouseFilter      = Control.MouseFilterEnum.Ignore,
+			Modulate         = Colors.White,
+			ZIndex           = 10,
+		};
+		_damagePreviewLabel.AddThemeColorOverride("font_color", Colors.White);
+		_damagePreviewLabel.AddThemeColorOverride("font_outline_color", new Color(0, 0, 0, 0.85f));
+		_damagePreviewLabel.AddThemeConstantOverride("outline_size", 4);
+		AddChild(_damagePreviewLabel);
+		UiTheme.ApplyPixelFontToAll(_damagePreviewLabel);
 
 		// Wire Dialogic status signals (e.g. "status:poison:3" applies Poison for 3 turns)
 		DialogicBridge.Instance.DialogicSignalReceived += OnDialogicSignalReceived;
 
-		_subMenu.OptionSelected += OnSubMenuOptionSelected;
-		_subMenu.Cancelled      += OnSubMenuCancelled;
+		_subMenu.OptionSelected      += OnSubMenuOptionSelected;
+		_subMenu.Cancelled           += OnSubMenuCancelled;
+		_subMenu.OptionFocusChanged  += OnSubMenuFocusChanged;
 
 		// Wire rhythm nodes
 		_rhythmStrike.StrikeResolved += OnStrikeResolved;
@@ -589,6 +619,12 @@ public partial class BattleScene : Node2D
 
 		_rhythmArena.NoteHit += OnNoteHitUpdateComboLabel;
 		_rhythmArena.PlayerHurt += _ => OnNoteHitUpdateComboLabel(0);
+
+		// Turn order minibar — thin strip at the top of the screen showing the
+		// upcoming actors. Lives on its own CanvasLayer so it sits above the
+		// Node2D battle visuals but below dialog popups.
+		_turnOrderMinibar = new TurnOrderMinibar { Visible = false };
+		AddChild(_turnOrderMinibar);
 
 		// Load encounter
 		var encounter = BattleRegistry.Instance.GetPendingEncounter();
@@ -854,9 +890,24 @@ public partial class BattleScene : Node2D
 	private void SetState(BattleState newState)
 	{
 		_state = newState;
+		// Damage preview only makes sense during player action selection.
+		if (newState != BattleState.PlayerTurn)
+			HideDamagePreview();
 		_subMenu.Visible        = false;
 		_rhythmStrike.Visible   = false;
 		_enemyNameplate.Visible = newState is BattleState.PlayerTurn or BattleState.EnemyTurn;
+
+		// Show the turn order minibar during active combat phases; hide on
+		// intro/victory/defeat so it doesn't overlap the results UI.
+		if (_turnOrderMinibar != null)
+		{
+			_turnOrderMinibar.Visible = newState
+				is BattleState.PlayerTurn
+				or BattleState.EnemyTurn
+				or BattleState.RhythmPhase
+				or BattleState.StrikePhase
+				or BattleState.SkillPhase;
+		}
 
 		_charmMinigame.Visible      = false;
 		_shadowBoltMinigame.Visible = false;
@@ -2093,7 +2144,24 @@ public partial class BattleScene : Node2D
 		_turnQueue    = TurnQueue.BuildOrder(partySpeeds, enemySpeeds);
 		_turnQueueIdx = 0;
 
+		RefreshTurnOrderMinibar();
+
 		await AdvanceTurn();
+	}
+
+	/// <summary>
+	/// Rebuild the top-of-screen turn order minibar to match the current queue
+	/// and active index. Safe to call when the minibar hasn't been built yet or
+	/// the queue is empty (the widget hides itself in that case).
+	/// </summary>
+	private void RefreshTurnOrderMinibar()
+	{
+		if (_turnOrderMinibar == null) return;
+		_turnOrderMinibar.Refresh(
+			_turnQueue,
+			_turnQueueIdx,
+			GameManager.Instance.Party.Members,
+			_enemies);
 	}
 
 	/// <summary>
@@ -2106,6 +2174,9 @@ public partial class BattleScene : Node2D
 		while (_turnQueueIdx < _turnQueue.Count)
 		{
 			var entry = _turnQueue[_turnQueueIdx];
+			// Refresh the minibar so the "current" actor (★) matches the one about
+			// to take their turn — must happen BEFORE we bump _turnQueueIdx.
+			RefreshTurnOrderMinibar();
 			_turnQueueIdx++;
 
 			if (entry.IsParty)
@@ -2841,5 +2912,145 @@ public partial class BattleScene : Node2D
 			new Vector2(4f, 4f), 0.15f)
 			.SetTrans(Tween.TransitionType.Bounce)
 			.SetEase(Tween.EaseType.Out);
+	}
+
+	// ── Damage Preview ────────────────────────────────────────────────
+
+	/// <summary>
+	/// Called when the focused button on the main action menu changes. Only Fight (index 0)
+	/// shows a damage preview; all other options hide it.
+	/// </summary>
+	private void OnActionMenuFocusChanged(int optionIndex)
+	{
+		if (optionIndex == ActionMenu.OptionFight)
+		{
+			_previewSource = PreviewSource.Fight;
+			_previewSkillIndex = -1;
+			RefreshDamagePreview();
+		}
+		else
+		{
+			HideDamagePreview();
+		}
+	}
+
+	/// <summary>
+	/// Called when the focused item on the SubMenu changes (skills or items sub-list).
+	/// Only the Perform / Skills sub-menu drives a damage preview.
+	/// </summary>
+	private void OnSubMenuFocusChanged(int index)
+	{
+		if (_subMenuMode != SubMenuMode.Perform)
+		{
+			HideDamagePreview();
+			return;
+		}
+		_previewSource = PreviewSource.SkillIndex;
+		_previewSkillIndex = index;
+		RefreshDamagePreview();
+	}
+
+	/// <summary>
+	/// Compute the preview string from the current preview source + current target and
+	/// position the label above the targeted enemy's nameplate.
+	/// </summary>
+	private void RefreshDamagePreview()
+	{
+		if (_damagePreviewLabel == null) return;
+		if (_state != BattleState.PlayerTurn)
+		{
+			HideDamagePreview();
+			return;
+		}
+		var target = Target;
+		if (target == null || target.IsKO)
+		{
+			HideDamagePreview();
+			return;
+		}
+
+		string? text = BuildPreviewText(target);
+		if (text == null)
+		{
+			HideDamagePreview();
+			return;
+		}
+
+		_damagePreviewLabel.Text = text;
+		// Position just above the nameplate, roughly centred.
+		var nameplatePos = _enemyNameplate.Position;
+		var nameplateSize = _enemyNameplate.Size;
+		_damagePreviewLabel.Position = new Vector2(
+			nameplatePos.X,
+			nameplatePos.Y - 22f);
+		_damagePreviewLabel.Size = new Vector2(nameplateSize.X, 20f);
+		_damagePreviewLabel.HorizontalAlignment = HorizontalAlignment.Center;
+		_damagePreviewLabel.Visible = true;
+	}
+
+	/// <summary>
+	/// Build the "~min-max dmg" string for the current preview source against the given target.
+	/// Returns null if no damage preview is appropriate (non-damaging skill, wrong actor, etc).
+	/// </summary>
+	private string? BuildPreviewText(EnemyInstance target)
+	{
+		int defense = target.Data.Stats?.Defense ?? 0;
+		int resistance = target.Data.Stats?.Resistance ?? 0;
+
+		if (_previewSource == PreviewSource.Fight)
+		{
+			var (low, high) = BattleAttackResolver.EstimateFightDamageRange(ActorAttack(), defense);
+			return FormatDamage(low, high);
+		}
+
+		if (_previewSource == PreviewSource.SkillIndex)
+		{
+			string actorId = CurrentActor()?.MemberId ?? "sen";
+			switch (actorId)
+			{
+				case "rain":
+				{
+					var (low, high) = SkillResolver.EstimateRangerSkillDamageRange(
+						ActorAttack(), defense, SkillResolver.DualClassMultiplier);
+					return FormatDamage(low, high);
+				}
+				case "bhata":
+				{
+					var (low, high) = SkillResolver.EstimateRangerSkillDamageRange(
+						ActorAttack(), defense, SkillResolver.GravityArrowMultiplier);
+					return FormatDamage(low, high);
+				}
+				case "lily":
+				{
+					var (low, high) = SkillResolver.EstimateWitherDamageRange(
+						ActorMagic(), resistance);
+					return FormatDamage(low, high);
+				}
+				case "kriora":
+				{
+					var (low, high) = SkillResolver.EstimateCrystalKnifeDamageRange(
+						ActorMagic(), resistance);
+					return FormatDamage(low, high);
+				}
+				default:
+					// Sen — bard skills (many are non-damaging); skip preview rather than mislead.
+					return null;
+			}
+		}
+		return null;
+	}
+
+	private static string FormatDamage(int low, int high)
+	{
+		if (low == high) return $"~{low} dmg";
+		return $"~{low}-{high} dmg";
+	}
+
+	private void HideDamagePreview()
+	{
+		_previewSource = PreviewSource.None;
+		_previewSkillIndex = -1;
+		if (_damagePreviewLabel != null)
+			_damagePreviewLabel.Visible = false;
 	}
 }

@@ -22,6 +22,7 @@ public partial class ClassChangeMenu : CanvasLayer
 
     private readonly List<Button> _classButtons = new();
     private Label _infoLabel = null!;
+    private RichTextLabel _classBonusPreview = null!;
     private Label _bonusLabel = null!;
     private VBoxContainer _outer = null!;
 
@@ -159,6 +160,18 @@ public partial class ClassChangeMenu : CanvasLayer
         _infoLabel.AddThemeFontSizeOverride("font_size", 16);
         _outer.AddChild(_infoLabel);
 
+        // Per-class upcoming cross-class bonuses (populated on focus)
+        _classBonusPreview = new RichTextLabel
+        {
+            BbcodeEnabled       = true,
+            FitContent          = true,
+            ScrollActive        = false,
+            AutowrapMode        = TextServer.AutowrapMode.WordSmart,
+            CustomMinimumSize   = new Vector2(0f, 0f),
+        };
+        _classBonusPreview.AddThemeFontSizeOverride("normal_font_size", 14);
+        _outer.AddChild(_classBonusPreview);
+
         _outer.AddChild(new HSeparator());
 
         // Cross-class bonuses
@@ -233,6 +246,54 @@ public partial class ClassChangeMenu : CanvasLayer
                 _infoLabel.Text = $"{cls} — New (Level 1)";
             }
         }
+
+        RefreshClassBonusPreview(cls);
+    }
+
+    private void RefreshClassBonusPreview(PlayerClass cls)
+    {
+        var gm = GameManager.Instance;
+        int currentLevel = gm.ClassEntries.TryGetValue(cls, out var entry) ? entry.Level : 0;
+
+        var bonuses = CrossClassBonusRegistry.All
+            .Where(b => b.SourceClass == cls)
+            .OrderBy(b => b.RequiredLevel)
+            .ToList();
+
+        if (bonuses.Count == 0)
+        {
+            _classBonusPreview.Text = string.Empty;
+            return;
+        }
+
+        string goldHex   = Gold.ToHtml(false);
+        string greenHex  = ActiveGreen.ToHtml(false);
+        string greyHex   = SubtleGrey.ToHtml(false);
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"[color=#{goldHex}]Bonuses (Lv {currentLevel}):[/color]\n");
+
+        // Show all earned first, then the next 2-3 upcoming
+        var earned   = bonuses.Where(b => currentLevel >= b.RequiredLevel).ToList();
+        var upcoming = bonuses.Where(b => currentLevel <  b.RequiredLevel).Take(3).ToList();
+
+        foreach (var b in earned)
+            sb.Append($"[color=#{greenHex}][Y] Lv{b.RequiredLevel}: {StripPrefix(b.Description)}[/color]\n");
+
+        foreach (var b in upcoming)
+            sb.Append($"[color=#{greyHex}][ ] Lv{b.RequiredLevel}: {StripPrefix(b.Description)}[/color]\n");
+
+        if (earned.Count == 0 && upcoming.Count == 0)
+            sb.Append($"[color=#{greyHex}](none)[/color]");
+
+        _classBonusPreview.Text = sb.ToString().TrimEnd('\n');
+    }
+
+    /// <summary>Strip the "ClassName LvN: " prefix from a bonus description for compact display.</summary>
+    private static string StripPrefix(string desc)
+    {
+        int colon = desc.IndexOf(':');
+        return colon >= 0 && colon + 2 <= desc.Length ? desc[(colon + 2)..] : desc;
     }
 
     private void OnClassSelected(PlayerClass cls)

@@ -12,6 +12,8 @@ public partial class SubMenu : Control
 {
 	[Signal] public delegate void OptionSelectedEventHandler(int index);
 	[Signal] public delegate void CancelledEventHandler();
+	/// <summary>Emitted when the highlighted option in the list changes. -1 = none focused.</summary>
+	[Signal] public delegate void OptionFocusChangedEventHandler(int index);
 
 	private VBoxContainer _list = null!;
 
@@ -36,6 +38,7 @@ public partial class SubMenu : Control
 			var btn = new Button();
 			btn.Text = options[i];
 			btn.Pressed += () => EmitSignal(SignalName.OptionSelected, captured);
+			btn.FocusEntered += () => EmitSignal(SignalName.OptionFocusChanged, captured);
 			// Ensure all focus modes are enabled for gamepad navigation
 			btn.FocusMode = Control.FocusModeEnum.All;
 			_list.AddChild(btn);

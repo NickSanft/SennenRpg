@@ -48,7 +48,13 @@ public partial class RhythmArena : Node2D
     private float PerfectWindowPx
         => SettingsLogic.RhythmPerfectWindowPx(TimingWindow);
 
-    private bool IsAutoHit => TimingWindow == AutoHit;
+    /// <summary>
+    /// When true, notes auto-resolve as Perfect (ghost/demo mode). Reset at EndPhase.
+    /// Set by PracticeArena before StartPhase to preview an enemy's attack pattern.
+    /// </summary>
+    public bool GhostMode { get; set; }
+
+    private bool IsAutoHit => GhostMode || TimingWindow == AutoHit;
 
     // -- Node references --
     public Node2D ObstacleContainer { get; private set; } = null!;
@@ -187,9 +193,8 @@ public partial class RhythmArena : Node2D
         t.TweenProperty(this, "modulate:a", 1f, 0.18f);
     }
 
-    public void StartPhase(PackedScene? patternScene, int totalMeasures = 2)
+    public void StartPhase(PackedScene? patternScene, int totalMeasures = 2, int leadInBeats = 2)
     {
-        _running        = true;
         _currentStreak  = 0;
         _maxStreak      = 0;
         _totalPerfects  = 0;
@@ -210,6 +215,23 @@ public partial class RhythmArena : Node2D
         Visible         = true;
         QueueRedraw();
 
+        if (leadInBeats > 0)
+        {
+            // Arena visible but _running stays false — _Process won't advance obstacles
+            // during the count-in. The beat pulse in _Draw still animates to the music.
+            _running = false;
+            ShowLeadInMetronome(leadInBeats, () => BeginPatternSpawn(patternScene, totalMeasures));
+        }
+        else
+        {
+            BeginPatternSpawn(patternScene, totalMeasures);
+        }
+    }
+
+    private void BeginPatternSpawn(PackedScene? patternScene, int totalMeasures)
+    {
+        _running = true;
+
         if (patternScene != null)
         {
             _activePattern = patternScene.Instantiate<RhythmPatternBase>();
@@ -223,6 +245,89 @@ public partial class RhythmArena : Node2D
                         * RhythmClock.Instance.BeatInterval;
             GetTree().CreateTimer(dur).Timeout += EndPhase;
         }
+    }
+
+    // -- Lead-in metronome --
+
+    private int             _leadInRemaining;
+    private int             _leadInShown;
+    private System.Action?  _leadInDone;
+    private Callable        _leadInBeatCallable;
+    private bool            _leadInConnected;
+
+    /// <summary>
+    /// Show a visual count-in before the pattern begins. Displays large
+    /// "1!", "2!", ... numbers at arena centre synced to the beat, plays
+    /// a tick SFX on each, then invokes <paramref name="onDone"/> after
+    /// the final beat has been shown. Pass beats ≤ 0 to skip and invoke
+    /// immediately.
+    /// </summary>
+    public void ShowLeadInMetronome(int beats, System.Action? onDone = null)
+    {
+        if (beats <= 0)
+        {
+            onDone?.Invoke();
+            return;
+        }
+
+        // Defensive: detach any previous hook.
+        DisconnectLeadInBeat();
+
+        _leadInRemaining    = beats;
+        _leadInShown        = 0;
+        _leadInDone         = onDone;
+        _leadInBeatCallable = new Callable(this, MethodName.OnLeadInBeat);
+        RhythmClock.Instance.Connect(RhythmClock.SignalName.Beat, _leadInBeatCallable);
+        _leadInConnected    = true;
+    }
+
+    private void OnLeadInBeat(int absoluteBeat)
+    {
+        _leadInShown++;
+        int number = _leadInShown;
+
+        // Spawn the count-in label at arena centre.
+        var size = new Vector2(60f, 40f);
+        var lbl = new Label
+        {
+            Text                = $"{number}!",
+            Modulate            = new Color(1f, 0.95f, 0.3f),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment   = VerticalAlignment.Center,
+            Size                = size,
+            Position            = new Vector2(-size.X * 0.5f, -size.Y * 0.5f),
+            PivotOffset         = size * 0.5f,
+            Scale               = new Vector2(1.5f, 1.5f),
+        };
+        lbl.AddThemeFontSizeOverride("font_size", 28);
+        AddChild(lbl);
+
+        var tween = CreateTween().SetParallel(true);
+        tween.TweenProperty(lbl, "scale", Vector2.One, 0.25f)
+             .SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
+        tween.TweenProperty(lbl, "modulate:a", 0f, 0.4f);
+        tween.Chain().TweenCallback(Callable.From(lbl.QueueFree));
+
+        AudioManager.Instance?.PlaySfxPitched(UiSfx.Cursor, 1.2f);
+
+        if (_leadInShown >= _leadInRemaining)
+        {
+            DisconnectLeadInBeat();
+            var cb      = _leadInDone;
+            _leadInDone = null;
+            cb?.Invoke();
+        }
+    }
+
+    private void DisconnectLeadInBeat()
+    {
+        if (!_leadInConnected) return;
+        if (RhythmClock.Instance != null
+            && RhythmClock.Instance.IsConnected(RhythmClock.SignalName.Beat, _leadInBeatCallable))
+        {
+            RhythmClock.Instance.Disconnect(RhythmClock.SignalName.Beat, _leadInBeatCallable);
+        }
+        _leadInConnected = false;
     }
 
     /// <summary>Spawn a StandardObstacle in the given lane.</summary>
@@ -657,6 +762,7 @@ public partial class RhythmArena : Node2D
         GD.Print($"[RhythmArena] Phase ended. Max combo streak: {_maxStreak} " +
                  $"(P:{_totalPerfects} G:{_totalGoods} M:{_totalMisses})");
         Visible = false;
+        GhostMode = false;
         EmitSignal(SignalName.PhaseEnded);
     }
 }
