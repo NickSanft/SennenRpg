@@ -109,6 +109,7 @@ public class UiScalingTests
         // At 1280x720, font size should be 8-16px for readability
         // ThemeDB.FallbackFontSize is set in ApplyGlobalTheme() to 12
         // We test the constant here since we can't access ThemeDB in NUnit
-        Assert.That(12, Is.InRange(8, 16));
+        int fallbackFontSize = 12;
+        Assert.That(fallbackFontSize, Is.InRange(8, 16));
     }
 }

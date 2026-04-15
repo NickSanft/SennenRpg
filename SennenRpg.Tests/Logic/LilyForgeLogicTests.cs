@@ -77,8 +77,9 @@ public class LilyForgeLogicTests
     [Test]
     public void Resolve_SlotMatchesRecipe()
     {
-        // Force slot 0 (Weapon) by finding a seed that produces slot 0
-        for (int seed = 0; seed < 1000; seed++)
+        // Verify that the resolved item's Slot matches the slot encoded in the recipe
+        // across a range of seeds (covers every slot value the generator can produce).
+        for (int seed = 0; seed < 50; seed++)
         {
             int capturedSeed = seed;
             string recipe = LilyForgeLogic.GenerateRecipe(1, () => capturedSeed);
@@ -86,7 +87,6 @@ public class LilyForgeLogicTests
             var item = LilyForgeLogic.Resolve(recipe);
             Assert.That((int)item.Slot, Is.EqualTo(slotInt),
                 $"Seed {seed}: resolved slot {item.Slot} doesn't match recipe slot {slotInt}");
-            break; // just test the first one
         }
     }
 
