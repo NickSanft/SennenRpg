@@ -125,6 +125,7 @@ public partial class AudioManager : Node
 		if (!forceRestart && path == _currentBgmPath && active.Playing)
 			return;
 		_currentBgmPath = path;
+		GameManager.Instance?.RecordBgmPlayed(path);
 
 		var incoming = _usingPlayerA ? _bgmPlayerB : _bgmPlayer;
 		var outgoing = _usingPlayerA ? _bgmPlayer  : _bgmPlayerB;

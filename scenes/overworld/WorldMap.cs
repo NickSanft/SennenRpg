@@ -44,6 +44,12 @@ public partial class WorldMap : Node2D
 	// Weather overlay spawned on this map — removed on exit.
 	private SennenRpg.Scenes.Hud.WeatherOverlay? _weatherOverlay;
 
+	// Mode 7 pseudo-3D perspective view (toggled with M key).
+	private bool _mode7Active;
+	private ColorRect? _mode7Rect;
+	private ShaderMaterial? _mode7Material;
+	private Label? _mode7Label;
+
 	// Phase 4 — overworld follower chain. The WorldMap is a 16×16 sprite map so it
 	// always spawns followers when the party has more than one member.
 	private FollowerTrail? _followerTrail;
@@ -108,6 +114,8 @@ public partial class WorldMap : Node2D
 		// First make sure the leader's sprite matches whoever is currently leading.
 		ApplyLeaderSpriteToPlayer();
 		SpawnFollowers();
+
+		SetupMode7();
 
 		// Refresh leader sprite + follower chain whenever the party order changes
 		// (e.g. via the Party Menu's set-leader / swap actions).
@@ -267,13 +275,38 @@ public partial class WorldMap : Node2D
 
 	public override void _UnhandledInput(InputEvent @event)
 	{
-		if (@event is InputEventKey { Pressed: true, Keycode: Key.L })
+		if (@event is not InputEventKey { Pressed: true } key) return;
+
+		if (key.Keycode == Key.L)
 		{
 			var gm = GameManager.Instance;
 			gm.DebugNoEncounters = !gm.DebugNoEncounters;
 			GD.Print($"[Debug] Encounters {(gm.DebugNoEncounters ? "OFF" : "ON")}");
 			GetViewport().SetInputAsHandled();
 		}
+		else if (key.Keycode == Key.M)
+		{
+			ToggleMode7();
+			GetViewport().SetInputAsHandled();
+		}
+	}
+
+	public override void _Process(double delta)
+	{
+		if (!_mode7Active || _mode7Material == null || _player == null) return;
+
+		// Estimate map dimensions from the ground layer's used rect.
+		var ground = GetNodeOrNull<TileMapLayer>("Ground");
+		if (ground == null) return;
+
+		var usedRect = ground.GetUsedRect();
+		var tileSize = ground.TileSet?.TileSize ?? new Vector2I(16, 16);
+		float mapW = usedRect.Size.X * tileSize.X;
+		float mapH = usedRect.Size.Y * tileSize.Y;
+
+		var (ox, oy) = Mode7Logic.WorldToShaderOffset(
+			_player.Position.X, _player.Position.Y, mapW, mapH);
+		_mode7Material.SetShaderParameter("camera_offset", new Vector2(ox, oy));
 	}
 
 	// ── Foraging ──────────────────────────────────────────────────────────────
@@ -716,8 +749,111 @@ public partial class WorldMap : Node2D
 		GD.Print($"[WorldMap] Lightning strike! Granted Charged Bark at tile {tile}.");
 	}
 
+	// ── Mode 7 pseudo-3D view ────────────────────────────────────────────
+
+	private void SetupMode7()
+	{
+		if (Engine.IsEditorHint()) return;
+
+		var shader = GD.Load<Shader>("res://assets/shaders/mode7.gdshader");
+		if (shader == null)
+		{
+			GD.PushWarning("[WorldMap] mode7.gdshader not found; Mode 7 disabled.");
+			return;
+		}
+
+		_mode7Material = new ShaderMaterial { Shader = shader };
+		_mode7Material.SetShaderParameter("transition_progress", 0f);
+
+		var layer = new CanvasLayer { Layer = 1, Name = "Mode7Layer" };
+		AddChild(layer);
+
+		_mode7Rect = new ColorRect
+		{
+			Material    = _mode7Material,
+			Visible     = false,
+			AnchorRight = 1f,
+			AnchorBottom = 1f,
+			MouseFilter = Control.MouseFilterEnum.Ignore,
+		};
+		layer.AddChild(_mode7Rect);
+
+		_mode7Label = new Label
+		{
+			Text = "MODE 7",
+			Position = new Vector2(8f, 8f),
+			Visible = false,
+			LabelSettings = new LabelSettings
+			{
+				Font        = UiTheme.LoadPixelFont(),
+				FontSize    = 8,
+				FontColor   = UiTheme.Gold,
+				OutlineSize = 1,
+				OutlineColor = Colors.Black,
+			},
+		};
+		layer.AddChild(_mode7Label);
+	}
+
+	/// <summary>Camera Y offset applied in Mode 7 to push the player into the
+	/// upper third of the screen, giving more real estate to the forward view
+	/// (perspective recedes toward the bottom).</summary>
+	private const float Mode7CameraOffsetY = 60f;
+
+	private void ToggleMode7()
+	{
+		if (_mode7Material == null) return;
+
+		_mode7Active = !_mode7Active;
+		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
+
+		float from = _mode7Active ? 0f : 1f;
+		float to   = _mode7Active ? 1f : 0f;
+
+		var tween = CreateTween();
+		tween.TweenMethod(
+			Callable.From<float>(v => _mode7Material.SetShaderParameter("transition_progress", v)),
+			from, to, 0.3f)
+			.SetTrans(Tween.TransitionType.Sine);
+
+		// Shift camera so the player sits in the lower third of the screen,
+		// giving the Mode 7 perspective more room to show tiles ahead.
+		var cam = _player?.GetNodeOrNull<Camera2D>("Camera2D");
+		if (cam != null)
+		{
+			float camFrom = _mode7Active ? 0f : Mode7CameraOffsetY;
+			float camTo   = _mode7Active ? Mode7CameraOffsetY : 0f;
+			tween.Parallel().TweenProperty(cam, "offset:y", camTo, 0.3f)
+				.From(camFrom)
+				.SetTrans(Tween.TransitionType.Sine);
+		}
+
+		if (_mode7Active)
+		{
+			if (_mode7Rect != null) _mode7Rect.Visible = true;
+			if (_mode7Label != null) _mode7Label.Visible = true;
+		}
+		else
+		{
+			tween.TweenCallback(Callable.From(() =>
+			{
+				if (_mode7Label != null) _mode7Label.Visible = false;
+				if (_mode7Rect != null) _mode7Rect.Visible = false;
+			}));
+		}
+
+		GD.Print($"[WorldMap] Mode 7 {(_mode7Active ? "ON" : "OFF")}");
+	}
+
 	public override void _ExitTree()
 	{
+		// Reset Mode 7 camera offset so it doesn't leak into battle/menus.
+		if (_mode7Active && _player != null)
+		{
+			var cam = _player.GetNodeOrNull<Camera2D>("Camera2D");
+			if (cam != null) cam.Offset = new Vector2(cam.Offset.X, 0f);
+		}
+
 		var wm = WeatherManager.Instance;
 		if (wm != null)
 		{

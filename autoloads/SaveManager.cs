@@ -132,6 +132,8 @@ public partial class SaveManager : Node
 			// Cooking Journal
 			CookingJournal           = new System.Collections.Generic.Dictionary<string, string>(gm.CookingJournal),
 			TotalMealsCooked         = gm.TotalMealsCooked,
+			// Jukebox
+			UnlockedBgmPaths         = new System.Collections.Generic.List<string>(gm.UnlockedBgmPaths),
 			// Party (Phase 2)
 			Party                    = new System.Collections.Generic.List<SennenRpg.Core.Data.PartyMember>(gm.Party.AllMembers),
 			PartyLeaderIndex         = gm.Party.LeaderIndex,

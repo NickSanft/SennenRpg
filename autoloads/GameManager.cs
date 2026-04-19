@@ -69,6 +69,16 @@ public partial class GameManager : Node
 	/// <summary>Total number of meals cooked across all recipes.</summary>
 	public int TotalMealsCooked { get; set; }
 
+	/// <summary>BGM resource paths the player has heard (unlocked for jukebox).</summary>
+	public System.Collections.Generic.HashSet<string> UnlockedBgmPaths { get; } = new();
+
+	/// <summary>Record a BGM path as heard. Called by AudioManager.PlayBgm.</summary>
+	public void RecordBgmPlayed(string? path)
+	{
+		if (!string.IsNullOrEmpty(path))
+			UnlockedBgmPaths.Add(path);
+	}
+
 	/// <summary>
 	/// Current Perfect-streak counter for the foraging minigame. Increments on a Perfect grade,
 	/// resets to zero on anything else. Persisted in <see cref="SaveData.ForageStreak"/>.
@@ -650,6 +660,9 @@ public partial class GameManager : Node
 		CookingJournal.Clear();
 		foreach (var kv in data.CookingJournal) CookingJournal[kv.Key] = kv.Value;
 		TotalMealsCooked = data.TotalMealsCooked;
+
+		UnlockedBgmPaths.Clear();
+		foreach (var p in data.UnlockedBgmPaths) UnlockedBgmPaths.Add(p);
 
 		WeatherManager.Instance?.LoadFromSave(data.Weather, data.WeatherStepCounter);
 

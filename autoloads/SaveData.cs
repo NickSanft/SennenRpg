@@ -129,6 +129,10 @@ public record SaveData
 	/// <summary>Total number of meals cooked across all recipes.</summary>
 	public int TotalMealsCooked { get; init; } = 0;
 
+	// ── Jukebox ───────────────────────────────────────────────────────────────
+	/// <summary>Set of BGM resource paths the player has heard (unlocked for jukebox).</summary>
+	public List<string> UnlockedBgmPaths { get; init; } = new();
+
 	// ── Slot metadata ─────────────────────────────────────────────────────────
 	/// <summary>Player's chosen name (displayed on the slot card).</summary>
 	public string PlayerName      { get; init; } = "Sen";

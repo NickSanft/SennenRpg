@@ -140,6 +140,10 @@
         <Compile Include="../core/data/ComboSpell.cs" />
         <Compile Include="../core/data/ComboSpellRegistry.cs" />
         <Compile Include="../core/data/ComboSpellLogic.cs" />
+        <!-- Mode 7 map view — pure logic, no Godot runtime -->
+        <Compile Include="../core/data/Mode7Logic.cs" />
+        <!-- Jukebox — pure logic, no Godot runtime -->
+        <Compile Include="../core/data/JukeboxLogic.cs" />
     </ItemGroup>
 
 </Project>
