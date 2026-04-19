@@ -251,6 +251,7 @@ public partial class EquipmentMenu : CanvasLayer
     public void Open()
     {
         Visible = true;
+        TutorialManager.Instance?.Trigger(TutorialIds.Equipment);
 
         // Honour the cursor set by PartyMenu so the same member appears here.
         var party = GameManager.Instance.Party;

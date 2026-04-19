@@ -134,6 +134,8 @@ public partial class SaveManager : Node
 			TotalMealsCooked         = gm.TotalMealsCooked,
 			// Jukebox
 			UnlockedBgmPaths         = new System.Collections.Generic.List<string>(gm.UnlockedBgmPaths),
+			// Tutorials
+			SeenTutorialIds          = new System.Collections.Generic.HashSet<string>(gm.SeenTutorialIds),
 			// Party (Phase 2)
 			Party                    = new System.Collections.Generic.List<SennenRpg.Core.Data.PartyMember>(gm.Party.AllMembers),
 			PartyLeaderIndex         = gm.Party.LeaderIndex,

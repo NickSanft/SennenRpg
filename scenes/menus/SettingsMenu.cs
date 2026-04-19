@@ -33,11 +33,12 @@ public partial class SettingsMenu : CanvasLayer
 	private CheckButton  _showFpsCheck      = null!;
 
 	// Gameplay
-	private OptionButton _difficultyOption = null!;
-	private OptionButton _encounterOption  = null!;
-	private OptionButton _rhythmOption     = null!;
-	private OptionButton _textSpeedOption  = null!;
-	private CheckButton  _autoAdvanceCheck = null!;
+	private OptionButton _difficultyOption   = null!;
+	private OptionButton _encounterOption    = null!;
+	private OptionButton _rhythmOption       = null!;
+	private OptionButton _textSpeedOption    = null!;
+	private CheckButton  _autoAdvanceCheck   = null!;
+	private CheckButton  _skipTutorialsCheck = null!;
 
 	// Accessibility
 	private CheckButton _speakerNameCheck   = null!;
@@ -193,7 +194,8 @@ public partial class SettingsMenu : CanvasLayer
 		_encounterOption  = AddOptionRow(tab, "Encounter Rate",    "Normal", "Low",        "Off");
 		_rhythmOption     = AddOptionRow(tab, "Rhythm Window",     "Tight",  "Normal",     "Forgiving", "AutoHit");
 		_textSpeedOption  = AddOptionRow(tab, "Battle Text Speed", "Slow",   "Normal",     "Fast",      "Instant");
-		_autoAdvanceCheck = AddCheckRow(tab,  "Auto-Advance Dialog");
+		_autoAdvanceCheck   = AddCheckRow(tab, "Auto-Advance Dialog");
+		_skipTutorialsCheck = AddCheckRow(tab, "Skip Tutorials");
 		return tab;
 	}
 
@@ -481,7 +483,8 @@ public partial class SettingsMenu : CanvasLayer
 		_encounterOption.Selected       = (int)s.EncounterRateMode;
 		_rhythmOption.Selected          = (int)s.RhythmTimingWindow;
 		_textSpeedOption.Selected       = (int)s.BattleTextSpeed;
-		_autoAdvanceCheck.ButtonPressed = s.AutoAdvanceDialog;
+		_autoAdvanceCheck.ButtonPressed   = s.AutoAdvanceDialog;
+		_skipTutorialsCheck.ButtonPressed = s.SkipTutorials;
 
 		_speakerNameCheck.ButtonPressed   = s.AlwaysShowSpeakerName;
 		_dialogHistoryCheck.ButtonPressed = s.DialogHistoryEnabled;
@@ -538,6 +541,7 @@ public partial class SettingsMenu : CanvasLayer
 			RhythmTimingWindow = (RhythmTimingWindow)_rhythmOption.Selected,
 			BattleTextSpeed    = (BattleTextSpeed)_textSpeedOption.Selected,
 			AutoAdvanceDialog  = _autoAdvanceCheck.ButtonPressed,
+			SkipTutorials      = _skipTutorialsCheck.ButtonPressed,
 
 			AlwaysShowSpeakerName = _speakerNameCheck.ButtonPressed,
 			DialogHistoryEnabled  = _dialogHistoryCheck.ButtonPressed,

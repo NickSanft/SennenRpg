@@ -46,6 +46,7 @@ public partial class CookingMenu : CanvasLayer
         UiTheme.ApplyPixelFontToAll(this);
         UiTheme.ApplyToAllButtons(this);
         Visible = true;
+        TutorialManager.Instance?.Trigger(TutorialIds.Cooking);
     }
 
     public override void _UnhandledInput(InputEvent e)

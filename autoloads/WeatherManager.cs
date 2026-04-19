@@ -76,6 +76,10 @@ public partial class WeatherManager : Node
             Current = next;
             GD.Print($"[WeatherManager] Weather changed → {WeatherLogic.DisplayName(next)} (step {StepCounter}).");
             EmitSignal(SignalName.WeatherChanged, (int)next);
+
+            // First time the player sees weather roll to something other than Sunny.
+            if (next != WeatherType.Sunny)
+                TutorialManager.Instance?.Trigger(TutorialIds.WeatherFirst);
         }
     }
 

@@ -323,6 +323,10 @@ public partial class WorldMap : Node2D
 
 		_stepsSinceLastForage = 0;
 
+		// First forage of the playthrough — show onboarding popup before the
+		// minigame / grant so the player understands what just happened.
+		TutorialManager.Instance?.Trigger(TutorialIds.Foraging);
+
 		// Settings toggle: when the minigame is disabled, fall back to the legacy
 		// instant-grant path (one default-table item, no rhythm prompt).
 		bool minigameEnabled = SettingsManager.Instance?.Current.ForageMinigameEnabled ?? true;
@@ -806,6 +810,10 @@ public partial class WorldMap : Node2D
 
 		_mode7Active = !_mode7Active;
 		AudioManager.Instance?.PlaySfx(UiSfx.Confirm);
+
+		// Fire the Mode 7 tutorial the first time the player activates the view.
+		if (_mode7Active)
+			TutorialManager.Instance?.Trigger(TutorialIds.Mode7);
 
 		float from = _mode7Active ? 0f : 1f;
 		float to   = _mode7Active ? 1f : 0f;

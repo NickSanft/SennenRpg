@@ -210,6 +210,7 @@ public partial class InventoryMenu : CanvasLayer
 	{
 		Refresh();
 		Visible = true;
+		TutorialManager.Instance?.Trigger(TutorialIds.ItemMenu);
 	}
 
 	private void Close()

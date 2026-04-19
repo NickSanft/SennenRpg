@@ -38,6 +38,7 @@ public partial class ClassChangeMenu : CanvasLayer
         UiTheme.ApplyPixelFontToAll(this);
         UiTheme.ApplyToAllButtons(this);
         Visible = true;
+        TutorialManager.Instance?.Trigger(TutorialIds.ClassChange);
     }
 
     public override void _UnhandledInput(InputEvent e)

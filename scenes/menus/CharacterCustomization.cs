@@ -83,6 +83,8 @@ public partial class CharacterCustomization : Node2D
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
+    private CheckButton? _skipTutorialsCheck;
+
     public override void _Ready()
     {
         _presets = new CharacterStats[ClassDefs.Length];
@@ -91,6 +93,8 @@ public partial class CharacterCustomization : Node2D
 
         GetNode<Button>("UI/Margin/VBox/BottomBar/ConfirmButton").Pressed += OnConfirmPressed;
         GetNode<Button>("UI/Margin/VBox/BottomBar/SkipButton").Pressed    += OnSkipPressed;
+
+        AddSkipTutorialsCheck();
 
         BuildClassTab();
         BuildStatsTab();
@@ -101,6 +105,25 @@ public partial class CharacterCustomization : Node2D
         // Apply SNES theme
         UiTheme.ApplyToAllButtons(this);
 		UiTheme.ApplyPixelFontToAll(this);
+    }
+
+    /// <summary>
+    /// Adds a "Skip Tutorials" check to the bottom bar so returning players can
+    /// disable onboarding popups as part of the new-game flow. Defaults to the
+    /// current SettingsData value (off for fresh installs).
+    /// </summary>
+    private void AddSkipTutorialsCheck()
+    {
+        var bottomBar = GetNode<HBoxContainer>("UI/Margin/VBox/BottomBar");
+        _skipTutorialsCheck = new CheckButton
+        {
+            Text           = "Skip Tutorials",
+            ButtonPressed  = SettingsManager.Instance?.Current.SkipTutorials ?? false,
+            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
+        };
+        // Insert as the first child so it sits on the left of Skip / Begin Adventure.
+        bottomBar.AddChild(_skipTutorialsCheck);
+        bottomBar.MoveChild(_skipTutorialsCheck, 0);
     }
 
     // ── Tab 1 — Class ─────────────────────────────────────────────────────────
@@ -438,6 +461,7 @@ public partial class CharacterCustomization : Node2D
     {
         if (_transitioning) return;
         _transitioning = true;
+        ApplySkipTutorialsSetting();
         ApplyToGameManager();
         _ = SceneTransition.Instance.GoToAsync(NextScene);
     }
@@ -448,8 +472,21 @@ public partial class CharacterCustomization : Node2D
         _transitioning = true;
         _selectedClassIdx = 0;
         _deltas.Clear();
+        ApplySkipTutorialsSetting();
         ApplyToGameManager();
         _ = SceneTransition.Instance.GoToAsync(NextScene);
+    }
+
+    /// <summary>
+    /// Persists the current state of the Skip Tutorials checkbox to SettingsManager
+    /// before leaving the character customization screen.
+    /// </summary>
+    private void ApplySkipTutorialsSetting()
+    {
+        var sm = SettingsManager.Instance;
+        if (sm == null || _skipTutorialsCheck == null) return;
+        if (sm.Current.SkipTutorials == _skipTutorialsCheck.ButtonPressed) return;
+        sm.Apply(sm.Current with { SkipTutorials = _skipTutorialsCheck.ButtonPressed });
     }
 
     private void ApplyToGameManager()

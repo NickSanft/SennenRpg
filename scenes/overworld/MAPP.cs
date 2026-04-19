@@ -92,6 +92,7 @@ public partial class MAPP : OverworldBase
 			SpawnMusicNoteAura(ShizuWorldPosition());
 
 		SpawnAllIdleWanders();
+		SpawnJukebox();
 
 		// Listen for the custom signal fired at the end of npc_brix_again.dtl
 		DialogicBridge.Instance.DialogicSignalReceived += OnDialogicSignal;
@@ -120,6 +121,19 @@ public partial class MAPP : OverworldBase
 		SpawnRugs();
 		SpawnWallDecorations();
 		SpawnStaircase();
+	}
+
+	// ── Jukebox ───────────────────────────────────────────────────────────────
+
+	/// <summary>Places an interactable jukebox near the bar counter.</summary>
+	private void SpawnJukebox()
+	{
+		var jukebox = new JukeboxProp
+		{
+			Position = new Vector2(-48f, -56f),
+			Name     = "Jukebox",
+		};
+		YSort.AddChild(jukebox);
 	}
 
 	public override void _ExitTree()

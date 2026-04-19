@@ -36,6 +36,7 @@ AccessibilityOverlay="*res://autoloads/AccessibilityOverlay.cs"
 WeatherManager="*res://autoloads/WeatherManager.cs"
 BgmBeatDebugOverlay="*res://autoloads/BgmBeatDebugOverlay.cs"
 BeatSyncRegistry="*res://autoloads/BeatSyncRegistry.cs"
+TutorialManager="*res://autoloads/TutorialManager.cs"
 
 [dialogic]
 

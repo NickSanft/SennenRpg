@@ -42,6 +42,7 @@ public partial class PartyMenu : CanvasLayer
         UiTheme.ApplyPixelFontToAll(this);
         UiTheme.ApplyToAllButtons(this);
         Visible = true;
+        TutorialManager.Instance?.Trigger(TutorialIds.PartyMenu);
     }
 
     public override void _UnhandledInput(InputEvent e)

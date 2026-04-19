@@ -133,6 +133,13 @@ public record SaveData
 	/// <summary>Set of BGM resource paths the player has heard (unlocked for jukebox).</summary>
 	public List<string> UnlockedBgmPaths { get; init; } = new();
 
+	// ── Tutorials ─────────────────────────────────────────────────────────────
+	/// <summary>
+	/// Set of tutorial IDs the player has already seen (or had silently marked
+	/// seen with Skip Tutorials enabled). Empty for new games.
+	/// </summary>
+	public HashSet<string> SeenTutorialIds { get; init; } = new();
+
 	// ── Slot metadata ─────────────────────────────────────────────────────────
 	/// <summary>Player's chosen name (displayed on the slot card).</summary>
 	public string PlayerName      { get; init; } = "Sen";

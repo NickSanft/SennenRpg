@@ -135,7 +135,6 @@ public partial class OverworldBase : Node2D
 		{
 			ApplyLeaderSpriteToPlayer();
 			SpawnFollowers();
-			ScheduleEntryReaction();
 			var gm = GameManager.Instance;
 			if (gm != null)
 			{
@@ -143,6 +142,13 @@ public partial class OverworldBase : Node2D
 				_subscribedToPartyOrder = true;
 			}
 		}
+
+		// Party reactions fire on ALL maps (followers or not).
+		// On non-follower maps the bubble appears above the player sprite.
+		ScheduleEntryReaction();
+
+		// First-map movement tutorial (only on gameplay maps, not cutscenes).
+		TutorialManager.Instance?.Trigger(TutorialIds.OverworldMovement);
 
 		if (!string.IsNullOrEmpty(BgmPath))
 			AudioManager.Instance.PlayBgm(BgmPath);
@@ -211,8 +217,8 @@ public partial class OverworldBase : Node2D
 				if (TryRandomEncounter()) return;
 		}
 
-		// Party reaction check
-		if (_followers.Count > 0 && PartyReactionLogic.ShouldCheckReactions(_totalSteps - _lastReactionStep))
+		// Party reaction check — works with or without followers
+		if (PartyReactionLogic.ShouldCheckReactions(_totalSteps - _lastReactionStep))
 		{
 			TryShowPartyReaction();
 		}
@@ -236,32 +242,80 @@ public partial class OverworldBase : Node2D
 		var reaction = PartyReactionLogic.GetNextReaction(MapId, activeIds, _shownReactions);
 		if (reaction == null) return;
 
-		// Find the follower whose party member matches the reaction's member id
-		int followerIdx = -1;
-		int fi = 0;
-		for (int i = 0; i < party.Members.Count; i++)
+		if (_followers.Count > 0)
 		{
-			if (i == party.LeaderIndex) continue;
-			if (string.Equals(party.Members[i].MemberId, reaction.Value.MemberId, System.StringComparison.OrdinalIgnoreCase))
+			// Follower maps: show bubble on the matching follower sprite
+			int followerIdx = -1;
+			int fi = 0;
+			for (int i = 0; i < party.Members.Count; i++)
 			{
-				followerIdx = fi;
-				break;
+				if (i == party.LeaderIndex) continue;
+				if (string.Equals(party.Members[i].MemberId, reaction.Value.MemberId, System.StringComparison.OrdinalIgnoreCase))
+				{
+					followerIdx = fi;
+					break;
+				}
+				fi++;
 			}
-			fi++;
+
+			if (followerIdx < 0 || followerIdx >= _followers.Count) return;
+			var follower = _followers[followerIdx];
+			if (!IsInstanceValid(follower)) return;
+
+			follower.ShowReactionBubble(reaction.Value.Text);
+		}
+		else
+		{
+			// Non-follower maps (towns/interiors): show bubble above the player
+			ShowPlayerReactionBubble(reaction.Value.MemberId, reaction.Value.Text);
 		}
 
-		if (followerIdx < 0 || followerIdx >= _followers.Count) return;
-		var follower = _followers[followerIdx];
-		if (!IsInstanceValid(follower)) return;
-
-		follower.ShowReactionBubble(reaction.Value.Text);
 		_shownReactions.Add(PartyReactionLogic.ReactionKey(reaction.Value));
 		_lastReactionStep = _totalSteps;
 	}
 
+	/// <summary>
+	/// Shows a floating reaction label above the player sprite on maps without
+	/// follower sprites (32×32 towns/interiors). Includes the member's name.
+	/// </summary>
+	private void ShowPlayerReactionBubble(string memberId, string text)
+	{
+		if (_player == null || !IsInstanceValid(_player)) return;
+
+		// Capitalize member name
+		string name = memberId.Length > 0
+			? char.ToUpper(memberId[0]) + memberId[1..]
+			: memberId;
+
+		var label = new Label
+		{
+			Text              = $"{name}: {text}",
+			HorizontalAlignment = HorizontalAlignment.Center,
+			Position          = new Vector2(-80, -36),
+			Size              = new Vector2(160, 0),
+			AutowrapMode      = TextServer.AutowrapMode.WordSmart,
+			LabelSettings     = new LabelSettings
+			{
+				Font        = UiTheme.LoadPixelFont(),
+				FontSize    = 7,
+				FontColor   = Colors.White,
+				OutlineSize = 1,
+				OutlineColor = Colors.Black,
+			},
+		};
+
+		_player.AddChild(label);
+		label.Modulate = new Color(1, 1, 1, 0);
+
+		var tween = CreateTween();
+		tween.TweenProperty(label, "modulate:a", 1f, 0.2f);
+		tween.TweenInterval(3.0);
+		tween.TweenProperty(label, "modulate:a", 0f, 0.5f);
+		tween.TweenCallback(Callable.From(label.QueueFree));
+	}
+
 	private void ScheduleEntryReaction()
 	{
-		if (_followers.Count == 0) return;
 		var timer = GetTree().CreateTimer(0.5);
 		timer.Timeout += TryShowPartyReaction;
 	}

@@ -1,5 +1,6 @@
 using Godot;
 using SennenRpg.Autoloads;
+using SennenRpg.Core.Data;
 using SennenRpg.Core.Interfaces;
 using SennenRpg.Scenes.Menus;
 
@@ -17,10 +18,19 @@ public partial class JukeboxProp : Area2D, IInteractable
 
     public override void _Ready()
     {
-        if (GetChildCount() > 1) return; // CollisionShape2D is pre-baked in .tscn
+        if (Engine.IsEditorHint()) return;
 
-        if (!Engine.IsEditorHint())
-            AddToGroup("interactable");
+        AddToGroup("interactable");
+
+        // Collision shape for Area2D interaction detection (code-spawned, no .tscn)
+        if (GetChildCount() == 0)
+        {
+            var shape = new CollisionShape2D
+            {
+                Shape = new RectangleShape2D { Size = new Vector2(20, 20) },
+            };
+            AddChild(shape);
+        }
 
         // Simple visual: a small colored rectangle representing the jukebox
         var body = new Polygon2D { Color = new Color(0.3f, 0.2f, 0.5f) };
@@ -53,6 +63,7 @@ public partial class JukeboxProp : Area2D, IInteractable
         _open = true;
         HidePrompt();
         GameManager.Instance.SetState(GameState.Dialog);
+        TutorialManager.Instance?.Trigger(TutorialIds.Jukebox);
 
         var menu = new JukeboxMenu();
         menu.Closed += OnMenuClosed;

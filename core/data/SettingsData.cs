@@ -58,6 +58,15 @@ public record SettingsData
     public bool AlwaysShowSpeakerName { get; init; } = true;
     public bool DialogHistoryEnabled  { get; init; } = true;
 
+    // ── Onboarding ─────────────────────────────────────────────────────
+    /// <summary>
+    /// When true, suppresses all first-time tutorial popups. Off by default so
+    /// new players receive the onboarding flow; returning players can enable.
+    /// Note: toggling mid-game still advances "seen" state silently so turning
+    /// tutorials back on later won't re-fire already-passed mechanics.
+    /// </summary>
+    public bool SkipTutorials { get; init; } = false;
+
     // ── Controls ──────────────────────────────────────────────────────
     /// <summary>Action name → Godot Key enum integer. Empty = use project defaults.</summary>
     public Dictionary<string, int> KeyBindings { get; init; } = new();

@@ -80,6 +80,20 @@ public partial class GameManager : Node
 	}
 
 	/// <summary>
+	/// Tutorial IDs the player has already seen (or had marked seen with Skip
+	/// Tutorials on). Persisted per save — cleared on New Game so every fresh
+	/// playthrough receives the onboarding flow.
+	/// </summary>
+	public System.Collections.Generic.HashSet<string> SeenTutorialIds { get; } = new();
+
+	/// <summary>Mark a tutorial as seen. Called by TutorialManager.</summary>
+	public void MarkTutorialSeen(string id)
+	{
+		if (!string.IsNullOrEmpty(id))
+			SeenTutorialIds.Add(id);
+	}
+
+	/// <summary>
 	/// Current Perfect-streak counter for the foraging minigame. Increments on a Perfect grade,
 	/// resets to zero on anything else. Persisted in <see cref="SaveData.ForageStreak"/>.
 	/// </summary>
@@ -472,6 +486,11 @@ public partial class GameManager : Node
 		WeatherManager.Instance?.Reset();
 		PaletteSourceColors = [];
 		PaletteTargetColors = [];
+		UnlockedTrophies.Clear();
+		CookingJournal.Clear();
+		TotalMealsCooked = 0;
+		UnlockedBgmPaths.Clear();
+		SeenTutorialIds.Clear();
 
 		// Seed the party with Sen as the sole leader. Stats are mirrored from
 		// _combat at this point — ApplyCharacterCustomization or class switches
@@ -566,6 +585,9 @@ public partial class GameManager : Node
 		GD.Print($"[GameManager] Recruited party member: {member.MemberId} ({member.DisplayName}, {member.Class})");
 		EmitSignal(SignalName.PartyMemberRecruited, member.MemberId);
 		EmitSignal(SignalName.PlayerStatsChanged);
+
+		// First recruitment — introduce the party system.
+		TutorialManager.Instance?.Trigger(TutorialIds.PartyRecruit);
 		return true;
 	}
 
@@ -663,6 +685,9 @@ public partial class GameManager : Node
 
 		UnlockedBgmPaths.Clear();
 		foreach (var p in data.UnlockedBgmPaths) UnlockedBgmPaths.Add(p);
+
+		SeenTutorialIds.Clear();
+		foreach (var id in data.SeenTutorialIds) SeenTutorialIds.Add(id);
 
 		WeatherManager.Instance?.LoadFromSave(data.Weather, data.WeatherStepCounter);
 

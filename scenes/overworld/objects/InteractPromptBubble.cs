@@ -91,6 +91,9 @@ public partial class InteractPromptBubble : Node2D
 
 	public void ShowBubble()
 	{
+		// First time the player sees a [Z] interact prompt anywhere — explain it.
+		Autoloads.TutorialManager.Instance?.Trigger(Core.Data.TutorialIds.InteractPrompt);
+
 		// Update text based on current input device (keyboard vs gamepad)
 		if (_labelNode != null)
 			_labelNode.Text = Core.Extensions.InputMapExtensions.HintFor(_action, _label);

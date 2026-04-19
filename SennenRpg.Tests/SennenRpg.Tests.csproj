@@ -144,6 +144,11 @@
         <Compile Include="../core/data/Mode7Logic.cs" />
         <!-- Jukebox — pure logic, no Godot runtime -->
         <Compile Include="../core/data/JukeboxLogic.cs" />
+        <!-- Tutorial system — pure logic, no Godot runtime -->
+        <Compile Include="../core/data/Tutorial.cs" />
+        <Compile Include="../core/data/TutorialCategory.cs" />
+        <Compile Include="../core/data/TutorialRegistry.cs" />
+        <Compile Include="../core/data/TutorialLogic.cs" />
     </ItemGroup>
 
 </Project>

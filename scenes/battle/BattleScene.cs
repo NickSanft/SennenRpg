@@ -670,6 +670,10 @@ public partial class BattleScene : Node2D
 		SetupBattleBackground();
 		SetupEnemySprite();
 		_enemyNameplate.Setup(_enemy?.DisplayName ?? "???");
+
+		// First-battle tutorial — paused so the intro animation doesn't rush past.
+		TutorialManager.Instance?.Trigger(TutorialIds.EncounterFirst, pauseGame: true);
+
 		_ = RunIntro();
 	}
 
@@ -1061,6 +1065,10 @@ public partial class BattleScene : Node2D
 	{
 		_actionMenu.SlideOut();
 		SetState(BattleState.StrikePhase);
+
+		// First FIGHT action — teach the rhythm timing before the minigame starts.
+		TutorialManager.Instance?.Trigger(TutorialIds.RhythmStrike, pauseGame: true);
+
 		await RunBattleTimeline("res://dialog/timelines/battle_strike_prompt.dtl");
 
 		var playerClass = ActorClass();
@@ -2227,6 +2235,9 @@ public partial class BattleScene : Node2D
 		if (GameManager.Instance.Party.Count > 1)
 			await ShowPhaseCard($"{ActorDisplayName()}'s Turn", new Color(1f, 0.85f, 0.1f));
 
+		// First time the action menu opens — explain FIGHT / SKILLS / ITEM / FLEE.
+		TutorialManager.Instance?.Trigger(TutorialIds.BattleFight, pauseGame: true);
+
 		SetState(BattleState.PlayerTurn);
 	}
 
@@ -2314,6 +2325,10 @@ public partial class BattleScene : Node2D
 	{
 		SetState(BattleState.RhythmPhase);
 		ResetEnemyReactions();
+
+		// First time the player sees an enemy rhythm/dodge phase — paused so
+		// obstacles don't start flying before they've read the explanation.
+		TutorialManager.Instance?.Trigger(TutorialIds.RhythmDodge, pauseGame: true);
 
 		if (_adaptation.Tier >= AdaptationTier.Hardened)
 			await ShowPhaseCard("⚠  DODGE!  ⚠  (INTENSIFIED)", new Color(1f, 0.15f, 0.15f));
@@ -2802,10 +2817,14 @@ public partial class BattleScene : Node2D
 		_enemyTauntTriggered  = false;
 		_enemySRankTintActive = false;
 
-		// Restore every enemy visual to default scale/modulate/position
+		// Restore every LIVING enemy visual to default scale/modulate/position.
+		// KO'd enemies have their scale/modulate driven by HandleEnemyDeathIfApplicable
+		// (shrinks to Vector2.Zero + fades to 0 alpha) — we must not undo that here or
+		// defeated enemies will visibly reappear when the next rhythm phase begins.
 		foreach (var e in _enemies)
 		{
 			if (e.Visual == null) continue;
+			if (e.IsKO) continue;
 			e.Visual.Scale    = new Vector2(4f, 4f);
 			e.Visual.Modulate = Colors.White;
 		}

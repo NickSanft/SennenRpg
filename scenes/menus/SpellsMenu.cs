@@ -33,6 +33,7 @@ public partial class SpellsMenu : CanvasLayer
         UiTheme.ApplyPixelFontToAll(this);
         UiTheme.ApplyToAllButtons(this);
         Visible = true;
+        TutorialManager.Instance?.Trigger(TutorialIds.SpellsMenu);
     }
 
     public override void _UnhandledInput(InputEvent e)
