@@ -54,6 +54,12 @@ public partial class RhythmArena : Node2D
     /// </summary>
     public bool GhostMode { get; set; }
 
+    /// <summary>
+    /// Current weather affecting rhythm obstacles. Reset to Sunny at EndPhase.
+    /// Set by BattleScene before StartPhase.
+    /// </summary>
+    public WeatherType CurrentWeather { get; set; } = WeatherType.Sunny;
+
     private bool IsAutoHit => GhostMode || TimingWindow == AutoHit;
 
     // -- Node references --
@@ -335,12 +341,27 @@ public partial class RhythmArena : Node2D
     {
         if (lane < 0 || lane >= LaneCenterY.Length) return;
 
+        int adjustedBeats = beatsUntilArrival + RhythmWeatherLogic.ExtraBeatsUntilArrival(CurrentWeather);
         var obs        = _standardObstacleScene.Instantiate<StandardObstacle>();
         obs.Lane       = lane;
         obs.Damage     = damage;
-        obs.TravelSpeed = (HitZoneX - SpawnX) / (RhythmClock.Instance.BeatInterval * beatsUntilArrival);
+        obs.TravelSpeed = (HitZoneX - SpawnX) / (RhythmClock.Instance.BeatInterval * adjustedBeats);
         obs.Position   = new Vector2(SpawnX, LaneCenterY[lane]);
-        ObstacleContainer.AddChild(obs);
+
+        // Fog: spawn invisible, tween to full opacity over first 30% of travel
+        float spawnOpacity = RhythmWeatherLogic.NoteSpawnOpacity(CurrentWeather);
+        if (spawnOpacity < 1f)
+        {
+            obs.Modulate = new Color(1f, 1f, 1f, spawnOpacity);
+            float travelTime = (HitZoneX - SpawnX) / obs.TravelSpeed;
+            ObstacleContainer.AddChild(obs);
+            var fadeTween = obs.CreateTween();
+            fadeTween.TweenProperty(obs, "modulate:a", 1f, travelTime * 0.3f);
+        }
+        else
+        {
+            ObstacleContainer.AddChild(obs);
+        }
     }
 
     /// <summary>Spawn a HoldObstacle in the given lane.</summary>
@@ -348,13 +369,28 @@ public partial class RhythmArena : Node2D
     {
         if (_holdObstacleScene == null || lane < 0 || lane >= LaneCenterY.Length) return;
 
+        int adjustedBeats = beatsUntilArrival + RhythmWeatherLogic.ExtraBeatsUntilArrival(CurrentWeather);
         var obs        = _holdObstacleScene.Instantiate<HoldObstacle>();
         obs.Lane       = lane;
         obs.Damage     = damage;
         obs.HoldBeats  = holdBeats;
-        obs.TravelSpeed = (HitZoneX - SpawnX) / (RhythmClock.Instance.BeatInterval * beatsUntilArrival);
+        obs.TravelSpeed = (HitZoneX - SpawnX) / (RhythmClock.Instance.BeatInterval * adjustedBeats);
         obs.Position   = new Vector2(SpawnX, LaneCenterY[lane]);
-        ObstacleContainer.AddChild(obs);
+
+        // Fog: spawn invisible, tween to full opacity over first 30% of travel
+        float spawnOpacity = RhythmWeatherLogic.NoteSpawnOpacity(CurrentWeather);
+        if (spawnOpacity < 1f)
+        {
+            obs.Modulate = new Color(1f, 1f, 1f, spawnOpacity);
+            float travelTime = (HitZoneX - SpawnX) / obs.TravelSpeed;
+            ObstacleContainer.AddChild(obs);
+            var fadeTween = obs.CreateTween();
+            fadeTween.TweenProperty(obs, "modulate:a", 1f, travelTime * 0.3f);
+        }
+        else
+        {
+            ObstacleContainer.AddChild(obs);
+        }
     }
 
     // -- Per-frame processing --
@@ -389,6 +425,31 @@ public partial class RhythmArena : Node2D
                 EmitSignal(SignalName.NoteHit, (int)HitGrade.Perfect);
                 ShowFeedback(HitGrade.Perfect, lane);
                 RecordHit(HitGrade.Perfect);
+            }
+        }
+
+        // Weather: Y wobble (Stormy) and rainbow hue shift (Aurora)
+        float wobbleAmp  = RhythmWeatherLogic.NoteYWobbleAmplitude(CurrentWeather);
+        bool  doRainbow  = RhythmWeatherLogic.UseRainbowShift(CurrentWeather);
+        if (wobbleAmp > 0f || doRainbow)
+        {
+            float sinWobble = Mathf.Sin((float)Time.GetTicksMsec() / 200.0f) * wobbleAmp;
+            float hue       = ((float)Time.GetTicksMsec() / 2000.0f) % 1.0f;
+            foreach (Node child in ObstacleContainer.GetChildren())
+            {
+                if (child is not ObstacleBase obs || obs.IsResolved) continue;
+                if (obs is HoldObstacle heldObs2 && heldObs2.IsBeingHeld) continue;
+
+                if (wobbleAmp > 0f)
+                {
+                    float baseY = LaneCenterY[Mathf.Clamp(obs.Lane, 0, 3)];
+                    obs.Position = new Vector2(obs.Position.X, baseY + sinWobble);
+                }
+
+                if (doRainbow)
+                {
+                    obs.Modulate = Color.FromHsv(hue, 0.7f, 1.0f);
+                }
             }
         }
 
@@ -763,6 +824,7 @@ public partial class RhythmArena : Node2D
                  $"(P:{_totalPerfects} G:{_totalGoods} M:{_totalMisses})");
         Visible = false;
         GhostMode = false;
+        CurrentWeather = WeatherType.Sunny;
         EmitSignal(SignalName.PhaseEnded);
     }
 }

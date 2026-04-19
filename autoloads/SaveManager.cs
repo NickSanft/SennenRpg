@@ -127,6 +127,11 @@ public partial class SaveManager : Node
 			Bestiary                 = new System.Collections.Generic.Dictionary<string, SennenRpg.Core.Data.BestiaryEntry>(gm.Bestiary.Entries),
 			// Practice best ranks
 			PracticeBestRanks        = new System.Collections.Generic.Dictionary<string, string>(gm.PracticeBestRanks),
+			// Trophies
+			UnlockedTrophies         = new System.Collections.Generic.Dictionary<string, string>(gm.UnlockedTrophies),
+			// Cooking Journal
+			CookingJournal           = new System.Collections.Generic.Dictionary<string, string>(gm.CookingJournal),
+			TotalMealsCooked         = gm.TotalMealsCooked,
 			// Party (Phase 2)
 			Party                    = new System.Collections.Generic.List<SennenRpg.Core.Data.PartyMember>(gm.Party.AllMembers),
 			PartyLeaderIndex         = gm.Party.LeaderIndex,

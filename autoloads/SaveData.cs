@@ -119,6 +119,16 @@ public record SaveData
 	/// </summary>
 	public int ActivePartyCount { get; init; } = -1;
 
+	// ── Trophies ──────────────────────────────────────────────────────────────
+	/// <summary>Trophy ID → ISO timestamp when unlocked.</summary>
+	public Dictionary<string, string> UnlockedTrophies { get; init; } = new();
+
+	// ── Cooking Journal ───────────────────────────────────────────────────────
+	/// <summary>Recipe ID → best quality achieved (CookingQuality enum name).</summary>
+	public Dictionary<string, string> CookingJournal { get; init; } = new();
+	/// <summary>Total number of meals cooked across all recipes.</summary>
+	public int TotalMealsCooked { get; init; } = 0;
+
 	// ── Slot metadata ─────────────────────────────────────────────────────────
 	/// <summary>Player's chosen name (displayed on the slot card).</summary>
 	public string PlayerName      { get; init; } = "Sen";

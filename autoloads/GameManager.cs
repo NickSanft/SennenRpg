@@ -60,6 +60,15 @@ public partial class GameManager : Node
 	/// <summary>Best practice mode rank per enemy — enemy id → rank string (S/A/B/C/D).</summary>
 	public System.Collections.Generic.Dictionary<string, string> PracticeBestRanks { get; } = new();
 
+	/// <summary>Trophy ID → ISO timestamp when unlocked.</summary>
+	public System.Collections.Generic.Dictionary<string, string> UnlockedTrophies { get; } = new();
+
+	/// <summary>Recipe ID → best quality achieved (CookingQuality enum name).</summary>
+	public System.Collections.Generic.Dictionary<string, string> CookingJournal { get; } = new();
+
+	/// <summary>Total number of meals cooked across all recipes.</summary>
+	public int TotalMealsCooked { get; set; }
+
 	/// <summary>
 	/// Current Perfect-streak counter for the foraging minigame. Increments on a Perfect grade,
 	/// resets to zero on anything else. Persisted in <see cref="SaveData.ForageStreak"/>.
@@ -634,6 +643,13 @@ public partial class GameManager : Node
 
 		PracticeBestRanks.Clear();
 		foreach (var kv in data.PracticeBestRanks) PracticeBestRanks[kv.Key] = kv.Value;
+
+		UnlockedTrophies.Clear();
+		foreach (var kv in data.UnlockedTrophies) UnlockedTrophies[kv.Key] = kv.Value;
+
+		CookingJournal.Clear();
+		foreach (var kv in data.CookingJournal) CookingJournal[kv.Key] = kv.Value;
+		TotalMealsCooked = data.TotalMealsCooked;
 
 		WeatherManager.Instance?.LoadFromSave(data.Weather, data.WeatherStepCounter);
 

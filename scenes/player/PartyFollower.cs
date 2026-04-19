@@ -128,6 +128,50 @@ public partial class PartyFollower : Node2D
         GlobalPosition = position;
     }
 
+    // ── Reaction bubble ──────────────────────────────────────────────
+
+    private Label? _reactionLabel;
+
+    /// <summary>
+    /// Shows a speech-bubble label above this follower's sprite. Only one bubble
+    /// at a time — subsequent calls while a bubble is active are silently ignored.
+    /// The label holds for 2.5s then fades out over 0.5s and self-frees.
+    /// </summary>
+    public void ShowReactionBubble(string text)
+    {
+        if (_reactionLabel != null && IsInstanceValid(_reactionLabel)) return;
+
+        _reactionLabel = new Label
+        {
+            Text              = text,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Position          = new Vector2(-60, -20),
+            Size              = new Vector2(120, 0),
+            AutowrapMode      = TextServer.AutowrapMode.WordSmart,
+        };
+
+        // Pixel font, small size, with a black shadow for readability.
+        _reactionLabel.AddThemeFontSizeOverride("font_size", 9);
+        _reactionLabel.AddThemeColorOverride("font_color", UiTheme.Gold);
+        _reactionLabel.AddThemeColorOverride("font_shadow_color", new Color(0, 0, 0, 1));
+        _reactionLabel.AddThemeConstantOverride("shadow_offset_x", 1);
+        _reactionLabel.AddThemeConstantOverride("shadow_offset_y", 1);
+
+        AddChild(_reactionLabel);
+
+        var tween = CreateTween();
+        tween.TweenInterval(2.5);
+        tween.TweenProperty(_reactionLabel, "modulate:a", 0f, 0.5f);
+        tween.TweenCallback(Callable.From(() =>
+        {
+            if (_reactionLabel != null && IsInstanceValid(_reactionLabel))
+            {
+                _reactionLabel.QueueFree();
+                _reactionLabel = null;
+            }
+        }));
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────
 
     private void UpdateFacing(Vector2 motion)

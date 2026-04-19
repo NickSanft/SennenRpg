@@ -25,9 +25,11 @@ public partial class PauseMenu : CanvasLayer
 	private Button _mainMenuButton  = null!;
 	private bool   _transitioning   = false;
 
-	private InventoryMenu?  _inventoryMenu;
-	private CookingMenu?    _cookingMenu;
-	private ForageryMenu?   _forageryMenu;
+	private InventoryMenu?        _inventoryMenu;
+	private CookingMenu?          _cookingMenu;
+	private ForageryMenu?         _forageryMenu;
+	private TrophyMenu?           _trophyMenu;
+	private CookingJournalMenu?   _cookingJournalMenu;
 	private BestiaryMenu?   _bestiaryMenu;
 	private PartyMenu?      _partyMenu;
 	private EquipmentMenu?  _equipmentMenu;
@@ -192,6 +194,33 @@ public partial class PauseMenu : CanvasLayer
 			GD.PushWarning("[PauseMenu] SettingsMenu.tscn not found — SETTINGS button will be disabled.");
 			_settingsButton.Disabled = true;
 		}
+
+		// Code-only menus — instantiated directly (no .tscn needed)
+		var vbox = GetNode<VBoxContainer>("Overlay/Panel/VBox");
+		int insertIdx = _mainMenuButton.GetIndex();
+
+		var trophiesBtn = new Button { Text = "TROPHIES" };
+		trophiesBtn.Pressed += OnTrophiesPressed;
+		trophiesBtn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+		vbox.AddChild(trophiesBtn);
+		vbox.MoveChild(trophiesBtn, insertIdx);
+
+		var recipesBtn = new Button { Text = "RECIPES" };
+		recipesBtn.Pressed += OnRecipesPressed;
+		recipesBtn.FocusEntered += () => AudioManager.Instance?.PlaySfx(UiSfx.Cursor);
+		vbox.AddChild(recipesBtn);
+		vbox.MoveChild(recipesBtn, insertIdx + 1);
+
+		_trophyMenu = new TrophyMenu();
+		_trophyMenu.Closed += OnTrophiesClosed;
+		AddSibling(_trophyMenu);
+
+		_cookingJournalMenu = new CookingJournalMenu();
+		_cookingJournalMenu.Closed += OnRecipesClosed;
+		AddSibling(_cookingJournalMenu);
+
+		UiTheme.ApplyToAllButtons(this);
+		UiTheme.ApplyPixelFontToAll(this);
 	}
 
 	public override void _UnhandledInput(InputEvent @event)
@@ -375,6 +404,36 @@ public partial class PauseMenu : CanvasLayer
 		Visible = true;
 		_statsButton.GrabFocus();
 		GD.Print("[PauseMenu] Stats menu closed, PauseMenu restored.");
+	}
+
+	private void OnTrophiesPressed()
+	{
+		if (_trophyMenu == null) return;
+		Visible = false;
+		var unlocked = new System.Collections.Generic.HashSet<string>(
+			GameManager.Instance.UnlockedTrophies.Keys);
+		_trophyMenu.Open(unlocked);
+		GD.Print("[PauseMenu] Trophy menu opened.");
+	}
+
+	private void OnTrophiesClosed()
+	{
+		Visible = true;
+		GD.Print("[PauseMenu] Trophy menu closed, PauseMenu restored.");
+	}
+
+	private void OnRecipesPressed()
+	{
+		if (_cookingJournalMenu == null) return;
+		Visible = false;
+		_cookingJournalMenu.Open(GameManager.Instance.CookingJournal);
+		GD.Print("[PauseMenu] Recipes menu opened.");
+	}
+
+	private void OnRecipesClosed()
+	{
+		Visible = true;
+		GD.Print("[PauseMenu] Recipes menu closed, PauseMenu restored.");
 	}
 
 	private void OnMainMenuPressed()

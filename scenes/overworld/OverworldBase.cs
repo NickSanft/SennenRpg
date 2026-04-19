@@ -52,6 +52,11 @@ public partial class OverworldBase : Node2D
 	private bool             _encounterLocked; // prevents overlapping battle transitions
 	private Rect2            _worldBounds;
 
+	// ── Party reactions ──────────────────────────────────────────────
+	private HashSet<string> _shownReactions = new();
+	private int _totalSteps;
+	private int _lastReactionStep;
+
 	// Phase 4 — overworld follower chain. Only populated on 16×16 sprite maps
 	// (UseSmallPlayer == true). Each entry is positioned 1 tile back further than the prior.
 	private FollowerTrail? _followerTrail;
@@ -130,6 +135,7 @@ public partial class OverworldBase : Node2D
 		{
 			ApplyLeaderSpriteToPlayer();
 			SpawnFollowers();
+			ScheduleEntryReaction();
 			var gm = GameManager.Instance;
 			if (gm != null)
 			{
@@ -196,6 +202,7 @@ public partial class OverworldBase : Node2D
 		while (_stepAccumulator >= StepDistance)
 		{
 			_stepAccumulator -= StepDistance;
+			_totalSteps++;
 
 			if (CountsForTownRewards)
 				TickTownRewards();
@@ -203,6 +210,60 @@ public partial class OverworldBase : Node2D
 			if (RandomEncounterTable.Count > 0 && !_encounterLocked && !GameManager.Instance.DebugNoEncounters)
 				if (TryRandomEncounter()) return;
 		}
+
+		// Party reaction check
+		if (_followers.Count > 0 && PartyReactionLogic.ShouldCheckReactions(_totalSteps - _lastReactionStep))
+		{
+			TryShowPartyReaction();
+		}
+	}
+
+	// ── Party reactions ──────────────────────────────────────────────
+
+	private void TryShowPartyReaction()
+	{
+		var party = GameManager.Instance.Party;
+		if (party.IsEmpty) return;
+
+		var activeIds = new System.Collections.Generic.List<string>();
+		for (int i = 0; i < party.Members.Count; i++)
+		{
+			if (i == party.LeaderIndex) continue; // leader = player, not a follower
+			activeIds.Add(party.Members[i].MemberId);
+		}
+		if (activeIds.Count == 0) return;
+
+		var reaction = PartyReactionLogic.GetNextReaction(MapId, activeIds, _shownReactions);
+		if (reaction == null) return;
+
+		// Find the follower whose party member matches the reaction's member id
+		int followerIdx = -1;
+		int fi = 0;
+		for (int i = 0; i < party.Members.Count; i++)
+		{
+			if (i == party.LeaderIndex) continue;
+			if (string.Equals(party.Members[i].MemberId, reaction.Value.MemberId, System.StringComparison.OrdinalIgnoreCase))
+			{
+				followerIdx = fi;
+				break;
+			}
+			fi++;
+		}
+
+		if (followerIdx < 0 || followerIdx >= _followers.Count) return;
+		var follower = _followers[followerIdx];
+		if (!IsInstanceValid(follower)) return;
+
+		follower.ShowReactionBubble(reaction.Value.Text);
+		_shownReactions.Add(PartyReactionLogic.ReactionKey(reaction.Value));
+		_lastReactionStep = _totalSteps;
+	}
+
+	private void ScheduleEntryReaction()
+	{
+		if (_followers.Count == 0) return;
+		var timer = GetTree().CreateTimer(0.5);
+		timer.Timeout += TryShowPartyReaction;
 	}
 
 	// ── Party followers (Phase 4) ────────────────────────────────────
